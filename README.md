@@ -7,8 +7,8 @@ The application enables users to:
 - **Visualize optimal routes** between two points based on quality, safety, and path conditions.
 
 # Team
-- [**Errigo Simone**](https://github.com) 
-- [**Gholami Vale**](https://github.com) 
+- [**Errigo Simone**](https://github.com/SimoneErrigo) 
+- [**Gholami Vale**](https://github.com/vajihe-gholami) 
 - [**Ianosel Bianca Roberta**](https://github.com/BIA3IA)
 
 ## Repository Structure
