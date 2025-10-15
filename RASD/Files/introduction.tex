@@ -1,0 +1,136 @@
+% --------------------------------------------------------------------------
+% Purpose % 
+% --------------------------------------------------------------------------
+\section{Purpose}
+\label{sec:purpose}
+
+
+\subsection{Goal}
+\label{subsec:goal}
+This section is dedicated to the goals, that are an optative description of the stakeholders needs
+
+\begin{itemize}
+    \item[\textbf{[G1]}] -
+\end{itemize}
+
+% --------------------------------------------------------------------------
+% Scope % 
+% --------------------------------------------------------------------------
+
+\section{Scope}
+\label{sec:scope}
+
+\textbf{Best Bike Paths (BBP)} is a software system designed to support users in \textbf{creating}, \textbf{exploring}, and \textbf{sharing} information about bike paths and cycling activities.
+Users can \textbf{register} on the platform and (optional, if we want to provide personalized statistics for each user) supply personal data to track their physical condition, enabling them to start recording and monitoring their future cycling activities.
+
+Registered users have access to a personal history of their trips and can view general \textbf{statistics} accumulated over time, as well as detailed \textbf{information} about each specific \textbf{trip}, such as the total distance covered, average speed, and other performance metrics.
+When available, \textbf{additional information} such as weather conditions, temperature, and wind speed can be \textbf{enriched} through \textbf{external services}, provided the registered user owns a compatible device capable of capturing such data.
+Furthermore, registered users can contribute to the community by \textbf{publishing} information about bike paths, \textbf{reporting} their current \textbf{status} and the presence of obstacles, to help other users identify the best and safest routes.
+These data can be entered \textbf{manually}, by specifying details such as the streets composing the path and their condition, or \textbf{automatically}, through the acquisition of data from the user’s mobile device (e.g., GPS, accelerometer, and gyroscope sensors).
+In automated mode, BBP can infer that a user is biking based on their speed, collect GPS information to reconstruct the followed path, and detect irregular movements that may suggest the presence of potholes or surface issues. 
+Since this process may generate false positives, users will have to confirm or correct the automatically acquired data before publication.
+
+The condition of a bike path can assume several states, such as “optimal,” “medium,” “sufficient,” “requires maintenance,” or “closed.”
+BBP \textbf{aggregates} and \textbf{merges} publishable information about paths obtained from multiple users, taking into account the \textbf{freshness} of the data and the number of consistent confirmations received. For instance, if a path receives multiple reports within a similar timeframe, BBP determines its status based on the most supported and up-to-date information.
+
+Any user, including non-registered ones, can search for and visualize optimal bike paths between two points on a map.
+Paths are \textbf{ranked} according to their status and overall effectiveness in connecting the selected origin and destination.
+(optional) While following a route, the user can visualize their position on the map and receive turn-by-turn navigation instructions toward the chosen destination. Additionally, the system may provide \textbf{notifications} about obstacles or particular conditions along the path.
+
+
+\subsection{World phenomena}
+\label{subsec:world_phenomena}
+The phenomena relevant to the system can be grouped into two main categories.
+This section focuses on non-shared world phenomena, that is, phenomena occurring in the external environment which are beyond the machine’s direct control.
+\begin{itemize}
+    \item[\textbf{[W1]}] - 
+\end{itemize}
+
+
+\subsection{Shared phenomena}
+\label{subsec:shared_phenomena}
+
+\begin{itemize}
+    \item \textbf{World controlled:} Shared phenomena triggered by the world
+        
+        \begin{itemize}
+            \item[\textbf{[SP1]}] - 
+        \end{itemize}
+        
+        
+    \item \textbf{Machine controlled:} Shared phenomena triggered by the machine
+        \begin{itemize}
+            \item[\textbf{[SP2]}] - 
+        \end{itemize}
+
+\end{itemize}
+
+% --------------------------------------------------------------------------
+% Definitions, Acronyms, Abbreviations % 
+% --------------------------------------------------------------------------
+
+\section{Definitions, Acronyms, Abbreviations}
+\label{sec:definitions}
+
+
+\subsection{Definitions}
+\label{subsec:definitions}
+
+\begin{itemize}
+    \item \textbf{something:} 
+\end{itemize}
+
+\subsection{Acronyms}
+\label{subsec:acronyms}
+
+\begin{itemize}
+    \item \textbf{BBP}: Best Bike Paths
+    \item \textbf{RASD}: Requirement Analysis and Specification Document.
+\end{itemize}
+
+\subsection{Abbreviations}
+\label{subsec:abbreviations}
+
+\begin{itemize}
+    \item \textbf{[something]} - 
+\end{itemize}
+
+% --------------------------------------------------------------------------
+% Revision history % 
+% --------------------------------------------------------------------------
+
+\section{Revision history}
+\label{sec:revhistory}
+
+\begin{itemize}
+    \item Version 1.0 (23 December 2025);
+\end{itemize}
+
+% --------------------------------------------------------------------------
+% Reference Documents % 
+% --------------------------------------------------------------------------
+
+\section{Reference Documents}
+\label{sec:refdocs}
+
+This document is based on the following references:
+\begin{itemize}
+    \item something \cite{something}.
+\end{itemize}
+
+% --------------------------------------------------------------------------
+% Document Structure % 
+% --------------------------------------------------------------------------
+
+\section{Document Structure}
+\label{sec:docstructure}
+
+Mainly the current document is divided in 4 chapters, which are:
+\begin{enumerate}
+    \item \textbf{Introduction}: 
+    \item \textbf{Overall Description}: 
+    \item \textbf{Specific Requirements}: 
+    \item \textbf{Formal Analysis}:
+    \item \textbf{Effort Spent}: 
+    \item \textbf{References}: 
+\end{enumerate}
