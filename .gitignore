@@ -148,4 +148,6 @@ vite.config.ts.timestamp-*
 *.toc
 *.synctex.gz
 *.lof
-*.pdf.DS_Store
+*.pdf
+.DS_Store
+**/.DS_Store
