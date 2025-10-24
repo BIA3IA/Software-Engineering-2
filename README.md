@@ -8,7 +8,7 @@ The application enables users to:
 
 # Team
 - [**Errigo Simone**](https://github.com/SimoneErrigo) 
-- [**Gholami Vale**](https://github.com/vajihe-gholami) 
+- [**Gholami Vajihe**](https://github.com/vajihe-gholami) 
 - [**Ianosel Bianca Roberta**](https://github.com/BIA3IA)
 
 ## Repository Structure
