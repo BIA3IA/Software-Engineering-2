@@ -188,15 +188,23 @@ This section provides an overview of the main system functionalities as perceive
 \section{User Characteristics}
 \label{sec:user_characteristics}
 
-This section describes the categories of users expected to interact with the system, their skills, and their goals.  
+The Best Bike Paths (BBP) platform is designed to support two main user categories: \textbf{unregistered users} and \textbf{registered users}.  
+Each group has distinct goals, permissions, and levels of interaction with the system.
 
 \begin{itemize}
-    \item \textbf{Some User}:
+    \item \textbf{Unregistered users}:
 
-    Some Explication.
-    \item \textbf{Another User}:
+    This user interacts with the system without performing any authentication.
+    They can explore existing bike paths, view global information such as distance and ranking, and consult public reports about obstacles or road conditions.  
+    Their interaction with the system is limited to visualization and browsing; they are not allowed to create, edit, or report any paths or obstacles.  
+   
+    \item \textbf{Registered users}:
 
-    Another Explication.
+    Registered users have full access to the system’s functionalities after creating an account and logging in.
+    They can create new bike paths using GPS tracking, or by manually selecting points on a map interface.  
+    They can also manually or automatically submit obstacle reports, and validate or confirm existing ones shared by other users. 
+    If the automatic mode is used, the user can confirm the detected obstacles before submission.
+    Furthermore, registered users can record trips, which are then stored within their personal profiles, allowing them to view historical data and general and per-trip statistics such as distance covered, average speed, and total time spent cycling.
 \end{itemize}
 
 % --------------------------------------------------------------------------
