@@ -9,14 +9,76 @@ This section describes how the Best Bike Paths (BBP) system fits into its contex
 \label{sec:scenarios}
 Here we describe representative situations that illustrate how users will interact with the system in the real world.  
 
-\begin{itemize}
-    \item \textbf{Some Scenario}:
+\begin{enumerate}
 
-    Some Explication.
-    \item \textbf{Another Scenario}:
+    \item \textbf{A user wants to use the system}:
+    
+    Giuseppe is a former professional cyclist who wants to start cycling again to stay fit. Among the various options available, he decides to use Best Bike Paths (BBP) to track his cycling activities and discover new routes.
+    He chooses BBP because it offers cyclist-oriented features such as creating personalized paths and sharing the current conditions of bike tracks with other users. \newline
+    Once he visits the BBP website, Giuseppe realizes that he can already use some functionalities of the system without creating an account, such as searching for bike paths and receiving suggestions based on other users’ rankings.
+    However, he soon notices that he cannot record his own cycling activities without registering. \newline
+    Therefore, he decides to create an account to take full advantage of all BBP’s features.
+    The registration process is simple and quick, requiring only basic information such as name, email, and password.
+    After successfully registering, Giuseppe gains access to the full set of functionalities, including creating personalized routes, recording his cycling sessions, and sharing information about the condition of bike paths with the BBP community.
+    
+    \item \textbf{A user starts to browse and create paths}:
 
-    Another Explication.
-\end{itemize}
+    Irene accesses the BBP application to plan her next cycling trip.
+    From the main page, she specifies a starting point and a destination. BBP displays on a map all available bike paths connecting the two points.
+    Each path is shown with its current condition based on feedback provided by other users. The paths are ranked according to an overall score computed by the system,
+    taking into account their condition and effectiveness in connecting the selected origin and destination. \newline
+    After reviewing the suggested routes, Irene realizes that none of them fully meet her preferences.
+    Since she is logged into her BBP account, she decides to create a new custom path. \newline
+    BBP offers her either a manual or an automatic mode for path creation. She chooses the manual mode, where she can specify the names of the street segments composing her desired route and provide initial information about their condition.
+    Irene carefully enters the street names that form her preferred path, adds a brief description, and saves it to her personal collection. \newline
+    The newly created path is now available in Irene's account and can be selected for future trips. If she decides to make it publishable later, other users will also be able to discover and use it.
+
+    \item \textbf{A user starts a trip}: 
+
+    Cesare decides to start a new bike trip. After selecting a suggested bike path, BBP asks him which data acquisition mode he prefers: manual or automatic.
+    Cesare chooses the automatic mode and presses the Start button to begin his ride. \newline
+    As he starts, BBP begins collecting data from the sensors available on his mobile device.
+    The GPS continuously updates his position, allowing the system to reconstruct the exact path he follows.
+    At the same time, the accelerometer and gyroscope detect small irregular movements that may indicate the presence of bumps or potholes along the road. \newline
+    On the screen, BBP dynamically shows his current position and provides real-time navigation instructions to help him reach his chosen destination.
+    Since Cesare also carries an external device capable of providing environmental information, the system enriches his trip data with weather conditions such as temperature, humidity, and wind speed retrieved from an external meteorological service.\newline
+    Once he reaches his destination BBP processes the collected data and generates a detailed summary, including total distance, duration, average speed, and other performance metrics that Cesare can review later in his personal activity history.
+
+    \item \textbf{A registered user browse his cycling activities}:
+
+    Luca, a registered user of BBP, opens the app to view his previous trips.
+    From the main page, he accesses the My Activities section, where BBP displays a list of his recorded trips over time.\newline
+    Each activity is accompanied by summary information such as the date, distance traveled, duration, and primary location.
+    Luca can sort trips by date or distance and scrolling through the list, he recognizes some of his favorite routes and notices that BBP automatically updates aggregate statistics such as total number of trips, kilometers traveled, and weekly average giving him a general overview of his progress over time. \newline
+    After identifying a recent trip he's interested in analyzing in more detail, Luca decides to open it to view the details.
+
+    \item \textbf{A registered user access his trip and per trip statistics}:
+    
+    Pietro selects his latest trip from his activity list. BBP opens the route details page, displaying the entire route on a map.
+    In the same page, the app presents a complete summary of the recorded data: total distance, duration, average and maximum speed.
+    Thanks to integration with the device's sensors, Pietro can also view the weather conditions he encountered during the trip, including average temperature and wind direction.\newline
+    Scrolling through the map, Pietro notices some points where the accelerometer detected abnormal movement.\newline
+    Satisfied with his analysis, Pietro closes the trip tab and returns to the general overview of his activities.
+
+    \item \textbf{A registered user wants to insert information about a bike path condition}:
+
+    Giulia is cycling along a local bike path using the manual mode of data insertion.
+    During her ride, she notices that a section of the route is partially blocked by some fallen branches.
+    Since she wants to help other cyclists avoid potential issues, she decides to report the current condition of the path to the BBP community.\newline
+    From the application menu, Giulia selects Report Path Condition and once the interactive map is opened, selects the affected segment, and writes a short description of the obstacle, choosing “requires maintenance” as the current status of that path.
+    After confirming the report, BBP stores the information and sends it for aggregation with other users’ data about the same route.
+    
+    \item \textbf{A registered user wants to confirm the condition of a bike path}:
+
+    While cycling through a familiar route, Marco is being notified with a small pop-up alert which states that there is a possible obstacle ahead reported by another user.
+    Marco slows down and observes the road segment. He notices that the obstacle is indeed still present, so he decides to confirm the report.
+    Directly from the notification, he presses Confirm, and BBP registers his feedback as an additional confirmation for that path condition. \newline
+    Later, while continuing his ride, Marco receives another notification about a reported bump on the same road, but this time the road surface looks perfectly fine.
+    He therefore selects Reject, indicating that the problem has been resolved or no longer exists. \newline
+    BBP updates the internal data accordingly. Each confirmation or rejection contributes to refining the aggregated information that determines the official status of that bike path.
+    This way, Marco’s participation, along with that of other cyclists, helps the system keep path conditions accurate and up to date for the entire community.
+
+\end{enumerate}
 
 \subsection{Domain Class Diagram}
 \label{sec:domain_class_diagram}
@@ -46,12 +108,78 @@ This subsection includes state or activity diagrams that describe the dynamic be
 This section provides an overview of the main system functionalities as perceived by users.  
 
 \begin{itemize}
-    \item \textbf{Some Function}:
+    \item \textbf{User Registration and Login}:
 
-    Some Explication.
-    \item \textbf{Another Function}:
+    The system allows new users to register and existing users to log in through a dedicated interface accessible from the main page of BBP.
+    Registration requires only basic personal information such as name, email, and password. 
+    Once registered, users gain access to additional functionalities that are not available to unregistered users, including the ability to record and track personal cycling trips, create personalized bike paths, view personal activity history and performance statistics, and contribute information to the community by reporting or confirming bike path conditions. 
+    Unregistered users can browse available bike paths, search for routes between two locations, and receive route suggestions based on community rankings, but they cannot record trips, create new paths, or contribute reports. 
 
-    Another Explication.
+    \item \textbf{Bike Path Search and Visualization}:
+    
+    Any user, registered or unregistered, can search for bike paths by specifying an origin and a destination. 
+    BBP displays on a map all available routes connecting the two selected points. Each path has information about its current condition, derived from aggregated feedback provided by registered users. 
+    The displayed paths are ranked according to an overall score computed by the system. This score takes into account both the physical condition of the path (e.g., optimal, medium, requires maintenance) and its effectiveness in connecting the specified origin and destination. 
+    Users can explore the visualized paths, review their details, and select the most suitable route for their needs. However, only registered users can start recording a trip or contribute new information about the selected paths.
+
+    \item \textbf{Bike Path Creation}:
+    
+    Registered users can create new custom bike paths using two different approaches. 
+    In manual mode, the user specifies the names of the street segments that compose the desired route and provides information about the characteristics of each segment. 
+    This allows cyclists to define personalized routes that may not yet be present in the system or that better match their preferences. 
+    Alternatively, in automatic mode, the system dynamically creates a new path by recording GPS data while the user follows their desired route during an actual trip. 
+    As the user bikes, BBP collects positional information to reconstruct the exact path in real time. This approach enables users to create paths simply by cycling along them, without needing to manually specify street names or segments beforehand. 
+    Regardless of the creation method, the newly created path can remain private to the user or be made publishable for the entire community.
+
+    \item \textbf{Trip Recording and Data Acquisition}:
+    
+    A registered user starts a trip by choosing a route on the map and selecting the data acquisition mode: manual (distance, time, and average speed only, without automatic detections) or automatic. 
+    In automatic mode, BBP uses GPS, an accelerometer, and a gyroscope to track the route and identify potential irregularities in the road surface. 
+    Pressing Start begins the trip: the app displays the user's real-time location and provides navigation to the destination. 
+    The activity stops automatically upon arrival or manually with Stop, then the system processes the data and generates a summary. 
+    If recording is automatic, BBP sends pop-ups to confirm or correct any detected anomalies before the data is made available to the community.
+
+    \item \textbf{Cycling Activity History and Aggregate Statistics}:
+    
+    Registered users can access the My Activities section to review their personal cycling history. 
+    This section displays both a chronological list of all recorded trips and aggregate statistics summarizing the users overall performance over time. 
+    The aggregate statistics are presented on the same page as the trip list and include metrics such as total number of trips, total kilometers traveled, average speed across all activities, and weekly or monthly riding frequency. 
+    Each trip entry in the list includes summary information such as the date, distance covered, duration, and primary route followed. 
+    Users can sort the list by date or distance to easily find specific activities. 
+    The trip list and aggregate statistics remain securely linked to the users account, allowing them to track their performance and monitor improvements over time.
+
+    \item \textbf{Trip Specific Statistics and Environmental Data}:
+
+    Registered users can select any trip from their activity list to access detailed trip specific statistics. 
+    For each individual trip, BBP provides total distance and duration and average and maximum speed.
+    The trip page also displays a map showing the complete route followed by the user. If environmental data were available during the ride either from the users external device or from an external meteorological service they are presented alongside the trip statistics. 
+    These environmental data may include average temperature, humidity levels, and wind speed and direction. 
+    Additionally, either if the user recorded the trip in automatic mode or manual mode, the map highlights points where the accelerometer detected abnormal movements, indicating possible obstacles or rough surfaces encountered along the route or points where the user manually reported issues.
+
+    \item \textbf{Manual Reporting of Bike Path Conditions}:
+    
+    BBP enables registered users to manually report the condition of any bike path they encounter. 
+    This feature helps keep route information accurate, especially when users spot issues like obstacles or closures. 
+    By selecting Report Path Condition in the app, users can mark the affected segment on a map, describe the issue, and assign a status such as “optimal,” “medium,” “requires maintenance,” or “closed.” 
+
+    \item \textbf{Real Time Confirmation and Rejection of Reported Path Conditions}:
+
+    During a ride, registered users may receive pop-up alerts about nearby issues reported by others, such as “Possible pothole ahead” or “Path requires maintenance.”
+    As they approach the location, users can confirm that the issue persists or reject it if the path is clear. 
+    Their feedback is instantly recorded by BBP and influences the reliability of reports—confirmed ones gain credibility, while frequently rejected ones are downgraded or removed. 
+
+    \item \textbf{Trip Confirmation of Automatically Detected Anomalies}:
+
+    When a registered user records a trip in automatic mode, BBP uses the device’s sensors to detect irregularities such as potholes or obstacles.
+    To prevent false positives, detected anomalies are not immediately published. Instead, the user is shown a confirmation screen to review and validate or correct each detection.
+    Only confirmed data becomes publishable, ensuring accuracy and reliability of shared path information.
+
+    \item \textbf{Aggregation and Merging of Bike Path Condition Reports}:
+
+    BBP combines multiple user reports about the same bike path into a single, updated condition overview. 
+    The system prioritizes recent and consistent reports, giving more weight to those confirmed by several users. 
+    In case of conflicting information, BBP determines the path’s status based on the most recent and widely supported data, ensuring an up-to-date representation of path conditions.
+
 \end{itemize}
 
 % --------------------------------------------------------------------------
