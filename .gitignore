@@ -151,3 +151,5 @@ vite.config.ts.timestamp-*
 *.pdf
 .DS_Store
 **/.DS_Store
+.bbl
+.blg
