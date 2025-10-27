@@ -117,22 +117,38 @@ This section focuses on non-shared world phenomena, that is, phenomena occurring
 \label{subsec:definitions}
 
 \begin{itemize}
-    \item \textbf{something:} 
+    \item \textbf{Bike Path:} A route, defined by collected data, where a proper bike track exists or where road conditions are generally compatible with cycling safety and speed. Path quality is determined by its aggregated status.
+    \item \textbf{Path Status:} The overall condition of a Bike Path or Path Segment, as determined by the system’s aggregation and merging process. Statuses include Optimal, Medium, Sufficient, and Requires Maintenance.
+    \item \textbf{Path Score:} The final numerical ranking value computed by the system, based on the path's aggregated status and effectiveness, used to prioritize and recommend path alternatives.
+    \item \textbf{Report:} A submission of path information by a Registered User. A report contains details on path status and obstacles and can be either Manually Entered (user-entered) or Automatically Acquired (sensor-acquired).
+    \item \textbf{Freshness:} A metric used in the path merging algorithm that measures the recency of a Path Report's submission. Older reports carry less weight in the aggregation.
+    \item \textbf{Obstacles:} Features on a path that negatively impact cycling conditions, such as Potholes or flooding, as identified by users or automated sensors.
+    \item \textbf{Automated Mode:} The system functionality where the BBP application acquires real-time GPS, accelerometer, and gyroscope data from a Registered User's mobile device to automatically generate a Path Report.
+
 \end{itemize}
 
 \subsection{Acronyms}
 \label{subsec:acronyms}
 
 \begin{itemize}
-    \item \textbf{BBP}: Best Bike Paths
-    \item \textbf{RASD}: Requirement Analysis and Specification Document.
+    \item \textbf{BBP:} Best Bike Paths (The name of the software system).
+    \item \textbf{RASD:} Requirement Analysis and Specification Document.
+    \item \textbf{GPS:} Global Positioning System.
+    \item \textbf{API:} Application Programming Interface.
+    \item \textbf{UI:} User Interface.
+    \item \textbf{UML:} Unified Modeling Language.
+    \item \textbf{DA:} Domain assumption.
 \end{itemize}
 
 \subsection{Abbreviations}
 \label{subsec:abbreviations}
 
 \begin{itemize}
-    \item \textbf{[something]} - 
+    \item \textbf{[Gn]} - The n-th goal of the system.
+    \item \textbf{[Wn]} -The n-th world phenomena.
+    \item \textbf{[SPn]} -The n-th shared phenomena.
+    \item \textbf{[UCn]} -The n-th use case.
+    \item \textbf{[Rn]} -The n-th functional requirement.
 \end{itemize}
 
 % --------------------------------------------------------------------------
