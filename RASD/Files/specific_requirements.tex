@@ -21,6 +21,77 @@
 % --------------------------------------------------------------------------
 \section{Functional Requirements}
 \label{sec:functional_requirements}
+The system shall meet the following functional requirements:
+\begin{enumerate}
+\item \textbf{User Registration and Authentication}
+\begin{itemize}
+    \item[\textbf{[R1]}] The system shall allow users to sign up to the application.
+    \item[\textbf{[R2]}] The system shall allow registered users to login to the application.
+    \item[\textbf{[R3]}] The system shall allow registered users to view their profile and account settings.
+    \item[\textbf{[R4]}] The system shall allow registered users to update their profile and account settings.
+\end{itemize}
+\item \textbf{Trip Recording and Management}
+\begin{itemize}
+    \item[\textbf{[R5]}] The system shall allow registered users to start recording a cycling trip.
+    \item[\textbf{[R6]}] The system shall allow registered users to stop recording a cycling trip.
+    \item[\textbf{[R7]}] The system shall automatically collect GPS data during trip recording.
+    \item[\textbf{[R8]}] The system shall automatically collect motion sensor data (accelerometer, gyroscope) during trip recording when available.
+    \item[\textbf{[R9]}] The system shall allow registered users to view a list of their recorded trips and general statistics across them.
+    \item[\textbf{[R10]}] The system shall allow registered users to view statistics (distance, speed, duration, metrics) about each recorded trip.
+    \item[\textbf{[R11]}] The system shall display to registered users the route of a trip they have taken and the obstacles encountered or reported.
+\end{itemize}
+\item \textbf{Trip Data Enrichment}
+\begin{itemize}
+    \item[\textbf{[R12]}] The system shall allow registered users to enrich trip data with meteorological information (weather, temperature, wind speed) when an external device is available.
+    \item[\textbf{[R13]}] The system shall communicate with weather services to retrieve meteorological data for trip enrichment.
+\end{itemize}
+\item \textbf{Automatic Data Processing}
+\begin{itemize}
+    \item[\textbf{[R14]}] The system shall detect that a user is cycling based on speed patterns from collected data.
+    \item[\textbf{[R15]}] The system shall detect irregular movements from sensor data that may suggest potholes or surface issues.
+    \item[\textbf{[R16]}] The system shall present automatically detected path and obstacle data to users for confirmation before they can be made publishable.
+\end{itemize}
+\item \textbf{Path Information Management - Manual}
+\begin{itemize}
+    \item[\textbf{[R17]}] The system shall allow registered users to manually create a new bike path by specifying street names and segments.
+    \item[\textbf{[R18]}] The system shall allow registered users to manually report obstacles on a bike path.
+    \item[\textbf{[R19]}] The system shall allow registered users to manually update the status of an existing bike path.
+    \item[\textbf{[R20]}] The system shall allow registered users to manually confirm or reject the presence of an obstacle reported by other users.
+\end{itemize}
+\item \textbf{Path Information Management - Automatic}
+\begin{itemize}
+    \item[\textbf{[R21]}] The system shall allow registered users to create a new bike path in automatic mode.
+    \item[\textbf{[R22]}] The system shall allow registered users to view a list of their submitted (manual and automatic) path reports.
+    \item[\textbf{[R23]}] The system shall allow registered users to make their path information (manual or confirmed automatic) publishable.
+\end{itemize}
+\item \textbf{Path Data Aggregation and Status}
+\begin{itemize}
+    \item[\textbf{[R24]}] The system shall aggregate multiple reports about the same path segment.
+    \item[\textbf{[R25]}] The system shall determine the most reliable path status based on report freshness and the number of confirmations.
+    \item[\textbf{[R26]}] The system shall display the current status of bike paths (optimal, medium, sufficient, requires maintenance, closed).
+    \item[\textbf{[R27]}] The system shall allow any user (registered or not) to view detailed information about a specific bike path (status, obstacles, last update time).
+\end{itemize}
+\item \textbf{Route Discovery and Search}
+\begin{itemize}
+    \item[\textbf{[R28]}] The system shall allow users to search for bike paths between two locations.
+    \item[\textbf{[R29]}] The system shall display bike paths on a map.
+    \item[\textbf{[R30]}] The system shall compute optimal routes considering path quality.
+    \item[\textbf{[R31]}] The system shall rank suggested paths based on their status and effectiveness.
+\end{itemize}
+\item \textbf{Navigation}
+\begin{itemize}
+    \item[\textbf{[R32]}] The system shall display the user's current position on the map during navigation.
+\end{itemize}
+\item \textbf{Notifications}
+\begin{itemize}
+    \item[\textbf{[R33]}] The system shall send pop-up notifications about obstacles along the followed path during navigation.
+\end{itemize}
+\item \textbf{External Services Integration}
+\begin{itemize}
+    \item[\textbf{[R34]}] The system shall interface with geographical map services for geocoding and path rendering.
+    \item [\textbf{[R35]}] The system shall interface with weather services to obtain meteorological data for trip enrichment.
+\end{itemize}
+\end{enumerate}
 
 \subsection{Requirements}
 \label{subsec:requirements}
