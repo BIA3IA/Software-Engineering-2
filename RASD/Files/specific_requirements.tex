@@ -105,7 +105,7 @@
 		                         & 4. The system prompts the actor to confirm the logout action.                                                                                                           \\
 		                         & 5. The system invalidates the current session.                                                                                                                          \\
 		                         & 6. The system clears user-specific local data and cached preferences as required.                                                                                       \\
-		                         & 7. The system redirects the actor to the welcome page and shows a confirmation message.                                                                                 \\ \hline
+		                         & 7. The system redirects the actor to the welcome page and displays a confirmation message.                                                                              \\ \hline
 		\textbf{Exit Condition}  & The actor is successfully logged out.                                                                                                                                   \\ \hline
 		\textbf{Exceptions}      & If the server cannot invalidate the session or the network is unavailable (temporary error), the system displays an error message and prompts the actor to retry later. \\ \hline
 		\textbf{Notes}           & Access tokens are revoked; next access requires re-authentication.                                                                                                      \\ \hline
@@ -136,7 +136,7 @@
 		                         & 6. The system displays the list of suggested routes to the actor.                                                   \\ \hline
 		\textbf{Exit Condition}  & The suggested routes are displayed to the actor.                                                                    \\ \hline                                                        \\ \hline
 		\textbf{Exceptions}      & If the inputs are invalid or incomplete,  the system displays an error message and prevents search until corrected. \\
-		                         & If no route is found, the system informs the actor and suggests adjusting inputs/filters.                           \\
+		                         & If no route is found, the system displays an error message and suggests adjusting inputs/filters.                   \\
 		                         & If there is a temporary connection or server error, the system displays an error message and allows retry.          \\ \hline
 		\textbf{Notes}           & None.                                                                                                               \\ \hline
 	\end{tabularx}
@@ -156,15 +156,15 @@
 	\label{tab:UC5}
 	\begin{tabularx}{\textwidth}{|p{0.3\textwidth}|X|}
 		\hline
-		\textbf{Actor(s)}        & Guest User, Logged-in User                                                                                            \\ \hline
-		\textbf{Entry Condition} & The actor has just performed a search or is browsing the catalog and is viewing the list of suggested paths.          \\ \hline
-		\textbf{Event Flow}      & 1. The actor selects one path from the results list.                                                                  \\
-		                         & 2. The system displays the path details (overview, distance, ranking, reports).                                       \\
-		                         & 3. The actor confirms the selection (\textit{Select / Use this path}).                                                \\ \hline
-		\textbf{Exit Condition}  & The path is selected. The system is ready to start the trip.                                                          \\ \hline
-		\textbf{Exceptions}      & If the selected path is unavailable (removed/updated), the system notifies the actor and returns to the results list. \\
-		                         & If there is a temporary connection or server error, the system displays an error message and allows retry.            \\ \hline
-		\textbf{Notes}           & Only Logged-in Users can store trip data; Guest Users can follow the path without recording.                          \\ \hline
+		\textbf{Actor(s)}        & Guest User, Logged-in User                                                                                                   \\ \hline
+		\textbf{Entry Condition} & The actor has just performed a search or is browsing the catalog and is viewing the list of suggested paths.                 \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects one path from the results list.                                                                         \\
+		                         & 2. The system displays the path details (overview, distance, ranking, reports).                                              \\
+		                         & 3. The actor confirms the selection.                                                                                         \\ \hline
+		\textbf{Exit Condition}  & The path is selected. The system is ready to start the trip.                                                                 \\ \hline
+		\textbf{Exceptions}      & If the selected path is unavailable (removed/updated), the system displays an error message and returns to the results list. \\
+		                         & If there is a temporary connection or server error, the system displays an error message and allows retry.                   \\ \hline
+		\textbf{Notes}           & Only Logged-in Users can store trip data; Guest Users can follow the path without recording.                                 \\ \hline
 	\end{tabularx}
 	\caption{Select a Path Process Detail}
 \end{table}
@@ -174,6 +174,73 @@
 	\includegraphics[width=0.7\textwidth]{Images/SequenceDiagrams/select_path.png}
 	\caption{Select a Path Sequence Diagram}
 	\label{fig:use_case_select_path}
+\end{figure}
+
+\textbf{[UC6]} - Create a Path in Manual Mode
+\begin{table}[H]
+	\centering
+	\label{tab:UC6}
+	\begin{tabularx}{\textwidth}{|p{0.3\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                            \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and wants to create a new path manually.                                                                                       \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects 'Create Path'.                                                                                                                       \\
+		                         & 2. The system displays the available creation modes.                                                                                                      \\
+		                         & 3. The actor chooses 'Manual'.                                                                                                                            \\
+		                         & 4. The system displays the input page for manual creation (metadata + map editor).                                                                        \\
+		                         & 5. The actor fills in metadata (e.g., name, description, visibility) and draws/adds segments on the map.                                                  \\
+		                         & 6. The system validates the provided metadata and the geometry of the segments.                                                                           \\
+		                         & 7. If validation succeeds, the system saves the path.                                                                                                     \\
+		                         & 8. The system displays a success message and the new path appears in the actor's path list.                                                               \\ \hline
+		\textbf{Exit Condition}  & The new path is successfully created, stored in the database, and associated with the actor’s account.                                                    \\ \hline
+		\textbf{Exceptions}      & If the data is invalid or incomplete, the system displays an error message and prevents saving until corrected.                                           \\
+		                         & If the geometry is invalid (e.g., disconnected segments, self-intersections), the system displays an error message and prompts the actor to fix the path. \\
+		                         & If there is a temporary connection or server error, the system displays an error message and allows retry.                                                \\ \hline
+		\textbf{Notes}           & The path visibility follows the selected setting. Geometry validation includes continuity and consistency checks.                                         \\ \hline
+	\end{tabularx}
+	\caption{Create a Path in Manual Mode — Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/SequenceDiagrams/manually_create.png}
+	\caption{Create a Path in Manual Mode — Sequence Diagram}
+	\label{fig:use_case_create_path_manual}
+\end{figure}
+
+\textbf{[UC7]} - Create a Path in Automatic Mode
+\begin{table}[H]
+	\centering
+	\label{tab:UC7}
+	\begin{tabularx}{\textwidth}{|p{0.3\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                             \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and wants to create a new path using GPS tracking.                                                                              \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects 'Create Path'.                                                                                                                        \\
+		                         & 2. The system displays the available creation modes.                                                                                                       \\
+		                         & 3. The actor chooses 'Automatic'.                                                                                                                          \\
+		                         & 4. The system displays the input page for metadata configuration.                                                                                          \\
+		                         & 5. The actor fills in basic metadata (e.g., name, visibility, description).                                                                                \\
+		                         & 6. The system validates the provided metadata.                                                                                                             \\
+		                         & 7. If the validation succeeds, the system confirms readiness and starts GPS tracking.                                                                      \\
+		                         & 8. The system continuously collects geo-coordinates from the GPS while the actor is moving.                                                                \\
+		                         & 9. Once tracking stops, the system validates the recorded GPS data.                                                                                        \\
+		                         & 10. If validation succeeds, the system saves the new path.                                                                                                 \\
+		                         & 11. The system displays a success message confirming the path creation.                                                                                    \\ \hline
+		\textbf{Exit Condition}  & The automatically recorded path is successfully validated and stored in the database, associated with the actor’s account.                                 \\ \hline
+		\textbf{Exceptions}      & If the data is invalid or incomplete, the system displays an error message and prevents saving until corrected.                                            \\
+		                         & If GPS signal is lost or unstable, the system displays an error message and prompts the actor to retry.                                                    \\
+		                         & If temporary connection or server error occurs, the system displays an error message and and allows retry later.                                           \\ \hline
+		\textbf{Notes}           & The system continuously records and buffers GPS data locally during tracking. Only after successful validation is the path permanently stored server-side. \\ \hline
+	\end{tabularx}
+	\caption{Create a Path in Automatic Mode — Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/SequenceDiagrams/automatically_create.png}
+	\caption{Create a Path in Automatic Mode — Sequence Diagram}
+	\label{fig:use_case_create_path_automatic}
 \end{figure}
 
 
