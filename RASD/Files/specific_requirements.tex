@@ -37,20 +37,30 @@
 	\label{tab:UC1}
 	\begin{tabularx}{\textwidth}{|p{0.3\textwidth}|X|}
 		\hline
-		\textbf{Actor(s)}        & Unregistered User                                                                                                                            \\ \hline
-		\textbf{Entry Condition} & The actor wants to create an account and is on the application's welcome page.                                                               \\ \hline
-		\textbf{Event Flow}      & 1. The actor clicks the “Sign Up” button.                                                                                                    \\
-		                         & 2. The system displays the registration form.                                                                                                \\
-		                         & 3. The actor fills in the required personal information (e.g., name, email, password).                                                       \\
-		                         & 4. The system validates the entered data.                                                                                                    \\
-		                         & 5. If validation succeeds, the system creates a new account and redirects the actor to the login page, showing a success message.            \\ \hline
-		\textbf{Exit Condition}  & A new user account is successfully created and the login page is displayed.                                                                  \\ \hline
-		\textbf{Exceptions}      & Invalid or incomplete information: the system displays an error message and prevents the actor from proceeding until the data are corrected. \\
-		                         & Email already in use: the system notifies the actor that the account exists and prompts them to log in instead.                              \\ \hline
-		\textbf{Notes}           & Registration data are stored securely in the system database.                                                                                \\ \hline
+		\textbf{Actor(s)}        & Guest User                                                                                               \\ \hline
+		\textbf{Entry Condition} & The actor does not have an account, wants to register and is on the app’s welcome page.                  \\ \hline
+		\textbf{Event Flow}      & 1. The actor clicks on the “Sign Up” button.                                                             \\
+		                         & 2. The system displays the registration form.                                                            \\
+		                         & 3. The actor fills in the required personal information (e.g., name, email, password).                   \\
+		                         & 4. The system validates the provided data.                                                               \\
+		                         & 5. If validation succeeds, the system creates a new account and send a success message.                  \\ \hline
+		\textbf{Exit Condition}  & A new user account is created.                                                                           \\ \hline
+		\textbf{Exceptions}      & If the data are invalid or incomplete, the system displays an error message and requests correction.     \\
+		                         & If the email is already registered, the system displays an error message and prompts the user to log in. \\
+		                         & If a temporary connection or server error occurs, the system displays an appropriate error message.      \\ \hline
+		\textbf{Notes}           & The entered password is stored in a hashed form for security purposes.                                   \\ \hline
 	\end{tabularx}
 	\caption{User Registration Process Detail}
 \end{table}
+
+% image
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/SequenceDiagrams/user_registration.png}
+	\caption{User Registration Sequence Diagram}
+	\label{fig:use_case_user_registration}
+\end{figure}
+
 
 \textbf{[UC2]} - User Log In
 \begin{table}[H]
@@ -58,22 +68,28 @@
 	\label{tab:UC2}
 	\begin{tabularx}{\textwidth}{|p{0.3\textwidth}|X|}
 		\hline
-		\textbf{Actor(s)}        & Registered User                                                                                                                  \\ \hline
-		\textbf{Entry Condition} & The actor wants to access their account and is on the application's welcome page.                                                \\ \hline
+		\textbf{Actor(s)}        & Guest User                                                                                                                       \\ \hline
+		\textbf{Entry Condition} & The actor has an account, wants to access it and is on the application's welcome page.                                           \\ \hline
 		\textbf{Event Flow}      & 1. The actor clicks the “Log In” button.                                                                                         \\
 		                         & 2. The system displays the login form.                                                                                           \\
 		                         & 3. The actor enters valid credentials (email and password).                                                                      \\
 		                         & 4. The system validates the credentials against the stored data.                                                                 \\
-		                         & 5. If validation succeeds, the system authenticates the user, initiates a session, and redirects the actor to the home page.     \\ \hline
-		\textbf{Exit Condition}  & The actor is successfully authenticated and the home page is displayed.                                                          \\ \hline
-		\textbf{Exceptions}      & Invalid or incomplete credentials: the system displays an error message and prevents access until corrected.                     \\
-		                         & Unrecognized credentials: the system notifies the actor and allows another login attempt.                                        \\
-		                         & Temporary connection or server error: the system informs the actor and allows retry.                                             \\ \hline
+		                         & 5. If validation succeeds, the system authenticates the user, initiates a session, and sends a success message.                  \\ \hline
+		\textbf{Exit Condition}  & The actor is successfully authenticated.                                                                                         \\ \hline
+		\textbf{Exceptions}      & If the credentials are invalid or incomplete, the system displays an error message and prevents access until corrected.          \\
+		                         & If the credentials are unrecognized,  the system displays an error message and allows another login attempt.                     \\
+		                         & If there is a temporary connection or server error,  the system displays an error message and allows retry.                      \\ \hline
 		\textbf{Notes}           & After login, a valid session or authentication token is created; the session expires automatically after a period of inactivity. \\ \hline
 	\end{tabularx}
 	\caption{User Log In Process Detail}
 \end{table}
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/SequenceDiagrams/user_login.png}
+	\caption{User Log In Sequence Diagram}
+	\label{fig:use_case_user_login}
+\end{figure}
 
 \textbf{[UC3]} - User Log Out
 \begin{table}[H]
@@ -81,21 +97,28 @@
 	\label{tab:UC3}
 	\begin{tabularx}{\textwidth}{|p{0.3\textwidth}|X|}
 		\hline
-		\textbf{Actor(s)}        & Registered User                                                                                                                                 \\ \hline
-		\textbf{Entry Condition} & The actor is authenticated and currently using the application (any page).                                                                      \\ \hline
-		\textbf{Event Flow}      & 1. The actor opens the account menu (or settings).                                                                                              \\
-		                         & 2. The actor selects the “Log out” option.                                                                                                      \\
-		                         & 3. The system invalidates the current session/refresh token.                                                                                    \\
-		                         & 4. The system clears user-specific local data and cached preferences as required.                                                               \\
-		                         & 5. The system redirects the actor to the welcome page and shows a confirmation message.                                                         \\ \hline
-		\textbf{Exit Condition}  & The actor is logged out and the welcome page is shown.                                                                                          \\ \hline
-		\textbf{Exceptions}      & If the server cannot invalidate the session (temporary error), the system performs a client-side sign-out and prompts the actor to retry later. \\
-		                         & If the network is unavailable, the system removes local credentials and informs the actor that server revocation may be pending.                \\
-		                         & If the actor cancels the action when prompted, the logout is aborted and the actor remains logged in.                                           \\ \hline
-		\textbf{Notes}           & Security: access/refresh tokens are revoked; next access requires re-authentication.                                                            \\ \hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                                          \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and currently using the application (any page).                                                                                              \\ \hline
+		\textbf{Event Flow}      & 1. The actor clicks on the hamburger menu.                                                                                                                              \\
+		                         & 2. The system displays the menu with the “Log out” option.                                                                                                              \\
+		                         & 3. The actor selects the “Log out” option.                                                                                                                              \\
+		                         & 4. The system prompts the actor to confirm the logout action.                                                                                                           \\
+		                         & 5. The system invalidates the current session.                                                                                                                          \\
+		                         & 6. The system clears user-specific local data and cached preferences as required.                                                                                       \\
+		                         & 7. The system redirects the actor to the welcome page and shows a confirmation message.                                                                                 \\ \hline
+		\textbf{Exit Condition}  & The actor is successfully logged out.                                                                                                                                   \\ \hline
+		\textbf{Exceptions}      & If the server cannot invalidate the session or the network is unavailable (temporary error), the system displays an error message and prompts the actor to retry later. \\ \hline
+		\textbf{Notes}           & Access tokens are revoked; next access requires re-authentication.                                                                                                      \\ \hline
 	\end{tabularx}
 	\caption{User Log Out Process Detail}
 \end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/SequenceDiagrams/user_logout.png}
+	\caption{User Log Out Sequence Diagram}
+	\label{fig:use_case_user_logout}
+\end{figure}
 
 \textbf{[UC4]} - Search for a Path
 \begin{table}[H]
@@ -103,48 +126,56 @@
 	\label{tab:UC4}
 	\begin{tabularx}{\textwidth}{|p{0.3\textwidth}|X|}
 		\hline
-		\textbf{Actor(s)}        & Unregistered User, Registered User                                                                     \\ \hline
-		\textbf{Entry Condition} & The actor is on the home (or search) page and wants to find a bike path.                               \\ \hline
-		\textbf{Event Flow}      & 1. The actor clicks the “Search” action.                                                               \\
-		                         & 2. The system shows the search panel.                                                                  \\
-		                         & 3. The actor enters start and destination.                                                             \\
-		                         & 4. The system validates inputs and runs the Path Suggestion process.                                   \\
-		                         & 5. The system shows the list of suggested routes.                                                      \\
-		                         & 6. The actor browses the results and selects a suggested route.                                        \\
-		                         & 7. The system displays the selected route on the map and its details.                                  \\ \hline
-		\textbf{Exit Condition}  & A suggested route is selected and shown on the map.                                                    \\ \hline
-		\textbf{Exceptions}      & Invalid or incomplete inputs: the system highlights the fields and prevents search until corrected.    \\
-		                         & No route found: the system informs the actor and suggests adjusting inputs/filters.                    \\
-		                         & External services unavailable (e.g., routing): the system notifies a temporary error and allows retry. \\ \hline
-		\textbf{Notes}           & None.                                                                                                  \\ \hline
+		\textbf{Actor(s)}        & Guest User, Logged-in User                                                                                          \\ \hline
+		\textbf{Entry Condition} & The actor is on the home page and wants to find a bike path.                                                        \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects the “Search” option.                                                                           \\
+		                         & 2. The system displays the search panel.                                                                            \\
+		                         & 3. The actor enters the start and destination points.                                                               \\
+		                         & 4. The system validates the provided inputs.                                                                        \\
+		                         & 5. The system activates the Path Suggestion process to find possible routes.                                        \\
+		                         & 6. The system displays the list of suggested routes to the actor.                                                   \\ \hline
+		\textbf{Exit Condition}  & The suggested routes are displayed to the actor.                                                                    \\ \hline                                                        \\ \hline
+		\textbf{Exceptions}      & If the inputs are invalid or incomplete,  the system displays an error message and prevents search until corrected. \\
+		                         & If no route is found, the system informs the actor and suggests adjusting inputs/filters.                           \\
+		                         & If there is a temporary connection or server error, the system displays an error message and allows retry.          \\ \hline
+		\textbf{Notes}           & None.                                                                                                               \\ \hline
 	\end{tabularx}
 	\caption{Search for a Path Process Detail}
 \end{table}
 
-\textbf{[UC5]} - Create a Path
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/SequenceDiagrams/search_path.png}
+	\caption{Search for a Path Sequence Diagram}
+	\label{fig:use_case_search_path}
+\end{figure}
+
+\textbf{[UC5]} - Select a Path
 \begin{table}[H]
 	\centering
 	\label{tab:UC5}
 	\begin{tabularx}{\textwidth}{|p{0.3\textwidth}|X|}
 		\hline
-		\textbf{Actor(s)}        & Registered User                                                                                                                           \\ \hline
-		\textbf{Entry Condition} & The actor is logged in and wants to create a new bike path, either manually or automatically.                                             \\ \hline
-		\textbf{Event Flow}      & 1. The actor accesses the “Create Path” section from the home page.                                                                       \\
-		                         & 2. The system displays the available creation modes (“Manual” and “Automatic”).                                                           \\
-		                         & 3. The actor selects one of the modes:                                                                                                    \\
-		                         & In \textbf{Manual Mode}, the actor enters metadata (name, description, visibility) and manually draws or selects segments on the map.     \\
-		                         & In \textbf{Automatic Mode}, the actor starts the GPS tracking process to record the path during a trip.                                   \\
-		                         & 4. The system validates the input data or recorded GPS trace.                                                                             \\
-		                         & 5. If validation succeeds, the system saves the new path to the database and notifies the actor that the operation was successful.        \\ \hline
-		\textbf{Exit Condition}  & The new path is successfully created, validated, and stored in the system’s database.                                                     \\ \hline
-		\textbf{Exceptions}      & Invalid or incomplete metadata: the system highlights the errors and prevents saving until corrected.                                     \\
-		                         & GPS signal unavailable or lost (automatic mode): the system pauses the recording and prompts the actor to retry or save the partial path. \\
-		                         & Database or network error: the system notifies the actor that the save operation failed and allows retry.                                 \\
-		                         & The actor cancels the creation process before completion, returning to the home page without saving.                                      \\ \hline
-		\textbf{Notes}           & The created path is associated with the actor’s account and becomes available for browsing, trip planning, and recommendations.           \\ \hline
+		\textbf{Actor(s)}        & Guest User, Logged-in User                                                                                            \\ \hline
+		\textbf{Entry Condition} & The actor has just performed a search or is browsing the catalog and is viewing the list of suggested paths.          \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects one path from the results list.                                                                  \\
+		                         & 2. The system displays the path details (overview, distance, ranking, reports).                                       \\
+		                         & 3. The actor confirms the selection (\textit{Select / Use this path}).                                                \\ \hline
+		\textbf{Exit Condition}  & The path is selected. The system is ready to start the trip.                                                          \\ \hline
+		\textbf{Exceptions}      & If the selected path is unavailable (removed/updated), the system notifies the actor and returns to the results list. \\
+		                         & If there is a temporary connection or server error, the system displays an error message and allows retry.            \\ \hline
+		\textbf{Notes}           & Only Logged-in Users can store trip data; Guest Users can follow the path without recording.                          \\ \hline
 	\end{tabularx}
-	\caption{Create a Path Process Detail}
+	\caption{Select a Path Process Detail}
 \end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/SequenceDiagrams/select_path.png}
+	\caption{Select a Path Sequence Diagram}
+	\label{fig:use_case_select_path}
+\end{figure}
+
 
 % --------------------------------------------------------------------------
 %  Performance requirements % 
