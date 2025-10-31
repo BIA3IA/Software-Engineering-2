@@ -25,11 +25,11 @@ They reflect the stakeholders’ expectations about how cycling activities and i
     
     \item[\textbf{[G2]}] \textbf{Users can discover optimal and safe biking routes} between two locations based on the quality and effectiveness of available bike paths.
     
-    \item[\textbf{[G3]}] \textbf{Registered users can track their cycling activities over time}, allowing registered users to monitor their trips and review their past performances.
+    \item[\textbf{[G3]}] \textbf{Logged-in users can track their cycling activities over time}, allowing logged-in users to monitor their trips and review their past performances.
 
-    \item[\textbf{[G4]}] \textbf{Registered users can contribute to the community knowledge} by creating, updating, or confirming information about existing bike paths.
+    \item[\textbf{[G4]}] \textbf{Logged-in users can contribute to the community knowledge} by creating, updating, or confirming information about existing bike paths.
     
-    \item[\textbf{[G5]}] \textbf{Registered users can view general and per-trip statistics} derived from their recorded cycling activities, supporting awareness and motivation in their performances.
+    \item[\textbf{[G5]}] \textbf{Logged-in users can view general and per-trip statistics} derived from their recorded cycling activities, supporting awareness and motivation in their performances.
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -42,19 +42,19 @@ They reflect the stakeholders’ expectations about how cycling activities and i
 \textbf{Best Bike Paths (BBP)} is a software system designed to support users in \textbf{creating}, \textbf{exploring}, and \textbf{sharing} information about bike paths and cycling activities.
 Users can \textbf{register} on the platform and (optional, if we want to provide personalized statistics for each user) supply personal data to track their physical condition, enabling them to start recording and monitoring their future cycling activities.
 
-Registered users have access to a personal history of their trips and can view general \textbf{statistics} accumulated over time, as well as detailed \textbf{information} about each specific \textbf{trip}, such as the total distance covered, average speed, and other performance metrics.
-When available, \textbf{additional information} such as weather conditions, temperature, and wind speed can be \textbf{enriched} through \textbf{external services}, provided the registered user owns a compatible device capable of capturing such data.
-Furthermore, registered users can contribute to the community by \textbf{publishing} information about bike paths, \textbf{reporting} their current \textbf{status} and the presence of obstacles, to help other users identify the best and safest routes.
+Logged-in users have access to a personal history of their trips and can view general \textbf{statistics} accumulated over time, as well as detailed \textbf{information} about each specific \textbf{trip}, such as the total distance covered, average speed, and other performance metrics.
+When available, \textbf{additional information} such as weather conditions, temperature, and wind speed can be \textbf{enriched} through \textbf{external services}, provided the logged-in user owns a compatible device capable of capturing such data.
+Furthermore, logged-in users can contribute to the community by \textbf{publishing} information about bike paths, \textbf{reporting} their current \textbf{status} and the presence of obstacles, to help other users identify the best and safest routes.
 These data can be entered \textbf{manually}, by specifying details such as the streets composing the path and their condition, or \textbf{automatically}, through the acquisition of data from the user’s mobile device (e.g., GPS, accelerometer, and gyroscope sensors).
 In automated mode, BBP can infer that a user is biking based on their speed, collect GPS information to reconstruct the followed path, and detect irregular movements that may suggest the presence of potholes or surface issues. 
-Since this process may generate false positives, users will have to confirm or correct the automatically acquired data before publication.
+Since this process may generate false positives, logged-in users will have to confirm or correct the automatically acquired data before publication.
 
 The condition of a bike path can assume several states, such as “optimal,” “medium,” “sufficient,” “requires maintenance,” or “closed.”
 BBP \textbf{aggregates} and \textbf{merges} publishable information about paths obtained from multiple users, taking into account the \textbf{freshness} of the data and the number of consistent confirmations received. For instance, if a path receives multiple reports within a similar timeframe, BBP determines its status based on the most supported and up-to-date information.
 
-Any user, including non-registered ones, can search for and visualize optimal bike paths between two points on a map.
+Any user can search for and visualize optimal bike paths between two points on a map.
 Paths are \textbf{ranked} according to their status and overall effectiveness in connecting the selected origin and destination.
-While following a route, the user can visualize their position on the map and receive turn-by-turn navigation instructions toward the chosen destination. Additionally, the system may provide \textbf{notifications} about obstacles or particular conditions along the path.
+While following a route, the user can visualize their position on the map. Additionally, the system may provide \textbf{notifications} about obstacles or particular conditions along the path.
 
 
 \subsection{World phenomena}
