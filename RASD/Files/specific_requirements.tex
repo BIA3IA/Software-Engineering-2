@@ -6,15 +6,28 @@
 
 \subsection{User Interfaces}
 \label{subsec:user_interfaces}
+BBP will be implemented as a mobile application available for Android and iOS devices.
+The interface will be designed to be intuitive and minimal, allowing users to create, browse, and report bike paths directly from their smartphones.
+Main sections will include an interactive map, a reporting form, a trip history, and user statistics.
+Each user type (guest, logged-in user) will access specific features according to their role.
+Detailed mockups and design choices will be presented in the Design Document (DD).
 
 \subsection{Hardware Interfaces}
 \label{subsec:hardware_interfaces}
+The application will run on common smartphones equipped with GPS, internet connection, and basic sensors.
+The GPS module will be used to track routes and provide automatic path creation, while optional sensors (accelerometer or gyroscope) may improve data accuracy.
+A stable network connection will be required for map loading and data synchronization.
 
 \subsection{Software Interfaces}
 \label{subsec:software_interfaces}
+The BBP application will interact with a remote backend through RESTful APIs.
+These APIs will handle user authentication, map data, path storage, and report submission.
+External services may also be used to obtain weather data relevant to the user's current route.
 
 \subsection{Communication Interfaces}
 \label{subsec:communication_interfaces}
+All communications between the mobile app and the server will occur via HTTPS to guarantee secure data exchange.
+The system will use JSON-formatted requests and responses.
 
 % --------------------------------------------------------------------------
 %  Functional requirements % 
