@@ -62,54 +62,54 @@ While following a route, the user can visualize their position on the map. Addit
 The phenomena relevant to the system can be grouped into two main categories.
 This section focuses on non-shared world phenomena, that is, phenomena occurring in the external environment which are beyond the machine’s direct control.
 \begin{itemize}
-    \item[\textbf{[W1]}] - Availability and accuracy of external services (e.g., weather data providers, map services).
-    \item [\textbf{[W2]}] - The user has an external device to measure additional statistics.
-    \item [\textbf{[W3]}] - The user decides whether to register or report a bike path condition.
-    \item [\textbf{[W4]}] - The road's physical condition can evolve.
-    \item [\textbf{[W5]}] - The user may deviate from the suggested path.
-    \item [\textbf{[W6]}] - The user may experience unexpected events during the ride (e.g., accidents, weather changes).
-    \item [\textbf{[W7]}] - The user may choose to stop recording the trip at any time.
-    \item [\textbf{[W8]}] - The user starts or finishes a path.
-    \item [\textbf{[W9]}] - The user rides a bike.
+	\item[\textbf{[W1]}] - Availability and accuracy of external services (e.g., weather data providers, map services).
+	\item [\textbf{[W2]}] - The user has an external device to measure additional statistics.
+	\item [\textbf{[W3]}] - The user decides whether to register or report a bike path condition.
+	\item [\textbf{[W4]}] - The road's physical condition can evolve.
+	\item [\textbf{[W5]}] - The user may deviate from the suggested path.
+	\item [\textbf{[W6]}] - The user may experience unexpected events during the ride (e.g., accidents, weather changes).
+	\item [\textbf{[W7]}] - The user may choose to stop recording the trip at any time.
+	\item [\textbf{[W8]}] - The user starts or finishes a path.
+	\item [\textbf{[W9]}] - The user rides a bike.
 \end{itemize}
 
 
 \subsection{Shared phenomena}
 \label{subsec:shared_phenomena}
- 
+
 \begin{itemize}
-    \item \textbf{World controlled:} Shared phenomena triggered by the world
-        
-        \begin{itemize}
-            \item[\textbf{[SP1]}] - A user registers or logs in to the system.
-            \item [\textbf{[SP2]}] - A user creates, browses, or selects a bike path.
-            \item [\textbf{[SP3]}] - A user selects an origin and a destination to explore bike paths.
-            \item [\textbf{[SP4]}] - A registered user sends reports about a bike path's condition or obstacles.
-            \item [\textbf{[SP5]}] - A registered user confirms or rejects a bike path's condition report.
-            \item [\textbf{[SP6]}] - A registered user updates personal information.
-            \item [\textbf{[SP7]}] - A registered user starts, pauses, resumes, or stops recording a bike trip.
-            \item [\textbf{[SP8]}] - A registered user browses a trip history or views statistics.
-            \item [\textbf{[SP9]}] - The sensors transmit their data to the system.
-            \item [\textbf{[SP10]}] - The external services provide additional data (e.g., weather conditions).
-        \end{itemize}
-        
-        
-    \item \textbf{Machine controlled:} Shared phenomena triggered by the machine
-        \begin{itemize}
-            \item[\textbf{[SP11]}] - The system recommends a bike path based on its ranking.
-            \item [\textbf{[SP12]}] - The system merges reports about bike path's conditions.
-            \item [\textbf{[SP13]}] - The system updates bike path rankings based on new feedback.
-            \item [\textbf{[SP14]}] - The system presents the acquired information to the Registered user for confirmation or correction before publication.
-            \item [\textbf{[SP15]}] - The system notifies users about significant changes in bike path conditions.
-            \item [\textbf{[SP16]}] - The system allows users to register or log in.
-            \item [\textbf{[SP17]}] - The system allows users to create, browse, or select a bike path.
-            \item [\textbf{[SP18]}] - The system allows users to select an origin and a destination to explore bike paths.
-            \item [\textbf{[SP19]}] - The system visualizes on a map the bike path(s) between a specified origin and destination.
-            \item [\textbf{[SP20]}] - The system reads the GPS positions of a biking user to track their trip.
-            \item [\textbf{[SP21]}] - The system reads data from the device's sensors (e.g., accelerometer, gyroscope) to detect obstacles during a bike trip.
-            \item   [\textbf{[SP22]}] - The system retrieves additional data (e.g., weather conditions) from external services when available.
-            \item [\textbf{[SP23]}] - The system provides general and per-trip statistics to Registered users.
-        \end{itemize}
+	\item \textbf{World controlled:} Shared phenomena triggered by the world
+
+	      \begin{itemize}
+		      \item[\textbf{[SP1]}] - A user registers or logs in to the system.
+		      \item [\textbf{[SP2]}] - A user creates, browses, or selects a bike path.
+		      \item [\textbf{[SP3]}] - A user selects an origin and a destination to explore bike paths.
+		      \item [\textbf{[SP4]}] - A registered user sends reports about a bike path's condition or obstacles.
+		      \item [\textbf{[SP5]}] - A registered user confirms or rejects a bike path's condition report.
+		      \item [\textbf{[SP6]}] - A registered user updates personal information.
+		      \item [\textbf{[SP7]}] - A registered user starts, pauses, resumes, or stops recording a bike trip.
+		      \item [\textbf{[SP8]}] - A registered user browses a trip history or views statistics.
+		      \item [\textbf{[SP9]}] - The sensors transmit their data to the system.
+		      \item [\textbf{[SP10]}] - The external services provide additional data (e.g., weather conditions).
+	      \end{itemize}
+
+
+	\item \textbf{Machine controlled:} Shared phenomena triggered by the machine
+	      \begin{itemize}
+		      \item[\textbf{[SP11]}] - The system recommends a bike path based on its ranking.
+		      \item [\textbf{[SP12]}] - The system merges reports about bike path's conditions.
+		      \item [\textbf{[SP13]}] - The system updates bike path rankings based on new feedback.
+		      \item [\textbf{[SP14]}] - The system presents the acquired information to the Registered user for confirmation or correction before publication.
+		      \item [\textbf{[SP15]}] - The system notifies users about significant changes in bike path conditions.
+		      \item [\textbf{[SP16]}] - The system allows users to register or log in.
+		      \item [\textbf{[SP17]}] - The system allows users to create, browse, or select a bike path.
+		      \item [\textbf{[SP18]}] - The system allows users to select an origin and a destination to explore bike paths.
+		      \item [\textbf{[SP19]}] - The system visualizes on a map the bike path(s) between a specified origin and destination.
+		      \item [\textbf{[SP20]}] - The system reads the GPS positions of a biking user to track their trip.
+		      \item [\textbf{[SP21]}] - The system reads data from the device's sensors (e.g., accelerometer, gyroscope) to detect obstacles during a bike trip.
+		      \item   [\textbf{[SP22]}] - The system retrieves additional data (e.g., weather conditions) from external services when available.
+		      \item [\textbf{[SP23]}] - The system provides general and per-trip statistics to Registered users.
+	      \end{itemize}
 
 \end{itemize}
 
@@ -176,18 +176,17 @@ This section focuses on non-shared world phenomena, that is, phenomena occurring
 % --------------------------------------------------------------------------
 % Reference Documents % 
 % --------------------------------------------------------------------------
-
 \section{Reference Documents}
 \label{sec:refdocs}
 
-This document is based on the following references:
+The preparation of this document was supported by the following reference materials:
 \begin{itemize}
-    \item  • IEEE standard on requirement engineering \cite{something}.
-    \item •The specification of the RASD and DD assignment of the Software Engineering II
- course, held by professor Matteo Rossi, Elisabetta Di Nitto and Matteo Camilli at
- the Politecnico di Milano, A.Y 2024/2025 \cite{something}.
-    \item •Slides of Software Engineering 2 course on WeBeep \cite{something}.
-    \item The paper "Deriving Specification from Requirements: An Example" \cite{something}.
+	\item IEEE Standard for Software Requirement Specifications \cite{ieee};
+	\item Assignment specification for the RASD and DD of the Software Engineering II course,
+	      held by professors Matteo Rossi, Elisabetta Di Nitto, and Matteo Camilli at the
+	      Politecnico di Milano, A.Y. 2025/2026 \cite{rasd};
+	\item Slides of the Software Engineering 2 course available on WeBeep \cite{slides};
+	\item The paper *Deriving Specifications from Requirements: An Example* by Jackson and Zave \cite{paper}.
 \end{itemize}
 
 % --------------------------------------------------------------------------
