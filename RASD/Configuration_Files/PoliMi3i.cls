@@ -133,9 +133,7 @@
 			\\
 			Date: {\date}
 			\\
-			Download page: {\link}
-			\\
-			Copyright: Copyright © 2025, {\authors} – All rights reserved
+			Project Link: {\link}
 			}
 			\end{minipage}
 	\end{titlepage}
