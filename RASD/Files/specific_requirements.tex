@@ -352,17 +352,19 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\label{tab:UC12}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
-		\textbf{Actor(s)}        & Logged-in User                                                                                                                          \\ \hline
-		\textbf{Entry Condition} & The actor is currently performing a trip in Manual or Automatic mode.                                                                   \\ \hline
-		\textbf{Event Flow}      & 1. The actor chooses to stop the current trip.                                                                                          \\
-		                         & 2. The system interrupts any ongoing data acquisition (GPS, sensors or manual input).                                                   \\
-		                         & 3. The system validates the collected data (e.g., duration, distance, reports).                                                         \\
-		                         & 4. The system stores the trip data in the actor's account and finalizes the session.                                                    \\
-		                         & 5. The system displays a confirmation and a summary view.                                                                               \\ \hline
-		\textbf{Exit Condition}  & The trip is stopped and the collected data are successfully saved.                                                                      \\ \hline
-		\textbf{Exceptions}      & If data validation fails, the system displays an error message and prevents completion until corrected.                                 \\
-		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry; data may be temporarily buffered. \\ \hline
-		\textbf{Notes}           & Once a trip is stopped, recording cannot be resumed; a new session is required to continue.                                             \\ \hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                      \\ \hline
+		\textbf{Entry Condition} & The actor is currently performing a trip in Manual or Automatic mode.                                                                               \\ \hline
+		\textbf{Event Flow}      & 1. The actor chooses to stop the current trip.                                                                                                      \\
+		                         & 2. The system interrupts any ongoing data acquisition (GPS, sensors or manual input).                                                               \\
+		                         & 3. The system validates the collected data (e.g., duration, distance, reports).                                                                     \\
+		                         & 4. The system stores the trip data in the actor's account and finalizes the session.                                                                \\
+		                         & 5. If possible, the system enriches the trip data with meteorological information (e.g., weather, temperature), retrieved from an external service. \\
+		                         & 6. The system displays a confirmation and a summary view.                                                                                           \\ \hline
+		\textbf{Exit Condition}  & The trip is stopped and the collected data are successfully saved.                                                                                  \\ \hline
+		\textbf{Exceptions}      & If data validation fails, the system displays an error message and prevents completion until corrected.                                             \\
+		                         & If enrichment with external data fails, the system proceeds without adding that information.                                                        \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry; data may be temporarily buffered.             \\ \hline
+		\textbf{Notes}           & Once a trip is stopped, recording cannot be resumed; a new session is required to continue.                                                         \\ \hline
 	\end{tabularx}
 	\caption{Stop a Trip as a Logged-in User Process Detail}
 \end{table}
