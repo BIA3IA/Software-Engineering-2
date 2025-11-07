@@ -48,8 +48,8 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		                         & 4. The system validates the provided data.                                                               \\
 		                         & 5. If validation succeeds, the system creates a new account and redirects the actor to the welcome page. \\ \hline
 		\textbf{Exit Condition}  & A new user account is created.                                                                           \\ \hline
-		\textbf{Exceptions}      & If the data are invalid or incomplete, the system displays an error message and requests correction.     \\
-		                         & If the email is already registered, the system displays an error message and prompts the user to log in. \\
+		\textbf{Exceptions}      & If the data are invalid or incomplete, the system shows an error and asks for correction.                \\
+		                         & If the email is already registered, the system shows an error and invites the user to log in.            \\
 		                         & If a temporary connection or BBP error occurs, the system displays an appropriate error message.         \\ \hline
 		\textbf{Notes}           & The entered password is stored in a hashed form for security purposes.                                   \\ \hline
 	\end{tabularx}
@@ -101,7 +101,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                                                 \\ \hline
-		\textbf{Entry Condition} & The actor is authenticated and is on his account page.                                                                                         \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and is using the application.                                                                                       \\ \hline
 		\textbf{Event Flow}      & 1. The actor clicks on the “Log out” option.                                                                                                   \\
 		                         & 2. The system disconnects the actor from the current session.                                                                                  \\
 		                         & 3. The system clears user-specific local data, and redirects the actor to the welcome page.                                                    \\ \hline
@@ -157,8 +157,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		\textbf{Actor(s)}        & Guest User, Logged-in User                                                                                                   \\ \hline
 		\textbf{Entry Condition} & The actor has just performed a search or is browsing the catalog and is viewing the list of suggested paths.                 \\ \hline
 		\textbf{Event Flow}      & 1. The actor selects one path from the results list.                                                                         \\
-		                         & 2. The system displays the path details (overview, distance, ranking, reports).                                              \\
-		                         & 3. The actor confirms the selection.                                                                                         \\ \hline
+		                         & 2. The system displays the path details (overview, distance, ranking, reports)                                               \\ \hline
 		\textbf{Exit Condition}  & The path is selected. The system is ready to start the trip.                                                                 \\ \hline
 		\textbf{Exceptions}      & If the selected path is unavailable (removed/updated), the system displays an error message and returns to the results list. \\
 		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.                        \\ \hline
@@ -245,15 +244,17 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\label{tab:UC8}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
-		\textbf{Actor(s)}        & Logged-in User                                                                                              \\ \hline
-		\textbf{Entry Condition} & The actor is authenticated and wants to remove one of their previously created paths.                       \\ \hline
-		\textbf{Event Flow}      & 1. The actor accesses the “My Paths” section.                                                               \\
-		                         & 2. The system displays the list of the actor's paths.                                                       \\
-		                         & 3. The actor selects a path and requests its deletion.                                                      \\
-		                         & 4. The system processes the request and deletes the corresponding path.                                     \\ \hline
-		\textbf{Exit Condition}  & The selected path is permanently deleted and no longer visible in the actor's list.                         \\ \hline
-		\textbf{Exceptions}      & If a temporary connection or BBP error occurs, the system displays an error message and allows retry later. \\ \hline
-		\textbf{Notes}           & Deletion is irreversible. Only the creator of the path can perform this operation.                          \\ \hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                         \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and wants to remove one of their previously created paths.                                  \\ \hline
+		\textbf{Event Flow}      & 1. The actor accesses the “My Paths” section.                                                                          \\
+		                         & 2.  The system retrieves and displays the list of paths owned by the actor.                                            \\
+		                         & 3. The actor selects a path and requests its deletion.                                                                 \\
+		                         & 4. The system verifies ownership and deletes the corresponding path.                                                   \\ \hline
+		\textbf{Exit Condition}  & The selected path is permanently deleted and no longer visible in the actor's list.                                    \\ \hline
+		\textbf{Exceptions}      & If the actor tries to delete a path they do not own, the system displays an ownership error message.                   \\
+		                         & If the selected path does not exist or was already deleted, the system notifies the actor that the path was not found. \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry later.            \\ \hline
+		\textbf{Notes}           & Deletion is irreversible. Only the creator of the path can perform this operation.                                     \\ \hline
 	\end{tabularx}
 	\caption{Delete a Path Process Detail}
 \end{table}
@@ -488,7 +489,6 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{Edit Personal Profile Process Detail}
 \end{table}
 
-% (Opzionale) Diagramma di sequenza corrispondente
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/edit_profile.png}
