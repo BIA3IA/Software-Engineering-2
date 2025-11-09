@@ -126,7 +126,7 @@ Throughout the process, the user can cancel the creation, which immediately retu
 \textbf{Automatically creating a new path}:
 
 The following diagram illustrates the states involved in the automatic creation of a new path by a logged-in user using GPS tracking.
-After accessing the app, the user can start the automatic creation process by selecting the “Automatic Mode” option. Once this action is triggered, the system leaves the idle state and enters the Waiting GPS Lock state, where it requests location permissions and attempts to establish a stable GPS connection.
+After accessing the application, the user can start the automatic creation process by selecting the “Automatic Mode” option. Once this action is triggered, the system leaves the idle state and enters the Editing Metadata State, where the user can provide information about the path. After confirming the metadata, the system transitions to the Waiting GPS Lock state, where it requests location permissions and attempts to establish a stable GPS connection.
 If the GPS signal is successfully acquired, the system transitions to the Recording state, during which the user’s movements are continuously tracked and converted into path segments.
 
 While recording, the user can manually stop the tracking (userStop), or the process can automatically stop if a long period of inactivity is detected.
