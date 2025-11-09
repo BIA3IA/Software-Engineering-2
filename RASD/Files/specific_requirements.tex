@@ -102,6 +102,51 @@ The requirements are organized according to the main functionalities of the syst
 
 \subsection{Use Case Diagrams}
 \label{subsec:use_case_diagrams}
+This subsection illustrates the main interactions between actors and the BBP system.
+Each diagram focuses on a specific actor category, distinguishing what a guest user can do from the actions reserved to logged-in users.
+
+\subsubsection{Authentication and Profile Management}
+This diagram shows how users access and manage their personal area within the system.
+Guest users can register to create an account and then log in to gain full access to BBP functionalities.
+Both the Register and Log-in cases include the Validate Inputs use case, ensuring that all user-provided data meet format and consistency rules.
+Once authenticated, users can log out, edit their personal information, and control the visibility of their profile data.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{Images/Use_Case_Diagrams/register_login_uc.png}
+	\caption{Authentication and Profile Management Use Case Diagram }
+	\label{fig:use_case_authentication_and_profile_management}
+\end{figure}
+
+\subsubsection{Guest User Use Cases}
+Guest users can freely access public information related to the available bike paths without being authenticated.
+They can search for paths, browse their details, and check the overall condition of each segment.
+When a user selects a path, the system retrieves and displays the corresponding aggregated condition.
+Guests can also start and stop a trip, but the data is not stored or associated with a user account.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{Images/Use_Case_Diagrams/guest_uc.png}
+	\caption{Guest User Use Case Diagram}
+	\label{fig:use_case_guest_user}
+\end{figure}
+
+\subsubsection{Logged-in User Use Cases}
+Logged-in users have access to all interactive and community features of the BBP platform.
+They can create new paths manually or automatically, by recording their route or by manually adding segments.
+Each new path can be saved only after passing the Validate Inputs step and may optionally be made public.
+Users can also delete paths they have created.
+During trip recording, data from sensors are analyzed to automatically detect anomalies; these detections trigger the Confirm/Reject Detection extension, allowing the user to verify their validity.
+Users can also report path conditions manually and review other users' reports.
+Once a trip is stopped, a summary enriched with weather data is generated.
+Finally, users can view their activity history and per-trip or overall statistics.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{Images/Use_Case_Diagrams/loggedin_uc.png}
+	\caption{Logged-in User Use Case Diagram}
+	\label{fig:use_case_logged_in_user}
+\end{figure}
 
 \subsubsection{Use Cases}
 \label{subsubsec:use_cases}
