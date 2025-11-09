@@ -60,19 +60,16 @@ While following a route, the user can visualize their position on the map. Addit
 \subsection{World phenomena}
 \label{subsec:world_phenomena}
 The phenomena relevant to the system can be grouped into two main categories.
-This section focuses on non-shared world phenomena, that is, phenomena occurring in the external environment which are beyond the machine’s direct control.
-\begin{itemize}
-	\item[\textbf{[W1]}] - Availability and accuracy of external services (e.g., weather data providers, map services).
-	\item [\textbf{[W2]}] - The user has an external device to measure additional statistics.
-	\item [\textbf{[W3]}] - The user decides whether to register or report a bike path condition.
-	\item [\textbf{[W4]}] - The road's physical condition can evolve.
-	\item [\textbf{[W5]}] - The user may deviate from the suggested path.
-	\item [\textbf{[W6]}] - The user may experience unexpected events during the ride (e.g., accidents, weather changes).
-	\item [\textbf{[W7]}] - The user may choose to stop recording the trip at any time.
-	\item [\textbf{[W8]}] - The user starts or finishes a path.
-	\item [\textbf{[W9]}] - The user rides a bike.
-\end{itemize}
+This section focuses on non-shared world phenomena, that is, phenomena occurring in the external environment which are beyond the machine's direct control.
 
+\begin{itemize}
+	\item [\textbf{[W1]}] - Availability and accuracy of external services (e.g., weather data providers, map services).
+	\item [\textbf{[W2]}] - The user has an external device to measure additional statistics.
+	\item [\textbf{[W3]}] - The road's physical condition can evolve.
+	\item [\textbf{[W4]}] - The user may deviate from the suggested path.
+	\item [\textbf{[W5]}] - The user may experience unexpected events during the ride (e.g., accidents, weather changes).
+	\item [\textbf{[W6]}] - The user rides a bike.
+\end{itemize}
 
 \subsection{Shared phenomena}
 \label{subsec:shared_phenomena}
@@ -81,36 +78,38 @@ This section focuses on non-shared world phenomena, that is, phenomena occurring
 	\item \textbf{World controlled:} Shared phenomena triggered by the world
 
 	      \begin{itemize}
-		      \item[\textbf{[SP1]}] - A user registers or logs in to the system.
-		      \item [\textbf{[SP2]}] - A user creates, browses, or selects a bike path.
-		      \item [\textbf{[SP3]}] - A user selects an origin and a destination to explore bike paths.
-		      \item [\textbf{[SP4]}] - A registered user sends reports about a bike path's condition or obstacles.
-		      \item [\textbf{[SP5]}] - A registered user confirms or rejects a bike path's condition report.
-		      \item [\textbf{[SP6]}] - A registered user updates personal information.
-		      \item [\textbf{[SP7]}] - A registered user starts, pauses, resumes, or stops recording a bike trip.
-		      \item [\textbf{[SP8]}] - A registered user browses a trip history or views statistics.
-		      \item [\textbf{[SP9]}] - The sensors transmit their data to the system.
-		      \item [\textbf{[SP10]}] - The external services provide additional data (e.g., weather conditions).
+		      \item[\textbf{[SP1]}] - A guest user registers to the system.
+		      \item [\textbf{[SP2]}] - A logged-in user logs into the system.
+		      \item [\textbf{[SP3]}] - A logged-in user logs out of the system.
+		      \item [\textbf{[SP4]}] - A logged-in user creates a new bike path.
+		      \item [\textbf{[SP5]}] - A logged-in user decides to make a created bike path public or private.
+		      \item [\textbf{[SP6]}] - A logged-in user deletes one of their created bike paths.
+		      \item [\textbf{[SP7]}] - A user selects an origin and a destination to explore bike paths.
+		      \item [\textbf{[SP8]}] - A user selects a specific bike path to view its details.
+		      \item [\textbf{[SP9]}] - A logged-in user sends reports about a bike path's condition or obstacles.
+		      \item [\textbf{[SP10]}] - A logged-in user confirms or rejects a bike path's condition report.
+		      \item [\textbf{[SP11]}] - A logged-in user updates personal information.
+		      \item [\textbf{[SP12]}] - A logged-in user starts, pauses, resumes, or stops recording a bike trip.
+		      \item [\textbf{[SP13]}] - A logged-in user browses a trip history or views statistics.
+		      \item [\textbf{[SP14]}] - The sensors transmit their data to the system.
+		      \item [\textbf{[SP15]}] - The external services provide additional data (e.g., weather conditions).
 	      \end{itemize}
-
 
 	\item \textbf{Machine controlled:} Shared phenomena triggered by the machine
 	      \begin{itemize}
-		      \item[\textbf{[SP11]}] - The system recommends a bike path based on its ranking.
-		      \item [\textbf{[SP12]}] - The system merges reports about bike path's conditions.
-		      \item [\textbf{[SP13]}] - The system updates bike path rankings based on new feedback.
-		      \item [\textbf{[SP14]}] - The system presents the acquired information to the Registered user for confirmation or correction before publication.
-		      \item [\textbf{[SP15]}] - The system notifies users about significant changes in bike path conditions.
-		      \item [\textbf{[SP16]}] - The system allows users to register or log in.
-		      \item [\textbf{[SP17]}] - The system allows users to create, browse, or select a bike path.
-		      \item [\textbf{[SP18]}] - The system allows users to select an origin and a destination to explore bike paths.
-		      \item [\textbf{[SP19]}] - The system visualizes on a map the bike path(s) between a specified origin and destination.
-		      \item [\textbf{[SP20]}] - The system reads the GPS positions of a biking user to track their trip.
-		      \item [\textbf{[SP21]}] - The system reads data from the device's sensors (e.g., accelerometer, gyroscope) to detect obstacles during a bike trip.
-		      \item   [\textbf{[SP22]}] - The system retrieves additional data (e.g., weather conditions) from external services when available.
-		      \item [\textbf{[SP23]}] - The system provides general and per-trip statistics to Registered users.
+		      \item[\textbf{[SP16]}] - The system recommends a bike path based on its ranking.
+		      \item [\textbf{[SP17]}] - The system merges reports about bike path's conditions.
+		      \item [\textbf{[SP18]}] - The system updates bike path rankings based on new feedback.
+		      \item [\textbf{[SP19]}] - The system presents detected information from sensors to the logged-in user for confirmation, generating a new report only if the user validates it.
+		      \item [\textbf{[SP20]}] - The system notifies users about significant changes in bike path conditions.
+		      \item [\textbf{[SP21]}] - The system confirms the successful creation or deletion of a bike path to the logged-in user.
+		      \item [\textbf{[SP22]}] - The system publishes or hides a bike path according to the logged-in user's sharing preference.
+		      \item [\textbf{[SP23]}] - The system visualizes on a map the bike path(s) between a specified origin and destination.
+		      \item [\textbf{[SP24]}] - The system reads the GPS positions of a biking user to track their trip.
+		      \item [\textbf{[SP25]}] - The system reads data from the device's sensors (e.g., accelerometer, gyroscope) to detect obstacles during a bike trip.
+		      \item [\textbf{[SP26]}] - The system retrieves additional data (e.g., weather conditions) from external services when available.
+		      \item [\textbf{[SP27]}] - The system provides general and per-trip statistics to logged-in users.
 	      \end{itemize}
-
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -119,7 +118,6 @@ This section focuses on non-shared world phenomena, that is, phenomena occurring
 
 \section{Definitions, Acronyms, Abbreviations}
 \label{sec:definitions}
-
 
 \subsection{Definitions}
 \label{subsec:definitions}
