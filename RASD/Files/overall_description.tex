@@ -3,11 +3,11 @@
 % --------------------------------------------------------------------------
 \section{Product Perspective}
 \label{sec:product_perspective}
-This section describes how the Best Bike Paths (BBP) system fits into its context.
+The Best Bike Paths (BBP) system operates within an environment that includes users, mobile devices, and external services. The following sections describe its main interactions and contextual role.
 
 \subsection{Scenarios}
 \label{sec:scenarios}
-Here we describe representative situations that illustrate how users will interact with the system in the real world.
+Representative scenarios illustrate how different types of users interact with BBP in realistic situations, showing the system’s main functionalities and objectives.
 
 \begin{enumerate}
 
@@ -15,7 +15,7 @@ Here we describe representative situations that illustrate how users will intera
 
 	      Giuseppe is a former professional cyclist who wants to start cycling again to stay fit. Among the various options available, he decides to use Best Bike Paths (BBP) to track his cycling activities and discover new routes.
 	      He chooses BBP because it offers cyclist-oriented features such as creating personalized paths and sharing the current conditions of bike tracks with other users. \newline
-	      Once he visits the BBP website, Giuseppe realizes that he can already use some functionalities of the system without creating an account, such as searching for bike paths and receiving suggestions based on other users’ rankings.
+	      Once he opens the BBP app, Giuseppe realizes that he can already use some functionalities of the system without creating an account, such as searching for bike paths and receiving suggestions based on other users’ rankings.
 	      However, he soon notices that he cannot record his own cycling activities without registering. \newline
 	      Therefore, he decides to create an account to take full advantage of all BBP’s features.
 	      The registration process is simple and quick, requiring only basic information such as name, email, and password.
@@ -23,7 +23,7 @@ Here we describe representative situations that illustrate how users will intera
 
 	\item \textbf{A user starts to browse and create paths}:
 
-	      Irene accesses the BBP application to plan her next cycling trip.
+	      Irene accesses the BBP app to plan her next cycling trip.
 	      From the main page, she specifies a starting point and a destination. BBP displays on a map all available bike paths connecting the two points.
 	      Each path is shown with its current condition based on feedback provided by other users. The paths are ranked according to an overall score computed by the system,
 	      taking into account their condition and effectiveness in connecting the selected origin and destination. \newline
@@ -41,13 +41,13 @@ Here we describe representative situations that illustrate how users will intera
 	      The GPS continuously updates his position, allowing the system to reconstruct the exact path he follows.
 	      At the same time, the accelerometer and gyroscope detect small irregular movements that may indicate the presence of bumps or potholes along the road. \newline
 	      On the screen, BBP dynamically shows his current position.
-	      Since Cesare also carries an external device capable of providing environmental information, the system enriches his trip data with weather conditions such as temperature, humidity, and wind speed retrieved from an external meteorological service.\newline
+	      The system also enriches Cesare's trip data with weather conditions such as temperature, humidity, and wind speed retrieved from an external meteorological service.\newline
 	      Once he reaches his destination BBP processes the collected data and generates a detailed summary, including total distance, duration, average speed, and other performance metrics that Cesare can review later in his personal activity history.
 
 	\item \textbf{A logged-in user browse his cycling activities}:
 
 	      Luca, a logged-in user of BBP, opens the app to view his previous trips.
-	      From the main page, he accesses the My Activities section, where BBP displays a list of his recorded trips over time.\newline
+	      From the main page, he accesses the "My Activities' section", where BBP displays a list of his recorded trips over time.\newline
 	      Each activity is accompanied by summary information such as the date, distance traveled, duration, and primary location.
 	      Luca can sort trips by date or distance and scrolling through the list, he recognizes some of his favorite routes and notices that BBP automatically updates aggregate statistics such as total number of trips, kilometers traveled, and weekly average giving him a general overview of his progress over time. \newline
 	      After identifying a recent trip he's interested in analyzing in more detail, Luca decides to open it to view the details.
@@ -62,15 +62,15 @@ Here we describe representative situations that illustrate how users will intera
 
 	\item \textbf{A logged-in user wants to insert information about a bike path condition}:
 
-	      Giulia is cycling along a local bike path using the manual mode of data insertion.
+	      Giulia is cycling along a local bike path using the manual reporting mode.
 	      During her ride, she notices that a section of the route is partially blocked by some fallen branches.
 	      Since she wants to help other cyclists avoid potential issues, she decides to report the current condition of the path to the BBP community.\newline
-	      From the application menu, Giulia selects Report Path Condition and once the interactive map is opened, selects the affected segment, and writes a short description of the obstacle, choosing “requires maintenance” as the current status of that path.
+	      From the app menu, Giulia selects Report Path Condition and once the interactive map is opened, selects the affected segment, and writes a short description of the obstacle, choosing “requires maintenance” as the current status of that path.
 	      After confirming the report, BBP stores the information and sends it for aggregation with other users’ data about the same route.
 
 	\item \textbf{A logged-in user wants to confirm the condition of a bike path}:
 
-	      While cycling through a familiar route, Marco is being notified with a small pop-up alert which states that there is a possible obstacle ahead reported by another user.
+	      While cycling through a familiar route, Marco receives a notification with a small pop-up alert which states that there is a possible obstacle ahead reported by another user.
 	      Marco slows down and observes the road segment. He notices that the obstacle is indeed still present, so he decides to confirm the report.
 	      Directly from the notification, he presses Confirm, and BBP registers his feedback as an additional confirmation for that path condition. \newline
 	      Later, while continuing his ride, Marco receives another notification about a reported bump on the same road, but this time the road surface looks perfectly fine.
@@ -87,15 +87,12 @@ This subsection contains the class diagram representing the main concepts of the
 
 \subsection{State Diagrams}
 \label{sec:state_diagrams}
-
-In this section, the UML State Diagrams describing the main behavioral processes of the system are presented.
-These diagrams model the possible states and transitions involved when a user interacts with the application during the starting of a trip, the creation of new paths (both manually and automatically), and the reporting of obstacles (both manually and automatically).
-These five scenarios have been analyzed because they represent the core functionalities of the entire system.
+The UML State Diagrams shown below describe the system’s main behavioral processes, focusing on the most relevant user interactions. These include starting a trip, creating paths (manually and automatically), and reporting obstacles (manually and automatically).
 
 \textbf{Starting a trip}:
 
 The following diagram illustrates the possible states involved when a user starts a trip through the system.
-This process begins when the user opens the application and decides to start a new trip by inserting the desired start and end points. Once these points are defined, the system activates the Path Suggestion System, which is responsible for generating and ranking candidate bike paths that best fit the user’s request.
+This process begins when the user opens the app and decides to start a new trip by inserting the desired start and end points. Once these points are defined, the system activates the Path Suggestion System, which is responsible for generating and ranking candidate bike paths that best fit the user’s request.
 
 Inside the Path Suggestion System, the process goes through several internal states. First, the system enters the Waiting for Data state, where it collects environmental and contextual information (such as existing paths and reports). When all required data have been gathered, the system transitions to the Evaluating state to verify their validity and consistency.
 If the data are valid, the system proceeds to Scoring, where each segment is analyzed and assigned a score based on its quality and reliability. Afterward, in the Merging and Building Candidates states, segments are merged and combined to form complete candidate paths. Finally, in the Ranking state, the system orders these candidates according to computed scores.
@@ -186,7 +183,7 @@ Finally, if the saving procedure completes successfully (saveComplete), the syst
 \section{Product functions}
 \label{sec:product_functions}
 
-This section provides an overview of the main system functionalities as perceived by users.
+The following points outline the main functionalities offered by the system from the user’s perspective.
 
 \begin{itemize}
 	\item \textbf{User Registration and Login}:
@@ -222,7 +219,7 @@ This section provides an overview of the main system functionalities as perceive
 
 	\item \textbf{Cycling Activity History and Aggregate Statistics}:
 
-	      Logged-in users can access the My Activities section to review their personal cycling history.
+	      Logged-in users can access the "My Activities' section" to review their personal cycling history.
 	      This section displays both a chronological list of all recorded trips and aggregate statistics summarizing the users overall performance over time.
 	      The aggregate statistics are presented on the same page as the trip list and include metrics such as total number of trips, total kilometers traveled, average speed across all activities, and weekly or monthly riding frequency.
 	      Each trip entry in the list includes summary information such as the date, distance covered, duration, and primary route followed.
@@ -295,35 +292,40 @@ Each group has distinct goals, permissions, and levels of interaction with the s
 \section{Assumptions, dependencies and constraints}
 \label{sec:assumptions_dependencies_constraints}
 
-This section lists external factors that influence the system but are beyond its direct control.
-
 \subsection{Dependencies}
 \label{sec:dependencies}
+The BBP application depends on several external systems and services to provide its core functionalities:
 
-This subsection lists the external systems or services on which BBP depends.
+\begin{itemize}
+	\item The system requires a connection with the remote database through the backend APIs to retrieve, store, and update user and path data.
+	\item The application depends on a reliable Internet connection to access the backend, synchronize trip data, and retrieve updated path information.
+	\item A geographic map service is required to display maps, compute routes, and process geocoding and reverse-geocoding requests.
+	\item External meteorological APIs are used to collect environmental data (e.g., temperature, humidity, wind speed) associated with trips.
+\end{itemize}
 
 \subsection{Constraints}
 \label{sec:constraints}
 
-This subsection specifies any technical, legal, or environmental restriction that affects the system design.
+The design and implementation of the BBP system are subject to the following constraints:
+
+\begin{itemize}
+	\item The system must fully comply with the principles and requirements established by the GDPR (General Data Protection Regulation, EU 2016/679), ensuring that all collected and processed data respect user privacy, security, and transparency standards.
+	\item The application must conform to accessibility and usability guidelines defined by major mobile platforms (Android and iOS).
+	\item Any third-party APIs used for maps, weather, or notifications must be employed in compliance with their respective terms of service and usage quotas.
+\end{itemize}
+.
 
 \subsection{Domain Assumptions}
 \label{sec:domain_assumptions}
-
 This subsection lists the assumptions about the real world that are taken as true for the requirements to hold.
 
 \begin{itemize}
-	\item[\textbf{[D1]}] The system has access to a geographical map service and geocoding capabilities to process origin/destination and render paths.
-
-	\item[\textbf{[D2]}] The manual input provided by the logged-in users is accurate and complete as intended for a path entry.
-
-	\item[\textbf{[D3]}] The external meteorological service is operational and accessible by the system.
-
-	\item [\textbf{[D4]}] The users' mobile devices are equipped with GPS, and they have granted the BBP application location permissions and motion sensor access.
-
-	\item [\textbf{[D5]}] The mobile device sensors (accelerometer, gyroscope) provide sufficiently reliable data to suggest the presence of obstacles.
-
-	\item[\textbf{[D6]}] A \emph{bike path} is considered either a dedicated bicycle track or a low-traffic road where motor-vehicle speed limits are compatible with average cycling speed.
-
-	\item[\textbf{[D7]}] Notification or Pop ups sent by the BBP system reaches the users within 5 min.
+	\item[\textbf{[D1]}] The system has access to a geographic map service and geocoding capabilities to process origin/destination and render paths.
+	\item[\textbf{[D2]}] External meteorological services are reachable and operational with acceptable latency during normal operation.
+	\item[\textbf{[D3]}] Users’ mobile devices are equipped with GPS and have granted the BBP app access to location and motion sensors.
+	\item[\textbf{[D4]}] Motion sensors (accelerometer, gyroscope) and GPS provide data of sufficient accuracy and reliability for obstacle detection.
+	\item[\textbf{[D5]}] Manual input provided by logged-in users is assumed to be truthful, accurate, and sufficiently complete for a path/report entry.
+	\item[\textbf{[D6]}] A bike path is either a dedicated bicycle track or a low-traffic road where motor-vehicle speed limits are compatible with average cycling speed.
+	\item[\textbf{[D7]}] Notifications or pop-ups sent by the BBP system reach users within 5 minutes.
+	\item[\textbf{[D8]}] Reported conditions may become obsolete over time; data “freshness” decays and is considered by the aggregation/ranking logic.
 \end{itemize}
