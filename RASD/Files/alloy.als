@@ -3,20 +3,14 @@
 // some -> 1..*   (one or more)
 // set  -> 0..*   (zero or more, default if not specified)
 
-// abstract sig Boolean {}
-// one sig True, False extends Boolean {}
 enum Boolean { True, False }
 
-
 abstract sig User {  
-  // operator "->" (slides 14-15):
-  // creates a binary relation (Cartesian product between two sets).
-  // "User -> Path" means: set of pairs (u, p) where u is User and p is Path.
-  // in this case -> is not used but it's implicit, for example has_selected User -> Path
   var has_selected: lone Path,
-
   var currentLocation: one Location,
-  var current_trip: lone Trip
+  var current_trip: lone Trip,
+  var trip_origin: lone Location,     
+  var trip_destination: lone Location  
 }
 
 // Guest and LoggedInUser are DISJOINT from each other
@@ -39,17 +33,19 @@ var sig Trip {
 var sig ActiveTrip, CompletedTrip in Trip {}
 
 sig Path {
-   segments: some PathSegment 
+   segments: some PathSegment,
+   origin: one Location,
+   destination: one Location
 }
 
 // we assumed that it is something like "Piola"
 sig Location {
-  var belongsToPath: some PathSegment,
-  var belongsToUser: some User
+  var belongsToPath: some PathSegment
 }
 
 sig PathSegment {
-  has: one Location
+  has: one Location,
+  nextSegment: lone PathSegment // with the fact we assure it is not a loop
 }
 
 //  the guide ("https://haslab.github.io/formal-software-design/overview/index.html")
@@ -67,6 +63,8 @@ fact init {
   // no means zero elements in the set
   no has_selected
   no completed_trips
+  no trip_origin
+  no trip_destination
 }
 
 // "always F" means that the formula F must be true in ALL states
@@ -84,13 +82,34 @@ fact inv_loc_path {
 
 // Location <--> User
 // belongsToUser(loc -> user) must be the inverse of currentLocation(user -> loc)
-fact inv_loc_user { 
-   always belongsToUser = ~currentLocation 
-}
+//fact inv_loc_user { 
+//   always belongsToUser = ~currentLocation 
+//}
 
 // each PathSegment must belong to at least one Path
 fact segHasPath { 
    all s: PathSegment | some p: Path | s in p.segments 
+}
+
+// The segments form a sequence without cycles
+fact pathStructure {
+  all p: Path | {
+    // the origin must be in the first segment
+    p.origin in p.segments.has
+    // the destination must be in the last segment
+    p.destination in p.segments.has
+    // origin and destination must be different
+    p.origin != p.destination
+    
+    // ^ is the tranistive closure, baically it is s.nextSegment.nextSegment.nextSegment.....
+    all s: p.segments | s in p.segments or s.^nextSegment in p.segments
+    
+    // no cycle
+    no s: PathSegment | s in s.^nextSegment
+    
+    // each segment (except the last one) has a next one in the path
+    all s: p.segments | some s.nextSegment implies s.nextSegment in p.segments
+  }
 }
 
 // a Trip is in ActiveTrip or CompletedTrip if and only if it has an associated bike_path
@@ -133,14 +152,18 @@ fact tripBooleanConsistency {
 // the guide says that if we don't specify what happens to a mutable relation, it can
 // change freely. To say that it does not need to change we must write: X' = X
 
-pred userSelectsPath[u: User, p: Path] {
+pred userSelectsPath[u: User, p: Path, orig: Location, dest: Location] {
   // PRECONDITIONS
   // the user must not have already selected a path
   no u.has_selected
+  orig = p.origin
+  dest = p.destination
 
   // POSTCONDITIONS
   //add the new selection
   has_selected' = has_selected + (u -> p)
+  trip_origin' = trip_origin + (u -> orig)
+  trip_destination' = trip_destination + (u -> dest)
 
   // FRAME CONDITIONS, all other mutable relations do not change
   Trip' = Trip
@@ -150,7 +173,6 @@ pred userSelectsPath[u: User, p: Path] {
   current_trip' = current_trip
   completed_trips' = completed_trips
   belongsToPath' = belongsToPath
-  belongsToUser' = belongsToUser
   bike_path' = bike_path
   has_started' = has_started
   has_finished' = has_finished
@@ -162,9 +184,8 @@ pred startTrip[u: User] {
   some u.has_selected
   // the user must not have an ongoing trip
   no u.current_trip
-  // the user must be at a location on the selected route, TO DO: let the user select an origin and a destination
-  // and let the position change over the sequence of path segments
-  u.currentLocation in u.has_selected.segments.has
+  // the user must be at the origin of the selected route
+  u.currentLocation = u.trip_origin
 
   // POSTCONDITIONS
   // create a new trip t that doesn't exist in the current state (it is like a trip that exist in the future, aka new)
@@ -181,19 +202,53 @@ pred startTrip[u: User] {
   currentLocation' = currentLocation
   completed_trips' = completed_trips
   belongsToPath' = belongsToPath
-  belongsToUser' = belongsToUser
   CompletedTrip' = CompletedTrip
+  trip_origin' = trip_origin
+  trip_destination' = trip_destination
+}
+
+pred moveAlongPath[u: User] {
+  // PRECONDITIONS
+  some u.current_trip
+  u.current_trip in ActiveTrip
+  has_started[u.current_trip] = True
+  has_finished[u.current_trip] = False
+  // it must not have arrived yet
+  u.currentLocation != u.trip_destination
+  
+  // find the current and next segment
+  some curr, nxt: PathSegment | 
+    curr.has = u.currentLocation
+    and curr in u.has_selected.segments
+    and nxt = curr.nextSegment
+    and nxt in u.has_selected.segments
+    and currentLocation' = currentLocation - (u -> Location) + (u -> nxt.has)
+
+  // FRAME CONDITIONS
+  Trip' = Trip
+  ActiveTrip' = ActiveTrip
+  CompletedTrip' = CompletedTrip
+  has_selected' = has_selected
+  current_trip' = current_trip
+  completed_trips' = completed_trips
+  belongsToPath' = belongsToPath
+  bike_path' = bike_path
+  has_started' = has_started
+  has_finished' = has_finished
+  trip_origin' = trip_origin
+  trip_destination' = trip_destination
 }
 
 pred stopTrip[u: User] {
   // PRECONDITIONS
-  // the user must have an ongoing trip
+  // The user must have an ongoing trip
   some u.current_trip
-  // the trip must be active and already started
+  // The trip must be active and already started
   some t: Trip | t = u.current_trip and t in ActiveTrip and has_started[t] = True
+  u.currentLocation = u.trip_destination
 
   // POSTCONDITIONS
-  // mark the trip as finished, but it remains active
+  // Mark the trip as finished, but it remains active and current_trip
   some t: Trip | t = u.current_trip and
     // we need to substract the previous value, that before stopping the trip is False, otherwise it will not find
     // any instances. this happens because in the signature there is one Boolean.
@@ -210,10 +265,10 @@ pred stopTrip[u: User] {
   currentLocation' = currentLocation
   completed_trips' = completed_trips
   belongsToPath' = belongsToPath
-  belongsToUser' = belongsToUser
+  trip_origin' = trip_origin
+  trip_destination' = trip_destination
 }
 
-// this pred is useful to see what is going on on the different users, so that we can see it in the transitions
 pred finalizeTrip[u: User] {
   // PRECONDITIONS
   // the user must have an ongoing trip
@@ -223,12 +278,15 @@ pred finalizeTrip[u: User] {
 
   // POSTCONDITIONS
   some t: Trip | t = u.current_trip and
-    // the trip is not active anymore
+    // the trip exits from active trips
     ActiveTrip' = ActiveTrip - t
     // the user no longer has a current_trip
     and current_trip' = current_trip - (u -> Trip)
     // the user no longer has a selected path
     and has_selected' = has_selected - (u -> Path)
+    // the user no longer has origin and destination
+    and trip_origin' = trip_origin - (u -> Location)
+    and trip_destination' = trip_destination - (u -> Location)
     
     // if LoggedInUser: archive the trip and keep it in the system
     and ((u in LoggedInUser) implies
@@ -251,18 +309,17 @@ pred finalizeTrip[u: User] {
   // FRAME CONDITIONS
   currentLocation' = currentLocation
   belongsToPath' = belongsToPath
-  belongsToUser' = belongsToUser
 }
 
 // "do_something_else" represents a step where the system does nothing (as in the guide)
 // with respect to our abstractions (the user could do something else, but it doesn't affect our Trips and Paths).
 //
-// alloy's traces are infinite, when all the loops are completed,
+// Alloy's traces are infinite. When all the loops are completed,
 // none of our four main events can happen anymore (the preconditions
 // fail). Without stuttering, the system couldn't generate valid
 // traces because it would "hang" at some point.
 //
-// however, it seems to work the same without stuttering, but without stuttering, Alloy executes the preds 
+// However, it seems to work the same without stuttering, but without stuttering, Alloy executes the preds 
 // with an extra step, which means that the preconditions of our preds don't conflict too much 
 // with each other.
 
@@ -280,7 +337,8 @@ pred do_something_else {
   current_trip' = current_trip
   completed_trips' = completed_trips
   belongsToPath' = belongsToPath
-  belongsToUser' = belongsToUser
+  trip_origin' = trip_origin
+  trip_destination' = trip_destination
 }
 
 // this fact specifies what events can happen at each step, the guide states:
@@ -291,8 +349,9 @@ pred do_something_else {
 
 fact trans {
   always (
-    (some u: User, p: Path | userSelectsPath[u, p]) or
+    (some u: User, p: Path, o, d: Location | userSelectsPath[u, p, o, d]) or
     (some u: User | startTrip[u]) or
+    (some u: User | moveAlongPath[u]) or
     (some u: User | stopTrip[u]) or
     (some u: User | finalizeTrip[u]) or
     do_something_else
@@ -302,34 +361,46 @@ fact trans {
 // PREDICATES
 
 pred bothUsersCycle {
-
-  eventually (some p: Path | userSelectsPath[Guest, p])
+  eventually (some p: Path, o, d: Location | userSelectsPath[Guest, p, o, d])
   and eventually startTrip[Guest]
+  and eventually moveAlongPath[Guest]
   and eventually stopTrip[Guest]
   and eventually finalizeTrip[Guest]
   and eventually #LoggedInUser.completed_trips = 2
   
-  and eventually (some p: Path | userSelectsPath[LoggedInUser, p])
+  and eventually (some p: Path, o, d: Location | userSelectsPath[LoggedInUser, p, o, d])
   and eventually startTrip[LoggedInUser]
+  and eventually moveAlongPath[LoggedInUser]
   and eventually stopTrip[LoggedInUser]
   and eventually finalizeTrip[LoggedInUser]
 }
 
 pred guestCompleteCycle {
-  eventually (some p: Path | userSelectsPath[Guest, p])
+  eventually (some p: Path, o, d: Location | userSelectsPath[Guest, p, o, d])
   and eventually startTrip[Guest]
+  and eventually moveAlongPath[Guest]
   and eventually stopTrip[Guest]
   and eventually finalizeTrip[Guest]
 }
 
 pred loggedCompleteCycle {
-  eventually (some p: Path | userSelectsPath[LoggedInUser, p])
+  eventually (some p: Path, o, d: Location | userSelectsPath[LoggedInUser, p, o, d])
   and eventually startTrip[LoggedInUser]
+  and eventually moveAlongPath[LoggedInUser]
   and eventually stopTrip[LoggedInUser]
   and eventually finalizeTrip[LoggedInUser]
   and eventually #LoggedInUser.completed_trips = 2
 }
 
-run bothUsersCycle for 3 but 15 steps
-run guestCompleteCycle for 3 but 8 steps
-run loggedCompleteCycle for 3 but 9 steps
+pred completeJourney {
+  eventually (some u: User, p: Path, o, d: Location | userSelectsPath[u, p, o, d])
+  and eventually (some u: User | startTrip[u])
+  and eventually (some u: User | moveAlongPath[u])
+  and eventually (some u: User | stopTrip[u])
+  and eventually (some u: User | finalizeTrip[u])
+}
+
+run bothUsersCycle for 3 but 20 steps
+run guestCompleteCycle for 3 but 12 steps
+run loggedCompleteCycle for 3 but 12 steps
+run completeJourney for 5 but 50 steps
