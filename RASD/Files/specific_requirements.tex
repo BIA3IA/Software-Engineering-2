@@ -213,18 +213,34 @@ Accuracy of certain features, such as automatic path recording or nearby alerts,
 % --------------------------------------------------------------------------
 \section{Software System Attributes}
 \label{sec:software_system_attributes}
+This section describes the main quality attributes that the BBP system must satisfy to ensure a good performance and overall user experience.
 
 \subsection{Reliability}
 \label{subsec:reliability}
+The system must ensure reliable operation over time, minimizing crashes and data loss during trip recording or report submission.
+All critical data, such as user profiles and path information, must be stored and synchronized safely with the server.
+Any detected malfunction or bug that affects reliability must be fixed as soon as possible through updates distributed via the app stores.
 
 \subsection{Availability}
 \label{subsec:availability}
+The BBP system must be available at all times, especially since many of its functions (such as navigation and path recording) may be used during trips.
+The backend services should guarantee an uptime of at least 99\%, with maintenance scheduled during off-peak hours.
 
 \subsection{Security}
 \label{subsec:security}
+The system manages personal and location data, which must be protected from unauthorized access.
+All communications between the app and the server must occur over HTTPS.
+User passwords must be securely stored on the server using strong hashing algorithms.
+Access to user data and sensitive operations must be restricted through authentication tokens and permission control.
 
 \subsection{Maintainability}
 \label{subsec:maintainability}
+The system must be designed with a modular and service-oriented architecture to simplify maintenance and future extensions.
+Code should be clearly documented and follow standard conventions for both client and server components.
+This will allow independent updates of single modules without compromising the overall functionality.
 
 \subsection{Portability}
 \label{subsec:portability}
+The application must be compatible with both Android and iOS platforms.
+It should adapt to different screen sizes and hardware capabilities while maintaining consistent behavior and appearance.
+The backend must remain platform-independent, ensuring that future client versions (e.g., a desktop or web app) can be integrated without major redesigns.
