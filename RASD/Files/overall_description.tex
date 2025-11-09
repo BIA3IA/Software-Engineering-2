@@ -111,8 +111,8 @@ At this point, the user enters the Browsing state, where they can inspect all su
 
 \textbf{Manually creating a new path}:
 
-The following diagram illustrates the states related to the manual creation of a new path by a registered user.
-A registered user can start the manual creation process by selecting the “Create Path” option. Once this action is triggered, the system leaves the idle state and enters the Editing Metadata state, where the user provides general information about the path, such as its name, description, visibility, and other optional details.
+The following diagram illustrates the states related to the manual creation of a new path by a logged-in user.
+A logged-in user can start the manual creation process by selecting the “Create Path” option. Once this action is triggered, the system leaves the idle state and enters the Editing Metadata state, where the user provides general information about the path, such as its name, description, visibility, and other optional details.
 
 After the metadata are confirmed and saved, the process continues in the Adding Segments state. In this phase, the user manually draws or selects the path segments on the map to define the complete route. When all segments have been added, the user proceeds to the Validating Path state, where the system checks the consistency and continuity of the selected route.
 If the validation succeeds, the process transitions to the Saving Path state, during which the system stores the new path in the database. In case of a validation failure or a save error, the system moves to an error path and returns to the idle state, allowing the user to retry or discard the creation.
@@ -128,8 +128,8 @@ Throughout the process, the user can cancel the creation, which immediately retu
 
 \textbf{Automatically creating a new path}:
 
-The following diagram illustrates the states involved in the automatic creation of a new path by a registered user using GPS tracking.
-After accessing the application, the user can start the automatic creation process by selecting the “Automatic Mode” option. Once this action is triggered, the system leaves the idle state and enters the Waiting GPS Lock state, where it requests location permissions and attempts to establish a stable GPS connection.
+The following diagram illustrates the states involved in the automatic creation of a new path by a logged-in user using GPS tracking.
+After accessing the application, the user can start the automatic creation process by selecting the “Automatic Mode” option. Once this action is triggered, the system leaves the idle state and enters the Editing Metadata State, where the user can provide information about the path. After confirming the metadata, the system transitions to the Waiting GPS Lock state, where it requests location permissions and attempts to establish a stable GPS connection.
 If the GPS signal is successfully acquired, the system transitions to the Recording state, during which the user’s movements are continuously tracked and converted into path segments.
 
 While recording, the user can manually stop the tracking (userStop), or the process can automatically stop if a long period of inactivity is detected.
@@ -147,7 +147,7 @@ Once the path has been successfully saved, the process reaches its final state, 
 
 \textbf{Manually inserting a report about an obstacle}:
 
-The following diagram illustrates the states related to the manual reporting process, which allows a registered user to create a report manually.
+The following diagram illustrates the states related to the manual reporting process, which allows a logged-in user to create a report manually.
 Starting from the Idle state, the user initiates the manual report creation process by selecting the appropriate option from the interface. Once the process begins, the system moves to the Editing Metadata state, where the user can enter or modify relevant information, such as the description, and obstacle type.
 
 After the metadata are saved, the process continues in the Waiting for GPS state. In this phase, the system attempts to obtain the user’s current position to associate the report with a specific geographic location.
@@ -164,7 +164,7 @@ When the report is successfully saved, the system reaches the final state, confi
 
 \textbf{Automatically detecting and reporting an obstacle}:
 
-The following diagram represents the states involved in the automatic reporting process, where a registered user can generate a report automatically when a relevant event or sensor input is detected.
+The following diagram represents the states involved in the automatic reporting process, where a logged-in user can generate a report automatically when a relevant event or sensor input is detected.
 The process starts from the Idle state. When the system detects a sensor signal or an anomaly (SensorDetection), it transitions to the Confirming Report state, where the user is asked to confirm whether the detected event should be reported.
 
 If the user confirms, the process continues in the Editing Metadata state, allowing the user to optionally edit or add information related to the report, such as a short description or obstacle type. Once the metadata are saved, the system moves to the Waiting for GPS state, where it tries to obtain the current position to associate it with the report.
