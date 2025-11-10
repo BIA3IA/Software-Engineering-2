@@ -1,7 +1,7 @@
 % --------------------------------------------------------------------------
 % Introduction % 
 % --------------------------------------------------------------------------
-In recent years, cycling has become an increasingly popular and sustainable means of transportation. However, cyclists often face difficulties in finding safe routes and reliable information about bike paths' conditions.  
+In recent years, cycling has become an increasingly popular and sustainable means of transportation. However, cyclists often struggle to find safe routes and reliable information about bike path conditions.
 The \textbf{Best Bike Paths (BBP)} system aims to address this issue by offering a platform where users can record their rides, explore optimal routes, and contribute with updated information about cycling paths and obstacles.
 
 % --------------------------------------------------------------------------
@@ -10,26 +10,26 @@ The \textbf{Best Bike Paths (BBP)} system aims to address this issue by offering
 \section{Purpose}
 \label{sec:purpose}
 
-The purpose of this document is to define, analyze, and specify the requirements of the \textbf{Best Bike Paths (BBP)} system in a precise and complete manner.  
-It establishes a shared understanding of the system’s goals, requirements, and boundaries, describing both the functional behavior and the assumptions about the real-world environment in which the system operates.  
+The purpose of this document is to define, analyze, and specify the requirements of the \textbf{Best Bike Paths (BBP)} system in a precise and complete manner.
+It establishes a shared understanding of the system's goals, requirements, and boundaries, describing both the functional behavior and the assumptions about the real-world environment in which the system operates.
 This document serves as a common reference for all project stakeholders, ensuring a clear and shared understanding of what the system must accomplish and under which constraints.
 
 \subsection{Goals}
 \label{subsec:goals}
 
 The following \textbf{goals} outline the desired properties of the real world that the Best Bike Paths (BBP) system is intended to achieve.
-They reflect the stakeholders’ expectations about how cycling activities and information should be managed and shared, independently of any technical or implementation detail.
+They reflect the stakeholders' expectations about how cycling activities and information should be managed and shared, independently of any technical or implementation detail.
 
-\begin{itemize}    
-    \item[\textbf{[G1]}] \textbf{Users can access accurate and up-to-date information about bike paths}, including their status and possible obstacles, to support safe and informed cycling.
-    
-    \item[\textbf{[G2]}] \textbf{Users can discover optimal and safe biking routes} between two locations based on the quality and effectiveness of available bike paths.
-    
-    \item[\textbf{[G3]}] \textbf{Logged-in users can track their cycling activities over time}, allowing logged-in users to monitor their trips and review their past performances.
+\begin{itemize}
+	\item[\textbf{[G1]}] \textbf{Users can access accurate and up-to-date information about bike paths}, including their status and possible obstacles, to support safe and informed cycling.
 
-    \item[\textbf{[G4]}] \textbf{Logged-in users can contribute to the community knowledge} by creating, updating, or confirming information about existing bike paths.
-    
-    \item[\textbf{[G5]}] \textbf{Logged-in users can view general and per-trip statistics} derived from their recorded cycling activities, supporting awareness and motivation in their performances.
+	\item[\textbf{[G2]}] \textbf{Users can discover optimal and safe biking routes} between two locations based on the quality and effectiveness of available bike paths.
+
+	\item[\textbf{[G3]}] \textbf{Logged-in users can track their cycling activities over time}, allowing logged-in users to monitor their trips and review their past performances.
+
+	\item[\textbf{[G4]}] \textbf{Logged-in users can contribute to the community knowledge} by creating, updating, or confirming information about existing bike paths.
+
+	\item[\textbf{[G5]}] \textbf{Logged-in users can view general and per-trip statistics} derived from their recorded cycling activities, supporting awareness and motivation in their performances.
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -40,14 +40,14 @@ They reflect the stakeholders’ expectations about how cycling activities and i
 \label{sec:scope}
 
 \textbf{Best Bike Paths (BBP)} is a software system designed to support users in \textbf{creating}, \textbf{exploring}, and \textbf{sharing} information about bike paths and cycling activities.
-Users can \textbf{register} on the platform and (optional, if we want to provide personalized statistics for each user) supply personal data to track their physical condition, enabling them to start recording and monitoring their future cycling activities.
+Users can \textbf{register} on the platform and may optionally provide personal data to enable personalized statistics for their cycling activities.
 
 Logged-in users have access to a personal history of their trips and can view general \textbf{statistics} accumulated over time, as well as detailed \textbf{information} about each specific \textbf{trip}, such as the total distance covered, average speed, and other performance metrics.
 When available, \textbf{additional information} such as weather conditions, temperature, and wind speed can be \textbf{enriched} through \textbf{external services}, provided the logged-in user owns a compatible device capable of capturing such data.
 Furthermore, logged-in users can contribute to the community by \textbf{publishing} information about bike paths, \textbf{reporting} their current \textbf{status} and the presence of obstacles, to help other users identify the best and safest routes.
-These data can be entered \textbf{manually}, by specifying details such as the streets composing the path and their condition, or \textbf{automatically}, through the acquisition of data from the user’s mobile device (e.g., GPS, accelerometer, and gyroscope sensors).
-In automated mode, BBP can infer that a user is biking based on their speed, collect GPS information to reconstruct the followed path, and detect irregular movements that may suggest the presence of potholes or surface issues. 
-Since this process may generate false positives, logged-in users will have to confirm or correct the automatically acquired data before publication.
+These data can be entered \textbf{manually}, by specifying details such as the streets composing the path and their condition, or \textbf{automatically}, through the acquisition of data from the user's mobile device (e.g., GPS, accelerometer, and gyroscope sensors).
+In automatic mode, BBP can infer that a user is biking based on their speed, collect GPS information to reconstruct the followed path, and detect irregular movements that may suggest the presence of potholes or surface issues.
+Since this process may generate false positives, logged-in users will have to confirm or correct the automatically acquired data before storing them.
 
 The condition of a bike path can assume several states, such as “optimal,” “medium,” “sufficient,” “requires maintenance,” or “closed.”
 BBP \textbf{aggregates} and \textbf{merges} publishable information about paths obtained from multiple users, taking into account the \textbf{freshness} of the data and the number of consistent confirmations received. For instance, if a path receives multiple reports within a similar timeframe, BBP determines its status based on the most supported and up-to-date information.
@@ -60,57 +60,56 @@ While following a route, the user can visualize their position on the map. Addit
 \subsection{World phenomena}
 \label{subsec:world_phenomena}
 The phenomena relevant to the system can be grouped into two main categories.
-This section focuses on non-shared world phenomena, that is, phenomena occurring in the external environment which are beyond the machine’s direct control.
-\begin{itemize}
-    \item[\textbf{[W1]}] - Availability and accuracy of external services (e.g., weather data providers, map services).
-    \item [\textbf{[W2]}] - The user has an external device to measure additional statistics.
-    \item [\textbf{[W3]}] - The user decides whether to register or report a bike path condition.
-    \item [\textbf{[W4]}] - The road's physical condition can evolve.
-    \item [\textbf{[W5]}] - The user may deviate from the suggested path.
-    \item [\textbf{[W6]}] - The user may experience unexpected events during the ride (e.g., accidents, weather changes).
-    \item [\textbf{[W7]}] - The user may choose to stop recording the trip at any time.
-    \item [\textbf{[W8]}] - The user starts or finishes a path.
-    \item [\textbf{[W9]}] - The user rides a bike.
-\end{itemize}
+This section focuses on non-shared world phenomena, that is, phenomena occurring in the external environment which are beyond the machine's direct control.
 
+\begin{itemize}
+	\item [\textbf{[W1]}] - Availability and accuracy of external services (e.g., weather data providers, map services).
+	\item [\textbf{[W2]}] - The user has an external device to measure additional statistics.
+	\item [\textbf{[W3]}] - The road's physical condition can evolve.
+	\item [\textbf{[W4]}] - The user may deviate from the suggested path.
+	\item [\textbf{[W5]}] - The user may experience unexpected events during the ride (e.g., accidents, weather changes).
+	\item [\textbf{[W6]}] - The user rides a bike.
+\end{itemize}
 
 \subsection{Shared phenomena}
 \label{subsec:shared_phenomena}
- 
-\begin{itemize}
-    \item \textbf{World controlled:} Shared phenomena triggered by the world
-        
-        \begin{itemize}
-            \item[\textbf{[SP1]}] - A user registers or logs in to the system.
-            \item [\textbf{[SP2]}] - A user creates, browses, or selects a bike path.
-            \item [\textbf{[SP3]}] - A user selects an origin and a destination to explore bike paths.
-            \item [\textbf{[SP4]}] - A registered user sends reports about a bike path's condition or obstacles.
-            \item [\textbf{[SP5]}] - A registered user confirms or rejects a bike path's condition report.
-            \item [\textbf{[SP6]}] - A registered user updates personal information.
-            \item [\textbf{[SP7]}] - A registered user starts, pauses, resumes, or stops recording a bike trip.
-            \item [\textbf{[SP8]}] - A registered user browses a trip history or views statistics.
-            \item [\textbf{[SP9]}] - The sensors transmit their data to the system.
-            \item [\textbf{[SP10]}] - The external services provide additional data (e.g., weather conditions).
-        \end{itemize}
-        
-        
-    \item \textbf{Machine controlled:} Shared phenomena triggered by the machine
-        \begin{itemize}
-            \item[\textbf{[SP11]}] - The system recommends a bike path based on its ranking.
-            \item [\textbf{[SP12]}] - The system merges reports about bike path's conditions.
-            \item [\textbf{[SP13]}] - The system updates bike path rankings based on new feedback.
-            \item [\textbf{[SP14]}] - The system presents the acquired information to the Registered user for confirmation or correction before publication.
-            \item [\textbf{[SP15]}] - The system notifies users about significant changes in bike path conditions.
-            \item [\textbf{[SP16]}] - The system allows users to register or log in.
-            \item [\textbf{[SP17]}] - The system allows users to create, browse, or select a bike path.
-            \item [\textbf{[SP18]}] - The system allows users to select an origin and a destination to explore bike paths.
-            \item [\textbf{[SP19]}] - The system visualizes on a map the bike path(s) between a specified origin and destination.
-            \item [\textbf{[SP20]}] - The system reads the GPS positions of a biking user to track their trip.
-            \item [\textbf{[SP21]}] - The system reads data from the device's sensors (e.g., accelerometer, gyroscope) to detect obstacles during a bike trip.
-            \item   [\textbf{[SP22]}] - The system retrieves additional data (e.g., weather conditions) from external services when available.
-            \item [\textbf{[SP23]}] - The system provides general and per-trip statistics to Registered users.
-        \end{itemize}
 
+\begin{itemize}
+	\item \textbf{World controlled:} Shared phenomena triggered by the world
+
+	      \begin{itemize}
+		      \item[\textbf{[SP1]}] - A guest user registers to the system.
+		      \item [\textbf{[SP2]}] - A logged-in user logs into the system.
+		      \item [\textbf{[SP3]}] - A logged-in user logs out of the system.
+		      \item [\textbf{[SP4]}] - A logged-in user creates a new bike path.
+		      \item [\textbf{[SP5]}] - A logged-in user decides to make a created bike path public or private.
+		      \item [\textbf{[SP6]}] - A logged-in user deletes one of their created bike paths.
+		      \item [\textbf{[SP7]}] - A user selects an origin and a destination to explore bike paths.
+		      \item [\textbf{[SP8]}] - A user selects a specific bike path to view its details.
+		      \item [\textbf{[SP9]}] - A logged-in user sends reports about a bike path's condition or obstacles.
+		      \item [\textbf{[SP10]}] - A logged-in user confirms or rejects a bike path's condition report.
+		      \item [\textbf{[SP11]}] - A logged-in user updates personal information.
+		      \item [\textbf{[SP12]}] - A logged-in user starts, pauses, resumes, or stops recording a bike trip.
+		      \item [\textbf{[SP13]}] - A logged-in user browses a trip history or views statistics.
+		      \item [\textbf{[SP14]}] - The sensors transmit their data to the system.
+		      \item [\textbf{[SP15]}] - The external services provide additional data (e.g., weather conditions).
+	      \end{itemize}
+
+	\item \textbf{Machine controlled:} Shared phenomena triggered by the machine
+	      \begin{itemize}
+		      \item[\textbf{[SP16]}] - The system recommends a bike path based on its ranking.
+		      \item [\textbf{[SP17]}] - The system merges reports about bike path's conditions.
+		      \item [\textbf{[SP18]}] - The system updates bike path rankings based on new feedback.
+		      \item [\textbf{[SP19]}] - The system presents detected information from sensors to the logged-in user for confirmation, generating a new report only if the user validates it.
+		      \item [\textbf{[SP20]}] - The system notifies users about significant changes in bike path conditions.
+		      \item [\textbf{[SP21]}] - The system confirms the successful creation or deletion of a bike path to the logged-in user.
+		      \item [\textbf{[SP22]}] - The system publishes or hides a bike path according to the logged-in user's sharing preference.
+		      \item [\textbf{[SP23]}] - The system visualizes on a map the bike path(s) between a specified origin and destination.
+		      \item [\textbf{[SP24]}] - The system reads the GPS positions of a biking user to track their trip.
+		      \item [\textbf{[SP25]}] - The system reads data from the device's sensors (e.g., accelerometer, gyroscope) to detect obstacles during a bike trip.
+		      \item [\textbf{[SP26]}] - The system retrieves additional data (e.g., weather conditions) from external services when available.
+		      \item [\textbf{[SP27]}] - The system provides general and per-trip statistics to logged-in users.
+	      \end{itemize}
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -120,43 +119,45 @@ This section focuses on non-shared world phenomena, that is, phenomena occurring
 \section{Definitions, Acronyms, Abbreviations}
 \label{sec:definitions}
 
-
 \subsection{Definitions}
 \label{subsec:definitions}
 
 \begin{itemize}
-    \item \textbf{Bike Path:} A route, defined by collected data, where a proper bike track exists or where road conditions are generally compatible with cycling safety and speed. Path quality is determined by its aggregated status.
-    \item \textbf{Path Status:} The overall condition of a Bike Path or Path Segment, as determined by the system’s aggregation and merging process. Statuses include Optimal, Medium, Sufficient, and Requires Maintenance.
-    \item \textbf{Path Score:} The final numerical ranking value computed by the system, based on the path's aggregated status and effectiveness, used to prioritize and recommend path alternatives.
-    \item \textbf{Report:} A submission of path information by a Registered User. A report contains details on path status and obstacles and can be either Manually Entered (user-entered) or Automatically Acquired (sensor-acquired).
-    \item \textbf{Freshness:} A metric used in the path merging algorithm that measures the recency of a Path Report's submission. Older reports carry less weight in the aggregation.
-    \item \textbf{Obstacles:} Features on a path that negatively impact cycling conditions, such as Potholes or flooding, as identified by users or automated sensors.
-    \item \textbf{Automated Mode:} The system functionality where the BBP application acquires real-time GPS, accelerometer, and gyroscope data from a Registered User's mobile device to automatically generate a Path Report.
-
+	\item \textbf{Bike Path:} A route, defined by collected data, where a proper bike track exists or where road conditions are generally compatible with cycling safety and speed. Path quality is determined by its aggregated status.
+	\item \textbf{Path Segment:} A portion of a Bike Path defined between two consecutive waypoints. Each segment may have specific attributes.
+	\item \textbf{Path Status:} The overall condition of a Bike Path or Path Segment, as determined by the system's aggregation and merging process. Statuses include Optimal, Medium, Sufficient, and Requires Maintenance.
+	\item \textbf{Path Score:} The final numerical ranking value computed by the system, based on the path's aggregated status and effectiveness, used to prioritize and recommend path alternatives.
+	\item \textbf{Trip:} A cycling activity recorded by a logged-in user through the BBP application. Each trip includes temporal, spatial, and contextual data (e.g., duration, distance, speed).
+	\item \textbf{Report:} A submission of path information by a logged-in user. A report contains details on path status and obstacles and can be either Manually Entered (user-entered) or Automatically Acquired (sensor-acquired).
+	\item \textbf{Freshness:} A metric used in the path merging algorithm that measures the recency of a Path Report's submission. Older reports carry less weight in the aggregation.
+	\item \textbf{Obstacles:} Features on a path that negatively impact cycling conditions, such as potholes or flooding, as identified by users or automated sensors.
+	\item \textbf{Automatic Mode:} The system functionality where the BBP application acquires real-time accelerometer and gyroscope data from a logged-in user's device to automatically generate a Path Report.
+	\item \textbf{Manual Mode:} The system functionality where the logged-in user manually enters information about a Bike Path, including its conditions and obstacles, through the application interface.
 \end{itemize}
 
 \subsection{Acronyms}
 \label{subsec:acronyms}
 
 \begin{itemize}
-    \item \textbf{BBP:} Best Bike Paths (The name of the software system).
-    \item \textbf{RASD:} Requirement Analysis and Specification Document.
-    \item \textbf{GPS:} Global Positioning System.
-    \item \textbf{API:} Application Programming Interface.
-    \item \textbf{UI:} User Interface.
-    \item \textbf{UML:} Unified Modeling Language.
-    \item \textbf{DA:} Domain assumption.
+	\item \textbf{API:} Application Programming Interface.
+	\item \textbf{BBP:} Best Bike Paths (The name of the software system).
+	\item \textbf{DA:} Domain assumption.
+	\item \textbf{DD:} Design Document.
+	\item \textbf{GPS:} Global Positioning System.
+	\item \textbf{RASD:} Requirement Analysis and Specification Document.
+	\item \textbf{UI:} User Interface.
+	\item \textbf{UML:} Unified Modeling Language.
 \end{itemize}
 
 \subsection{Abbreviations}
 \label{subsec:abbreviations}
 
 \begin{itemize}
-    \item \textbf{[Gn]} - The n-th goal of the system.
-    \item \textbf{[Wn]} -The n-th world phenomena.
-    \item \textbf{[SPn]} -The n-th shared phenomena.
-    \item \textbf{[UCn]} -The n-th use case.
-    \item \textbf{[Rn]} -The n-th functional requirement.
+	\item \textbf{[Gn]} - The n-th goal of the system.
+	\item \textbf{[Wn]} -The n-th world phenomena.
+	\item \textbf{[SPn]} -The n-th shared phenomena.
+	\item \textbf{[UCn]} -The n-th use case.
+	\item \textbf{[Rn]} -The n-th functional requirement.
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -167,24 +168,23 @@ This section focuses on non-shared world phenomena, that is, phenomena occurring
 \label{sec:revhistory}
 
 \begin{itemize}
-    \item Version 1.0 (23 December 2025);
+	\item Version 1.0 (23 December 2025);
 \end{itemize}
 
 % --------------------------------------------------------------------------
 % Reference Documents % 
 % --------------------------------------------------------------------------
-
 \section{Reference Documents}
 \label{sec:refdocs}
 
-This document is based on the following references:
+The preparation of this document was supported by the following reference materials:
 \begin{itemize}
-    \item  • IEEE standard on requirement engineering \cite{something}.
-    \item •The specification of the RASD and DD assignment of the Software Engineering II
- course, held by professor Matteo Rossi, Elisabetta Di Nitto and Matteo Camilli at
- the Politecnico di Milano, A.Y 2024/2025 \cite{something}.
-    \item •Slides of Software Engineering 2 course on WeBeep \cite{something}.
-    \item The paper "Deriving Specification from Requirements: An Example" \cite{something}.
+	\item IEEE Standard for Software Requirement Specifications \cite{ieee};
+	\item Assignment specification for the RASD and DD of the Software Engineering II course,
+	      held by professors Matteo Rossi, Elisabetta Di Nitto, and Matteo Camilli at the
+	      Politecnico di Milano, A.Y. 2025/2026 \cite{rasd};
+	\item Slides of the Software Engineering 2 course available on WeBeep \cite{slides};
+	\item The paper *Deriving Specifications from Requirements: An Example* by Jackson and Zave \cite{paper}.
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -194,13 +194,12 @@ This document is based on the following references:
 \section{Document Structure}
 \label{sec:docstructure}
 
-Mainly the current document is divided into 6 chapters, which are:
+Mainly the current document is divided into six chapters:
 \begin{enumerate}
-    \item \textbf{Introduction}:  It aims to describe the environment and the demands taken into account for this project. In particular, it focuses on the reasons and goals that will be achieved through its development. 
-    \item \textbf{Overall Description}: provides a high-level overview of the system, focusing on shared phenomena and domain assumptions; 
-    \item \textbf{Specific Requirements}: details the functional and non-functional requirements necessary for the system to achieve its goals. In addition, it contains more details useful for developers (i.e, information about HW and SW interfaces);
-    \item \textbf{Formal Analysis}: a formal description of the main aspect of the World phenomena by using Alloy; 
-    \item \textbf{Effort Spent}: a breakdown of time spent on each section of the document;
-    \item \textbf{References}: a list of all sources (including Software) and documents used in the preparation of this document. 
-
+	\item \textbf{Introduction}:  aims to describe the environment and the demands taken into account for this project. In particular, it focuses on the reasons and goals that will be achieved through its development, as well as the context in which the system will operate.
+	\item \textbf{Overall Description}: provides a high-level overview of the system, with a domain model and state/process views that outline the system's behavior without implementation details.
+	\item \textbf{Specific Requirements}: details the functional and non-functional requirements necessary for the system to achieve its goals. In addition, it contains including external interface requirements (UI, hardware, software, communication) and design constraints.
+	\item \textbf{Formal Analysis}: presents a formal description of selected aspects of the world/shared phenomena using the Alloy modeling language.
+	\item \textbf{Effort Spent}: provides a breakdown of time spent on each section of the document.
+	\item \textbf{References}: lists all sources (including Software) and documents used in the preparation of this document.
 \end{enumerate}

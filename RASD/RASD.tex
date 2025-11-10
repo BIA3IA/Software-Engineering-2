@@ -111,10 +111,10 @@
 \begin{document}
 
 \fancypagestyle{plain}{%
-\fancyhf{} % Clear all header and footer fields
-\fancyhead[RO,RE]{\thepage} %RO=right odd, RE=right even
-\renewcommand{\headrulewidth}{0pt}
-\renewcommand{\footrulewidth}{0pt}}
+	\fancyhf{} % Clear all header and footer fields
+	\fancyhead[RO,RE]{\thepage} %RO=right odd, RE=right even
+	\renewcommand{\headrulewidth}{0pt}
+	\renewcommand{\footrulewidth}{0pt}}
 
 %----------------------------------------------------------------------------
 %	TITLE PAGE
@@ -125,12 +125,12 @@
 
 \puttitle{
 	title=Requirement Analysis and Specification Document, % Title 
-    course=Software Engineering II, %
+	course=Software Engineering II, %
 	project=Best Bike Paths, % Project
 	authors={Ianosel Bianca Roberta, Gholami Vajihe, Errigo Simone}, % 
 	version=1.0,  %
-	date=23.12.2025, % Co-Supervisor name, remove this line if there is none
-	link=\href{https://github.com/BIA3IA/Software-Engineering-2-Errigo-Gholami-Ianosel.git}{https://github.com/BIA3IA/Software-Engineering-2-Errigo-Gholami-Ianosel (github.com)} ,
+	date=23.12.2025, %
+	link=\href{https://github.com/BIA3IA/Errigo-Gholami-Ianosel.git}{Errigo-Gholami-Ianosel (github.com)} ,
 } % These info will be put into your Title page 
 
 %----------------------------------------------------------------------------
@@ -188,7 +188,7 @@
 % SPECIFIC REQUIREMENTS % 
 % --------------------------------------------------------------------------
 
-\chapter{Specific requirements}
+\chapter{Specific Requirements}
 \input{Files/specific_requirements}
 \label{ch:requirements}%
 
@@ -203,13 +203,9 @@
 % EFFORT SPENT % 
 % --------------------------------------------------------------------------
 
-\chapter{Effort spent}
-\label{ch:efforts} %
-
-
-% \chapter{Chapter one}
-% \label{ch:chapter_one}%
-
+\chapter{Effort Spent}
+\input{Files/effort_spent}
+\label{ch:effort_spent} %
 
 
 % \section{Bibliography and citations}
@@ -229,7 +225,7 @@
 %-------------------------------------------------------------------------
 
 \addtocontents{toc}{\vspace{2em}} % Add a gap in the Contents, for aesthetics
-\bibliography{References} % The references information are stored in the file named "bibliography.bib"
+\bibliography{bibliography} % The references information are stored in the file named "bibliography.bib"
 
 %-------------------------------------------------------------------------
 %	APPENDICES
@@ -259,15 +255,15 @@ It may be necessary to include another appendix to better organize the presentat
 \begin{comment}
 \chapter*{List of Symbols} % You have to include a chapter for your list of symbols (
 \begin{table}[H]
-    \centering
-    \begin{tabular}{lll}
-        \textbf{Variable} & \textbf{Description} & \textbf{SI unit} \\\hline\\[-9px]
-        $\bm{u}$ & solid displacement & m \\[2px]
-        $\bm{u}_f$ & fluid displacement & m \\[2px]
-    \end{tabular}
+	\centering
+	\begin{tabular}{lll}
+		\textbf{Variable} & \textbf{Description} & \textbf{SI unit} \\\hline\\[-9px]
+		$\bm{u}$          & solid displacement   & m                \\[2px]
+		$\bm{u}_f$        & fluid displacement   & m                \\[2px]
+	\end{tabular}
 \end{table}
 
- 
+
 % ACKNOWLEDGEMENTS
 \chapter*{Acknowledgements}
 Here you might want to acknowledge someone.
