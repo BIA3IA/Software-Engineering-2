@@ -444,7 +444,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		                         & If a temporary connection or BBP error occurs, the system shows an error message and allows the actor to retry.     \\ \hline
 		\textbf{Notes}           & While the trip is active, the system may record trip data (e.g., time, distance, speed) for the actor's statistics. \\ \hline
 	\end{tabularx}
-	\caption{Start a Trip (Logged-in User, Manual Mode) Process Detail}
+	\caption{Start a Trip in Manual Mode as a Logged-in User Process Detail}
 \end{table}
 
 \begin{figure}[H]
@@ -454,7 +454,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\label{fig:use_case_start_trip_manual_logged}
 \end{figure}
 
-\textbf{[UC11]} - Start a Trip in Automatic Mode as aLogged-in User
+\textbf{[UC11]} - Start a Trip in Automatic Mode as a Logged-in User
 \begin{table}[H]
 	\centering
 	\label{tab:UC11}
@@ -475,7 +475,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		                         & If the GPS signal is unavailable/unstable or permissions are denied, the system shows an error message and does not start or interrupts tracking.                                             \\ \hline
 		\textbf{Notes}           & External devices are optional; when connected, their data are buffered locally together with GPS samples. Final validation/storage happens at trip stop. No path editing occurs in this flow. \\ \hline
 	\end{tabularx}
-	\caption{Start a Trip in Automatic Mode as aLogged-in User Process Detail}
+	\caption{Start a Trip in Automatic Mode as a Logged-in User Process Detail}
 \end{table}
 
 \begin{figure}[H]
