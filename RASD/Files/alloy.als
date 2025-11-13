@@ -194,7 +194,7 @@ pred suggestPaths[u: User] {
   no u.has_selected
   
   // POSTCONDITIONS
-  // Find all paths that match the origin and destination
+  // find all paths that match the origin and destination
   let matchingPaths = {p: Path | p.origin = u.trip_origin and p.destination = u.trip_destination} |
   some matchingPaths and
   suggested_paths' = suggested_paths + (u -> matchingPaths)
@@ -475,3 +475,52 @@ pred loggedCompleteCycle {
 
 run guestCompleteCycle for 4 but exactly 3 Location, exactly 4 PathSegment, exactly 2 Path, 15 steps
 run loggedCompleteCycle for 4 but exactly 3 Location, exactly 4 PathSegment, exactly 2 Path, 15 steps
+
+
+// ASSERTS
+
+// an active trip cannot be simultaneously completed
+assert activeAndCompletedDisjoint {
+  always (no t: Trip | t in ActiveTrip and t in CompletedTrip)
+}
+
+// a user cannot have more than one active trip at a time.
+// and if they have an active trip, they must have a path selected that matches it.
+assert oneActiveTripPerUser {
+  always all u: User |
+    lone u.current_trip
+    and
+    (some u.current_trip implies 
+      (u.current_trip in ActiveTrip and 
+       u.has_selected = bike_path[u.current_trip]))
+}
+
+// when a user moves along a path, he must follow the sequence of segments
+assert tripCompletionAtDestination {
+  always all u: User |
+    (some u.current_trip and u.current_trip in ActiveTrip and 
+     has_finished[u.current_trip] = True) implies u.currentLocation = u.trip_destination
+}
+
+// once a trip is in completed_trips, it stays there
+assert completedTripsNeverLost {
+  always all u: LoggedInUser, t: Trip | (t in u.completed_trips) implies
+    (always t in u.completed_trips)
+}
+
+// every path must always connect its source to its destination
+assert pathConnectivity {
+  all p: Path |
+    let firstSeg = {s: p.segments | s.segmentLocation = p.origin and
+                    no s2: p.segments | s2.nextSegment = s} |
+    let lastSeg = {s: p.segments | s.segmentLocation = p.destination and
+                   no s.nextSegment} |
+    some firstSeg and some lastSeg and
+    lastSeg in firstSeg.*nextSegment
+}
+
+check activeAndCompletedDisjoint for 4 but exactly 3 Location, exactly 4 PathSegment, exactly 2 Path, 16 steps
+check oneActiveTripPerUser for 4 but exactly 3 Location, exactly 4 PathSegment, exactly 2 Path, 16 steps
+check tripCompletionAtDestination for 4 but 15 steps
+check completedTripsNeverLost for 4 but exactly 3 Location, exactly 4 PathSegment, exactly 2 Path, 16 steps
+check pathConnectivity for 4 but exactly 3 Location, exactly 4 PathSegment, exactly 2 Path, 15 steps
