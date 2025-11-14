@@ -1,11 +1,6 @@
 % A LaTeX template for MSc Thesis submissions to 
 % Politecnico di Milano (PoliMi) - School of Industrial and Information Engineering
 %
-% S. Bonetti, A. Gruttadauria, G. Mescolini, A. Zingaro
-% e-mail: template-tesi-ingind@polimi.it
-%
-% Last Revision: October 2021
-%
 % Copyright 2021 Politecnico di Milano, Italy. NC-BY
 
 \documentclass{./Configuration_Files/PoliMi3i}
@@ -86,27 +81,9 @@
 
 % Input of configuration file. Do not change config.tex file unless you really know what you are doing. 
 \input{./Configuration_Files/config}
-\usepackage{./Configuration_Files/alloy-style}
 
 %----------------------------------------------------------------------------
-%	NEW COMMANDS DEFINED
-%----------------------------------------------------------------------------
-
-% EXAMPLES OF NEW COMMANDS
-\newcommand{\bea}{\begin{eqnarray}} % Shortcut for equation arrays
-\newcommand{\eea}{\end{eqnarray}}
-\newcommand{\e}[1]{\times 10^{#1}}  % Powers of 10 notation
-
-%----------------------------------------------------------------------------
-%	ADD YOUR PACKAGES (be careful of package interaction)
-%----------------------------------------------------------------------------
-
-%----------------------------------------------------------------------------
-%	ADD YOUR DEFINITIONS AND COMMANDS (be careful of existing commands)
-%----------------------------------------------------------------------------
-
-%----------------------------------------------------------------------------
-%	BEGIN OF YOUR DOCUMENT
+%	BEGIN OF DOCUMENT
 %----------------------------------------------------------------------------
 
 \begin{document}
@@ -125,17 +102,17 @@
 \frontmatter % Use roman page numbering style (i, ii, iii, iv...) for the preamble pages
 
 \puttitle{
-	title=Requirement Analysis and Specification Document, % Title 
+	title=Design Document, % Title 
 	course=Software Engineering II, %
 	project=Best Bike Paths, % Project
 	authors={Ianosel Bianca Roberta, Gholami Vajihe, Errigo Simone}, % 
 	version=1.0,  %
 	date=23.12.2025, %
 	link=\href{https://github.com/BIA3IA/Errigo-Gholami-Ianosel.git}{Errigo-Gholami-Ianosel (github.com)} ,
-} % These info will be put into your Title page 
+} % These info will be put into the Title page 
 
 %----------------------------------------------------------------------------
-%	PREAMBLE PAGES: ABSTRACT (inglese e italiano), EXECUTIVE SUMMARY
+%	PREAMBLE PAGES: ABSTRACT, EXECUTIVE SUMMARY
 %----------------------------------------------------------------------------
 \startpreamble
 \setcounter{page}{1} % Set page counter to 1
@@ -153,80 +130,62 @@
 %-------------------------------------------------------------------------
 %	MAIN TEXT
 %-------------------------------------------------------------------------
-% In the main text of your thesis you can write the chapters in two different ways:
-%
-%(1) As presented in this template you can write:
-%    \chapter{Title of the chapter}
-%    *body of the chapter*
-%
-%(2) You can write your chapter in a separated .tex file and then include it in the main file with the following command:
-%    \chapter{Title of the chapter}
-%    \input{chapter_file.tex}
-%
-% Especially for long thesis, we recommend you the second option.
 
 \addtocontents{toc}{\vspace{2em}} % Add a gap in the Contents, for aesthetics
 \mainmatter % Begin numeric (1,2,3...) page numbering
 
 % --------------------------------------------------------------------------
-% INTRODUCTION % 
+% INTRODUCTION 
 % --------------------------------------------------------------------------
 \chapter{Introduction}
 \input{Files/introduction}
 \label{ch:introduction}%
 
-% The \label{...}% enables to remove the small indentation that is generated, always leave the % symbol.
-
 % --------------------------------------------------------------------------
-% OVERALL DESCRIPTION % 
+% ARCHITECTURAL DESIGN
 % --------------------------------------------------------------------------
 
-\chapter{Overall Description}
-\input{Files/overall_description}
-\label{ch:description}%
+\chapter{Architectural Design}
+\input{Files/architectural_design}
+\label{ch:architectural_design}%
 
 % --------------------------------------------------------------------------
-% SPECIFIC REQUIREMENTS % 
+% USER INTERFACE DESIGN 
 % --------------------------------------------------------------------------
 
-\chapter{Specific Requirements}
-\input{Files/specific_requirements}
-\label{ch:requirements}%
+\chapter{User Interface Design}
+\input{Files/user_interface_design}
+\label{ch:user_interface_design}%
 
 % --------------------------------------------------------------------------
-% FORMAL ANALYSIS USING ALLOY % 
+% REQUIREMENTS TRACEABILITY 
 % --------------------------------------------------------------------------
 
-\chapter{Formal analysis using alloy}
-\input{Files/alloy.tex}
-\label{ch:alloy}%
+\chapter{Requirements Traceability}
+\input{Files/requirements_traceability}
+\label{ch:requirements_traceability}%
 
 % --------------------------------------------------------------------------
-% EFFORT SPENT % 
+% IMPLEMENTATION, INTEGRATION AND TEST PLAN
+% --------------------------------------------------------------------------
+
+\chapter{Implementation, Integration and Test Plan}
+\input{Files/implementation_integration_test}
+\label{ch:implementation_integration_test} %
+
+% --------------------------------------------------------------------------
+% EFFORT SPENT
 % --------------------------------------------------------------------------
 
 \chapter{Effort Spent}
 \input{Files/effort_spent}
 \label{ch:effort_spent} %
 
-
-% \section{Bibliography and citations}
-% Your thesis must contain a suitable Bibliography which lists all the sources consulted on developing the work.
-% The list of references is placed at the end of the manuscript after the chapter containing the conclusions.
-% We suggest to use the BibTeX package and save the bibliographic references  in the file \verb|bibliography.bib|.
-% This is indeed a database containing all the information about the references. To cite in your manuscript, use the \verb|\cite{}| command as follows:
-% \\
-% \textit{Here is how you cite bibliography entries: \cite{knuth74}, or multiple ones at once: \cite{knuth92,lamport94}}.
-% \\
-% The bibliography and list of references are generated automatically by running BibTeX 
-
-%\cite{bibtex}.
-
 %-------------------------------------------------------------------------
 %	BIBLIOGRAPHY
 %-------------------------------------------------------------------------
 
-\addtocontents{toc}{\vspace{2em}} % Add a gap in the Contents, for aesthetics
+\addtocontents{toc}{\vspace{2em}}
 \bibliography{bibliography} % The references information are stored in the file named "bibliography.bib"
 
 %-------------------------------------------------------------------------
@@ -234,17 +193,7 @@
 %-------------------------------------------------------------------------
 
 \cleardoublepage
-\addtocontents{toc}{\vspace{2em}} % Add a gap in the Contents, for aesthetics
-\begin{comment}
-\appendix
-\chapter{Appendix A}
-If you need to include an appendix to support the research in your thesis, you can place it at the end of the manuscript.
-An appendix contains supplementary material (figures, tables, data, codes, mathematical proofs, surveys, \dots)
-which supplement the main results contained in the previous chapters.
-
-\chapter{Appendix B}
-It may be necessary to include another appendix to better organize the presentation of supplementary material.
-\end{comment}
+\addtocontents{toc}{\vspace{2em}}
 
 % LIST OF FIGURES
 \listoffigures
@@ -252,25 +201,5 @@ It may be necessary to include another appendix to better organize the presentat
 % LIST OF TABLES
 \listoftables
 
-% LIST OF SYMBOLS
-% Write out the List of Symbols in this page
-\begin{comment}
-\chapter*{List of Symbols} % You have to include a chapter for your list of symbols (
-\begin{table}[H]
-	\centering
-	\begin{tabular}{lll}
-		\textbf{Variable} & \textbf{Description} & \textbf{SI unit} \\\hline\\[-9px]
-		$\bm{u}$          & solid displacement   & m                \\[2px]
-		$\bm{u}_f$        & fluid displacement   & m                \\[2px]
-	\end{tabular}
-\end{table}
-
-
-% ACKNOWLEDGEMENTS
-\chapter*{Acknowledgements}
-Here you might want to acknowledge someone.
-\end{comment}
-
 \cleardoublepage
-
 \end{document}
