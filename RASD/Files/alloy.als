@@ -80,7 +80,7 @@ fact segHasPath {
    all s: PathSegment | some p: Path | s in p.segments 
 }
 
-// The segments form a sequence without cycles and connect origin → destination
+// The segments form a sequence without cycles and connect origin -> destination
 fact pathStructure {
   all p: Path | {
     // origin and destination must be different
@@ -473,8 +473,8 @@ pred loggedCompleteCycle {
   and eventually #LoggedInUser.completed_trips = 2
 }
 
-run guestCompleteCycle for 4 but exactly 3 Location, exactly 4 PathSegment, exactly 2 Path, 15 steps
-run loggedCompleteCycle for 4 but exactly 3 Location, exactly 4 PathSegment, exactly 2 Path, 15 steps
+run guestCompleteCycle for 4 but exactly 3 Location, exactly 4 PathSegment, 15 steps
+run loggedCompleteCycle for 4 but exactly 3 Location, exactly 4 PathSegment, 15 steps
 
 
 // ASSERTS
@@ -519,8 +519,8 @@ assert pathConnectivity {
     lastSeg in firstSeg.*nextSegment
 }
 
-check activeAndCompletedDisjoint for 4 but exactly 3 Location, exactly 4 PathSegment, exactly 2 Path, 16 steps
-check oneActiveTripPerUser for 4 but exactly 3 Location, exactly 4 PathSegment, exactly 2 Path, 16 steps
-check tripCompletionAtDestination for 4 but 15 steps
-check completedTripsNeverLost for 4 but exactly 3 Location, exactly 4 PathSegment, exactly 2 Path, 16 steps
-check pathConnectivity for 4 but exactly 3 Location, exactly 4 PathSegment, exactly 2 Path, 15 steps
+check activeAndCompletedDisjoint for 4 but 16 steps
+check oneActiveTripPerUser for 4 but 16 steps
+check tripCompletionAtDestination for 4 but 16 steps
+check completedTripsNeverLost for 4 but 16 steps
+check pathConnectivity for 4 but 16 steps
