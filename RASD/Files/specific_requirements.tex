@@ -911,6 +911,27 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \section{Performance Requirements}
 \label{sec:performance_requirements}
 
+The BBP system must guarantee stable and responsive behaviour during both navigation and trip recording, even when running on devices with limited hardware resources or unstable network conditions.
+The mobile application should ensure smooth interaction, maintaining short response times and minimizing data traffic to preserve usability in everyday scenarios.
+
+Performance requirements mainly concern the following aspects:
+
+\begin{itemize}
+	\item \textbf{System load and scalability:}
+	      The backend must be capable of supporting a growing community of cyclists who simultaneously record trips, search for routes, and submit reports.
+	      To ensure continuity of service, the system should be designed to handle a large number of active users concurrently, maintaining acceptable response times through scalable deployment and efficient resource management.
+
+	\item \textbf{Responsiveness:}
+	      User interactions such as opening the map, viewing a path, or confirming a report should be processed almost instantly.
+	      Under normal conditions, local actions are expected to complete within about one second, while operations requiring server communication should not exceed a few seconds.
+
+	\item \textbf{Energy and resource usage:}
+	      The application must be lightweight and efficient in its use of mobile resources.
+	      Continuous processes such as GPS tracking and sensor sampling should be optimized to minimize battery consumption without compromising accuracy.
+\end{itemize}
+
+Overall, the system must provide a smooth and reliable experience in real-world conditions, balancing accuracy, responsiveness, and efficiency across different devices and network environments.
+
 
 % --------------------------------------------------------------------------
 %  Design Constraints %
