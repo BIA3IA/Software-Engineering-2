@@ -4,9 +4,15 @@
 \section{External Interface Requirements}
 \label{sec:external_interface_requirements}
 The external interface requirements describe the main interfaces through which users, hardware, and external services communicate with the system.
+The external interface requirements describe the main interfaces through which users, hardware, and external services communicate with the system.
 
 \subsection{User Interfaces}
 \label{subsec:user_interfaces}
+BBP will be implemented as a mobile application available for Android and iOS devices.
+The interface will be designed to be intuitive and minimal, allowing users to create, browse, and report bike paths directly from their smartphones.
+Main sections will include an interactive map, a reporting form, a trip history, and user statistics.
+Each user type (guest, logged-in user) will access specific features according to their role.
+Detailed mockups and design choices will be presented in the Design Document (DD).
 BBP will be implemented as a mobile application available for Android and iOS devices.
 The interface will be designed to be intuitive and minimal, allowing users to create, browse, and report bike paths directly from their smartphones.
 Main sections will include an interactive map, a reporting form, a trip history, and user statistics.
@@ -18,15 +24,23 @@ Detailed mockups and design choices will be presented in the Design Document (DD
 The application will run on common smartphones equipped with GPS, internet connection, and basic sensors.
 The GPS module will be used to track routes and provide automatic path creation, while optional sensors (accelerometer or gyroscope) may improve data accuracy.
 A stable network connection will be required for map loading and data synchronization.
+The application will run on common smartphones equipped with GPS, internet connection, and basic sensors.
+The GPS module will be used to track routes and provide automatic path creation, while optional sensors (accelerometer or gyroscope) may improve data accuracy.
+A stable network connection will be required for map loading and data synchronization.
 
 \subsection{Software Interfaces}
 \label{subsec:software_interfaces}
 The BBP application will interact with a remote backend through RESTful APIs.
 These APIs will handle user authentication, map data, path storage, and report submission.
 External services may also be used to obtain weather data relevant to the user's current route.
+The BBP application will interact with a remote backend through RESTful APIs.
+These APIs will handle user authentication, map data, path storage, and report submission.
+External services may also be used to obtain weather data relevant to the user's current route.
 
 \subsection{Communication Interfaces}
 \label{subsec:communication_interfaces}
+All communications between the mobile app and the server will occur via HTTPS to guarantee secure data exchange.
+The system will use JSON-formatted requests and responses.
 All communications between the mobile app and the server will occur via HTTPS to guarantee secure data exchange.
 The system will use JSON-formatted requests and responses.
 
@@ -110,6 +124,81 @@ The requirements are organized according to the main functionalities of the syst
 		      \item[\textbf{[R36]}] The system shall ensure that communication with all external services (map, weather) handles temporary unavailability gracefully.
 	      \end{itemize}
 \end{enumerate}
+This subsection specifies all the functional requirements that the BBP system must fulfill to achieve the goals described in the previous chapters.
+The requirements are organized according to the main functionalities of the system and are expressed in a testable form, describing what the system shall do rather than how it shall be implemented.
+
+\begin{enumerate}
+	\item \textbf{User Registration and Authentication}
+	      \begin{itemize}
+		      \item[\textbf{[R1]}] The system shall allow users to sign up for the application.
+		      \item[\textbf{[R2]}] The system shall allow registered users to login to the application.
+		      \item[\textbf{[R3]}] The system shall allow logged-in users to view their profile and account settings.
+		      \item[\textbf{[R4]}] The system shall allow logged-in users to update their profile and account settings.
+	      \end{itemize}
+	\item \textbf{Trip Recording and Management}
+	      \begin{itemize}
+		      \item[\textbf{[R5]}] The system shall allow logged-in users to start recording a cycling trip.
+		      \item[\textbf{[R6]}] The system shall allow logged-in users to stop recording a cycling trip.
+		      \item[\textbf{[R7]}] The system shall automatically collect GPS data during trip recording.
+		      \item[\textbf{[R8]}] The system shall automatically collect motion sensor data (accelerometer, gyroscope) during trip recording when available.
+		      \item[\textbf{[R9]}] The system shall allow logged-in users to view a list of their recorded trips and general statistics across them.
+		      \item[\textbf{[R10]}] The system shall allow logged-in users to view statistics (distance, speed, duration, metrics) about each recorded trip.
+		      \item[\textbf{[R11]}] The system shall display to logged-in users the route of a trip they have taken and the obstacles encountered or reported.
+	      \end{itemize}
+	\item \textbf{Trip Data Enrichment}
+	      \begin{itemize}
+		      \item[\textbf{[R12]}] The system shall allow logged-in users to enrich trip data with meteorological information (weather, temperature, wind speed) when an external device is available.
+		      \item[\textbf{[R13]}] The system shall communicate with weather services to retrieve meteorological data for trip enrichment.
+	      \end{itemize}
+	\item \textbf{Automatic Data Processing}
+	      \begin{itemize}
+		      \item[\textbf{[R14]}] The system shall detect that a user is cycling based on speed patterns from collected data.
+		      \item[\textbf{[R15]}] The system shall detect irregular movements from sensor data that may suggest potholes or surface issues.
+		      \item[\textbf{[R16]}] The system shall present automatically detected path and obstacle data to logged-in users for confirmation before they can be made publishable.
+	      \end{itemize}
+	\item \textbf{Path Information Management - Manual}
+	      \begin{itemize}
+		      \item[\textbf{[R17]}] The system shall allow logged-in users to manually create a new bike path by specifying street names and segments.
+		      \item[\textbf{[R18]}] The system shall allow logged-in users to manually report obstacles on a bike path.
+		      \item[\textbf{[R19]}] The system shall allow logged-in users to manually update the status of an existing bike path.
+		      \item[\textbf{[R20]}] The system shall allow logged-in users to manually confirm or reject the presence of an obstacle reported by other users.
+	      \end{itemize}
+	\item \textbf{Path Information Management - Automatic}
+	      \begin{itemize}
+		      \item[\textbf{[R21]}] The system shall allow logged-in users to create a new bike path in automatic mode.
+		      \item[\textbf{[R22]}] The system shall allow logged-in users to view a list of their submitted (manual and automatic) path reports.
+		      \item[\textbf{[R23]}] The system shall allow logged-in users to make their path information (manual or confirmed automatic) publishable.
+	      \end{itemize}
+	\item \textbf{Path Data Aggregation and Status}
+	      \begin{itemize}
+		      \item[\textbf{[R24]}] The system shall aggregate multiple reports about the same path segment.
+		      \item[\textbf{[R25]}] The system shall determine the most reliable path status based on report freshness and the number of confirmations.
+		      \item[\textbf{[R26]}] The system shall display the current status of bike paths (optimal, medium, sufficient, requires maintenance, closed).
+		      \item[\textbf{[R27]}] The system shall allow any user (logged-in or guest) to view detailed information about a specific bike path (status, obstacles, last update time).
+	      \end{itemize}
+	\item \textbf{Route Discovery and Search}
+	      \begin{itemize}
+		      \item[\textbf{[R28]}] The system shall allow any user (logged-in or guest) to browse available bike paths.
+		      \item[\textbf{[R29]}] The system shall allow any user (logged-in or guest) to search for bike paths between two locations.
+		      \item[\textbf{[R30]}] The system shall display bike paths on a map.
+		      \item[\textbf{[R31]}] The system shall display reports and obstacles associated with public paths.
+		      \item[\textbf{[R32]}] The system shall compute optimal routes considering path quality.
+		      \item[\textbf{[R33]}] The system shall rank suggested paths based on their status and effectiveness.
+	      \end{itemize}
+	\item \textbf{Navigation}
+	      \begin{itemize}
+		      \item[\textbf{[R34]}] The system shall display the user's current position on the map during navigation.
+	      \end{itemize}
+	\item \textbf{Notifications}
+	      \begin{itemize}
+		      \item[\textbf{[R35]}] The system shall send pop-up notifications about obstacles along the followed path during navigation.
+	      \end{itemize}
+	\item \textbf{External Services Integration}
+	      \begin{itemize}
+		      \item[\textbf{[R36]}] The system shall interface with geographical map services for geocoding and path rendering.
+		      \item[\textbf{[R37]}] The system shall interface with weather services to obtain meteorological data for trip enrichment.
+	      \end{itemize}
+\end{enumerate}
 
 \subsection{Use Case Diagrams}
 \label{subsec:use_case_diagrams}
@@ -158,32 +247,663 @@ Finally, users can view their activity history and per-trip or overall statistic
 	\caption{Logged-in User Use Case Diagram}
 	\label{fig:use_case_logged_in_user}
 \end{figure}
+This subsection illustrates the main interactions between actors and the BBP system.
+Each diagram focuses on a specific actor category, distinguishing what a guest user can do from the actions reserved to logged-in users.
 
-\subsubsection{Use Cases}
-\label{subsubsec:use_cases}
+\subsubsection{Authentication and Profile Management}
+This diagram shows how users access and manage their personal area within the system.
+Guest users can register to create an account and then log in to gain full access to BBP functionalities.
+Both the Register and Log-in cases include the Validate Inputs use case, ensuring that all user-provided data meet format and consistency rules.
+Once authenticated, users can log out, edit their personal information, and control the visibility of their profile data.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{Images/Use_Case_Diagrams/register_login_uc.png}
+	\caption{Authentication and Profile Management Use Case Diagram }
+	\label{fig:use_case_authentication_and_profile_management}
+\end{figure}
+
+\subsubsection{Guest User Use Cases}
+Guest users can freely access public information related to the available bike paths without being authenticated.
+They can search for paths, browse their details, and check the overall condition of each segment.
+When a user selects a path, the system retrieves and displays the corresponding aggregated condition.
+Guests can also start and stop a trip, but the data is not stored or associated with a user account.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{Images/Use_Case_Diagrams/guest_uc.png}
+	\caption{Guest User Use Case Diagram}
+	\label{fig:use_case_guest_user}
+\end{figure}
+
+\subsubsection{Logged-in User Use Cases}
+Logged-in users have access to all interactive and community features of the BBP platform.
+They can create new paths manually or automatically, by recording their route or by manually adding segments.
+Each new path can be saved only after passing the Validate Inputs step and may optionally be made public.
+Users can also delete paths they have created.
+During trip recording, data from sensors are analyzed to automatically detect anomalies; these detections trigger the Confirm/Reject Detection extension, allowing the user to verify their validity.
+Users can also report path conditions manually and review other users' reports.
+Once a trip is stopped, a summary enriched with weather data is generated.
+Finally, users can view their activity history and per-trip or overall statistics.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{Images/Use_Case_Diagrams/loggedin_uc.png}
+	\caption{Logged-in User Use Case Diagram}
+	\label{fig:use_case_logged_in_user}
+\end{figure}
+
+\subsection{Use Cases}
+\label{subsec:use_cases}
+The main system processes that define the core functionalities of BBP are described below.
+Each process is presented through a structured table that details the actors involved, the flow of events, and possible exceptions.
+A corresponding sequence diagram is provided for each process to illustrate the interaction between the actor and the system components during its execution.
 
 \textbf{[UC1]} - User Registration
 \begin{table}[H]
 	\centering
 	\label{tab:UC1}
-	\begin{tabularx}{\textwidth}{|p{0.3\textwidth}|X|}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
-		\textbf{Actor(s)}        & none    \\ \hline
-		\textbf{Entry Condition} & none    \\ \hline
-		\textbf{Event Flow}      & 1. none \\
-		                         & 2. none \\
-		                         & 3. none \\ \hline
-		\textbf{Exit Condition}  & none    \\ \hline
-		\textbf{Exceptions}      & none    \\ \hline
-		\textbf{Notes}           & none    \\ \hline
+		\textbf{Actor(s)}        & Guest User                                                                                               \\ \hline
+		\textbf{Entry Condition} & The actor does not have an account, wants to register and is on the app's welcome page.                  \\ \hline
+		\textbf{Event Flow}      & 1. The actor clicks on the “Sign Up” button.                                                             \\
+		                         & 2. The system displays the registration form.                                                            \\
+		                         & 3. The actor fills in the required personal information (e.g., name, email, password).                   \\
+		                         & 4. The system validates the provided data.                                                               \\
+		                         & 5. If validation succeeds, the system creates a new account and redirects the actor to the welcome page. \\ \hline
+		\textbf{Exit Condition}  & A new user account is created.                                                                           \\ \hline
+		\textbf{Exceptions}      & If the data are invalid or incomplete, the system shows an error and asks for correction.                \\
+		                         & If the email is already logged-in, the system shows an error and invites the user to log in.             \\
+		                         & If a temporary connection or BBP error occurs, the system displays an appropriate error message.         \\ \hline
+		\textbf{Notes}           & The entered password is stored in a hashed form for security purposes.                                   \\ \hline
 	\end{tabularx}
 	\caption{User Registration Process Detail}
 \end{table}
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/user_registration.png}
+	\caption{User Registration Sequence Diagram}
+	\label{fig:use_case_user_registration}
+\end{figure}
+
+
+\textbf{[UC2]} - User Log In
+\begin{table}[H]
+	\centering
+	\label{tab:UC2}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Guest User                                                                                                              \\ \hline
+		\textbf{Entry Condition} & The actor has an account, wants to access it and is on the application's welcome page.                                  \\ \hline
+		\textbf{Event Flow}      & 1. The actor clicks the “Log In” button.                                                                                \\
+		                         & 2. The system displays the login form.                                                                                  \\
+		                         & 3. The actor enters valid credentials (email and password).                                                             \\
+		                         & 4. The system validates the credentials against the stored data.                                                        \\
+		                         & 5. If validation succeeds, the system authenticates the user and redirects them to the home page.                       \\ \hline
+		\textbf{Exit Condition}  & The actor is successfully authenticated.                                                                                \\ \hline
+		\textbf{Exceptions}      & If the credentials are invalid or incomplete, the system displays an error message and prevents access until corrected. \\
+		                         & If the credentials are unrecognized,  the system displays an error message and allows another login attempt.            \\
+		                         & If a temporary connection or BBP error occurs,  the system displays an error message and allows retry.                  \\ \hline
+		\textbf{Notes}           & After login, a valid session is created; the session expires automatically after a period of inactivity.                \\ \hline
+	\end{tabularx}
+	\caption{User Log In Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/user_login.png}
+	\caption{User Log In Sequence Diagram}
+	\label{fig:use_case_user_login}
+\end{figure}
+
+\textbf{[UC3]} - User Log Out
+\begin{table}[H]
+	\centering
+	\label{tab:UC3}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                 \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and is using the application.                                                                                       \\ \hline
+		\textbf{Event Flow}      & 1. The actor clicks on the “Log out” option.                                                                                                   \\
+		                         & 2. The system disconnects the actor from the current session.                                                                                  \\
+		                         & 3. The system clears user-specific local data, and redirects the actor to the welcome page.                                                    \\ \hline
+		\textbf{Exit Condition}  & The actor is successfully logged out.                                                                                                          \\ \hline
+		\textbf{Exceptions}      & If BBP cannot invalidate the session or the network is unavailable, the system displays an error message and prompts the actor to retry later. \\ \hline
+		\textbf{Notes}           & Session is terminated; next access requires re-authentication.                                                                                 \\ \hline
+	\end{tabularx}
+	\caption{User Log Out Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/user_logout.png}
+	\caption{User Log Out Sequence Diagram}
+	\label{fig:use_case_user_logout}
+\end{figure}
+
+\textbf{[UC4]} - Search for a Path
+\begin{table}[H]
+	\centering
+	\label{tab:UC4}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Guest User, Logged-in User                                                                                          \\ \hline
+		\textbf{Entry Condition} & The actor is on the home page and wants to find a bike path.                                                        \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects the “Search” option.                                                                           \\
+		                         & 2. The system displays the search panel.                                                                            \\
+		                         & 3. The actor enters start and destination points.                                                                   \\
+		                         & 4. The system validates the provided inputs.                                                                        \\
+		                         & 5. The system displays the list of suggested routes to the actor.                                                   \\ \hline
+		\textbf{Exit Condition}  & The suggested routes are displayed to the actor.                                                                    \\ \hline
+		\textbf{Exceptions}      & If the inputs are invalid or incomplete,  the system displays an error message and prevents search until corrected. \\
+		                         & If no route is found, the system displays an error message and suggests adjusting inputs/filters.                   \\
+		                         & If there is a temporary connection or BBP error, the system displays an error message and allows retry.             \\ \hline
+		\textbf{Notes}           & None.                                                                                                               \\ \hline
+	\end{tabularx}
+	\caption{Search for a Path Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/search_path.png}
+	\caption{Search for a Path Sequence Diagram}
+	\label{fig:use_case_search_path}
+\end{figure}
+
+\textbf{[UC5]} - Select a Path
+\begin{table}[H]
+	\centering
+	\label{tab:UC5}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Guest User, Logged-in User                                                                                                   \\ \hline
+		\textbf{Entry Condition} & The actor has just performed a search or is browsing the catalog and is viewing the list of suggested paths.                 \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects one path from the results list.                                                                         \\
+		                         & 2. The system displays the path details (overview, distance, ranking, reports)                                               \\ \hline
+		\textbf{Exit Condition}  & The path is selected. If the starting point is the current user's position, the system is ready to start the trip.           \\ \hline
+		\textbf{Exceptions}      & If the selected path is unavailable (removed/updated), the system displays an error message and returns to the results list. \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.                        \\ \hline
+		\textbf{Notes}           & Only Logged-in Users can store trip data; Guest Users can follow the path without recording.                                 \\ \hline
+	\end{tabularx}
+	\caption{Select a Path Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/select_path.png}
+	\caption{Select a Path Sequence Diagram}
+	\label{fig:use_case_select_path}
+\end{figure}
+
+\textbf{[UC6]} - Create a Path in Manual Mode
+\begin{table}[H]
+	\centering
+	\label{tab:UC6}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                   \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and wants to create a new path manually.                                              \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects 'Create Path'.                                                                              \\
+		                         & 2. The system displays the available creation modes.                                                             \\
+		                         & 3. The actor chooses 'Manual'.                                                                                   \\
+		                         & 4. The system displays the input page for manual creation (metadata + map editor).                               \\
+		                         & 5. The actor fills in metadata (e.g., name, description, visibility) and draws/adds segments on the map.         \\
+		                         & 6. The system validates the provided metadata and the geometry of the segments.                                  \\
+		                         & 7. If validation succeeds, the system saves the path that will appear in the actor's path list.                  \\ \hline
+		\textbf{Exit Condition}  & The new path is successfully created and associated with the actor's account.                                    \\ \hline
+		\textbf{Exceptions}      & If the data are invalid or incomplete, the system displays an error message and prevents saving until corrected. \\
+		                         & If there is a temporary connection or system error, the system displays an error message and allows retry.       \\ \hline
+		\textbf{Notes}           & The path visibility follows the selected setting.                                                                \\ \hline
+	\end{tabularx}
+	\caption{Create a Path in Manual Mode Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/create_manual.png}
+	\caption{Create a Path in Manual Mode Sequence Diagram}
+	\label{fig:use_case_create_path_manual}
+\end{figure}
+
+\textbf{[UC7]} - Create a Path in Automatic Mode
+\begin{table}[H]
+	\centering
+	\label{tab:UC7}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                 \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and wants to create a new path using the Automatic Mode.                                                            \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects 'Create Path'.                                                                                                            \\
+		                         & 2. The system displays the available creation modes.                                                                                           \\
+		                         & 3. The actor chooses 'Automatic'.                                                                                                              \\
+		                         & 4. The system displays the input page for metadata configuration.                                                                              \\
+		                         & 5. The actor fills in basic metadata (e.g., name, visibility, description).                                                                    \\
+		                         & 6. The system validates the provided metadata.                                                                                                 \\
+		                         & 7. If the validation succeeds, the system confirms readiness and starts GPS tracking.                                                          \\
+		                         & 8. The system continuously collects geo-coordinates from the GPS while the actor is moving.                                                    \\
+		                         & 9. Once tracking stops, the system validates the recorded GPS data.                                                                            \\
+		                         & 10. If validation succeeds, the system saves the new path.                                                                                     \\ \hline
+		\textbf{Exit Condition}  & The automatically recorded path is successfully validated and stored in the database, associated with the actor's account.                     \\ \hline
+		\textbf{Exceptions}      & If the data are invalid or incomplete, the system displays an error message and prevents saving until corrected.                               \\
+		                         & If GPS signal is lost or unstable, the system displays an error message and prompts the actor to retry.                                        \\
+		                         & If temporary connection or system error occurs, the system displays an error message and allows retry later.                                   \\ \hline
+		\textbf{Notes}           & The system continuously records and buffers GPS data locally during tracking. Only after successful validation is the path permanently stored. \\ \hline
+	\end{tabularx}
+	\caption{Create a Path in Automatic Mode Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/create_automatic.png}
+	\caption{Create a Path in Automatic Mode Sequence Diagram}
+	\label{fig:use_case_create_path_automatic}
+\end{figure}
+
+\textbf{[UC8]} - Delete a Path
+\begin{table}[H]
+	\centering
+	\label{tab:UC8}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                         \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and wants to remove one of their previously created paths.                                  \\ \hline
+		\textbf{Event Flow}      & 1. The actor accesses the “My Paths” section.                                                                          \\
+		                         & 2. The system retrieves and displays the list of paths owned by the actor.                                             \\
+		                         & 3. The actor selects a path and requests its deletion.                                                                 \\
+		                         & 4. The system verifies ownership and deletes the corresponding path.                                                   \\ \hline
+		\textbf{Exit Condition}  & The selected path is permanently deleted and no longer visible in the actor's list.                                    \\ \hline
+		\textbf{Exceptions}      & If the actor tries to delete a path they do not own, the system displays an ownership error message.                   \\
+		                         & If the selected path does not exist or was already deleted, the system notifies the actor that the path was not found. \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry later.            \\ \hline
+		\textbf{Notes}           & Deletion is irreversible. Only the creator of the path can perform this operation.                                     \\ \hline
+	\end{tabularx}
+	\caption{Delete a Path Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/delete_path.png}
+	\caption{Delete a Path Sequence Diagram}
+	\label{fig:use_case_delete_path}
+\end{figure}
+
+\textbf{[UC9]} - Start a Trip as Guest User
+\begin{table}[H]
+	\centering
+	\label{tab:UC9}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Guest User                                                                                                                               \\ \hline
+		\textbf{Entry Condition} & The actor has selected a path and wants to follow it without authentication.                                                             \\ \hline
+		\textbf{Event Flow}      & 1. The actor chooses to start the trip on the selected path.                                                                             \\
+		                         & 2. The system activates GPS tracking to obtain the actor's real-time location.                                                           \\
+		                         & 3. The system continuously updates the actor's position on the map during the trip.                                                      \\ \hline
+		\textbf{Exit Condition}  & The trip visualization ends when the actor stops the trip or leaves the page; no trip data are stored.                                   \\ \hline
+		\textbf{Exceptions}      & If the GPS signal is unavailable or the connection to BBP fails, the system displays an error message and allows retry.                  \\ \hline
+		\textbf{Notes}           & Guest Users can only visualize their current location relative to the selected path; no recording, statistics, or reports are generated. \\ \hline
+	\end{tabularx}
+	\caption{Start a Trip as Guest User Process Detail}
+\end{table}
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/start_guest.png}
+	\caption{Start a Trip as Guest User Sequence Diagram}
+	\label{fig:use_case_start_trip_guest}
+\end{figure}
+
+
+\textbf{[UC10]} - Start a Trip in Manual Mode as a Logged-in User
+\begin{table}[H]
+	\centering
+	\label{tab:UC10}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                      \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated, has selected a path to follow, and wants to start the trip with manual mode.            \\ \hline
+		\textbf{Event Flow}      & 1. The actor chooses to start the trip on the selected path.                                                        \\
+		                         & 2. The system displays the available start modes.                                                                   \\
+		                         & 3. The actor selects Manual mode.                                                                                   \\
+		                         & 4. The system activates GPS tracking to obtain the actor's real-time location.                                      \\
+		                         & 5. The system continuously updates the actor's position on the map during the trip.                                 \\ \hline
+		\textbf{Exit Condition}  & The trip is successfully started; live tracking and map updates are active.                                         \\ \hline
+		\textbf{Exceptions}      & If GPS permissions are denied or the GPS signal is unavailable/unstable, the system shows an error message.         \\
+		                         & If a temporary connection or BBP error occurs, the system shows an error message and allows the actor to retry.     \\ \hline
+		\textbf{Notes}           & While the trip is active, the system may record trip data (e.g., time, distance, speed) for the actor's statistics. \\ \hline
+	\end{tabularx}
+	\caption{Start a Trip in Manual Mode as a Logged-in User Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/start_manual.png}
+	\caption{Start a Trip in Manual Mode as a Logged-in User Sequence Diagram}
+	\label{fig:use_case_start_trip_manual_logged}
+\end{figure}
+
+\textbf{[UC11]} - Start a Trip in Automatic Mode as a Logged-in User
+\begin{table}[H]
+	\centering
+	\label{tab:UC11}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                                                                \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated, has selected a path to follow, and wants to start the trip in Automatic mode, using external devices.                                                             \\ \hline
+		\textbf{Event Flow}      & 1. The actor chooses to start the trip on the selected path.                                                                                                                                  \\
+		                         & 2. The system displays the available start modes.                                                                                                                                             \\
+		                         & 3. The actor selects Automatic mode.                                                                                                                                                          \\
+		                         & 4. The system attempts to connect to the configured external devices.                                                                                                                         \\
+		                         & 5. If the connection succeeds, the system confirms device readiness.                                                                                                                          \\
+		                         & 6. The system activates GPS tracking and enables trip data recording.                                                                                                                         \\
+		                         & 7. The system receives position updates from the GPS.                                                                                                                                         \\
+		                         & 8. While the trip is active, the system updates the actor's position on the map and records trip samples.                                                                                     \\ \hline
+		\textbf{Exit Condition}  & The trip is successfully started; live tracking, map updates, and external device streaming are active.                                                                                       \\ \hline
+		\textbf{Exceptions}      & If external devices cannot be connected, the system shows an error message and does not proceed.                                                                                              \\
+		                         & If the GPS signal is unavailable/unstable or permissions are denied, the system shows an error message and does not start or interrupts tracking.                                             \\ \hline
+		\textbf{Notes}           & External devices are optional; when connected, their data are buffered locally together with GPS samples. Final validation/storage happens at trip stop. No path editing occurs in this flow. \\ \hline
+	\end{tabularx}
+	\caption{Start a Trip in Automatic Mode as a Logged-in User Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/start_automatic.png}
+	\caption{Start a Trip in Automatic Mode as a Logged-in User Sequence Diagram}
+	\label{fig:use_case_start_trip_automatic_logged}
+\end{figure}
+
+\textbf{[UC12]} - Stop a Trip as Guest User
+\begin{table}[H]
+	\centering
+	\label{tab:UC12}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Guest User                                                                               \\ \hline
+		\textbf{Entry Condition} & The actor is currently on a trip, he is visualizing a map with real-time position.       \\ \hline
+		\textbf{Event Flow}      & 1. The actor chooses to stop the trip or leaves the page.                                \\
+		                         & 2. The system stops GPS tracking and ends the map visualization.                         \\ \hline
+		\textbf{Exit Condition}  & The trip visualization ends; no trip data are stored.                                    \\ \hline
+		\textbf{Exceptions}      &                                                                                          \\ \hline
+		\textbf{Notes}           & Guest Users only visualize the trip; no recording, statistics, or reports are generated. \\ \hline
+	\end{tabularx}
+	\caption{Stop a Trip as a Guest User Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/stop_guest.png}
+	\caption{Stop a Trip as a Guest User Sequence Diagram}
+	\label{fig:use_case_stop_trip_guest}
+\end{figure}
+
+\textbf{[UC13]} - Stop a Trip as a Logged-in User
+\begin{table}[H]
+	\centering
+	\label{tab:UC13}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                      \\ \hline
+		\textbf{Entry Condition} & The actor is currently performing a trip in Manual or Automatic mode.                                                                               \\ \hline
+		\textbf{Event Flow}      & 1. The actor chooses to stop the current trip.                                                                                                      \\
+		                         & 2. The system disconnects external devices (if any) and stops GPS tracking.                                                                         \\
+		                         & 3. The system validates the collected data (e.g., duration, distance, reports).                                                                     \\
+		                         & 5. If possible, the system enriches the trip data with meteorological information (e.g., weather, temperature), retrieved from an external service. \\
+		                         & 4. The system stores the trip data in the actor's account.                                                                                          \\
+		                         & 6. The system displays a confirmation and a summary view.                                                                                           \\ \hline
+		\textbf{Exit Condition}  & The trip is stopped and the collected data are successfully saved.                                                                                  \\ \hline
+		\textbf{Exceptions}      & If data validation fails, the system displays an error message and prevents completion until corrected.                                             \\
+		                         & If enrichment with external data fails, the system proceeds without adding that information.                                                        \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.                                               \\ \hline
+		\textbf{Notes}           & Once a trip is stopped, recording cannot be resumed; a new session is required to continue.                                                         \\ \hline
+	\end{tabularx}
+	\caption{Stop a Trip as a Logged-in User Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/stop_loggedin.png}
+	\caption{Stop a Trip as a Logged-in User Sequence Diagram}
+	\label{fig:use_case_stop_trip_loggedin}
+\end{figure}
+
+\textbf{[UC14]} - Make a Report in Manual Mode
+\begin{table}[H]
+	\centering
+	\label{tab:UC14}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                       \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated, is on a trip, and wants to report a problem or an obstacle on the path.                  \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects the “Report" option.                                                                            \\
+		                         & 2. The system displays the reporting form.                                                                           \\
+		                         & 3. The actor fills in the report data (e.g., type, description).                                                     \\
+		                         & 4. The system retrieves the actor’s current GPS position.                                                            \\
+		                         & 5. The system validates the provided data.                                                                           \\
+		                         & 6. If validation succeeds, the system saves the report and links it to the position and the current trip.            \\
+		                         & 7. The system confirms submission and returns to the path view.                                                      \\ \hline
+		\textbf{Exit Condition}  & A new report is created and associated with the position and current trip.                                           \\ \hline
+		\textbf{Exceptions}      & If the data are invalid or incomplete, the system displays an error message and prevents submission until corrected. \\
+		                         & If GPS position cannot be retrieved, the system displays an error message and allows retry.                          \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.                \\ \hline
+		\textbf{Notes}           & The report includes timestamp and geolocation. Reports will impact path ranking.                                     \\ \hline
+	\end{tabularx}
+	\caption{Make a Report in Manual Mode Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/report_manual.png}
+	\caption{Make a Report in Manual Mode Sequence Diagram}
+	\label{fig:use_case_report_problem_manual}
+\end{figure}
+
+\textbf{[UC15]} - Make a Report in Automatic Mode
+\begin{table}[H]
+	\centering
+	\label{tab:UC15}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                     \\ \hline
+		\textbf{Entry Condition} & The actor is performing a trip in Automatic mode; external devices/sensors are active.                                             \\ \hline
+		\textbf{Event Flow}      & 1. A connected sensor detects a potential issue on the path.                                                                       \\
+		                         & 2. The system displays a form with a prefilled report (e.g., type, timestamp, location).                                           \\
+		                         & 3. The actor chooses whether to review/edit the data and submit the report, or dismiss the form.                                   \\
+		                         & 4. The system retrieves the actor’s current GPS position.                                                                          \\
+		                         & 5. The system validates the provided data.                                                                                         \\
+		                         & 6. If validation succeeds, the system saves the report and links it to the position and the current trip.                          \\
+		                         & 7. The system confirms submission and returns to the trip view.                                                                    \\ \hline
+		\textbf{Exit Condition}  & The report is created and associated with the selected position and current trip, or the form is dismissed and the trip continues. \\ \hline
+		\textbf{Exceptions}      & If the data are invalid or incomplete, the system displays an error message and prevents submission until corrected.               \\
+		                         & If the GPS position cannot be determined, the system displays an error message and allows the actor to manually enter a location.  \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry later.                        \\ \hline
+		\textbf{Notes}           & If the actor dismisses the form, no report is created and the trip proceeds. Prefilled data come from sensors (e.g., gyroscope).   \\ \hline
+	\end{tabularx}
+	\caption{Make a Report in Automatic Mode Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/report_automatic.png}
+	\caption{Make a Report in Automatic Mode Sequence Diagram}
+	\label{fig:use_case_report_problem_automatic}
+\end{figure}
+
+
+\textbf{[UC16]} - Confirm a Report
+\begin{table}[H]
+	\centering
+	\label{tab:UC16}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                                                                 \\ \hline
+		\textbf{Entry Condition} & The actor is currently performing a trip. The system already knows the actor’s current position through GPS tracking and can detect proximity to path segments with existing reports.          \\ \hline
+		\textbf{Event Flow}      & 1. While following the path, the system detects proximity to a segment with existing reports based on the actor’s current position.                                                            \\
+		                         & 2. The system displays a popup summarizing the reported issue (e.g., “Users have reported a pothole here. Do you confirm it?”).                                                                \\
+		                         & 3. The actor chooses one of the available options:                                                                                                                                             \\
+		                         & \hspace{1em} \textbf{Confirm:} the system registers the actor’s confirmation, increasing the report’s reliability.                                                                             \\
+		                         & \hspace{1em} \textbf{Reject:} the system registers the actor’s feedback as “not confirmed”.                                                                                                    \\
+		                         & \hspace{1em} \textbf{Ignore:} the popup is dismissed without any action.                                                                                                                       \\
+		                         & 4. The trip continues normally.                                                                                                                                                                \\ \hline
+		\textbf{Exit Condition}  & The system updates the report’s confirmation status (confirmed, rejected, or unchanged).                                                                                                       \\ \hline
+		\textbf{Exceptions}      & If the data are invalid or incomplete, the system displays an error message.                                                                                                                   \\
+		                         & If a temporary connection or BBP error occurs and the feedback cannot be saved, the system displays an error message.                                                                          \\ \hline
+		\textbf{Notes}           & The feature enables collaborative validation of reports. Multiple confirmations increase a report’s reliability, while rejections decrease it. Guest Users are not prompted for confirmations. \\ \hline
+	\end{tabularx}
+	\caption{Confirm a Report Process Detail}
+\end{table}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/report_confirm.png}
+	\caption{Confirm a Report Sequence Diagram}
+	\label{fig:use_case_confirm_other_reports}
+\end{figure}
+
+\textbf{[UC17]} - Manage Path Visibility
+\begin{table}[H]
+	\centering
+	\label{tab:UC17}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                                                                                                               \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and is viewing the details of one of their created paths, intending to change its visibility.                                                                                                                     \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects “Edit visibility” for a specific path.                                                                                                                                                                                  \\
+		                         & 2. The system retrieves and displays the current visibility setting (e.g., Public, Private).                                                                                                                                                 \\
+		                         & 3. The actor selects a new visibility option and confirms.                                                                                                                                                                                   \\
+		                         & 4. The system validates the input and sends an update request.                                                                                                                                                                               \\
+		                         & 5. If the operation succeeds, the system confirms the update and refreshes the path details.                                                                                                                                                 \\ \hline
+		\textbf{Exit Condition}  & The path visibility is successfully updated according to the actor’s selection.                                                                                                                                                              \\ \hline
+		\textbf{Exceptions}      & If the path is not found, the system notifies the actor.                                                                                                                                                                                     \\
+		                         & If the actor is not the path owner, the system denies the operation and shows an appropriate error message.                                                                                                                                  \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.                                                                                                                                        \\
+		                         & If the input is invalid or incomplete, the system displays an error and asks for correction.                                                                                                                                                 \\ \hline
+		\textbf{Notes}           & This operation modifies only a metadata field (“visibility”) and does not affect the path geometry or statistics. Public paths are visible to other users according to platform rules, while private paths are accessible only to the owner. \\ \hline
+	\end{tabularx}
+	\caption{Manage Path Visibility Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/manage_visibility.png}
+	\caption{Manage Path Visibility Sequence Diagram}
+	\label{fig:use_case_manage_visibility}
+\end{figure}
+
+
+\textbf{[UC18]} - View Trip History and Trip Details
+\begin{table}[H]
+	\centering
+	\label{tab:UC18}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                             \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and has completed at least one trip.                            \\ \hline
+		\textbf{Event Flow}      & 1. The actor accesses the “Trip History” section from the profile or main menu.            \\
+		                         & 3. The system displays the trips associated with the actor chronologically.                \\
+		                         & 4. The actor can selects a specific trip to view detailed data (map, statistics, reports). \\
+		                         & 5. The system retrieves and displays the detailed information for the selected trip.       \\ \hline
+		\textbf{Exit Condition}  & The actor can visualize the details of one or more past trips.                             \\ \hline
+		\textbf{Exceptions}      & If no trips are found, the system shows “No trips available”.                              \\
+		                         & If no trip details are available, the system displays an error message.                    \\
+		                         & If connection to BBP fails, the system shows an error and allows retry.                    \\ \hline
+		\textbf{Notes}           & The system may allow sorting or filtering by date, distance, or ranking.                   \\ \hline
+	\end{tabularx}
+	\caption{View Trip History Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/trip_history.png}
+	\caption{View Trip History and Trip Details Sequence Diagram}
+	\label{fig:use_case_view_trip_history}
+\end{figure}
+
+\textbf{[UC19]} - View Overall Statistics
+\begin{table}[H]
+	\centering
+	\label{tab:UC19}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and has completed one or more trips.                                               \\ \hline
+		\textbf{Event Flow}      & 1. The actor opens the “Statistics” section from the profile or dashboard.                                    \\
+		                         & 2. The system aggregates data from all completed trips (e.g., total distance, average speed, total duration). \\
+		                         & 3. The system displays overall metrics and summaries.                                                         \\ \hline
+		\textbf{Exit Condition}  & The actor visualizes overall statistics about their activity.                                                 \\ \hline
+		\textbf{Exceptions}      & If no trip data are available, the system displays “No statistics available”.                                 \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.         \\ \hline
+		\textbf{Notes}           & These statistics are private.                                                                                 \\ \hline
+	\end{tabularx}
+	\caption{View Overall Statistics Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/stats_overall.png}
+	\caption{View Overall Statistics Sequence Diagram}
+	\label{fig:use_case_view_overall_statistics}
+\end{figure}
+
+\textbf{[UC20]} - View Trip Statistics
+\begin{table}[H]
+	\centering
+	\label{tab:UC20}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                    \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and has selected a trip from the trip history.                                                         \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects a trip to view its detailed statistics.                                                                      \\
+		                         & 2. The system retrieves all data recorded during that trip (e.g., duration, speed graph, distance, elevation, number of reports). \\
+		                         & 3. The system displays the trip's detailed statistics.                                                                            \\ \hline
+		\textbf{Exit Condition}  & The actor views the trip's performance metrics and related information.                                                           \\ \hline
+		\textbf{Exceptions}      & IIf no trip data are available, the system shows an error message.                                                                \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.                             \\ \hline
+		\textbf{Notes}           & This information is visible only to the trip owner.                                                                               \\ \hline
+	\end{tabularx}
+	\caption{View Trip Statistics Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/stats_trip.png}
+	\caption{View Trip Statistics Sequence Diagram}
+	\label{fig:use_case_view_trip_statistics}
+\end{figure}
+
+
+\textbf{[UC21]} - Edit Personal Profile
+\begin{table}[H]
+	\centering
+	\label{tab:UC21}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                                 \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and is on the personal profile page.                                                                                                \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects the “Edit Profile” action.                                                                                                                \\
+		                         & 2. The system displays the editable profile form (e.g., username ).                                                                                            \\
+		                         & 3. The actor modifies one or more fields and submits the changes.                                                                                              \\
+		                         & 4. The system validates the provided data (e.g., required fields).                                                                                             \\
+		                         & 5. If validation succeeds, the system saves the changes and updates the profile view.                                                                          \\ \hline
+		\textbf{Exit Condition}  & The actor's profile information is updated successfully.                                                                                                       \\ \hline
+		\textbf{Exceptions}      & If data are invalid or incomplete, the system displays an error message and prevents saving until corrected.                                                   \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.                                                          \\ \hline
+		\textbf{Notes}           & Changing sensitive data (e.g., email or password) may require re-authentication and/or email verification. Avatar uploads must respect size and format limits. \\ \hline
+	\end{tabularx}
+	\caption{Edit Personal Profile Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/edit_profile.png}
+	\caption{Edit Personal Profile Sequence Diagram}
+	\label{fig:use_case_edit_profile}
+\end{figure}
+
+
 \subsection{Requirement Mapping}
 \label{subsec:requirement_mapping}
-
-% TODO: review this section together
 
 \begin{table}[H]
 	\centering
