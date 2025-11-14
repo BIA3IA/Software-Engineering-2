@@ -1,0 +1,706 @@
+The main objective of the Alloy model presented here is to structure and describe the domain and the behavior of a user selecting an origin 
+and a destination, choosing a suggested path, starting a trip, moving through path segments, and eventually stopping it.
+
+Users are divided into two categories: Guest and LoggedInUser. Through the specification of 
+appropriate predicates, it is possible to highlight the differences between the processes carried out by these two user types. 
+In particular, LoggedInUsers have access to additional functionality, such as viewing the history of completed trips.
+
+We did not include features related to data acquisition modes (manual or automatic) or statistics, as the focus of the model is on the path selection 
+process and the management of the trip itself.
+
+In this model, a location represents an area within which multiple path segments may be defined, and in which a user may be considered 
+present. This notion of location does not represent the user’s exact GPS position but rather their presence within a broader area. 
+This simplification avoids the need to model precise user coordinates, which are not relevant to the purpose of the model.
+
+Finally, a set of assertions has been defined to verify the correctness of the model and its fundamental properties, without manually 
+exploring all possible system states.
+
+
+Below are the main components and constraints of the developed Alloy model.
+
+\begin{lstlisting}[language=alloy]
+
+enum Boolean { True, False }
+
+abstract sig User {  
+  var has_selected: lone Path,
+  var currentLocation: one Location,
+  var current_trip: lone Trip,
+  var trip_origin: lone Location,     
+  var trip_destination: lone Location,
+  var suggested_paths: set Path
+}
+
+sig Guest extends User {}
+
+sig LoggedInUser extends User {
+  var completed_trips: set Trip,
+}
+
+var sig Trip {
+  var bike_path: lone Path,
+  var has_started: one Boolean,
+  var has_finished: one Boolean,
+  var current_segment: lone PathSegment
+}
+
+var sig ActiveTrip, CompletedTrip in Trip {}
+
+sig Path {
+   segments: some PathSegment,
+   origin: one Location,
+   destination: one Location
+}
+
+sig Location {}
+
+sig PathSegment {
+  segmentLocation: one Location,
+  nextSegment: lone PathSegment
+}
+
+\end{lstlisting}
+
+% comando per reindirizzare la navigazione qui chiamandolo alloy:fact-init
+\label{alloy:fact-init}
+
+
+
+\begin{lstlisting}[language=alloy]
+fact init {
+  #LoggedInUser = 1
+  #Guest = 1
+  #Path = 2
+
+  no has_selected
+  no completed_trips
+  no trip_origin
+  no trip_destination
+  no suggested_paths
+  no current_trip
+  no Trip
+  no ActiveTrip
+  no CompletedTrip
+}
+
+fact segHasPath { 
+   all s: PathSegment | some p: Path | s in p.segments 
+}
+
+fact pathStructure {
+  all p: Path | {
+    p.origin != p.destination
+
+    some s: p.segments | s.segmentLocation = p.origin and 
+      (no s2: p.segments | s2.nextSegment = s)
+
+    some s: p.segments | s.segmentLocation = p.destination and 
+      no s.nextSegment
+
+      all s: p.segments | (some s.nextSegment) implies (s.nextSegment in p.segments)
+
+    all s: p.segments | s not in s.^nextSegment
+
+    let first = {s: p.segments | s.segmentLocation = p.origin and 
+                  no s2: p.segments | s2.nextSegment = s} |
+    let reachable = first.*nextSegment |
+    p.segments = reachable
+  }
+}
+
+fact liveTripConsistency {
+   always all t: Trip | (t in ActiveTrip + CompletedTrip) iff some bike_path[t]
+}
+
+fact currentTripConsistency {
+  always (
+    all t: ActiveTrip | one u: User | u.current_trip = t
+    and all u: User | lone u.current_trip
+    and all u: User | some u.current_trip implies (
+      u.current_trip in ActiveTrip
+      and has_selected[u] = bike_path[u.current_trip]
+    )
+  )
+}
+
+fact completedTripsDisjoint {
+  always no (ActiveTrip & CompletedTrip)
+}
+
+fact tripBooleanConsistency {
+  always all t: Trip | one has_started[t] and one has_finished[t]
+}
+
+\end{lstlisting}
+
+To make the model as realistic as possible, some mutable signatures have been defined, such as ActiveTrip and CompletedTrip. 
+These signatures enable the representation of the dynamic evolution of entities within the system, allowing the model to more accurately 
+capture the system’s behavior over time.
+
+Furthermore, a set of facts has been introduced to ensure the consistency and integrity of the model. For example, the pathStructure 
+fact guarantees that all paths are correctly formed, free of cycles, and fully connected between their origin and destination. 
+Other facts, such as liveTripConsistency and currentTripConsistency, ensure that the state of Trip and User entities remains coherent 
+with the operations that can be performed in the system.
+
+\newpage
+For simplicity, paths are assumed to be unidirectional, since the possibility for a user to move backwards along a path is not considered 
+in this model.
+
+An init fact is also defined to initialize the system in its starting state. In this simplified initial configuration, the model begins 
+with one Guest user, one LoggedInUser, and two predefined paths already present in the system.
+
+We now show the main actions a user can perform within the system, modeled using predicates in Alloy.
+Note that each predicate contains frame conditions, which ensure that all relationships not involved in the action remain unchanged.
+
+\begin{lstlisting}[language=alloy]
+
+pred selectOriginDestination[u: User, dest: Location] {
+  // PRECONDITIONS
+  no u.trip_origin
+  no u.trip_destination
+  no u.current_trip
+  u.currentLocation != dest
+  
+  // POSTCONDITIONS
+  trip_origin' = trip_origin + (u -> u.currentLocation)
+  trip_destination' = trip_destination + (u -> dest)
+  
+  // FRAME CONDITIONS
+  Trip' = Trip
+  ActiveTrip' = ActiveTrip
+  CompletedTrip' = CompletedTrip
+  has_selected' = has_selected
+  currentLocation' = currentLocation
+  current_trip' = current_trip
+  completed_trips' = completed_trips
+  bike_path' = bike_path
+  has_started' = has_started
+  has_finished' = has_finished
+  current_segment' = current_segment
+  suggested_paths' = suggested_paths
+}
+
+\end{lstlisting}
+
+A user begins the route selection process by specifying an origin and a destination.
+The destination must be different from the origin.
+Furthermore, for simplicity, it is assumed that the user's current location is always the origin of the selected route.
+This is because, in reality, the user could navigate between multiple locations, but would not be able to begin the journey if they
+were at a location other than the origin of the chosen cycling route. 
+
+\begin{lstlisting}[language=alloy]
+
+pred suggestPaths[u: User] {
+  // PRECONDITIONS
+  some u.trip_origin
+  some u.trip_destination
+  no u.suggested_paths
+  no u.has_selected
+  
+  // POSTCONDITIONS
+  let matchingPaths = {p: Path | p.origin = u.trip_origin and p.destination = u.trip_destination} |
+  some matchingPaths and
+  suggested_paths' = suggested_paths + (u -> matchingPaths)
+  
+  // FRAME CONDITIONS
+  Trip' = Trip
+  ActiveTrip' = ActiveTrip
+  CompletedTrip' = CompletedTrip
+  has_selected' = has_selected
+  currentLocation' = currentLocation
+  current_trip' = current_trip
+  completed_trips' = completed_trips
+  bike_path' = bike_path
+  has_started' = has_started
+  has_finished' = has_finished
+  current_segment' = current_segment
+  trip_origin' = trip_origin
+  trip_destination' = trip_destination
+}
+
+\end{lstlisting}
+
+This model assumes that a route is suggested simply, without considering factors such as ranking or the route's status
+as rated by users.
+
+\begin{lstlisting}[language=alloy]
+
+pred userSelectsPath[u: User, p: Path] {
+  // PRECONDITIONS
+  p in u.suggested_paths
+  no u.has_selected
+  no u.current_trip
+  
+  // POSTCONDITIONS
+  has_selected' = has_selected + (u -> p)
+
+  // FRAME CONDITIONS
+  Trip' = Trip
+  ActiveTrip' = ActiveTrip
+  CompletedTrip' = CompletedTrip
+  currentLocation' = currentLocation
+  current_trip' = current_trip
+  completed_trips' = completed_trips
+  bike_path' = bike_path
+  has_started' = has_started
+  has_finished' = has_finished
+  trip_origin' = trip_origin
+  trip_destination' = trip_destination
+  suggested_paths' = suggested_paths
+}
+
+// STEP 4: Start the trip
+pred startTrip[u: User] {
+  // PRECONDITIONS
+  some u.has_selected
+  no u.current_trip
+  u.currentLocation = u.trip_origin
+
+  let firstSeg = {s: u.has_selected.segments | 
+    s.segmentLocation = u.trip_origin and
+    no s2: u.has_selected.segments | s2.nextSegment = s} |
+  
+  // POSTCONDITIONS
+  some t: Trip' - Trip |
+    Trip' = Trip + t
+    and ActiveTrip' = ActiveTrip + t
+    and bike_path' = bike_path + (t -> u.has_selected)
+    and has_started' = has_started + (t -> True)
+    and has_finished' = has_finished + (t -> False)
+    and current_trip' = current_trip + (u -> t)
+    and current_segment' = current_segment + (t -> firstSeg)
+
+  // FRAME CONDITIONS
+  has_selected' = has_selected
+  currentLocation' = currentLocation
+  completed_trips' = completed_trips
+  CompletedTrip' = CompletedTrip
+  trip_origin' = trip_origin
+  trip_destination' = trip_destination
+  suggested_paths' = suggested_paths
+}
+
+pred moveAlongPath[u: User] {
+  // PRECONDITIONS
+  some u.current_trip
+  u.current_trip in ActiveTrip
+  has_started[u.current_trip] = True
+  has_finished[u.current_trip] = False
+  some current_segment[u.current_trip]
+  some current_segment[u.current_trip].nextSegment
+
+  let currSeg = current_segment[u.current_trip] |
+  let nextSeg = currSeg.nextSegment |
+  
+  // POSTCONDITIONS
+  current_segment' = current_segment - (u.current_trip -> PathSegment) + (u.current_trip -> nextSeg)
+  and currentLocation' = currentLocation - (u -> Location) + (u -> nextSeg.segmentLocation)
+
+  // FRAME CONDITIONS
+  Trip' = Trip
+  ActiveTrip' = ActiveTrip
+  CompletedTrip' = CompletedTrip
+  has_selected' = has_selected
+  current_trip' = current_trip
+  completed_trips' = completed_trips
+  bike_path' = bike_path
+  has_started' = has_started
+  has_finished' = has_finished
+  trip_origin' = trip_origin
+  trip_destination' = trip_destination
+  suggested_paths' = suggested_paths
+}
+
+\end{lstlisting}
+
+It is assumed that if two path segments are in the same location, the user always stays in that location
+but if the next path segment is in a different location, the user moves accordingly.
+
+
+\begin{lstlisting}[language=alloy]
+
+pred stopTrip[u: User] {
+  // PRECONDITIONS
+  some u.current_trip
+  u.current_trip in ActiveTrip
+  has_started[u.current_trip] = True
+  u.currentLocation = u.trip_destination
+  no current_segment[u.current_trip].nextSegment
+
+  // POSTCONDITIONS
+  has_finished' = has_finished - (u.current_trip -> Boolean) + (u.current_trip -> True)
+
+  // FRAME CONDITIONS
+  Trip' = Trip
+  ActiveTrip' = ActiveTrip
+  CompletedTrip' = CompletedTrip
+  has_selected' = has_selected
+  currentLocation' = currentLocation
+  current_trip' = current_trip
+  completed_trips' = completed_trips
+  bike_path' = bike_path
+  has_started' = has_started
+  trip_origin' = trip_origin
+  trip_destination' = trip_destination
+  suggested_paths' = suggested_paths
+  current_segment' = current_segment
+}
+
+\end{lstlisting}
+
+Since the model does not account for the possibility of a user abandoning a trip midway, it is assumed that the user can only stop the trip
+upon reaching the destination and after traversing all path segments.
+
+\begin{lstlisting}[language=alloy]
+
+pred finalizeTrip[u: User] {
+  // PRECONDITIONS
+  some u.current_trip
+  u.current_trip in ActiveTrip
+  has_finished[u.current_trip] = True
+
+  let t = u.current_trip |
+  
+  // POSTCONDITIONS
+  ActiveTrip' = ActiveTrip - t
+  and current_trip' = current_trip - (u -> Trip)
+  and has_selected' = has_selected - (u -> Path)
+  and trip_origin' = trip_origin - (u -> Location)
+  and trip_destination' = trip_destination - (u -> Location)
+  and suggested_paths' = suggested_paths - (u -> Path)
+  and current_segment' = current_segment - (t -> PathSegment)
+  
+  and ((u in LoggedInUser) implies
+        (Trip' = Trip
+         and CompletedTrip' = CompletedTrip + t
+         and bike_path' = bike_path
+         and has_started' = has_started
+         and has_finished' = has_finished
+         and completed_trips' = completed_trips + (u -> t)))
+  
+  and ((u not in LoggedInUser) implies
+        (Trip' = Trip - t
+         and CompletedTrip' = CompletedTrip
+         and bike_path' = bike_path - (t -> Path)
+         and has_started' = has_started - (t -> Boolean)
+         and has_finished' = has_finished - (t -> Boolean)
+         and completed_trips' = completed_trips))
+
+  // FRAME CONDITIONS
+  currentLocation' = currentLocation
+}
+
+\end{lstlisting}
+
+The finalizeTrip predicate handles the completion of a trip differently based on the user's type. LoggedInUsers retain a record of their completed trips,
+while Guest users have their trip data removed from the system upon finalization. Furthermore this predicates ensures to have an extra step 
+where is possibile to see the transtition from ActiveTrip to CompletedTrip.
+
+\begin{lstlisting}[language=alloy]
+
+pred do_something_else {
+  // POSTCONDITIONS = FRAME CONDITIONS
+  Trip' = Trip
+  ActiveTrip' = ActiveTrip
+  CompletedTrip' = CompletedTrip
+  bike_path' = bike_path
+  has_started' = has_started
+  has_finished' = has_finished
+  has_selected' = has_selected
+  currentLocation' = currentLocation
+  current_trip' = current_trip
+  completed_trips' = completed_trips
+  trip_origin' = trip_origin
+  trip_destination' = trip_destination
+  suggested_paths' = suggested_paths
+  current_segment' = current_segment
+}
+
+\end{lstlisting}
+
+The do\_something\_else predicate represents a stuttering step in which the system performs no significant action with respect to the modeled entities and all mutable relations remain unchanged.
+This allows the model to capture periods of inactivity or transitions without observable effects, making the execution traces more realistic.
+In addition, do\_something\_else ensures that the trans fact can always be satisfied: when none of the main events is enabled (because their preconditions fail), the system can still progress by taking a do\_something\_else step instead of “hanging” in a deadlocked state.
+
+\begin{lstlisting}[language=alloy]
+
+fact trans {
+  always (
+    (some u: User, d: Location | selectOriginDestination[u, d]) or
+    (some u: User | suggestPaths[u]) or
+    (some u: User, p: Path | userSelectsPath[u, p]) or
+    (some u: User | startTrip[u]) or
+    (some u: User | moveAlongPath[u]) or
+    (some u: User | stopTrip[u]) or
+    (some u: User | finalizeTrip[u]) or
+    do_something_else
+  )
+}
+
+\end{lstlisting}
+
+The predicate trans defines the possible transitions that can occur in the system at any given time. 
+It ensures that at each step, one of the defined actions can be executed, or the system can remain in a state of inactivity through 
+the do\_something\_else predicate. This approach allows the model to capture the dynamic behavior of the system while ensuring that 
+it can always progress or maintain its state without getting stuck.
+
+Finally, we introduce the predicates used to execute the model and the assertions that verify its correctness. We intentionally do not define 
+a single predicate combining both user types, since running their scenarios separately makes the resulting traces clearer and avoids confusion.
+
+\begin{lstlisting}[language=alloy]
+
+pred guestCompleteCycle {
+  eventually (some d: Location | selectOriginDestination[Guest, d])
+  and eventually suggestPaths[Guest]
+  and eventually (some p: Path | userSelectsPath[Guest, p])
+  and eventually startTrip[Guest]
+  and eventually moveAlongPath[Guest]
+  and eventually stopTrip[Guest]
+  and eventually finalizeTrip[Guest]
+}
+
+pred loggedCompleteCycle {
+  eventually (some d: Location | selectOriginDestination[LoggedInUser, d])
+  and eventually suggestPaths[LoggedInUser]
+  and eventually (some p: Path | userSelectsPath[LoggedInUser, p])
+  and eventually startTrip[LoggedInUser]
+  and eventually moveAlongPath[LoggedInUser]
+  and eventually stopTrip[LoggedInUser]
+  and eventually finalizeTrip[LoggedInUser]
+  and eventually #LoggedInUser.completed_trips = 2
+}
+
+run guestCompleteCycle for 4 but exactly 3 Location, exactly 4 PathSegment, 15 steps
+run loggedCompleteCycle for 4 but exactly 3 Location, exactly 4 PathSegment, 15 steps
+
+
+// ASSERTS
+
+assert activeAndCompletedDisjoint {
+  always (no t: Trip | t in ActiveTrip and t in CompletedTrip)
+}
+
+assert oneActiveTripPerUser {
+  always all u: User |
+    lone u.current_trip
+    and
+    (some u.current_trip implies 
+      (u.current_trip in ActiveTrip and 
+       u.has_selected = bike_path[u.current_trip]))
+}
+
+assert tripCompletionAtDestination {
+  always all u: User |
+    (some u.current_trip and u.current_trip in ActiveTrip and 
+     has_finished[u.current_trip] = True) implies u.currentLocation = u.trip_destination
+}
+
+assert completedTripsNeverLost {
+  always all u: LoggedInUser, t: Trip | (t in u.completed_trips) implies
+    (always t in u.completed_trips)
+}
+
+assert pathConnectivity {
+  all p: Path |
+    let firstSeg = {s: p.segments | s.segmentLocation = p.origin and
+                    no s2: p.segments | s2.nextSegment = s} |
+    let lastSeg = {s: p.segments | s.segmentLocation = p.destination and
+                   no s.nextSegment} |
+    some firstSeg and some lastSeg and
+    lastSeg in firstSeg.*nextSegment
+}
+
+check activeAndCompletedDisjoint for 4 but 16 steps
+check oneActiveTripPerUser for 4 but 16 steps
+check tripCompletionAtDestination for 4 but 16 steps
+check completedTripsNeverLost for 4 but 16 steps
+check pathConnectivity for 4 but 16 steps
+
+\end{lstlisting}
+
+\newpage
+
+To illustrate the dynamic behavior of the Alloy specification, we present a complete execution trace generated by the 
+loggedCompleteCycle predicate. The scenario shows how a LoggedInUser interacts with the system by selecting a route, initiating a trip,
+progressing through its segments, completing it, and finally repeating the process for a second trip until the goal of two completed trips 
+is satisfied.
+
+The initial state corresponds to the configuration defined in the init fact: one Guest, one LoggedInUser, and two predefined Path instances. 
+The LoggedInUser begins in Location0 with no selected route and no active or completed trip.
+
+In the first steps, the user selects the origin and destination of the trip.
+The origin is automatically assigned to the user's current location, while the destination must be distinct from it.
+
+\begin{figure}[H]
+    \centering
+    \subfloat[Initial state\label{fig:alloy-step-0}]{%
+        \includegraphics[width=0.7\linewidth]{../Images/Alloy/0.png}%
+    }%
+    \hfill
+    \subfloat[Origin and destination selection\label{fig:alloy-step-1}]{%
+        \includegraphics[width=0.7\linewidth]{../Images/Alloy/1.png}%
+    }
+    \caption{Initialization and beginning of the route selection process}
+\end{figure}
+
+After selecting the origin and destination, the system suggests one of the available paths that satisfy the specified endpoints.
+
+\vspace{2cm}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{../Images/Alloy/2.png}
+    \caption{System suggesting available paths}
+    \label{fig:alloy-step-2}
+\end{figure}
+
+\newpage
+The LoggedInUser chooses the suggested path and initiates the trip.
+Starting the trip creates a new ActiveTrip instance, sets its initial segment, and marks has\_started = True.
+
+\vspace{1cm}
+\begin{figure}[H]
+    \centering
+    \subfloat[User selects a suggested path\label{fig:alloy-step-4}]{%
+        \includegraphics[width=0.65\linewidth]{../Images/Alloy/3.png}%
+    }%
+    \hfill
+    \subfloat[User starting the trip\label{fig:alloy-step-5}]{%
+        \includegraphics[width=0.65\linewidth]{../Images/Alloy/4.png}%
+    }
+    \caption{User selection and trip initialization}
+\end{figure}
+
+\newpage
+As shown in Figure~\ref{fig:alloy-step-5}, the LoggedInUser changes position from \texttt{Location0} to \texttt{Location2}, moving from PathSegment3 to PathSegment2, which is the next segment after PathSegment3. As can be seen in the figure, the current\_segment has also changed accordingly.
+
+As the trip progresses, the user moves from one segment to the next.
+
+Once the last segment is traversed and the destination is reached, the trip is marked as finished (has\_finished = True).
+
+\vspace{0.6cm}
+\begin{figure}[H]
+    \centering
+    \subfloat[User moving to the next segment\label{fig:alloy-step-5}]{%
+        \includegraphics[width=0.57\linewidth]{../Images/Alloy/5.png}%
+    }%
+    \hfill
+    \subfloat[User arrives at destination\label{fig:alloy-step-6}]{%
+        \includegraphics[width=0.57\linewidth]{../Images/Alloy/6.png}%
+    }
+    \caption{Completion of the first trip}
+\end{figure}
+
+\newpage
+Then there is another extra step to show the transition of the trip from ActiveTrip to CompletedTrip, as depicted in Figure~\ref{fig:alloy-step-7}.
+This state is important to show that when the trip is finalized, it is no longer active and is recorded in the user's completed\_trips relation, that is his history of trips.
+
+\vspace{1.5cm}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{../Images/Alloy/7.png}
+    \caption{Transition from ActiveTrip to CompletedTrip}
+    \label{fig:alloy-step-7}
+\end{figure}
+
+\newpage
+The model then restarts the cycle: the user selects a new origin and destination, a new path is suggested and all the steps are repeated (they're not shown because they are similar to the previous ones)
+until the user has exactly two completed trips as shown in figure \ref{fig:alloy-step-10}.
+\vspace{0.5cm}
+
+\begin{figure}[H]
+    \centering
+    \subfloat[Second origin/destination selection\label{fig:alloy-step-8}]{%
+        \includegraphics[width=0.55\linewidth]{../Images/Alloy/8.png}%
+    }%
+    \hfill
+    \subfloat[Second path suggestion\label{fig:alloy-step-9}]{%
+        \includegraphics[width=0.55\linewidth]{../Images/Alloy/9.png}%
+    }
+    \caption{Beginning of the second trip cycle}
+\end{figure}
+
+\newpage
+The second trip concludes with a new entry in the user's completed\_trips relation.
+\vspace{0.5cm}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{../Images/Alloy/10.png}
+    \caption{Finalization of the second trip}
+    \label{fig:alloy-step-10}
+\end{figure}
+
+\newpage
+Once the user has exactly two completed trips, the goal of the loggedCompleteCycle predicate is satisfied. At this point, Alloy stops generating additional transitions, resulting in a trace of 15 steps (0--14).
+\vspace{0.5cm}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{../Images/Alloy/11.png}
+    \caption{Total number of steps produced by the model}
+    \label{fig:alloy-step-11}
+\end{figure}
+
+Regarding the Guest user, all the steps preceding trip finalization are analogous to those already shown for the LoggedInUser. 
+The only semantic difference emerges at the end of the cycle: as illustrated in Figure~\ref{fig:alloy-step-g4}, the Guest user does not retain any record of completed trips, 
+since Guest instances do not own the \texttt{completed\_trips} relation. 
+
+For brevity, we do not repeat the screenshots related to origin and destination selection, path suggestion, and path selection for the Guest, as they are identical to those presented 
+for the LoggedInUser. Instead, we focus on the part of the execution that starts when the Guest initiates a trip and ends when that trip is finalized.
+
+\begin{figure}[H]
+    \centering
+    \subfloat[User starting the trip\label{fig:alloy-step-g1}]{%
+        \includegraphics[width=0.7\linewidth]{../Images/Alloy/g1.png}%
+    }%
+    \hfill
+    \subfloat[User moving to the next segment\label{fig:alloy-step-g2}]{%
+        \includegraphics[width=0.7\linewidth]{../Images/Alloy/g2.png}%
+    }
+    \caption{Guest user starting the trip and moving along the path}
+\end{figure}
+
+Figure~\ref{fig:alloy-step-g3} shows how the user position and the current segment evolve during the trip: the Guest moves from \texttt{Location1} to \texttt{Location3} 
+and from \texttt{PathSegment3} to \texttt{PathSegment2}.
+
+\begin{figure}[H]
+    \centering
+    \subfloat[User arrives at destination\label{fig:alloy-step-g3}]{%
+        \includegraphics[width=0.7\linewidth]{../Images/Alloy/g3.png}%
+    }%
+    \hfill
+    \subfloat[State after trip finalization\label{fig:alloy-step-g4}]{%
+        \includegraphics[width=0.7\linewidth]{../Images/Alloy/g4.png}%
+    }
+    \caption{Completion and finalization of the Guest user's trip}
+\end{figure}
+
+In the final part of the trace (Figure~\ref{fig:alloy-step-15}), the Guest user does not start a new trip. At this point, the predicate used for this scenario is already satisfied,
+and the remaining steps are realized through stuttering transitions (represented by the \texttt{do\_something\_else} predicate), so no further path is selected. Moreover, 
+in this particular instance there is no additional path available that would allow the Guest to start another trip.
+
+To obtain an execution in which the Guest repeatedly selects and completes trips in a loop, it would be necessary to define a dedicated predicate that explicitly enforces such repeated behavior.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{../Images/Alloy/g5.png}
+    \caption{Total number of steps produced by the Guest scenario}
+    \label{fig:alloy-step-15}
+\end{figure}
+
+\newpage
+All assertions defined in the model were checked using scopes consistent with the scenario.
+No counterexamples were generated (figure \ref{fig:alloy-step-12}), confirming the internal consistency of the specification and the correctness of key properties such as:
+\begin{itemize}
+    \item disjointness of ActiveTrip and CompletedTrip
+    \item uniqueness of active trips per user
+    \item completion only at destination
+    \item persistence of completed trips for LoggedInUser
+    \item path connectivity
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{../Images/Alloy/12.png}
+    \caption{Verification of assertions}
+    \label{fig:alloy-step-12}
+\end{figure}
