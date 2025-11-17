@@ -4,15 +4,9 @@
 \section{External Interface Requirements}
 \label{sec:external_interface_requirements}
 The external interface requirements describe the main interfaces through which users, hardware, and external services communicate with the system.
-The external interface requirements describe the main interfaces through which users, hardware, and external services communicate with the system.
 
 \subsection{User Interfaces}
 \label{subsec:user_interfaces}
-BBP will be implemented as a mobile application available for Android and iOS devices.
-The interface will be designed to be intuitive and minimal, allowing users to create, browse, and report bike paths directly from their smartphones.
-Main sections will include an interactive map, a reporting form, a trip history, and user statistics.
-Each user type (guest, logged-in user) will access specific features according to their role.
-Detailed mockups and design choices will be presented in the Design Document (DD).
 BBP will be implemented as a mobile application available for Android and iOS devices.
 The interface will be designed to be intuitive and minimal, allowing users to create, browse, and report bike paths directly from their smartphones.
 Main sections will include an interactive map, a reporting form, a trip history, and user statistics.
@@ -24,23 +18,15 @@ Detailed mockups and design choices will be presented in the Design Document (DD
 The application will run on common smartphones equipped with GPS, internet connection, and basic sensors.
 The GPS module will be used to track routes and provide automatic path creation, while optional sensors (accelerometer or gyroscope) may improve data accuracy.
 A stable network connection will be required for map loading and data synchronization.
-The application will run on common smartphones equipped with GPS, internet connection, and basic sensors.
-The GPS module will be used to track routes and provide automatic path creation, while optional sensors (accelerometer or gyroscope) may improve data accuracy.
-A stable network connection will be required for map loading and data synchronization.
 
 \subsection{Software Interfaces}
 \label{subsec:software_interfaces}
 The BBP application will interact with a remote backend through RESTful APIs.
 These APIs will handle user authentication, map data, path storage, and report submission.
 External services may also be used to obtain weather data relevant to the user's current route.
-The BBP application will interact with a remote backend through RESTful APIs.
-These APIs will handle user authentication, map data, path storage, and report submission.
-External services may also be used to obtain weather data relevant to the user's current route.
 
 \subsection{Communication Interfaces}
 \label{subsec:communication_interfaces}
-All communications between the mobile app and the server will occur via HTTPS to guarantee secure data exchange.
-The system will use JSON-formatted requests and responses.
 All communications between the mobile app and the server will occur via HTTPS to guarantee secure data exchange.
 The system will use JSON-formatted requests and responses.
 
@@ -124,88 +110,13 @@ The requirements are organized according to the main functionalities of the syst
 		      \item[\textbf{[R36]}] The system shall ensure that communication with all external services (map, weather) handles temporary unavailability gracefully.
 	      \end{itemize}
 \end{enumerate}
-This subsection specifies all the functional requirements that the BBP system must fulfill to achieve the goals described in the previous chapters.
-The requirements are organized according to the main functionalities of the system and are expressed in a testable form, describing what the system shall do rather than how it shall be implemented.
-
-\begin{enumerate}
-	\item \textbf{User Registration and Authentication}
-	      \begin{itemize}
-		      \item[\textbf{[R1]}] The system shall allow users to sign up for the application.
-		      \item[\textbf{[R2]}] The system shall allow registered users to login to the application.
-		      \item[\textbf{[R3]}] The system shall allow logged-in users to view their profile and account settings.
-		      \item[\textbf{[R4]}] The system shall allow logged-in users to update their profile and account settings.
-	      \end{itemize}
-	\item \textbf{Trip Recording and Management}
-	      \begin{itemize}
-		      \item[\textbf{[R5]}] The system shall allow logged-in users to start recording a cycling trip.
-		      \item[\textbf{[R6]}] The system shall allow logged-in users to stop recording a cycling trip.
-		      \item[\textbf{[R7]}] The system shall automatically collect GPS data during trip recording.
-		      \item[\textbf{[R8]}] The system shall automatically collect motion sensor data (accelerometer, gyroscope) during trip recording when available.
-		      \item[\textbf{[R9]}] The system shall allow logged-in users to view a list of their recorded trips and general statistics across them.
-		      \item[\textbf{[R10]}] The system shall allow logged-in users to view statistics (distance, speed, duration, metrics) about each recorded trip.
-		      \item[\textbf{[R11]}] The system shall display to logged-in users the route of a trip they have taken and the obstacles encountered or reported.
-	      \end{itemize}
-	\item \textbf{Trip Data Enrichment}
-	      \begin{itemize}
-		      \item[\textbf{[R12]}] The system shall allow logged-in users to enrich trip data with meteorological information (weather, temperature, wind speed) when an external device is available.
-		      \item[\textbf{[R13]}] The system shall communicate with weather services to retrieve meteorological data for trip enrichment.
-	      \end{itemize}
-	\item \textbf{Automatic Data Processing}
-	      \begin{itemize}
-		      \item[\textbf{[R14]}] The system shall detect that a user is cycling based on speed patterns from collected data.
-		      \item[\textbf{[R15]}] The system shall detect irregular movements from sensor data that may suggest potholes or surface issues.
-		      \item[\textbf{[R16]}] The system shall present automatically detected path and obstacle data to logged-in users for confirmation before they can be made publishable.
-	      \end{itemize}
-	\item \textbf{Path Information Management - Manual}
-	      \begin{itemize}
-		      \item[\textbf{[R17]}] The system shall allow logged-in users to manually create a new bike path by specifying street names and segments.
-		      \item[\textbf{[R18]}] The system shall allow logged-in users to manually report obstacles on a bike path.
-		      \item[\textbf{[R19]}] The system shall allow logged-in users to manually update the status of an existing bike path.
-		      \item[\textbf{[R20]}] The system shall allow logged-in users to manually confirm or reject the presence of an obstacle reported by other users.
-	      \end{itemize}
-	\item \textbf{Path Information Management - Automatic}
-	      \begin{itemize}
-		      \item[\textbf{[R21]}] The system shall allow logged-in users to create a new bike path in automatic mode.
-		      \item[\textbf{[R22]}] The system shall allow logged-in users to view a list of their submitted (manual and automatic) path reports.
-		      \item[\textbf{[R23]}] The system shall allow logged-in users to make their path information (manual or confirmed automatic) publishable.
-	      \end{itemize}
-	\item \textbf{Path Data Aggregation and Status}
-	      \begin{itemize}
-		      \item[\textbf{[R24]}] The system shall aggregate multiple reports about the same path segment.
-		      \item[\textbf{[R25]}] The system shall determine the most reliable path status based on report freshness and the number of confirmations.
-		      \item[\textbf{[R26]}] The system shall display the current status of bike paths (optimal, medium, sufficient, requires maintenance, closed).
-		      \item[\textbf{[R27]}] The system shall allow any user (logged-in or guest) to view detailed information about a specific bike path (status, obstacles, last update time).
-	      \end{itemize}
-	\item \textbf{Route Discovery and Search}
-	      \begin{itemize}
-		      \item[\textbf{[R28]}] The system shall allow any user (logged-in or guest) to browse available bike paths.
-		      \item[\textbf{[R29]}] The system shall allow any user (logged-in or guest) to search for bike paths between two locations.
-		      \item[\textbf{[R30]}] The system shall display bike paths on a map.
-		      \item[\textbf{[R31]}] The system shall display reports and obstacles associated with public paths.
-		      \item[\textbf{[R32]}] The system shall compute optimal routes considering path quality.
-		      \item[\textbf{[R33]}] The system shall rank suggested paths based on their status and effectiveness.
-	      \end{itemize}
-	\item \textbf{Navigation}
-	      \begin{itemize}
-		      \item[\textbf{[R34]}] The system shall display the user's current position on the map during navigation.
-	      \end{itemize}
-	\item \textbf{Notifications}
-	      \begin{itemize}
-		      \item[\textbf{[R35]}] The system shall send pop-up notifications about obstacles along the followed path during navigation.
-	      \end{itemize}
-	\item \textbf{External Services Integration}
-	      \begin{itemize}
-		      \item[\textbf{[R36]}] The system shall interface with geographical map services for geocoding and path rendering.
-		      \item[\textbf{[R37]}] The system shall interface with weather services to obtain meteorological data for trip enrichment.
-	      \end{itemize}
-\end{enumerate}
 
 \subsection{Use Case Diagrams}
 \label{subsec:use_case_diagrams}
 This subsection illustrates the main interactions between actors and the BBP system.
 Each diagram focuses on a specific actor category, distinguishing what a guest user can do from the actions reserved to logged-in users.
 
-\subsubsection{Authentication and Profile Management}
+\subsubsection{Authentication and Profile Management Use Cases}
 This diagram shows how users access and manage their personal area within the system.
 Guest users can register to create an account and then log in to gain full access to BBP functionalities.
 Both the Register and Log-in cases include the Validate Inputs use case, ensuring that all user-provided data meet format and consistency rules.
@@ -213,7 +124,7 @@ Once authenticated, users can log out, edit their personal information, and cont
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.8\textwidth]{Images/Use_Case_Diagrams/register_login_uc.png}
+	\includegraphics[width=0.7\textwidth]{Images/Use_Case_Diagrams/register_login_uc.png}
 	\caption{Authentication and Profile Management Use Case Diagram }
 	\label{fig:use_case_authentication_and_profile_management}
 \end{figure}
@@ -226,7 +137,7 @@ Guests can also start and stop a trip, but the data is not stored or associated 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.8\textwidth]{Images/Use_Case_Diagrams/guest_uc.png}
+	\includegraphics[width=\textwidth]{Images/Use_Case_Diagrams/guest_uc.png}
 	\caption{Guest User Use Case Diagram}
 	\label{fig:use_case_guest_user}
 \end{figure}
@@ -243,52 +154,7 @@ Finally, users can view their activity history and per-trip or overall statistic
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{Images/Use_Case_Diagrams/loggedin_uc.png}
-	\caption{Logged-in User Use Case Diagram}
-	\label{fig:use_case_logged_in_user}
-\end{figure}
-This subsection illustrates the main interactions between actors and the BBP system.
-Each diagram focuses on a specific actor category, distinguishing what a guest user can do from the actions reserved to logged-in users.
-
-\subsubsection{Authentication and Profile Management}
-This diagram shows how users access and manage their personal area within the system.
-Guest users can register to create an account and then log in to gain full access to BBP functionalities.
-Both the Register and Log-in cases include the Validate Inputs use case, ensuring that all user-provided data meet format and consistency rules.
-Once authenticated, users can log out, edit their personal information, and control the visibility of their profile data.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.8\textwidth]{Images/Use_Case_Diagrams/register_login_uc.png}
-	\caption{Authentication and Profile Management Use Case Diagram }
-	\label{fig:use_case_authentication_and_profile_management}
-\end{figure}
-
-\subsubsection{Guest User Use Cases}
-Guest users can freely access public information related to the available bike paths without being authenticated.
-They can search for paths, browse their details, and check the overall condition of each segment.
-When a user selects a path, the system retrieves and displays the corresponding aggregated condition.
-Guests can also start and stop a trip, but the data is not stored or associated with a user account.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.8\textwidth]{Images/Use_Case_Diagrams/guest_uc.png}
-	\caption{Guest User Use Case Diagram}
-	\label{fig:use_case_guest_user}
-\end{figure}
-
-\subsubsection{Logged-in User Use Cases}
-Logged-in users have access to all interactive and community features of the BBP platform.
-They can create new paths manually or automatically, by recording their route or by manually adding segments.
-Each new path can be saved only after passing the Validate Inputs step and may optionally be made public.
-Users can also delete paths they have created.
-During trip recording, data from sensors are analyzed to automatically detect anomalies; these detections trigger the Confirm/Reject Detection extension, allowing the user to verify their validity.
-Users can also report path conditions manually and review other users' reports.
-Once a trip is stopped, a summary enriched with weather data is generated.
-Finally, users can view their activity history and per-trip or overall statistics.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{Images/Use_Case_Diagrams/loggedin_uc.png}
+	\includegraphics[width=\textwidth]{Images/Use_Case_Diagrams/loggedin_uc.png}
 	\caption{Logged-in User Use Case Diagram}
 	\label{fig:use_case_logged_in_user}
 \end{figure}
@@ -327,7 +193,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{User Registration Sequence Diagram}
 	\label{fig:use_case_user_registration}
 \end{figure}
-
+\pagebreak
 
 \textbf{[UC2]} - User Log In
 \begin{table}[H]
@@ -357,6 +223,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{User Log In Sequence Diagram}
 	\label{fig:use_case_user_login}
 \end{figure}
+\pagebreak
 
 \textbf{[UC3]} - User Log Out
 \begin{table}[H]
@@ -378,10 +245,11 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/user_logout.png}
+	\includegraphics[width=0.8\textwidth]{Images/SequenceDiagrams/user_logout.png}
 	\caption{User Log Out Sequence Diagram}
 	\label{fig:use_case_user_logout}
 \end{figure}
+\pagebreak
 
 \textbf{[UC4]} - Search for a Path
 \begin{table}[H]
@@ -397,10 +265,10 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		                         & 4. The system validates the provided inputs.                                                                        \\
 		                         & 5. The system displays the list of suggested routes to the actor.                                                   \\ \hline
 		\textbf{Exit Condition}  & The suggested routes are displayed to the actor.                                                                    \\ \hline
-		\textbf{Exceptions}      & If the inputs are invalid or incomplete,  the system displays an error message and prevents search until corrected. \\
+		\textbf{Exceptions}      & If the inputs are invalid or incomplete, the system displays an error message and prevents search until corrected. \\
 		                         & If no route is found, the system displays an error message and suggests adjusting inputs/filters.                   \\
 		                         & If there is a temporary connection or BBP error, the system displays an error message and allows retry.             \\ \hline
-		\textbf{Notes}           & None.                                                                                                               \\ \hline
+		\textbf{Notes}           & The search results are ranked based on path quality and distance.                                                    \\ \hline
 	\end{tabularx}
 	\caption{Search for a Path Process Detail}
 \end{table}
@@ -411,6 +279,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{Search for a Path Sequence Diagram}
 	\label{fig:use_case_search_path}
 \end{figure}
+\pagebreak
 
 \textbf{[UC5]} - Select a Path
 \begin{table}[H]
@@ -432,10 +301,11 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/select_path.png}
+	\includegraphics[width=0.8\textwidth]{Images/SequenceDiagrams/select_path.png}
 	\caption{Select a Path Sequence Diagram}
 	\label{fig:use_case_select_path}
 \end{figure}
+\pagebreak
 
 \textbf{[UC6]} - Create a Path in Manual Mode
 \begin{table}[H]
@@ -466,6 +336,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{Create a Path in Manual Mode Sequence Diagram}
 	\label{fig:use_case_create_path_manual}
 \end{figure}
+\pagebreak
 
 \textbf{[UC7]} - Create a Path in Automatic Mode
 \begin{table}[H]
@@ -500,6 +371,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{Create a Path in Automatic Mode Sequence Diagram}
 	\label{fig:use_case_create_path_automatic}
 \end{figure}
+\pagebreak
 
 \textbf{[UC8]} - Delete a Path
 \begin{table}[H]
@@ -524,10 +396,11 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/delete_path.png}
+	\includegraphics[width=0.8\textwidth]{Images/SequenceDiagrams/delete_path.png}
 	\caption{Delete a Path Sequence Diagram}
 	\label{fig:use_case_delete_path}
 \end{figure}
+\pagebreak
 
 \textbf{[UC9]} - Start a Trip as Guest User
 \begin{table}[H]
@@ -542,19 +415,18 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		                         & 3. The system continuously updates the actor's position on the map during the trip.                                                      \\ \hline
 		\textbf{Exit Condition}  & The trip visualization ends when the actor stops the trip or leaves the page; no trip data are stored.                                   \\ \hline
 		\textbf{Exceptions}      & If the GPS signal is unavailable or the connection to BBP fails, the system displays an error message and allows retry.                  \\ \hline
-		\textbf{Notes}           & Guest Users can only visualize their current location relative to the selected path; no recording, statistics, or reports are generated. \\ \hline
+		\textbf{Notes}           & Guest Users can only visualize their current location. \\ \hline
 	\end{tabularx}
 	\caption{Start a Trip as Guest User Process Detail}
 \end{table}
 
-
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/start_guest.png}
+	\includegraphics[width=0.8\textwidth]{Images/SequenceDiagrams/start_guest.png}
 	\caption{Start a Trip as Guest User Sequence Diagram}
 	\label{fig:use_case_start_trip_guest}
 \end{figure}
-
+\pagebreak
 
 \textbf{[UC10]} - Start a Trip in Manual Mode as a Logged-in User
 \begin{table}[H]
@@ -583,6 +455,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{Start a Trip in Manual Mode as a Logged-in User Sequence Diagram}
 	\label{fig:use_case_start_trip_manual_logged}
 \end{figure}
+\pagebreak
 
 \textbf{[UC11]} - Start a Trip in Automatic Mode as a Logged-in User
 \begin{table}[H]
@@ -614,6 +487,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{Start a Trip in Automatic Mode as a Logged-in User Sequence Diagram}
 	\label{fig:use_case_start_trip_automatic_logged}
 \end{figure}
+\pagebreak
 
 \textbf{[UC12]} - Stop a Trip as Guest User
 \begin{table}[H]
@@ -634,10 +508,11 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/stop_guest.png}
+	\includegraphics[width=0.8\textwidth]{Images/SequenceDiagrams/stop_guest.png}
 	\caption{Stop a Trip as a Guest User Sequence Diagram}
 	\label{fig:use_case_stop_trip_guest}
 \end{figure}
+\pagebreak
 
 \textbf{[UC13]} - Stop a Trip as a Logged-in User
 \begin{table}[H]
@@ -668,6 +543,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{Stop a Trip as a Logged-in User Sequence Diagram}
 	\label{fig:use_case_stop_trip_loggedin}
 \end{figure}
+\pagebreak
 
 \textbf{[UC14]} - Make a Report in Manual Mode
 \begin{table}[H]
@@ -699,6 +575,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{Make a Report in Manual Mode Sequence Diagram}
 	\label{fig:use_case_report_problem_manual}
 \end{figure}
+\pagebreak
 
 \textbf{[UC15]} - Make a Report in Automatic Mode
 \begin{table}[H]
@@ -730,6 +607,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{Make a Report in Automatic Mode Sequence Diagram}
 	\label{fig:use_case_report_problem_automatic}
 \end{figure}
+\pagebreak
 
 
 \textbf{[UC16]} - Confirm a Report
@@ -756,10 +634,11 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{table}
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/report_confirm.png}
+	\includegraphics[width=0.8\textwidth]{Images/SequenceDiagrams/report_confirm.png}
 	\caption{Confirm a Report Sequence Diagram}
 	\label{fig:use_case_confirm_other_reports}
 \end{figure}
+\pagebreak
 
 \textbf{[UC17]} - Manage Path Visibility
 \begin{table}[H]
@@ -786,11 +665,11 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/manage_visibility.png}
+	\includegraphics[width=0.8\textwidth]{Images/SequenceDiagrams/manage_visibility.png}
 	\caption{Manage Path Visibility Sequence Diagram}
 	\label{fig:use_case_manage_visibility}
 \end{figure}
-
+\pagebreak
 
 \textbf{[UC18]} - View Trip History and Trip Details
 \begin{table}[H]
@@ -815,10 +694,11 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/trip_history.png}
+	\includegraphics[width=0.8\textwidth]{Images/SequenceDiagrams/trip_history.png}
 	\caption{View Trip History and Trip Details Sequence Diagram}
 	\label{fig:use_case_view_trip_history}
 \end{figure}
+\pagebreak
 
 \textbf{[UC19]} - View Overall Statistics
 \begin{table}[H]
@@ -845,6 +725,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{View Overall Statistics Sequence Diagram}
 	\label{fig:use_case_view_overall_statistics}
 \end{figure}
+\pagebreak
 
 \textbf{[UC20]} - View Trip Statistics
 \begin{table}[H]
@@ -871,6 +752,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{View Trip Statistics Sequence Diagram}
 	\label{fig:use_case_view_trip_statistics}
 \end{figure}
+\pagebreak
 
 
 \textbf{[UC21]} - Edit Personal Profile
@@ -900,7 +782,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\caption{Edit Personal Profile Sequence Diagram}
 	\label{fig:use_case_edit_profile}
 \end{figure}
-
+\pagebreak
 
 \subsection{Requirement Mapping}
 \label{subsec:requirement_mapping}
