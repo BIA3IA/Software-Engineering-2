@@ -32,9 +32,9 @@ This layer is responsible for:
 
 The mobile app is intentionally designed as a \textbf{thin client}.
 All domain logic, decision processes, ranking operations, and aggregation of path
-information are delegated to the application layer. The app merely collects inputs
-from the user and device sensors, forwards them to the backend, and presents the
-returned results.
+information are delegated to the application layer. The mobile application also uses
+the secure storage facilities provided by the operating system (iOS Keychain / Android Keystore)
+to safely store authentication tokens and other sensitive data.
 
 \subsection*{Application Layer}
 
@@ -95,6 +95,13 @@ This section describes the main software components that constitute the BBP back
 and their responsibilities. As required by the three-tier architecture adopted by the system,
 the backend is structured into a set of independent yet cooperating modules, each exposing
 well-defined interfaces and encapsulating a cohesive subset of the application logic.
+
+\figure[H]
+\centering
+\includegraphics[width=\textwidth]{Images/ArchitecturalOverview/component_view.png}
+\caption{Component View Diagram}
+\label{fig:component_view}
+\endfigure
 
 \subsection{API Gateway}
 The \textbf{API Gateway} acts as the entry point for all interactions between the BBP mobile
