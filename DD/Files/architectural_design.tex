@@ -7,13 +7,174 @@
 % --------------------------------------------------------------------------
 \section{Overview: High-level components and their interactions}
 \label{sec:overview}%
+\section{Architectural Overview}
+\label{sec:architectural_overview}
+
+The architecture of the Best Bike Paths (BBP) system follows a classic
+\textbf{three-tier structure}, separating the software into a presentation layer,
+an application layer, and a data layer. This architectural style ensures a clear
+division of responsibilities and simplifies the evolution of the system over time.
+Since BBP is conceived as a mobile-centric platform, the presentation tier is
+implemented entirely through the BBP mobile application, which communicates with
+the backend via RESTful APIs over HTTPS.
+
+\subsection*{Presentation Layer}
+
+The presentation layer consists solely of the \textbf{BBP mobile application},
+which serves as the primary interface between users and the system.
+This layer is responsible for:
+\begin{itemize}
+	\item rendering the user interface and handling user interactions;
+	\item acquiring device-level data (GPS, accelerometer, gyroscope) during trips;
+	\item displaying bike paths, trip summaries, statistics, and reports;
+	\item invoking backend functionalities through HTTP requests.
+\end{itemize}
+
+The mobile app is intentionally designed as a \textbf{thin client}.
+All domain logic, decision processes, ranking operations, and aggregation of path
+information are delegated to the application layer. The app merely collects inputs
+from the user and device sensors, forwards them to the backend, and presents the
+returned results.
+
+\subsection*{Application Layer}
+
+The application layer embodies the \textbf{core business logic} of BBP.
+It is implemented as a modular backend composed of independent yet cooperating \textbf{components},
+each encapsulating a well–defined responsibility.
+These components are logically independent in terms of responsibilities and interfaces,
+but they are part of a single backend application.
+The main functional components include:
+
+\begin{itemize}
+	\item \textbf{User Module}: contains the \textit{AuthManager} and the
+	      \textit{UserManager}, responsible for authentication, credential verification,
+	      and management of user profiles.
+	\item \textbf{Trip Module}: contains the \textit{TripManager}, which handles
+	      the lifecycle of a cycling trip and produces trip summaries enriched with
+	      contextual weather data.
+	\item \textbf{Path Module}: contains the \textit{PathManager}, responsible for
+	      maintaining bike-path data, computing routes, and ranking candidate paths according to
+	      their condition and effectiveness..
+	\item \textbf{Report Module}: contains the \textit{ReportManager}, responsible
+	      for storing and aggregating reports, managing confirmations, and updating
+	      path-condition indicators.
+	\item \textbf{Statistics Module}: contains the \textit{StatsManager}, which
+	      computes and stores user statistics and per-trip metrics.
+\end{itemize}
+
+
+The application layer also includes the \textbf{WeatherManager}, which interacts
+with an external weather service to retrieve meteorological data.
+All modules are accessed through the \textbf{API Gateway}, which exposes a set of
+RESTful sub-APIs and routes incoming requests to the appropriate Manager.
+
+\subsection*{Data Layer}
+
+The data layer consists of a \textbf{relational DBMS} storing all persistent
+information relevant to the system’s domain, including:
+\begin{itemize}
+	\item user profiles and authentication credentials;
+	\item trip records and associated GPS data;
+	\item bike path segments and their aggregated conditions;
+	\item reports, confirmations, and metadata about obstacles;
+	\item computed statistics and weather snapshots.
+\end{itemize}
+
+All interactions with the DBMS are mediated by a single \textbf{QueryManager},
+which centralises data-access operations and offers a uniform interface for
+executing queries. This design keeps persistence concerns separated from the
+application logic and reduces duplication across components.
 
 % --------------------------------------------------------------------------
 % Component View
 % --------------------------------------------------------------------------
-
 \section{Component View}
-\label{sec:component_view}%
+\label{sec:component_view}
+
+This section describes the main software components that constitute the BBP backend
+and their responsibilities. As required by the three-tier architecture adopted by the system,
+the backend is structured into a set of independent yet cooperating modules, each exposing
+well-defined interfaces and encapsulating a cohesive subset of the application logic.
+
+\subsection{API Gateway}
+The \textbf{API Gateway} acts as the entry point for all interactions between the BBP mobile
+application and the backend. It is responsible for routing incoming requests to the appropriate
+internal services, enforcing authentication and authorization requirements, validating inputs,
+and translating domain errors into HTTP responses.
+
+The API Gateway exposes the following logical sub-APIs:
+\begin{itemize}
+	\item \textbf{AuthAPI}: endpoints for token generation and validation.
+	\item \textbf{UserAPI}: endpoints for registration, login, token refresh, and profile retrieval.
+	\item \textbf{TripAPI}: endpoints for starting, updating, and stopping a trip.
+	\item \textbf{RoutingAPI}: endpoints for route computation and retrieval of path metadata.
+	\item \textbf{ReportAPI}: endpoints for creating and confirming obstacle reports.
+	\item \textbf{StatisticsAPI}: endpoints for retrieving per-trip and aggregated statistics.
+\end{itemize}
+
+\subsection{User Module}
+The \textbf{User Module} groups two Managers:
+\begin{itemize}
+	\item \textbf{AuthManager}, responsible for authentication and token issuance.
+	\item \textbf{UserManager}, responsible for registration, profile updates,
+	      and credential-related operations.
+\end{itemize}
+Both Managers use the \textit{QueryManager} for data retrieval and persistence.
+
+\subsection{Trip Manager}
+The \textbf{Trip Manager} manages the entire lifecycle of a cycling session.
+It receives GPS data from the mobile application, records the user’s trajectory, and
+stores trip metadata such as timestamps, duration, distance, and average speed.
+When a trip is completed, the component generates its summary and associates it with
+relevant environmental data retrieved from the Weather Manager.
+The component relies on the \textit{QueryManager} for storage and communicates
+with the Weather Manager to obtain contextual weather information.
+
+\subsection{Trip Module}
+The \textbf{Trip Module} contains the \textbf{TripManager}, that manages the entire
+lifecycle of a cycling session. It receives GPS data from the mobile application, records
+the user’s trajectory, and stores trip metadata such as timestamps, duration, distance, and average speed.
+When a trip is completed, the component generates its summary and associates it with
+relevant environmental data retrieved from the Weather Manager.
+The component relies on the \textit{QueryManager} for storage and communicates
+with the Weather Manager to obtain contextual weather information.
+
+\subsection{Path Module}
+The \textbf{Path Module} contains the \textbf{PathManager}, responsible for retrieving graph
+data from the database, computing optimal routes between two locations,
+and ranking alternative routes according to their quality and reported conditions.
+This service exposes the routing logic to the API Gateway and interacts with the
+\textit{QueryManager} to retrieve and update path and report information needed for route computation.
+
+\subsection{Reports Manager}
+The \textbf{Reports Manager} handles obstacle reports submitted
+by users or automatically detected during trips. It stores and aggregates reports, manages
+confirmation and rejection flows, updates path-quality indicators, and exposes relevant data to the mobile application.
+This component interacts with the \textit{QueryManager} for persistence and with the
+Routing \& Path Manager when updated conditions affect route evaluation.
+
+\subsection{Report Module}
+The \textbf{Report Module} contains the \textbf{ReportManager}, which stores and aggregates reports, manages
+confirmation and rejection flows, updates path-quality indicators, and exposes relevant data to the mobile application.
+This component interacts with the \textit{QueryManager} for persistence.
+
+\subsection{Statistics Module}
+The \textbf{Statistics Module} contains the \textbf{StatsManager}, which computes
+and retrieves aggregated cycling statistics. It retrieves historical data through
+the \textit{QueryManager}.
+
+\subsection{WeatherManager}
+The \textbf{WeatherManager} interacts with the external weather API to obtain
+meteorological information. It provides weather snapshots associated with trip start and end points
+It provides weather snapshots associated with trip start and end points
+It stores weather snapshots using the \textit{QueryManager}.
+
+\subsection{QueryManager}
+The \textbf{QueryManager} is the data-access component of the backend.
+It acts as the single entry point for interacting with the relational DBMS and
+provides a set of methods to retrieve, insert, update, and delete domain data.
+Centralising data access in one component simplifies consistency checks, reduces duplicated logic, and
+keeps the domain layer independent of database details.
 
 % --------------------------------------------------------------------------
 % Deployment View
