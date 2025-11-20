@@ -82,13 +82,55 @@ Representative scenarios illustrate how different types of users interact with B
 
 \subsection{Domain Class Diagram}
 \label{sec:domain_class_diagram}
-\begin{enumerate}
-	The Domain Class Diagram for the Best Bike Paths (BBP) system illustrates the key entities and their relationships for managing bike paths, trips, and associated information in a unified manner. The core functionality revolves around the User, who can either register to record activities and contribute data, or remain unregistered to only browse path information. A User is defined by identifiers like userId and email, along with their current position (a GeoPoint). The central object of the system is the Path, which is a sequence of PathSegments linking an origin to a destination GeoPoint. Each Path possesses a status (from the PathStatus enumeration), a computed score, and a boolean indicating if it is public (publishable). A PathSegment is an atomic part of the route, identified by a segmentId and a streetName, and links to the nextSegment.
-	Registered Users can record a Trip that follows a specific Path. The Trip entity records temporal data (startTime, endTime) and metrics like totalDistanceTraveled. Trip performance is summarized in the associated Statistics entity, which captures avgSpeed, maxSpeed, and other relevant performance metrics. To enrich the user experience, a Trip can incorporate WeatherInfo—including temperature, humidity, and condition (WeatherType)—which is sourced from an external WeatherProvider.
-	Data about paths, especially concerning obstacles like potholes, is collected through a Report. A User creates a Report, which is generated under a specific AcquisitionMode (either MANUAL or AUTOMATIC). In the AUTOMATIC mode, the system utilizes raw data acquired from Sensors (e.g., ACCELEROMETER, GYROSCOPE) to suggest issues. Each Report describes an obstacleType (ObstacleType enumeration) and may propose a statusSuggestion. To maintain data accuracy and avoid false positives, a Report must receive one or more Confirmations from users, which explicitly validate the reported information with a boolean value. Confirmations are also used to validate individual PathSegments.
-	
-	Finally, the system aggregates multiple Reports about a Path into a MergedReport. This entity provides a consolidated view of the Path's condition, including an overall status, the confirmationCount that supports this status, and its freshness (TimeFrame), ensuring that the information provided to the community is current and validated by multiple sources. All temporal data within the system is consistently managed using the DateTime entity, which employs the epochTime format for simplicity. This integrated design ensures a comprehensive system for creating, recording, validating, and sharing bike path information.
-\end{enumerate}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Domain_Class_Diagram/diagram.png}
+	\caption{Domain Class Diagram}
+\end{figure}
+
+The Domain Class Diagram for the Best Bike Paths (BBP) system illustrates the
+key entities and their relationships for managing bike paths, trips, and associated information in a unified manner.
+
+The core functionality revolves around the User, who can either
+register to record activities and contribute data, or remain a guest and
+only browse path information. A User is defined by identifiers such as
+userId and email, along with their current position represented as a GeoPoint.
+
+The central object of the system is the Path, which is defined as a
+sequence of PathSegments linking an origin to a destination GeoPoint.
+Each Path has a status (from the PathStatus enumeration), a computed
+score, and a boolean flag indicating if it is public. A PathSegment is an
+atomic portion of a route, identified by a segmentId and a
+streetName, and maintains a reference to the next segment in the path.
+
+Logged-in Users may record a Trip that follows a specific Path.
+A Trip includes temporal information (startTime, endTime) and
+metrics such as totalDistanceTraveled. Performance for each trip is
+summarised in the associated Statistics entity, which records values
+such as avgSpeed, maxSpeed, and other relevant indicators.
+To enrich the user experience, a Trip may incorporate WeatherInfo,
+including temperature, humidity, and a weather condition (WeatherType),
+which is obtained from an external WeatherProvider.
+
+Data about paths, especially regarding obstacles such as potholes, is collected
+through Report entities. A User creates a Report using a specific
+AcquisitionMode (MANUAL or AUTOMATIC). In the
+automatic mode, the system uses raw data from Sensors (e.g.,
+accelerometer, gyroscope) to detect and suggest possible issues. Each Report
+specifies an ObstacleType and may include a statusSuggestion.
+
+To maintain accuracy and reduce false positives, each Report must receive one
+or more Confirmations from users, which validate the information with
+a boolean value. Confirmations may also be used to validate individual PathSegments.
+
+Finally, the system aggregates multiple Reports about a Path into a
+MergedReport. This entity provides a consolidated view of the path's
+condition, including the resulting status, the confirmationCount that
+supports it, and a freshness interval (TimeFrame). All temporal data
+within the system is represented using the DateTime entity, which stores values in epoch time for simplicity.
+
+This integrated design ensures a comprehensive system for creating, recording, validating, and sharing bike path information.
 
 \subsection{State Diagrams}
 \label{sec:state_diagrams}
@@ -249,7 +291,7 @@ The following points outline the main functionalities offered by the system from
 
 	      During a ride, logged-in users may receive pop-up alerts about nearby issues reported by others, such as “Possible pothole ahead” or “Path requires maintenance.”
 	      As they approach the location, users can confirm that the issue persists or reject it if the path is clear.
-	      Their feedback is instantly recorded by BBP and influences the reliability of reports—confirmed ones gain credibility, while frequently rejected ones are downgraded or removed.
+	      Their feedback is instantly recorded by BBP and influences the reliability of reports-confirmed ones gain credibility, while frequently rejected ones are downgraded or removed.
 
 	\item \textbf{Trip Confirmation of Automatically Detected Anomalies}:
 
