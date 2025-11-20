@@ -82,8 +82,13 @@ Representative scenarios illustrate how different types of users interact with B
 
 \subsection{Domain Class Diagram}
 \label{sec:domain_class_diagram}
-
-This subsection contains the class diagram representing the main concepts of the application domain.
+\begin{enumerate}
+	The Domain Class Diagram for the Best Bike Paths (BBP) system illustrates the key entities and their relationships for managing bike paths, trips, and associated information in a unified manner. The core functionality revolves around the User, who can either register to record activities and contribute data, or remain unregistered to only browse path information. A User is defined by identifiers like userId and email, along with their current position (a GeoPoint). The central object of the system is the Path, which is a sequence of PathSegments linking an origin to a destination GeoPoint. Each Path possesses a status (from the PathStatus enumeration), a computed score, and a boolean indicating if it is public (publishable). A PathSegment is an atomic part of the route, identified by a segmentId and a streetName, and links to the nextSegment.
+	Registered Users can record a Trip that follows a specific Path. The Trip entity records temporal data (startTime, endTime) and metrics like totalDistanceTraveled. Trip performance is summarized in the associated Statistics entity, which captures avgSpeed, maxSpeed, and other relevant performance metrics. To enrich the user experience, a Trip can incorporate WeatherInfo—including temperature, humidity, and condition (WeatherType)—which is sourced from an external WeatherProvider.
+	Data about paths, especially concerning obstacles like potholes, is collected through a Report. A User creates a Report, which is generated under a specific AcquisitionMode (either MANUAL or AUTOMATIC). In the AUTOMATIC mode, the system utilizes raw data acquired from Sensors (e.g., ACCELEROMETER, GYROSCOPE) to suggest issues. Each Report describes an obstacleType (ObstacleType enumeration) and may propose a statusSuggestion. To maintain data accuracy and avoid false positives, a Report must receive one or more Confirmations from users, which explicitly validate the reported information with a boolean value. Confirmations are also used to validate individual PathSegments.
+	
+	Finally, the system aggregates multiple Reports about a Path into a MergedReport. This entity provides a consolidated view of the Path's condition, including an overall status, the confirmationCount that supports this status, and its freshness (TimeFrame), ensuring that the information provided to the community is current and validated by multiple sources. All temporal data within the system is consistently managed using the DateTime entity, which employs the epochTime format for simplicity. This integrated design ensures a comprehensive system for creating, recording, validating, and sharing bike path information.
+\end{enumerate}
 
 \subsection{State Diagrams}
 \label{sec:state_diagrams}
