@@ -339,6 +339,25 @@ network or server errors trigger an appropriate error message on the client side
 
 \textbf{[UC6]} - Create a Path in Manual mode
 
+When a logged-in user wants to create a new path, he will be asked to choose between
+manual and automatic creation modes. If he opts for creating the path in manual mode,
+he will be presented with a form to fill in the required metadata and segment list.
+
+Before sending the request, the app performs local validation to ensure that all
+mandatory fields and segments are correctly specified.
+
+If the input is valid, the mobile app submits the creation request to the
+backend through the API Gateway. The gateway forwards the request to the PathManager,
+which is responsible for handling the creation workflow. The PathManager stores the new
+path by delegating the persistence task to the QueryManager, which executes the
+corresponding INSERT operation on the DBMS.
+
+Once the database confirms the insertion and returns the generated path identifier,
+the PathManager sends the result back to the API Gateway.
+The gateway responds with a 201 Created status and the new pathId. The mobile app then
+displays a confirmation message to the user. In the event of network failures or
+server-side errors, the app notifies the user accordingly.
+
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/create_manual.png}
@@ -348,6 +367,29 @@ network or server errors trigger an appropriate error message on the client side
 \pagebreak
 
 \textbf{[UC7]} - Create a Path in Automatic Mode
+
+When a logged-in user chooses to create a new bike path using, he first selects the
+automatic creation mode from the mobile app. The app displays a form for entering
+the required metadata, such as the path name, description, and other relevant details.
+The app performs a first local validation. If the fields are invalid, the user is immediately notified.
+
+Once the input is valid, the app attempts to activate GPS tracking. If activation fails
+(e.g., permissions or hardware issues), an error is shown. If tracking succeeds, the GPS
+module begins providing continuous location samples (latitude, longitude, speed, timestamp).
+The app collects these values during the entire movement loop.
+
+If the GPS signal temporarily fails while moving, the app detects the error and
+interrupts the procedure, informing the user. When the user completes the movement
+session, GPS tracking is deactivated and the collected samples undergo a final local
+validation; if invalid, the user is notified. When both metadata and sensor samples are
+valid, the app sends a POST request to the backend. If a network timeout or server error
+occurs, an appropriate message is shown to the user.
+
+The API forwards the request to the PathManager, which calls the QueryManager to store
+the path in the DBMS. The system inserts metadata and user association into the database,
+and upon successful insertion returns a 201 Created response containing the new pathId.
+The mobile app receives the response and displays a success message,
+indicating that the new automatically generated path has been saved.
 
 \begin{figure}[H]
 	\centering
@@ -359,6 +401,22 @@ network or server errors trigger an appropriate error message on the client side
 
 \textbf{[UC8]} - Delete a Path
 
+When a logged-in user wants to delete one of his path, he firstly navigates to the list of
+his created paths in the mobile app. The app sends a request to the backend to retrieve
+all paths associated with the user. The API forwards this request to the PathManager,
+which retrieves the corresponding records through the QueryManager and the DBMS.
+Once the user selects a specific path to delete, the app sends a DELETE request to the backend.
+
+The PathManager first verifies that the path exists and that the requesting user is its
+owner. If the ownership check fails, the backend returns a 403 FORBIDDEN error.
+If the path does not exist, a 404 NOT\_FOUND response is generated.
+
+When the user is authorised and the path exists, the PathManager performs the deletion
+through the QueryManager, which issues the appropriate SQL\ DELETE operation to the DBMS.
+Successful deletion results in a 204 response, upon which the mobile app
+confirms the removal to the user. Network or server-side failures prompts the mobile app
+to display a generic error message.
+
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/delete_path.png}
@@ -368,6 +426,18 @@ network or server errors trigger an appropriate error message on the client side
 \pagebreak
 
 \textbf{[UC9]} - Start a Trip as Guest User
+
+When a guest user wants to start a trip using the BBP mobile app, he first selects a path
+from the available options. The app then attempts to activate GPS tracking to monitor
+the user's movement along the selected path.
+
+If GPS activation fails, the mobile app immediately notifies the user with an error
+message. Otherwise, once tracking is active, the app continuously receives location
+updates while the user is moving and refreshes the map accordingly.
+
+If at any point the GPS module reports a loss of signal, the app displays an appropriate
+error message to the user. No backend interaction occurs in this use case, as guest
+trips are not recorded or stored.
 
 \begin{figure}[H]
 	\centering
@@ -379,6 +449,20 @@ network or server errors trigger an appropriate error message on the client side
 
 \textbf{[UC10]} - Start a Trip in Manual Mode as a Logged-in User
 
+In this scenario, a logged-in user starts a trip by selecting a path and enabling manual tracking.
+The interaction begins when the user initiates the trip from the mobile app, which
+displays the chosen path on the map. The user then selects the Manual mode,
+and then the app activates the GPS module.
+
+If the GPS fails to activate, the mobile app immediately notifies the user with an error
+message. Otherwise, GPS tracking begins, and the device periodically emits position
+updates containing latitude, longitude, speed, and time.
+The mobile app stores these samples locally and updates the on-screen map in real time.
+
+During the trip, if the GPS signal is lost at any point, the GPS module reports an error
+and the mobile app displays a corresponding warning to the user, interrupting the normal
+flow of position updates.
+
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/start_manual.png}
@@ -388,6 +472,20 @@ network or server errors trigger an appropriate error message on the client side
 \pagebreak
 
 \textbf{[UC11]} - Start a Trip in Automatic Mode as a Logged-in user
+
+When a logged-in user selects a path and chooses to start the trip in automatic mode,
+the Mobile App first displays the map and then attempts to establish a connection with
+the external sensors required for automatic detection.
+
+If sensor activation fails, the app immediately informs the user with an error message.
+Otherwise, sensors respond successfully and the app proceeds by enabling GPS tracking.
+Once tracking is active, the GPS Module periodically sends position updates which the app
+stores locally and reflects on the UI Map.
+
+During the trip, if the GPS signal is lost, the system interrupts the loop and displays
+an appropriate error message. If instead the connection to the external sensors drops
+during the session, the app stops the automatic process and notifies the user of the
+failure.
 
 \begin{figure}[H]
 	\centering
@@ -401,7 +499,7 @@ network or server errors trigger an appropriate error message on the client side
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/stop_guest.png}
+	\includegraphics[width=0.7\textwidth]{Images/Sequence_Diagrams/stop_guest.png}
 	\caption{Stop a Trip as a Guest User Sequence Diagram}
 	\label{fig:use_case_stop_trip_guest}
 \end{figure}
