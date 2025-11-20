@@ -12,15 +12,15 @@
 
 The architecture of the Best Bike Paths (BBP) system follows a classic
 \textbf{three-tier structure}, separating the software into a presentation layer,
-an application layer, and a data layer. This architectural style ensures a clear
+an app layer, and a data layer. This architectural style ensures a clear
 division of responsibilities and simplifies the evolution of the system over time.
 Since BBP is conceived as a mobile-centric platform, the presentation tier is
-implemented entirely through the BBP mobile application, which communicates with
+implemented entirely through the BBP mobile app, which communicates with
 the backend via RESTful APIs over HTTPS.
 
 \subsection*{Presentation Layer}
 
-The presentation layer consists solely of the \textbf{BBP mobile application},
+The presentation layer consists solely of the \textbf{BBP mobile app},
 which serves as the primary interface between users and the system.
 This layer is responsible for:
 \begin{itemize}
@@ -32,17 +32,17 @@ This layer is responsible for:
 
 The mobile app is intentionally designed as a \textbf{thin client}.
 All domain logic, decision processes, ranking operations, and aggregation of path
-information are delegated to the application layer. The mobile application also uses
+information are delegated to the app layer. The mobile app also uses
 the secure storage facilities provided by the operating system (iOS Keychain / Android Keystore)
 to safely store authentication tokens and other sensitive data.
 
 \subsection*{Application Layer}
 
-The application layer embodies the \textbf{core business logic} of BBP.
+The app layer embodies the \textbf{core business logic} of BBP.
 It is implemented as a modular backend composed of independent yet cooperating \textbf{components},
 each encapsulating a well–defined responsibility.
 These components are logically independent in terms of responsibilities and interfaces,
-but they are part of a single backend application.
+but they are part of a single backend app.
 The main functional components include:
 
 \begin{itemize}
@@ -63,7 +63,7 @@ The main functional components include:
 \end{itemize}
 
 
-The application layer also includes the \textbf{WeatherManager}, which interacts
+The app layer also includes the \textbf{WeatherManager}, which interacts
 with an external weather service to retrieve meteorological data.
 All modules are accessed through the \textbf{API Gateway}, which exposes a set of
 RESTful sub-APIs and routes incoming requests to the appropriate Manager.
@@ -83,7 +83,7 @@ information relevant to the system’s domain, including:
 All interactions with the DBMS are mediated by a single \textbf{QueryManager},
 which centralises data-access operations and offers a uniform interface for
 executing queries. This design keeps persistence concerns separated from the
-application logic and reduces duplication across components.
+app logic and reduces duplication across components.
 
 % --------------------------------------------------------------------------
 % Component View
@@ -94,18 +94,18 @@ application logic and reduces duplication across components.
 This section describes the main software components that constitute the BBP backend
 and their responsibilities. As required by the three-tier architecture adopted by the system,
 the backend is structured into a set of independent yet cooperating modules, each exposing
-well-defined interfaces and encapsulating a cohesive subset of the application logic.
+well-defined interfaces and encapsulating a cohesive subset of the app logic.
 
 \figure[H]
 \centering
-\includegraphics[width=\textwidth]{Images/ArchitecturalOverview/component_view.png}
+\includegraphics[width=\textwidth]{Images/Architectural_Overview/component_view.png}
 \caption{Component View Diagram}
 \label{fig:component_view}
 \endfigure
 
-\subsection{API Gateway}
+\subsubsection{API Gateway}
 The \textbf{API Gateway} acts as the entry point for all interactions between the BBP mobile
-application and the backend. It is responsible for routing incoming requests to the appropriate
+app and the backend. It is responsible for routing incoming requests to the appropriate
 internal services, enforcing authentication and authorization requirements, validating inputs,
 and translating domain errors into HTTP responses.
 
@@ -119,7 +119,7 @@ The API Gateway exposes the following logical sub-APIs:
 	\item \textbf{StatisticsAPI}: endpoints for retrieving per-trip and aggregated statistics.
 \end{itemize}
 
-\subsection{User Module}
+\subsubsection{User Module}
 The \textbf{User Module} groups two Managers:
 \begin{itemize}
 	\item \textbf{AuthManager}, responsible for authentication and token issuance.
@@ -128,55 +128,55 @@ The \textbf{User Module} groups two Managers:
 \end{itemize}
 Both Managers use the \textit{QueryManager} for data retrieval and persistence.
 
-\subsection{Trip Manager}
+\subsubsection{Trip Manager}
 The \textbf{Trip Manager} manages the entire lifecycle of a cycling session.
-It receives GPS data from the mobile application, records the user’s trajectory, and
+It receives GPS data from the mobile app, records the user’s trajectory, and
 stores trip metadata such as timestamps, duration, distance, and average speed.
 When a trip is completed, the component generates its summary and associates it with
 relevant environmental data retrieved from the Weather Manager.
 The component relies on the \textit{QueryManager} for storage and communicates
 with the Weather Manager to obtain contextual weather information.
 
-\subsection{Trip Module}
+\subsubsection{Trip Module}
 The \textbf{Trip Module} contains the \textbf{TripManager}, that manages the entire
-lifecycle of a cycling session. It receives GPS data from the mobile application, records
+lifecycle of a cycling session. It receives GPS data from the mobile app, records
 the user’s trajectory, and stores trip metadata such as timestamps, duration, distance, and average speed.
 When a trip is completed, the component generates its summary and associates it with
 relevant environmental data retrieved from the Weather Manager.
 The component relies on the \textit{QueryManager} for storage and communicates
 with the Weather Manager to obtain contextual weather information.
 
-\subsection{Path Module}
+\subsubsection{Path Module}
 The \textbf{Path Module} contains the \textbf{PathManager}, responsible for retrieving graph
 data from the database, computing optimal routes between two locations,
 and ranking alternative routes according to their quality and reported conditions.
 This service exposes the routing logic to the API Gateway and interacts with the
 \textit{QueryManager} to retrieve and update path and report information needed for route computation.
 
-\subsection{Reports Manager}
+\subsubsection{Reports Manager}
 The \textbf{Reports Manager} handles obstacle reports submitted
 by users or automatically detected during trips. It stores and aggregates reports, manages
-confirmation and rejection flows, updates path-quality indicators, and exposes relevant data to the mobile application.
+confirmation and rejection flows, updates path-quality indicators, and exposes relevant data to the mobile app.
 This component interacts with the \textit{QueryManager} for persistence and with the
 Routing \& Path Manager when updated conditions affect route evaluation.
 
-\subsection{Report Module}
+\subsubsection{Report Module}
 The \textbf{Report Module} contains the \textbf{ReportManager}, which stores and aggregates reports, manages
-confirmation and rejection flows, updates path-quality indicators, and exposes relevant data to the mobile application.
+confirmation and rejection flows, updates path-quality indicators, and exposes relevant data to the mobile app.
 This component interacts with the \textit{QueryManager} for persistence.
 
-\subsection{Statistics Module}
+\subsubsection{Statistics Module}
 The \textbf{Statistics Module} contains the \textbf{StatsManager}, which computes
 and retrieves aggregated cycling statistics. It retrieves historical data through
 the \textit{QueryManager}.
 
-\subsection{WeatherManager}
+\subsubsection{WeatherManager}
 The \textbf{WeatherManager} interacts with the external weather API to obtain
 meteorological information. It provides weather snapshots associated with trip start and end points
 It provides weather snapshots associated with trip start and end points
 It stores weather snapshots using the \textit{QueryManager}.
 
-\subsection{QueryManager}
+\subsubsection{QueryManager}
 The \textbf{QueryManager} is the data-access component of the backend.
 It acts as the single entry point for interacting with the relational DBMS and
 provides a set of methods to retrieve, insert, update, and delete domain data.
@@ -196,6 +196,306 @@ keeps the domain layer independent of database details.
 
 \section{Runtime View}
 \label{sec:runtime_view}%
+
+The Runtime View describes how the components of the BBP system collaborate
+to realise the behaviour specified in the functional requirements.
+While the Component View focuses on the static organisation of the backend
+(API Gateway, Managers, QueryManager) and their responsibilities,
+the Runtime View illustrates how these components interact dynamically
+during the execution of the main use cases.
+
+All diagrams follow the modular structure of the backend:
+the mobile client invokes the API Gateway, which routes each request to the
+appropriate Manager.
+Persistence operations are centralised in the QueryManager, whereas
+weather-related data requests involve the WeatherManager and its external API.
+
+The following pages report the sequence diagrams for all core use cases,
+from user authentication to trip management, path exploration, reporting,
+statistics retrieval, and profile updates.
+Together, these diagrams provide a comprehensive understanding of how the BBP
+system behaves during execution and how responsibilities are distributed among
+its components.
+
+\textbf{[UC1]} - User Registration
+
+A new user wants to register into the BBP system.
+The process begins on the mobile app, where the guest user opens the registration page,
+and fills in the required details: email, password, and personal information.
+A first local validation step checks for malformed inputs before contacting the backend.
+
+If the data is valid, the mobile app sends a registration request to the API Gateway,
+which forwards it to the AuthManager. This component checks that the email is not
+already in use by querying the database through the QueryManager.
+If the email already exists, the system returns an error and the mobile app notifiesthe user accordingly.
+
+If the email does not exist, the AuthManager inserts the new user into the database
+and generates an authentication token. The token is returned to the mobile app, which
+stores it securely using the device’s secure storage mechanism. The flow concludes with a success message being shown to the user.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/user_registration.png}
+	\caption{User Registration Sequence Diagram}
+	\label{fig:use_case_user_registration}
+\end{figure}
+\pagebreak
+
+\textbf{[UC2]} - User Log In
+
+A guest user wants to authenticate and obtain access to the system. The process starts
+when the user opens the login form and submits credentials through the mobile app. After
+a local validation, the app sends an HTTP request to the login endpoint exposed by the API Gateway.
+
+The API Gateway forwards the request to the AuthManager, which first checks whether the provided
+email exists by querying the DBMS through the QueryManager. If the email is not found,
+the backend returns a 404 Not Found error, which the mobile app displays to the user.
+If the user exists, the AuthManager verifies the submitted password. Invalid credentials
+lead to a 401 Unauthorized response and the corresponding error message on the client.
+
+When the credentials are correct, the AuthManager generates an authentication token and
+returns it to the mobile app, which stores it securely using the device's
+secure storage facility. The user is then successfully logged in and the app
+proceeds to show the appropriate authenticated UI.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/user_login.png}
+	\caption{User Log In Sequence Diagram}
+	\label{fig:use_case_user_login}
+\end{figure}
+\pagebreak
+
+\textbf{[UC3]} - User Log Out
+
+When a logged-in user initiates the logout operation from the mobile app, the client first clears
+the locally stored authentication token from the secure storage.
+Afterward, the mobile app sends an HTTP request to the backend.
+
+The API Gateway forwards the request to the AuthManager, which handles the logout process by deleting
+the corresponding refresh token through the QueryManager. The QueryManager executes a DELETE
+operation on the database to invalidate the stored refresh token.
+
+If the operation succeeds, the server returns a 204 NO\_CONTENT response, and the app
+displays a success message to the user. If instead a network or server error occurs,
+the system interrupts the flow and the mobile app notifies the user with a “Network unavailable” error message.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/user_logout.png}
+	\caption{User Log Out Sequence Diagram}
+	\label{fig:use_case_user_logout}
+\end{figure}
+\pagebreak
+
+\textbf{[UC4]} - Search for a Path
+
+A user can search for bike paths between two locations. He enters the start and end points
+and submits the request. The app performs a preliminary local validation
+and, if the data is valid, forwards the request to the backend through the API Gateway.
+
+The API Gateway forwards the request to the PathManager, which loads the relevant
+portion of the path graph from the database using the QueryManager. Once the graph
+data is retrieved, the PathManager computes the optimal path(s) according to the
+requested constraints. If valid routes are found, the API Gateway returns them to
+the mobile app, which displays the corresponding suggestions.
+
+If no route satisfies the user’s constraints, the PathManager signals a NO\_ROUTE
+condition, which results in a 404 error. In the case of network or server issues,
+the app notifies the user with an appropriate error message.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/search_path.png}
+	\caption{Search for a Path Sequence Diagram}
+	\label{fig:use_case_search_path}
+\end{figure}
+\pagebreak
+
+\textbf{[UC5]} - Select a Path
+
+The Select a Path sequence diagram illustrates how the system retrieves the details of
+a path selected by a user. The interaction begins when the user chooses a specific path
+from the list of suggested routes displayed by the mobile app. The app sends a request
+to the backend through the API Gateway, which forwards it to the PathManager.
+
+The PathManager retrieves the corresponding path information by querying the database
+through the QueryManager. If a matching record is found, the PathManager returns the
+path details to the API Gateway, which sends them back to the mobile app for
+presentation to the user.
+
+If the database does not contain a path with the specified identifier, the PathManager
+signals a NOT\_FOUND condition, resulting in a 404 response. In that case, the mobile app
+notifies the user that the selected route is unavailable. As in other interactions,
+network or server errors trigger an appropriate error message on the client side.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/select_path.png}
+	\caption{Select a Path Sequence Diagram}
+	\label{fig:use_case_select_path}
+\end{figure}
+\pagebreak
+
+\textbf{[UC6]} - Create a Path in Manual mode
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/create_manual.png}
+	\caption{Create a Path in Manual Mode Sequence Diagram}
+	\label{fig:use_case_create_path_manual}
+\end{figure}
+\pagebreak
+
+\textbf{[UC7]} - Create a Path in Automatic Mode
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/create_automatic.png}
+	\caption{Create a Path in Automatic Mode Sequence Diagram}
+	\label{fig:use_case_create_path_automatic}
+\end{figure}
+\pagebreak
+
+\textbf{[UC8]} - Delete a Path
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/delete_path.png}
+	\caption{Delete a Path Sequence Diagram}
+	\label{fig:use_case_delete_path}
+\end{figure}
+\pagebreak
+
+\textbf{[UC9]} - Start a Trip as Guest User
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/start_guest.png}
+	\caption{Start a Trip as Guest User Sequence Diagram}
+	\label{fig:use_case_start_trip_guest}
+\end{figure}
+\pagebreak
+
+\textbf{[UC10]} - Start a Trip in Manual Mode as a Logged-in User
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/start_manual.png}
+	\caption{Start a Trip in Manual Mode as a Logged-in User Sequence Diagram}
+	\label{fig:use_case_start_trip_manual_logged}
+\end{figure}
+\pagebreak
+
+\textbf{[UC11]} - Start a Trip in Automatic Mode as a Logged-in user
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/start_automatic.png}
+	\caption{Start a Trip in Automatic Mode as a Logged-in User Sequence Diagram}
+	\label{fig:use_case_start_trip_automatic_logged}
+\end{figure}
+\pagebreak
+
+\textbf{[UC12]} - Stop a Trip as Guest User
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/stop_guest.png}
+	\caption{Stop a Trip as a Guest User Sequence Diagram}
+	\label{fig:use_case_stop_trip_guest}
+\end{figure}
+\pagebreak
+
+\textbf{[UC13]} - Stop a Trip as a Logged-in user
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/stop_loggedin.png}
+	\caption{Stop a Trip as a Logged-in User Sequence Diagram}
+	\label{fig:use_case_stop_trip_loggedin}
+\end{figure}
+\pagebreak
+
+\textbf{[UC14]} - Make a Report in Manual Mode
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/report_manual.png}
+	\caption{Make a Report in Manual Mode Sequence Diagram}
+	\label{fig:use_case_report_problem_manual}
+\end{figure}
+\pagebreak
+
+\textbf{[UC15]} - Make a Report in Automatic Mode
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/report_automatic.png}
+	\caption{Make a Report in Automatic Mode Sequence Diagram}
+	\label{fig:use_case_report_problem_automatic}
+\end{figure}
+\pagebreak
+
+\textbf{[UC16]} - Confirm a report
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/report_confirm.png}
+	\caption{Confirm a Report Sequence Diagram}
+	\label{fig:use_case_confirm_other_reports}
+\end{figure}
+\pagebreak
+
+\textbf{[UC17]} - Manage Path visibility
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/manage_visibility.png}
+	\caption{Manage Path Visibility Sequence Diagram}
+	\label{fig:use_case_manage_visibility}
+\end{figure}
+\pagebreak
+
+\textbf{[UC18]} - View Trip History and Trip Details
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/trip_history.png}
+	\caption{View Trip History and Trip Details Sequence Diagram}
+	\label{fig:use_case_view_trip_history}
+\end{figure}
+\pagebreak
+
+\textbf{[UC19]} - View Overall Statistics
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/stats_overall.png}
+	\caption{View Overall Statistics Sequence Diagram}
+	\label{fig:use_case_view_overall_statistics}
+\end{figure}
+\pagebreak
+
+\textbf{[UC20]} - View Trip Statistics
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/stats_trip.png}
+	\caption{View Trip Statistics Sequence Diagram}
+	\label{fig:use_case_view_trip_statistics}
+\end{figure}
+\pagebreak
+
+\textbf{[UC21]} - Edit Personal Profile
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/edit_profile.png}
+	\caption{Edit Personal Profile Sequence Diagram}
+	\label{fig:use_case_edit_profile}
+\end{figure}
+\pagebreak
 
 % --------------------------------------------------------------------------
 % Component Interfaces
