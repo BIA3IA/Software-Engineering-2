@@ -4,7 +4,7 @@
 % Copyright 2021 Politecnico di Milano, Italy. Inc. All rights reserved
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{Configuration_Files/PoliMi3i}[2021/6/30 PoliMi3i thesis submission class]
+\ProvidesClass{./Configuration_Files/PoliMi3i}[2021/6/30 PoliMi3i thesis submission class]
 \ProcessOptions\relax
 
 %--------------------------------------------------------------------------
