@@ -32,9 +32,11 @@ This layer is responsible for:
 
 The mobile app is intentionally designed as a \textbf{thin client}.
 All domain logic, decision processes, ranking operations, and aggregation of path
-information are delegated to the app layer. The mobile app also uses
-the secure storage facilities provided by the operating system (iOS Keychain / Android Keystore)
-to safely store authentication tokens and other sensitive data.
+information are delegated to the app layer. 
+The app interacts with device-level subsystems such as the GPS module
+and external sensors (when available), but these elements are not part of the backend architecture.
+The mobile app also uses the secure storage facilities provided by the operating system 
+(iOS Keychain / Android Keystore) to safely store authentication tokens and other sensitive data.
 
 \subsection*{Application Layer}
 
@@ -61,7 +63,6 @@ The main functional components include:
 	\item \textbf{Statistics Module}: contains the \textbf{StatsManager}, which
 	      computes and stores user statistics and per-trip metrics.
 \end{itemize}
-
 
 The app layer also includes the \textbf{WeatherManager}, which interacts
 with an external weather service to retrieve meteorological data.
@@ -128,8 +129,8 @@ The \textbf{User Module} groups two Managers:
 \end{itemize}
 Both Managers use the \textbf{QueryManager} for data retrieval and persistence.
 
-\subsubsection{Trip Module}
-The \textbf{Trip Module} contains the \textbf{TripManager}, that manages the entire
+\subsubsection{Trip Manager}
+The \textbf{TripManager} manages the entire
 lifecycle of a cycling session. It receives GPS data from the mobile app, records
 the user’s trajectory, and stores trip metadata such as timestamps, duration, distance, and average speed.
 When a trip is completed, the component generates its summary and associates it with
@@ -137,8 +138,8 @@ relevant environmental data retrieved from the Weather Manager.
 The component relies on the \textbf{QueryManager} for storage and communicates
 with the Weather Manager to obtain contextual weather information.
 
-\subsubsection{Path Module}
-The \textbf{Path Module} contains the \textbf{PathManager}, responsible for retrieving graph
+\subsubsection{Path Manager}
+The \textbf{PathManager} is responsible for retrieving graph
 data from the database, computing optimal routes between two locations,
 and ranking alternative routes according to their quality and reported conditions.
 This service exposes the routing logic to the API Gateway and interacts with the
@@ -151,18 +152,13 @@ confirmation and rejection flows, updates path-quality indicators, and exposes r
 This component interacts with the \textbf{QueryManager} for persistence and with the
 Routing \& Path Manager when updated conditions affect route evaluation.
 
-\subsubsection{Report Module}
-The \textbf{Report Module} contains the \textbf{ReportManager}, which stores and aggregates reports, manages
-confirmation and rejection flows, updates path-quality indicators, and exposes relevant data to the mobile app.
-This component interacts with the \textbf{QueryManager} for persistence.
-
-\subsubsection{Statistics Module}
-The \textbf{Statistics Module} contains the \textbf{StatsManager}, which computes
+\subsubsection{Statistics Manager}
+The \textbf{Statistics Manager} computes
 and retrieves aggregated cycling statistics. It retrieves historical data through
 the \textbf{QueryManager}.
 
-\subsubsection{WeatherManager}
-The \textbf{WeatherManager} interacts with the external weather API to obtain
+\subsubsection{Weather Manager}
+The \textbf{Weather Manager} interacts with the external weather API to obtain
 meteorological information. It provides a weather snapshot associated with trip start and end points.
 It stores the weather snapshot using the \textbf{QueryManager}.
 
@@ -310,12 +306,10 @@ The Select a Path sequence diagram illustrates how the system retrieves the deta
 a path selected by a user. The interaction begins when the user chooses a specific path
 from the list of suggested routes displayed by the mobile app. The app sends a request
 to the backend through the \textbf{API Gateway}, which forwards it to the \textbf{PathManager}.
-
 The \textbf{PathManager} retrieves the corresponding path information by querying the database
 through the \textbf{QueryManager}. If a matching record is found, the PathManager returns the
 path details to the \textbf{API Gateway}, which sends them back to the mobile app for
 presentation to the user.
-
 If the database does not contain a path with the specified identifier, the \textbf{PathManager}
 signals a \textbf{NOT\_FOUND} condition, resulting in a \textbf{404} response. In that case, the mobile app
 notifies the user that the selected route is unavailable. As in other interactions,
@@ -323,7 +317,7 @@ network or server errors trigger an appropriate error message on the client side
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/select_path.png}
+	\includegraphics[width=0.95\textwidth]{Images/Sequence_Diagrams/select_path.png}
 	\caption{Select a Path Sequence Diagram}
 	\label{fig:use_case_select_path}
 \end{figure}
@@ -449,12 +443,10 @@ In this scenario, a logged-in user starts a trip by selecting a path and enablin
 The interaction begins when the user initiates the trip from the mobile app, which
 displays the chosen path on the map. The user then selects the \textbf{Manual mode},
 and then the app activates the \textbf{GPS module}.
-
 If the GPS fails to activate, the mobile app immediately notifies the user with an error
 message. Otherwise, GPS tracking begins, and the device periodically emits position
 updates containing latitude, longitude, speed, and time.
-The mobile app stores these samples locally and updates the on-screen map in real time.
-
+The mobile app stores these samples locally and updates the on-screen map in real time
 During the trip, if the GPS signal is lost at any point, the GPS module reports an error
 and the mobile app displays a corresponding warning to the user, interrupting the normal
 flow of position updates.
