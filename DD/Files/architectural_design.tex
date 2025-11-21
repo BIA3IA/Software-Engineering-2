@@ -176,6 +176,54 @@ keeps the domain layer independent of database details.
 \section{Deployment View}
 \label{sec:deployment_view}%
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{../Images/deployment_view/deployment_view.png}
+    \caption{Deployment View of the BBP System}
+    \label{fig:deployment_view}
+\end{figure}
+
+The deployment view describes the hardware and software infrastructure supporting the \textit{BBP} system. Each tier is 
+executed on dedicated hardware nodes and communicates with the others using secure protocols.
+
+\begin{itemize}
+    \item \textbf{Presentation Tier:} 
+    this tier includes all devices through which end users interact with the BBP system. 
+    The primary clients are smartphones or tablets running iOS or Android, where the BBP mobile application is installed. 
+    These devices communicate with the backend exclusively via HTTPS, ensuring confidentiality and data integrity. 
+    Although the mobile app represents the main access point, any device equipped with a modern web browser and a stable 
+    internet connection could technically interact with the system, 
+    since the backend exposes standard RESTful endpoints. 
+    No application logic is executed at this level, the devices simply capture user input, display results, and forward 
+    authenticated HTTP requests toward the Application Tier.
+
+    \item \textbf{Application Tier:}
+    this tier is responsible for handling incoming traffic, enforcing security, applying routing and load balancing policies, and 
+    executing the core business logic of the system. 
+    All external requests first pass through a Linux-based server configured as a Web Application Firewall using \textit{ModSecurity}.  
+    ModSecurity blocks malicious traffic such as SQL injection attempts, cross-site scripting payloads, and abnormal request patterns,
+     while supporting anomaly detection.  
+    Validated HTTPS traffic is then forwarded to the gateway node running \textit{Traefik}, which acts as the system’s 
+    reverse proxy and load balancer.  
+    Traefik terminates HTTPS connections, exposes a single public entrypoint for clients, and distributes incoming requests 
+    across multiple backend replicas using load balancing strategies.  
+    Additional middleware functionalities (request logging or rate limiting) can be applied as needed at this level.
+    The backend application itself is executed on one or more stateless Application Servers, each running the BBP RESTful backend.  
+    Since authentication tokens are included in each request header, no server-side session state is maintained, enabling horizontal 
+    scaling and dynamic replica management.  
+    Communication between Traefik and the backend replicas is confined to a protected internal network, reducing the system’s 
+    exposure to external threats.
+
+    \item \textbf{Data Tier:}
+    the Data Tier consists of a dedicated server running a PostgreSQL database instance, which stores all persistent system data 
+    such as user information, paths, trips, and analytics.  
+    Backend servers interact with the database using standard PostgreSQL drivers over TCP/IP within an isolated internal network 
+    segment.  
+    Centralizing the database simplifies backup strategies, consistency enforcement, and maintenance operations, while still 
+    allowing for potential future extensions such as replication or clustering without altering the upper tiers of the system.
+
+\end{itemize}
+
 % --------------------------------------------------------------------------
 % Runtime View
 % --------------------------------------------------------------------------
