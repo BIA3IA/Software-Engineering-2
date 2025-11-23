@@ -7,6 +7,7 @@
 % --------------------------------------------------------------------------
 \section{Overview: High-level components and their interactions}
 \label{sec:overview}%
+
 \section{Architectural Overview}
 \label{sec:architectural_overview}
 
@@ -56,7 +57,7 @@ The main functional components include:
 	      contextual weather data.
 	\item \textbf{Path Module}: contains the \textbf{PathManager}, responsible for
 	      maintaining bike-path data, computing routes, and ranking candidate paths according to
-	      their condition and effectiveness..
+	      their condition and effectiveness.
 	\item \textbf{Report Module}: contains the \textbf{ReportManager}, responsible
 	      for storing and aggregating reports, managing confirmations, and updating
 	      path-condition indicators.
@@ -130,20 +131,18 @@ The \textbf{User Module} groups two Managers:
 Both Managers use the \textbf{QueryManager} for data retrieval and persistence.
 
 \subsubsection{Trip Manager}
-The \textbf{TripManager} manages the entire
-lifecycle of a cycling session. It receives GPS data from the mobile app, records
-the user’s trajectory, and stores trip metadata such as timestamps, duration, distance, and average speed.
-When a trip is completed, the component generates its summary and associates it with
-relevant environmental data retrieved from the Weather Manager.
-The component relies on the \textbf{QueryManager} for storage and communicates
-with the Weather Manager to obtain contextual weather information.
+The \textbf{TripManager} coordinates the lifecycle of a cycling session.
+GPS samples and live tracking stay on the mobile app during the trip; the backend is contacted only at stop time.
+Upon trip completion, the app sends the final payload (trajectory, metrics) to the backend.
+The TripManager generates the summary, enriches it with environmental data retrieved from the Weather Manager,
+and persists it through the \textbf{QueryManager}.
 
 \subsubsection{Path Manager}
 The \textbf{PathManager} is responsible for retrieving graph
 data from the database, computing optimal routes between two locations,
 and ranking alternative routes according to their quality and reported conditions.
 This service exposes the routing logic to the API Gateway and interacts with the
-\textbf{QueryManager} to retrieve and update path and report information needed for route computation.
+\textbf{QueryManager} to retrieve pre-aggregated segment conditions (kept up to date by the ReportManager) alongside path data needed for route computation.
 
 \subsubsection{Reports Manager}
 The \textbf{Reports Manager} handles obstacle reports submitted
@@ -160,7 +159,7 @@ the \textbf{QueryManager}.
 \subsubsection{Weather Manager}
 The \textbf{Weather Manager} interacts with the external weather API to obtain
 meteorological information. It provides a weather snapshot associated with trip start and end points.
-It stores the weather snapshot using the \textbf{QueryManager}.
+The snapshot is returned to the \textbf{TripManager}, which includes it in the final trip payload saved through the \textbf{QueryManager}.
 
 \subsubsection{QueryManager}
 The \textbf{QueryManager} is the data-access component of the backend.
@@ -233,8 +232,7 @@ executed on dedicated hardware nodes and communicates with the others using secu
 
 The Runtime View describes how the components of the BBP system collaborate
 to realise the behaviour specified in the functional requirements.
-While the Component View focuses on the static organisation of the backend
-(\textbf{API Gateway}, \textbf{Managers}, \textbf{QueryManager}) and their responsibilities,
+While the Component View focuses on the static organisation of the backend,
 the Runtime View illustrates how these components interact dynamically
 during the execution of the main use cases.
 
@@ -244,12 +242,8 @@ appropriate \textbf{Manager}.
 Persistence operations are centralised in the \textbf{QueryManager}, whereas
 weather-related data requests involve the \textbf{WeatherManager} and its external API.
 
-The following pages report the sequence diagrams for all core use cases,
-from user authentication to trip management, path exploration, reporting,
-statistics retrieval, and profile updates.
-Together, these diagrams provide a comprehensive understanding of how the BBP
-system behaves during execution and how responsibilities are distributed among
-its components.
+The sequence diagrams that follow cover the core use cases and show how responsibilities
+are distributed at runtime.
 
 \subsubsection*{[UC1] - User Registration}
 
@@ -331,10 +325,10 @@ and submits the request. The app performs a preliminary local validation
 and, if the data is valid, forwards the request to the backend through the \textbf{API Gateway}.
 
 The \textbf{API Gateway} forwards the request to the \textbf{PathManager}, which loads the relevant
-portion of the path graph from the database using the \textbf{QueryManager}. Once the graph
-data is retrieved, the \textbf{PathManager} computes the optimal path(s) according to the
-requested constraints. If valid routes are found, the API Gateway returns them to
-the mobile app, which displays the corresponding suggestions.
+portion of the path graph, including segment condition indicators derived from reports, from the 
+database using the \textbf{QueryManager}. Once the graph data is retrieved, the \textbf{PathManager}
+computes the optimal path(s) according to the requested constraints. If valid routes are found, 
+the API Gateway returns them to the mobile app, which displays the corresponding suggestions.
 
 If no route satisfies the user’s constraints, the \textbf{PathManager} signals a \textbf{NO\_ROUTE}
 condition, which results in a 404 error. In the case of network or server issues,
@@ -437,7 +431,7 @@ indicating that the new automatically generated path has been saved.
 
 \subsubsection*{[UC8] - Delete a Path}
 
-When a logged-in user wants to delete one of his path, he firstly navigates to the list of
+When a logged-in user wants to delete one of his paths, he firstly navigates to the list of
 his created paths in the mobile app. The app sends a request to the backend to retrieve
 all paths associated with the user. The \textbf{API} forwards this request to the \textbf{PathManager},
 which retrieves the corresponding records through the \textbf{QueryManager} and the \textbf{DBMS}.
@@ -494,7 +488,8 @@ and then the app activates the \textbf{GPS module}.
 If the GPS fails to activate, the mobile app immediately notifies the user with an error
 message. Otherwise, GPS tracking begins, and the device periodically emits position
 updates containing latitude, longitude, speed, and time.
-The mobile app stores these samples locally and updates the on-screen map in real time
+The mobile app stores these samples locally and updates the on-screen map in real time.
+The trip identifier is generated and maintained locally by the app during tracking and will be sent to the backend only when the trip is finalised.
 During the trip, if the GPS signal is lost at any point, the GPS module reports an error
 and the mobile app displays a corresponding warning to the user, interrupting the normal
 flow of position updates.
@@ -518,6 +513,7 @@ If sensor activation fails, the app immediately informs the user with an error m
 Otherwise, sensors respond successfully and the app proceeds by enabling GPS tracking.
 Once tracking is active, the \textbf{GPS Module} periodically sends position updates which the app
 stores locally and reflects on the UI map.
+The trip identifier remains local to the app during tracking and is forwarded to the backend only when the trip is stopped and finalised.
 
 During the trip, if the GPS signal is lost, the system interrupts the loop and displays
 an appropriate error message. If instead the connection to the external sensors drops
@@ -558,19 +554,16 @@ making this use case lightweight and fully handled on the device.
 When the user wants to stop an ongoing trip, he selects the Stop Trip action
 from the mobile app. Upon this action, the mobile app terminates any
 active data acquisition (GPS tracking and, if the selected mode is Automatic,
-external sensor streams) and sends a stop-trip request to the backend. The
-\textbf{TripManager} validates the request and retrieves the corresponding trip
+external sensor streams) and sends a stop-trip request to the backend, including the
+locally maintained trip identifier.
+The \textbf{TripManager} validates the request and retrieves the corresponding trip
 record through the \textbf{QueryManager}. If the request is invalid, for example, if
 the trip does not exist or is already closed, the system returns an appropriate error.
 
-If validation succeeds, the \textbf{TripManager} contacts the
-\textbf{WeatherManager} to obtain contextual weather information.
-This step is best-effort: if the external weather service is reachable and
-returns valid data, the weather snapshot is included in the summary; otherwise,
-the summary is generated without weather information. The \textbf{TripManager} then
-computes the final trip summary, including distance, duration, speed metrics, sensor-derived
-data (when available), and the associated weather snapshot. The summary is then
-saved through the \textbf{QueryManager}.
+If validation succeeds, the \textbf{TripManager} contacts the \textbf{WeatherManager} 
+to obtain a contextual weather snapshot. It then composes the final trip summary using
+ distance, duration, speed metrics, sensor-derived data (when available), and the weather snapshot.
+The summary is then saved through the \textbf{QueryManager}.
 
 The backend responds with a \textbf{201 Created} status and the complete summary.
 The mobile app then displays the result to the user.
@@ -717,7 +710,7 @@ If the trip is missing or does not belong to the user, the \textbf{TripManager}
 returns a \textbf{404 Not Found}, which the client displays accordingly.
 
 If the trip exists, the \textbf{TripManager} loads full details from the \textbf{DBMS},
-including timestamps, distance, speed metrics, the associated path, and any storedweather snapshots. 
+including timestamps, distance, speed metrics, the associated path, and any stored weather snapshots. 
 The details are returned to the App, which presents a complete summary of the selected trip.
 
 In case of any network or server failures, the app notifies the user with an appropriate error message.
@@ -801,14 +794,197 @@ In case of network or server errors during the request, the mobile app shows an 
 % --------------------------------------------------------------------------
 
 \section{Component Interfaces}
-\label{sec:component_interfaces}%
+\label{sec:component_interfaces}
+
+This section describes the operations exposed by each backend component and the
+interfaces through which these components collaborate at runtime.
+
+Unless explicitly noted, all Manager methods operate in an authenticated context:
+the identifier of the currently logged-in user is implicitly supplied by the
+\textbf{API Gateway} after validating the access token, and is therefore not
+included in the method signatures.
+The \textbf{QueryManager}, in contrast, interacts directly with the relational DBMS
+and does not rely on authentication parameters.
+
+\subsection*{User Module - AuthManager}
+The \textbf{AuthManager} handles user authentication, credential verification,
+token generation, and logout flows.  
+It is invoked through the \textbf{API Gateway} and relies on the \textbf{QueryManager}
+to retrieve and persist authentication metadata, including refresh tokens stored in the DBMS.
+
+It exposes the following operations:
+
+\begin{itemize}
+    \item \textbf{registerUser(email, password, profileData)}: validates registration data, checks whether the email is
+	 already in use, hashes the password, stores the user profile, persists a refresh token, and returns a newly issued access/refresh token pair.
+    \item \textbf{loginUser(email, password)}: verifies the supplied credentials and, if valid, issues fresh access and refresh 
+	tokens and persists the new refresh token.
+    \item \textbf{logout(refreshToken)}: invalidates the provided refresh token and terminates the associated session in the DBMS.
+    % \item \textbf{verifyPassword(userId, candidatePassword)}: internal method used to compares the given password against the 
+	% stored hash to authorise profile updates requiring re-authentication.
+    % \item \textbf{generateToken(userId)}: internal method that produces a short-lived access token and a long-lived refresh
+	%  token for the authenticated user.
+\end{itemize}
+
+\subsection*{User Module - UserManager}
+The \textbf{UserManager} manages user-profile data and receives requests via the
+\textbf{API Gateway}.  
+It uses the \textbf{QueryManager} for persistence and exposes:
+
+\begin{itemize}
+    \item \textbf{updateProfile(userId, profilePayload)}: validates editable fields, prevents duplicate emails, applies the update to the stored profile, and returns the updated information.
+\end{itemize}
+
+\subsection*{TripManager}
+
+The \textbf{TripManager} coordinates the lifecycle of a cycling session.  
+It receives GPS samples from the mobile app, stores trip metadata, and, upon trip
+completion, composes the final summary enriched with weather data supplied by the client after it retrieved a snapshot
+ from the \textbf{WeatherManager}. All persistent data is saved through the \textbf{QueryManager}.
+
+The component exposes the following methods:
+
+\begin{itemize}
+    \item \textbf{finalizeTrip(tripId, tripPayload)}: receives the final trip payload from the API (including the locally
+		 generated trip identifier), obtains a weather snapshot from the \textbf{WeatherManager}, composes the completed trip summary and stores it.
+    \item \textbf{getTripsByUser(userId)}: returns the complete list of trips owned by the authenticated user, ordered by time.
+    \item \textbf{getTripDetails(tripId, userId)}: verifies ownership of the requested trip and returns its full stored details.
+\end{itemize}
+
+\subsection*{PathManager}
+
+The \textbf{PathManager} implements all functionality related to bike paths:
+manual and automatic creation, route computation, ranking of candidate routes,
+path selection, deletion, and visibility updates.  
+It is accessed through the \textbf{API Gateway} and uses the \textbf{QueryManager}
+to retrieve and update persistent path data.
+
+The public operations are:
+
+\begin{itemize}
+    \item \textbf{findPath(start, end, constraints)}: retrieves the required portion of the graph, including report-derived condition indicators
+	 for each segmen, and computes candidate routes satisfying the given constraints.
+    % \item \textbf{computeBestPath(paths)}: internal method that selects and ranks the best route among the candidates returned by \textbf{findPath}.
+    \item \textbf{getPathDetails(pathId)}: returns metadata, geometry, condition indicators, and aggregated reports for the selected path and its segments.
+    \item \textbf{createPath(pathPayload)}: validates metadata and segment lists (manual mode) or GPS-derived samples (automatic mode), persists
+	 the new path, and associates it with the creator.
+    \item \textbf{getPathsByUser(userId)}: retrieves all paths created by the authenticated user.
+    \item \textbf{deletePath(pathId, userId)}: verifies ownership and removes the specified path, triggering cascade deletion of dependent records.
+    \item \textbf{updateVisibility(pathId, visibility, userId)}: enforces ownership and updates the stored visibility field.
+\end{itemize}
+
+\subsection*{ReportManager}
+
+The \textbf{ReportManager} handles submission and confirmation of obstacle reports,
+both manual and automatic.
+It centralises validation, association to a path, and persistence.
+It also updates path-segment condition indicators in the DBMS that are consumed by the \textbf{PathManager} when computing rankings, without requiring additional calls to the ReportManager at query time.
+
+\begin{itemize}
+    \item \textbf{createReport(reportPayload)}: processes manual reports, automatic sensor-based reports, and confirmations of existing reports. 
+	It validates payload and location data, inserts the report, and returns the newly created report identifier.
+\end{itemize}
+
+\subsection*{StatsManager}
+
+The \textbf{StatsManager} computes aggregated statistics over user trips and
+derives detailed metrics for individual trips.  
+Raw and processed data are retrieved via the \textbf{QueryManager}.
+
+\begin{itemize}
+    \item \textbf{computeOverallStats(userId)}: retrieves all trips owned by the user and computes cumulative indicators
+	 such as total distance, total duration, and average speed.
+    % \item \textbf{aggregate(tripData)}: internal utility method used to consolidate raw trip rows into aggregated metrics, as shown in the Runtime View.
+    \item \textbf{computeTripStats(userId, tripId)}: verifies ownership and computes per-trip statistics including average
+	 pace, speed, and time splits.
+\end{itemize}
+
+\subsection*{WeatherManager}
+
+The \textbf{WeatherManager} interfaces with an external weather provider and is used to
+enrich trip summaries with environmental context.
+
+\begin{itemize}
+    \item \textbf{getWeather(location, timeWindow)}: queries the external weather API and returns a snapshot containing
+	temperature, precipitation, and wind information for the specified interval.
+\end{itemize}
+
+\subsection*{QueryManager}
+
+The \textbf{QueryManager} is the uniform access point to the DBMS.
+It encapsulates all SQL operations required by the Managers, ensuring consistency and
+separation between domain logic and data storage.
+
+It exposes:
+
+\begin{itemize}
+    \item \textbf{checkDuplicateEmail(email)}: verifies whether an email is already associated with an existing user.
+    \item \textbf{insertUser(userData)}: inserts a new user record with hashed credentials and stores a refresh token issued for the user.
+    \item \textbf{checkEmail(email)}: retrieves credential metadata for login attempts.
+    \item \textbf{deleteRefreshToken(refreshToken)}: removes the refresh token associated with the terminated session.
+    \item \textbf{fetchPaths(areaBounds)}: retrieves the relevant segments for route computation, including condition indicators already updated from reports.
+    \item \textbf{fetchPathById(pathId)}: returns the full record of the specified path, including aggregated report data for its segments.
+    \item \textbf{fetchReportsByPath(pathId)}: retrieves reports associated with the path segments to support condition scoring.
+    \item \textbf{insertPath(pathPayload)}: stores new path metadata and geometry.
+    \item \textbf{fetchUserPaths(userId)}: retrieves all paths created by the given user.
+    \item \textbf{verifyOwnership(pathId, userId)}: checks whether the specified path belongs to the requesting user.
+    \item \textbf{deletePathCascade(pathId)}: deletes a path and its dependent records.
+    \item \textbf{updateVisibility(pathId, visibility)}: updates the visibility field of the selected path.
+    \item \textbf{insertReport(reportPayload)}: persists manual or automatic reports and confirmations.
+    \item \textbf{insertTripSummary(tripSummary)}: inserts a completed trip summary with its associated weather snapshot.
+    \item \textbf{fetchTrips(userId)}: retrieves all trips belonging to the user, ordered by date.
+    \item \textbf{fetchTrip(tripId, userId)}: retrieves detailed trip data, enforcing ownership.
+    \item \textbf{updateUser(userId, profilePayload)}: stores changes to user profile fields.
+\end{itemize}
 
 % --------------------------------------------------------------------------
 % Architectural Styles and Patterns
 % --------------------------------------------------------------------------
 
-\section{Selected architectural styles and patterns}
+\section{Selected Architectural Styles and Patterns}
 \label{sec:arch_patterns}%
+
+The BBP system adopts a \textbf{three-tier, layered architecture} composed of a thin mobile client,
+an application tier implementing all business rules, and a relational data tier.
+This structure ensures clear responsibility separation, simplifies maintenance,
+and supports the mobile-first design goals described in the system overview.
+
+\begin{itemize}
+	\item \textbf{API Gateway with modular backend}.
+	All external requests pass through a Gateway that centralises routing, authentication,
+	input validation and error normalisation.
+	Behind it, the backend is organised as a collection of Managers, each encapsulating
+	a coherent vertical slice of functionality (paths, reports, trips, users).
+	This separation reduces coupling, facilitates parallel development, and keeps
+	inter-component interactions lightweight.
+	\item \textbf{RESTful, stateless communication}.  
+      The mobile app interacts with the backend exclusively through resource-based HTTPS
+      endpoints.  
+      The application tier remains stateless for access tokens: session information is kept client-side through
+      short-lived access tokens stored in secure storage, making the system horizontally scalable
+      and resilient to server restarts. Refresh tokens are persisted in the DBMS to support logout and rotation,
+	  introducing minimal server-side state explicitly managed by the \textbf{AuthManager}.
+
+	\item \textbf{Service Layer pattern}.  
+      Each Manager acts as a well-defined service boundary that hides internal logic,
+      aggregates operations into meaningful methods,
+      and exposes a stable API to the Gateway.  
+      This pattern avoids exposing domain details to the controller layer and fosters
+      maintainability and testability.
+
+		\item \textbf{DAO pattern}.  
+      The \textbf{QueryManager} centralises access to the relational DBMS and hides SQL concerns
+      from the rest of the backend.  
+      By enforcing consistency checks and persistence rules in a single component, the system
+      becomes less error-prone and more adaptable to future schema evolution or database
+      optimisation.
+
+\item \textbf{Security patterns}.  
+      Authentication is based on JWT-like tokens validated by the Gateway and the AuthManager.  
+      Boundary validation prevents malformed inputs and mitigates injection risks.
+      Since authorisation depends solely on token claims, backend nodes remain stateless and
+      interchangeable, matching the scalability goals of the architecture.
+\end{itemize}
 
 % --------------------------------------------------------------------------
 % Other Design Decisions
@@ -816,3 +992,41 @@ In case of network or server errors during the request, the mobile app shows an 
 
 \section{Other Design Decisions}
 \label{sec:other_design_decisions}%
+
+Beyond the architectural style, the following design choices strengthen the BBP system’s
+quality attributes and align with the mobile-first scope:
+
+\begin{itemize}
+\item \textbf{Authentication and authorisation}.  
+      Access control relies on short-lived access tokens and refresh tokens securely stored
+      on the mobile client. Refresh tokens are also persisted in the DBMS to enable validation,
+      rotation, and logout.  
+      The API Gateway enforces authentication, while domain-level authorisation (guest vs
+      authenticated user) is performed inside the Managers.
+
+\item \textbf{Input validation and error handling}.  
+      Validation occurs at the system boundary (API Gateway), ensuring malformed requests
+      are filtered before reaching the business layer.  
+      Errors are normalised into structured HTTP responses so the mobile client can present
+      consistent messages.  
+      Domain-specific errors (e.g., \texttt{NO\_ROUTE}, \texttt{NOT\_FOUND}) are explicitly
+      mapped and surfaced through the Gateway.
+
+\item \textbf{Caching and rate limiting}.  
+      Gateway-level caching may be applied on read-heavy endpoints (e.g., path metadata or
+      weather snapshots) to reduce backend load.  
+      Basic rate limiting is configured to protect the system against abusive clients while
+      preserving normal usage.
+
+\item \textbf{Fault tolerance}.  
+      Calls to external services (e.g., weather provider) are wrapped with timeouts,
+      fallbacks and default values.  
+      Even in case of partial failure, critical user actions (such as trip completion) are
+      preserved and stored.
+
+\item \textbf{Data integrity}.  
+      The \textbf{QueryManager} encapsulates transactional boundaries to guarantee atomic
+      updates during operations such as path creation, trip summary storage and report
+      confirmation, isolating Managers from SQL concerns.
+
+\end{itemize}
