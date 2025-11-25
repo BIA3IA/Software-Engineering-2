@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "mhutchie.git-graph",
+    "github.vscode-pull-request-github",
+    "donjayamanne.githistory",
+    "james-yu.latex-workshop",
+    "tecosaur.latex-utilities",
+    "gruntfuggly.todo-tree",
+    "DongyuZhao.alloy-vscode",
+    "bradlc.vscode-tailwindcss",
+    "yoavbls.pretty-ts-errors",
+    "usernamehw.errorlens",
+    "dsznajder.es7-react-js-snippets",
+  ]
+}
