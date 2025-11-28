@@ -1,92 +1,92 @@
-\begin{longtable}{|p{0.07\textwidth}|p{0.55\textwidth}|p{0.33\textwidth}|}
+\begin{longtable}{|p{0.07\textwidth}|>{\raggedright\arraybackslash}p{0.55\textwidth}|>{\raggedright\arraybackslash}p{0.33\textwidth}|} 
  \caption{Mapping between BBP Requirements and System Components}
  \label{tab:R_MAP} \\
  \hline
  \textbf{Rx} & \textbf{Description} & \textbf{Components} \\ \hline
  \endfirsthead
- 
+
  \multicolumn{3}{c}{\textbf{Table \thetable{} (Continued)}} \\
  \hline
  \textbf{Rx} & \textbf{Description} & \textbf{Components} \\ \hline
  \endhead
- 
+
  \hline
  \multicolumn{3}{|r|}{Continued on next page} \\ \hline
  \endfoot
- 
+
  \hline
  \endlastfoot
- 
- \textbf{R1} & The system shall allow guest users to create an account by providing personal information and credentials. & \RaggedRight AccountManager (Registration/Profile), QueryManager (DB Insert) \\ \hline
- 
- \textbf{R2} & The system shall allow registered users to log into the application using valid credentials. & \RaggedRight AccountManager (Authentication/Login), QueryManager (DB Read) \\ \hline
- 
- \textbf{R3} & The system shall allow logged-in users to view their profile and account settings. & \RaggedRight AccountManager (Profile/Settings), QueryManager (DB Read) \\ \hline
- 
- \textbf{R4} & The system shall allow logged-in users to update their profile and account settings. & \RaggedRight AccountManager (Profile/Settings), QueryManager (DB Update) \\ \hline
- 
- \textbf{R5} & The system shall allow logged-in users to log out of the application, ending their current session. & \RaggedRight AccountManager (Authentication/Logout) \\ \hline
- 
- \textbf{R6} & The system shall allow logged-in users to start a cycling trip in manual or automatic mode. & \RaggedRight TripManager, SensorDataManager \\ \hline
- 
- \textbf{R7} & The system shall allow logged-in users to stop a currently active trip and save the recorded data. & \RaggedRight TripManager, QueryManager (DB Insert/Update) \\ \hline
- 
- \textbf{R8} & The system shall collect GPS data during trip recording. & \RaggedRight SensorDataManager (GPS component) \\ \hline
- 
- \textbf{R9} & The system shall collect motion sensor data (accelerometer, gyroscope) during trip recording when available. & \RaggedRight SensorDataManager (Motion Sensor component) \\ \hline
- 
- \textbf{R10} & The system shall allow logged-in users to view the list of their recorded trips. & \RaggedRight TripManager, QueryManager (DB Read) \\ \hline
- 
- \textbf{R11} & The system shall allow logged-in users to view a summary of their overall cycling statistics (total distance, total time, average speed, etc.). & \RaggedRight StatisticsManager, QueryManager (DB Read) \\ \hline
- 
- \textbf{R12} & The system shall allow logged-in users to view statistics for each trip (distance, speed, duration, etc.). & \RaggedRight TripManager, QueryManager (DB Read) \\ \hline
- 
- \textbf{R13} & The system shall display the route and reported obstacles associated with a recorded trip. & \RaggedRight TripManager, MapService, PathManager, QueryManager (DB Read) \\ \hline
- 
- \textbf{R14} & The system shall allow logged-in users to delete a recorded trip. & \RaggedRight TripManager, QueryManager (DB Delete) \\ \hline
- 
- \textbf{R15} & The system shall communicate with external weather services to retrieve meteorological data related to the time and location of a trip. & \RaggedRight TripManager, ExternalWeatherService \\ \hline
- 
- \textbf{R16} & The system shall detect when a user is cycling based on speed and acceleration patterns. & \RaggedRight AutoDetectionEngine \\ \hline
- 
- \textbf{R17} & The system shall detect irregular movements from sensor data that may suggest potholes or surface defects. & \RaggedRight AutoDetectionEngine (Obstacle Detection component), SensorDataManager \\ \hline
- 
- \textbf{R18} & The system shall present automatically detected path and obstacle data to the user for manual confirmation before publishing. & \RaggedRight PathManager, ObstacleManager \\ \hline
- 
- \textbf{R19} & The system shall allow logged-in users to manually create a new bike path by drawing or specifying street segments. & \RaggedRight PathManager, MapService, QueryManager (DB Insert) \\ \hline
- 
- \textbf{R20} & The system shall allow logged-in users to manually report obstacles or problems on a bike path. & \RaggedRight ObstacleManager, QueryManager (DB Insert) \\ \hline
- 
- \textbf{R21} & The system shall allow logged-in users to manually confirm or reject the presence of obstacles reported by other users. & \RaggedRight ObstacleManager, QueryManager (DB Update) \\ \hline
- 
- \textbf{R22} & The system shall allow logged-in users to create a new bike path in automatic mode using GPS tracking. & \RaggedRight PathManager, TripManager, QueryManager (DB Insert) \\ \hline
- 
- \textbf{R23} & The system shall allow logged-in users to delete or edit their previously created paths. & \RaggedRight PathManager, QueryManager (DB Delete/Update) \\ \hline
- 
- \textbf{R24} & The system shall allow logged-in users to set the visibility of their created paths as public or private. & \RaggedRight PathManager, QueryManager (DB Update) \\ \hline
- 
- \textbf{R25} & The system shall aggregate multiple user reports referring to the same path segment. & \RaggedRight PathAggregationEngine, QueryManager (DB Read/Logic) \\ \hline
- 
- \textbf{R26} & The system shall evaluate the reliability of each path segment based on the number of confirmations and report freshness. & \RaggedRight PathAggregationEngine (Reliability Component) \\ \hline
- 
- \textbf{R27} & The system shall determine the current status of a path (optimal, medium, sufficient, requires maintenance, closed). & \RaggedRight PathAggregationEngine (Status Component) \\ \hline
- 
- \textbf{R28} & The system shall allow any user (guest or logged-in) to view the detailed status and latest reports of a selected bike path. & \RaggedRight PathManager, ObstacleManager, PathAggregationEngine, QueryManager (DB Read) \\ \hline
- 
- \textbf{R29} & The system shall allow any user (guest or logged-in) to browse available public bike paths on a map. & \RaggedRight PathManager, MapService, QueryManager (DB Read) \\ \hline
- 
- \textbf{R30} & The system shall allow any user to search for bike paths connecting two locations. & \RaggedRight RouteDiscoveryManager, MapService (Geocoding) \\ \hline
- 
- \textbf{R31} & The system shall compute suggested routes based on path quality and distance. & \RaggedRight RouteDiscoveryManager (Route Calculation Engine), PathAggregationEngine \\ \hline
- 
- \textbf{R32} & The system shall rank suggested routes according to their safety and quality. & \RaggedRight RouteDiscoveryManager (Ranking Component), PathAggregationEngine \\ \hline
- 
- \textbf{R33} & The system shall display the user’s current GPS position during navigation along a selected path. & \RaggedRight NavigationManager, SensorDataManager (GPS component), MapService \\ \hline
- 
- \textbf{R34} & The system shall send in-app notifications or pop-ups to warn users about nearby obstacles or closed path segments during navigation. & \RaggedRight NavigationManager, NotificationManager, ObstacleManager \\ \hline
- 
- \textbf{R35} & The system shall interface with map and geocoding services to translate addresses into coordinates and render paths. & \RaggedRight MapService (Geocoding/Rendering component) \\ \hline
- 
- \textbf{R36} & The system shall ensure that communication with all external services (map, weather) handles temporary unavailability gracefully. & \RaggedRight MapService, ExternalWeatherService (Error Handling/Fallback Components) \\ \hline
- 
+
+ \textbf{R1} & The system shall allow guest users to create an account by providing personal information and credentials. & UserManager, QueryManager \\ \hline
+
+ \textbf{R2} & The system shall allow registered users to log into the application using valid credentials. & AuthManager, QueryManager \\ \hline
+
+ \textbf{R3} & The system shall allow logged-in users to view their profile and account settings. & UserManager, QueryManager \\ \hline
+
+ \textbf{R4} & The system shall allow logged-in users to update their profile and account settings. & UserManager, QueryManager \\ \hline
+
+ \textbf{R5} & The system shall allow logged-in users to log out of the application, ending their current session. & AuthManager \\ \hline
+
+ \textbf{R6} & The system shall allow logged-in users to start a cycling trip in manual or automatic mode. & TripManager \\ \hline
+
+ \textbf{R7} & The system shall allow logged-in users to stop a currently active trip and save the recorded data. & TripManager, QueryManager \\ \hline
+
+ \textbf{R8} & The system shall collect GPS data during trip recording. & StatsManager \\ \hline
+
+ \textbf{R9} & The system shall collect motion sensor data (accelerometer, gyroscope) during trip recording when available. & StatsManager \\ \hline
+
+ \textbf{R10} & The system shall allow logged-in users to view the list of their recorded trips. & TripManager, QueryManager \\ \hline
+
+ \textbf{R11} & The system shall allow logged-in users to view a summary of their overall cycling statistics (total distance, total time, average speed, etc.). & StatsManager, QueryManager \\ \hline
+
+ \textbf{R12} & The system shall allow logged-in users to view statistics for each trip (distance, speed, duration, etc.). &  TripManager, QueryManager \\ \hline
+
+ \textbf{R13} & The system shall display the route and reported obstacles associated with a recorded trip. & TripManager, PathManager, QueryManager (DB Read) \\ \hline
+
+ \textbf{R14} & The system shall allow logged-in users to delete a recorded trip. & TripManager, QueryManager \\ \hline
+
+ \textbf{R15} & The system shall communicate with external weather services to retrieve meteorological data related to the time and location of a trip. & TripManager, WeatherManager\\ \hline
+
+ \textbf{R16} & The system shall detect when a user is cycling based on speed and acceleration patterns. & TripManager \\ \hline
+
+ \textbf{R17} & The system shall detect irregular movements from sensor data that may suggest potholes or surface defects. & TripManager, StatsManager \\ \hline
+
+ \textbf{R18} & The system shall present automatically detected path and obstacle data to the user for manual confirmation before publishing. & PathManager, ObstacleManager \\ \hline
+
+ \textbf{R19} & The system shall allow logged-in users to manually create a new bike path by drawing or specifying street segments. & PathManager, MapService, QueryManager (DB Insert) \\ \hline
+
+ \textbf{R20} & The system shall allow logged-in users to manually report obstacles or problems on a bike path. & ObstacleManager, QueryManager (DB Insert) \\ \hline
+
+ \textbf{R21} & The system shall allow logged-in users to manually confirm or reject the presence of obstacles reported by other users. & ObstacleManager, QueryManager (DB Update) \\ \hline
+
+ \textbf{R22} & The system shall allow logged-in users to create a new bike path in automatic mode using GPS tracking. & PathManager, TripManager, QueryManager (DB Insert) \\ \hline
+
+ \textbf{R23} & The system shall allow logged-in users to delete or edit their previously created paths. & PathManager, QueryManager (DB Delete/Update) \\ \hline
+
+ \textbf{R24} & The system shall allow logged-in users to set the visibility of their created paths as public or private. & PathManager, QueryManager \\ \hline
+
+ \textbf{R25} & The system shall aggregate multiple user reports referring to the same path segment. & ReportManager, QueryManager \\ \hline
+
+ \textbf{R26} & The system shall evaluate the reliability of each path segment based on the number of confirmations and report freshness. & ReportManager \\ \hline
+
+ \textbf{R27} & The system shall determine the current status of a path (optimal, medium, sufficient, requires maintenance, closed). & StatsManager \\ \hline
+
+ \textbf{R28} & The system shall allow any user (guest or logged-in) to view the detailed status and latest reports of a selected bike path. & ReportManager, QueryManager \\ \hline
+
+ \textbf{R29} & The system shall allow any user (guest or logged-in) to browse available public bike paths on a map. & PathManager, QueryManager \\ \hline
+
+ \textbf{R30} & The system shall allow any user to search for bike paths connecting two locations. & PathManager \\ \hline
+
+ \textbf{R31} & The system shall compute suggested routes based on path quality and distance. & PathManager \\ \hline
+
+ \textbf{R32} & The system shall rank suggested routes according to their safety and quality. & PathManager \\ \hline
+
+ \textbf{R33}  & The system shall display the user’s current GPS position during navigation along a selected path. & TripManager \\ \hline
+
+ \textbf{R34} & The system shall send in-app notifications or pop-ups to warn users about nearby obstacles or closed path segments during navigation. & ReportManager, PathManager \\ \hline
+
+ \textbf{R35} & The system shall interface with map and geocoding services to translate addresses into coordinates and render paths. & PathManager \\ \hline
+
+ \textbf{R36} & The system shall ensure that communication with all external services (map, weather) handles temporary unavailability gracefully. & PathManager, WeatherManager \\ \hline
+
 \end{longtable}
