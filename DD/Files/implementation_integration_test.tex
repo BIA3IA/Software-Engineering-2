@@ -25,7 +25,7 @@ Before starting the coding of modules, the development environment will be set u
 \end{itemize}
 
 \subsection{Implementation Order}
-The implementation order of software components reflects the identified dependencies:
+The implementation order of software components will be as follows:
 \begin{enumerate}
     \item \textbf{Data Access Layer}: Implementation of the \texttt{QueryManager} and database configuration.
     \item \textbf{Core Services}: Development of \texttt{AuthManager} and \texttt{UserManager} for identity management.
@@ -58,8 +58,9 @@ The test driver will simulate query requests (CRUD) to verify the correct connec
 
 
 The \texttt{AuthManager} and \texttt{UserManager} are integrated next. These components are fundamental to ensure that 
-subsequent operations are performed by authenticated users. The driver will simulate registration, login, and profile management 
-flows, verifying that the \texttt{QueryManager} correctly persists credentials and user data.
+subsequent operations are performed by authenticated users. The driver will simulate registration, login, logout, and profile management 
+flows, verifying that the \texttt{QueryManager} correctly persists credentials and user data and that token generation, validation, and error conditions 
+(e.g., duplicate e-mails, invalid credentials) are handled consistently.
 
 \vspace{1cm}
 \begin{figure}[H]
@@ -71,9 +72,10 @@ flows, verifying that the \texttt{QueryManager} correctly persists credentials a
 
 
 \newpage
-In parallel, the \texttt{WeatherManager} is integrated. Being a module that primarily interacts with an external service 
-(Weather Service API) and has minimal internal dependencies, it can be integrated and tested independently. 
-The driver will verify the correct reception and parsing of meteorological data.
+In parallel, the \texttt{WeatherManager} is integrated. As a component that primarily interacts with an external 
+Weather Service API and has minimal internal dependencies, it can be tested independently. The driver will simulate 
+successful and failing API calls to verify the correct parsing of meteorological data, the handling of timeouts and HTTP 
+errors, and the propagation of meaningful error codes when the external service is unavailable.
 
 \vspace{1cm}
 \begin{figure}[H]
@@ -85,8 +87,9 @@ The driver will verify the correct reception and parsing of meteorological data.
 
 
 We proceed with the integration of the \texttt{PathManager}. This component is crucial for BBP's core logic (path management). 
-The driver will test the creation of new paths and route calculation logic, interacting with the \texttt{QueryManager} for 
-retrieving geospatial data.
+The driver will test the creation of new paths and the route calculation process, which relies on geospatial data retrieved 
+via the \texttt{QueryManager}. Integration tests will also verify that the \texttt{PathManager} correctly computes and ranks 
+candidate routes using stored path and report information, and properly handles corner cases such as missing or incomplete data.
 
 \vspace{1cm}
 \begin{figure}[H]
@@ -97,8 +100,10 @@ retrieving geospatial data.
 \end{figure}
 
 \vspace{1cm}
-The \texttt{TripManager} is added next. This component has dependencies on the \texttt{WeatherManager} 
-(to associate weather data with trips). The integration verifies that, upon closing a trip, the data is correctly enriched with meteorological information and saved to the database.
+The \texttt{TripManager} is added next. This module manages user trips and relies on both the \texttt{PathManager} and 
+the \texttt{WeatherManager} to associate route and weather data with each trip. Integration tests will verify that raw trip 
+samples and metadata are correctly stored, that each trip is linked to the selected path and corresponding weather snapshot, 
+and that a complete trip summary is generated upon closure, even if the external weather service is temporarily unavailable.
 
 \begin{figure}[H]
     \centering
@@ -108,9 +113,9 @@ The \texttt{TripManager} is added next. This component has dependencies on the \
 \end{figure}
 
 
-After the TripManager, we integrate the \texttt{ReportManager}. This module allows users to report obstacles. 
-Tests will verify that reports are correctly associated with existing paths (managed by the \texttt{PathManager}) 
-and users (managed by the \texttt{UserManager}).
+After the \texttt{TripManager}, we integrate the \texttt{ReportManager}. This module allows users to report obstacles. 
+Integration tests will verify that reports are correctly linked to existing users and paths, that attempts to create reports 
+for non-existing entities and that updates and confirmations are properly propagated to the \texttt{PathManager}.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{../Images/iit/iit6.png}
@@ -122,6 +127,8 @@ and users (managed by the \texttt{UserManager}).
 The backend system is completed with the addition of the \texttt{StatsManager}. This component aggregates data generated 
 by the user's device to provide statistics. Being the final logical module, its integration allows testing complex data 
 flows traversing the entire application domain.
+Integration tests will exercise end-to-end interactions involving trips, paths, reports, and confirmations to ensure that the 
+computed aggregates are consistent with the underlying data and remain efficient on realistic data volumes.
 
 \vspace{1cm}
 \begin{figure}[H]
@@ -145,8 +152,11 @@ correct components (\texttt{Auth}, \texttt{User}, \texttt{Trip}, etc.).
 \end{figure}
 
 
-Finally, the test driver is removed and from now the interaction is performed between the mobile device, the API Gateway, 
+Finally, the test driver is removed and from now on the interaction is performed between the mobile device, the API Gateway, 
 and all backend services, including real device sensors (GPS).
+At this final stage, integration tests will be executed end-to-end by exercising the main use cases from the mobile client, checking 
+that interactions involving device sensors, the API Gateway, backend services, and the database behave as described in the Runtime View 
+sequence diagrams.
 
 \vspace{1cm}
 \begin{figure}[H]
