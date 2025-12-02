@@ -52,62 +52,64 @@ The requirements are organized according to the main functionalities of the syst
 	      \end{itemize}
 	\item \textbf{Trip Recording and Management}
 	      \begin{itemize}
-		      \item[\textbf{[R6]}] The system shall allow logged-in users to start a cycling trip in manual or automatic mode.
-		      \item[\textbf{[R7]}] The system shall allow logged-in users to stop a currently active trip and save the recorded data.
-		      \item[\textbf{[R8]}] The system shall collect GPS data during trip recording.
-		      \item[\textbf{[R9]}] The system shall collect motion sensor data (accelerometer, gyroscope) during trip recording when available.
-		      \item[\textbf{[R10]}] The system shall allow logged-in users to view the list of their recorded trips.
-		      \item[\textbf{[R11]}] The system shall allow logged-in users to view a summary of their overall cycling statistics (total distance, total time, average speed, etc.).
-		      \item[\textbf{[R12]}] The system shall allow logged-in users to view statistics for each trip (distance, speed, duration, etc.).
-		      \item[\textbf{[R13]}] The system shall display the route and reported obstacles associated with a recorded trip.
-		      \item[\textbf{[R14]}] The system shall allow logged-in users to delete a recorded trip.
+			  \item[\textbf{[R6]}] The system shall allow guest users to start a cycling trip.
+			  \item[\textbf{[R7]}] The system shall allow guest users to stop a currently active trip.
+		      \item[\textbf{[R8]}] The system shall allow logged-in users to start a cycling trip in manual or automatic mode.
+		      \item[\textbf{[R9]}] The system shall allow logged-in users to stop a currently active trip and save the recorded data.
+		      \item[\textbf{[R10]}] The system shall collect GPS data during trip recording.
+		      \item[\textbf{[R11]}] The system shall collect motion sensor data (accelerometer, gyroscope) during trip recording when available.
+		      \item[\textbf{[R12]}] The system shall allow logged-in users to view the list of their recorded trips.
+		      \item[\textbf{[R13]}] The system shall allow logged-in users to view a summary of their overall cycling statistics (total distance, total time, average speed, etc.).
+		      \item[\textbf{[R14]}] The system shall allow logged-in users to view statistics for each trip (distance, speed, duration, etc.).
+		      \item[\textbf{[R15]}] The system shall display the route and reported obstacles associated with a recorded trip.
+		      \item[\textbf{[R16]}] The system shall allow logged-in users to delete a recorded trip.
 	      \end{itemize}
 	\item \textbf{Trip Data Enrichment}
 	      \begin{itemize}
-		      \item[\textbf{[R15]}] The system shall communicate with external weather services to retrieve meteorological data related to the time and location of a trip.
+		      \item[\textbf{[R17]}] The system shall communicate with external weather services to retrieve meteorological data related to the time and location of a trip.
 	      \end{itemize}
 	\item \textbf{Automatic Data Processing and Detection}
 	      \begin{itemize}
-		      \item[\textbf{[R16]}] The system shall detect when a user is cycling based on speed and acceleration patterns.
-		      \item[\textbf{[R17]}] The system shall detect irregular movements from sensor data that may suggest potholes or surface defects.
-		      \item[\textbf{[R18]}] The system shall present automatically detected path and obstacle data to the user for manual confirmation before publishing.
+		      \item[\textbf{[R18]}] The system shall detect when a user is cycling based on speed and acceleration patterns.
+		      \item[\textbf{[R19]}] The system shall detect irregular movements from sensor data that may suggest potholes or surface defects.
+		      \item[\textbf{[R20]}] The system shall present automatically detected path and obstacle data to the logged-in user for manual confirmation before publishing.
 	      \end{itemize}
 	\item \textbf{Path Information Management}
 	      \begin{itemize}
-		      \item[\textbf{[R19]}] The system shall allow logged-in users to manually create a new bike path by drawing or specifying street segments.
-		      \item[\textbf{[R20]}] The system shall allow logged-in users to manually report obstacles or problems on a bike path.
-		      \item[\textbf{[R21]}] The system shall allow logged-in users to manually confirm or reject the presence of obstacles reported by other users.
-		      \item[\textbf{[R22]}] The system shall allow logged-in users to create a new bike path in automatic mode using GPS tracking.
-		      \item[\textbf{[R23]}] The system shall allow logged-in users to delete or edit their previously created paths.
-		      \item[\textbf{[R24]}] The system shall allow logged-in users to set the visibility of their created paths as public or private.
+		      \item[\textbf{[R21]}] The system shall allow logged-in users to manually create a new bike path by drawing or specifying street segments.
+		      \item[\textbf{[R22]}] The system shall allow logged-in users to manually report obstacles or problems on a bike path.
+		      \item[\textbf{[R23]}] The system shall allow logged-in users to manually confirm or reject the presence of obstacles reported by other users.
+		      \item[\textbf{[R24]}] The system shall allow logged-in users to create a new bike path in automatic mode using GPS tracking.
+		      \item[\textbf{[R25]}] The system shall allow logged-in users to delete or edit their previously created paths.
+		      \item[\textbf{[R26]}] The system shall allow logged-in users to set the visibility of their created paths as public or private.
 	      \end{itemize}
 
 	\item \textbf{Path Data Aggregation and Status Evaluation}
 	      \begin{itemize}
-		      \item[\textbf{[R25]}] The system shall aggregate multiple user reports referring to the same path segment.
-		      \item[\textbf{[R26]}] The system shall evaluate the reliability of each path segment based on the number of confirmations and report freshness.
-		      \item[\textbf{[R27]}] The system shall determine the current status of a path (optimal, medium, sufficient, requires maintenance, closed).
-		      \item[\textbf{[R28]}] The system shall allow any user (guest or logged-in) to view the detailed status and latest reports of a selected bike path.
+		      \item[\textbf{[R27]}] The system shall aggregate multiple user reports referring to the same path segment.
+		      \item[\textbf{[R28]}] The system shall evaluate the reliability of each path segment based on the number of confirmations and report freshness.
+		      \item[\textbf{[R29]}] The system shall determine the current status of a path (optimal, medium, sufficient, requires maintenance, closed).
+		      \item[\textbf{[R30]}] The system shall allow any user (guest or logged-in) to view the detailed status and latest reports of a selected bike path.
 	      \end{itemize}
 	\item \textbf{Route Discovery and Search}
 	      \begin{itemize}
-		      \item[\textbf{[R29]}] The system shall allow any user (guest or logged-in) to browse available public bike paths on a map.
-		      \item[\textbf{[R30]}] The system shall allow any user to search for bike paths connecting two locations.
-		      \item[\textbf{[R31]}] The system shall compute suggested routes based on path quality and distance.
-		      \item[\textbf{[R32]}] The system shall rank suggested routes according to their safety and quality.
+		      \item[\textbf{[R31]}] The system shall allow any user (guest or logged-in) to browse available public bike paths on a map.
+		      \item[\textbf{[R32]}] The system shall allow any user to search for bike paths connecting two locations.
+		      \item[\textbf{[R33]}] The system shall compute suggested routes based on path quality and distance.
+		      \item[\textbf{[R34]}] The system shall rank suggested routes according to their safety and quality.
 	      \end{itemize}
 	\item \textbf{Navigation}
 	      \begin{itemize}
-		      \item[\textbf{[R33]}] The system shall display the user’s current GPS position during navigation along a selected path.
+		      \item[\textbf{[R35]}] The system shall display the user’s current GPS position during navigation along a selected path.
 	      \end{itemize}
-	\item \textbf{Notifications and Alerts}
+	\item \textbf{Alerts}
 	      \begin{itemize}
-		      \item[\textbf{[R34]}] The system shall send in-app notifications or pop-ups to warn users about nearby obstacles or closed path segments during navigation.
+		      \item[\textbf{[R36]}] The system shall send pop-ups to warn users about nearby obstacles or closed path segments during navigation.
 	      \end{itemize}
 	\item \textbf{External Services Integration}
 	      \begin{itemize}
-		      \item[\textbf{[R35]}] The system shall interface with map and geocoding services to translate addresses into coordinates and render paths.
-		      \item[\textbf{[R36]}] The system shall ensure that communication with all external services (map, weather) handles temporary unavailability gracefully.
+		      \item[\textbf{[R37]}] The system shall interface with map and geocoding services to translate addresses into coordinates and render paths.
+		      \item[\textbf{[R38]}] The system shall ensure that communication with all external services (map, weather) handles temporary unavailability gracefully.
 	      \end{itemize}
 \end{enumerate}
 
@@ -146,11 +148,11 @@ Guests can also start and stop a trip, but the data is not stored or associated 
 Logged-in users have access to all interactive and community features of the BBP platform.
 They can create new paths manually or automatically, by recording their route or by manually adding segments.
 Each new path can be saved only after passing the Validate Inputs step and may optionally be made public.
-Users can also delete paths they have created.
-During trip recording, data from sensors are analyzed to automatically detect anomalies; these detections trigger the Confirm/Reject Detection extension, allowing the user to verify their validity.
-Users can also report path conditions manually and review other users' reports.
+Logged-in users can also delete paths they have created.
+During trip recording, data from sensors are analyzed to automatically detect anomalies; these detections trigger the Confirm/Reject Detection extension, allowing the logged-in user to verify their validity.
+Logged-in users can also report path conditions manually and review other users' reports.
 Once a trip is stopped, a summary enriched with weather data is generated.
-Finally, users can view their activity history and per-trip or overall statistics.
+Finally, logged-in users can view their activity history and per-trip or overall statistics.
 
 \begin{figure}[H]
 	\centering
@@ -180,7 +182,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		                         & 5. If validation succeeds, the system creates a new account and redirects the actor to the welcome page. \\ \hline
 		\textbf{Exit Condition}  & A new user account is created.                                                                           \\ \hline
 		\textbf{Exceptions}      & If the data are invalid or incomplete, the system shows an error and asks for correction.                \\
-		                         & If the email is already logged-in, the system shows an error and invites the user to log in.             \\
+		                         & If the email is already in use, the system shows an error and invites the user to log in.             \\
 		                         & If a temporary connection or BBP error occurs, the system displays an appropriate error message.         \\ \hline
 		\textbf{Notes}           & The entered password is stored in a hashed form for security purposes.                                   \\ \hline
 	\end{tabularx}
