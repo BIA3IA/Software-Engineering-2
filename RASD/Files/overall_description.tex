@@ -83,13 +83,60 @@ Representative scenarios illustrate how different types of users interact with B
 \subsection{Domain Class Diagram}
 \label{sec:domain_class_diagram}
 
-This subsection contains the class diagram representing the main concepts of the application domain.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Domain_Class_Diagram/diagram.png}
+	\caption{Domain Class Diagram}
+\end{figure}
+
+The Domain Class Diagram for the Best Bike Paths (BBP) system illustrates the
+key entities and their relationships for managing bike paths, trips, and associated information in a unified manner.
+
+The core functionality revolves around the User, who can either
+register to record activities and contribute data, or remain a guest and
+only browse path information. A User is defined by identifiers such as
+userId and email, along with their current position represented as a GeoPoint.
+
+The central object of the system is the Path, which is defined as a
+sequence of PathSegments linking an origin to a destination GeoPoint.
+Each Path has a status (from the PathStatus enumeration), a computed
+score, and a boolean flag indicating if it is public. A PathSegment is an
+atomic portion of a route, identified by a segmentId and a
+streetName, and maintains a reference to the next segment in the path.
+
+Logged-in Users may record a Trip that follows a specific Path.
+A Trip includes temporal information (startTime, endTime) and
+metrics such as totalDistanceTraveled. Performance for each trip is
+summarised in the associated Statistics entity, which records values
+such as avgSpeed, maxSpeed, and other relevant indicators.
+To enrich the user experience, a Trip may incorporate WeatherInfo,
+including temperature, humidity, and a weather condition (WeatherType),
+which is obtained from an external WeatherProvider.
+
+Data about paths, especially regarding obstacles such as potholes, is collected
+through Report entities. A User creates a Report using a specific
+AcquisitionMode (MANUAL or AUTOMATIC). In the
+automatic mode, the system uses raw data from Sensors (e.g.,
+accelerometer, gyroscope) to detect and suggest possible issues. Each Report
+specifies an ObstacleType and may include a statusSuggestion.
+
+To maintain accuracy and reduce false positives, each Report must receive one
+or more Confirmations from users, which validate the information with
+a boolean value. Confirmations may also be used to validate individual PathSegments.
+
+Finally, the system aggregates multiple Reports about a Path into a
+MergedReport. This entity provides a consolidated view of the path's
+condition, including the resulting status, the confirmationCount that
+supports it, and a freshness interval (TimeFrame). All temporal data
+within the system is represented using the DateTime entity, which stores values in epoch time for simplicity.
+
+This integrated design ensures a comprehensive system for creating, recording, validating, and sharing bike path information.
 
 \subsection{State Diagrams}
 \label{sec:state_diagrams}
 The UML State Diagrams shown below describe the system’s main behavioral processes, focusing on the most relevant user interactions. These include starting a trip, creating paths (manually and automatically), and reporting obstacles (manually and automatically).
 
-\textbf{Starting a trip}:
+\subsubsection{Starting a trip}
 
 The following diagram illustrates the possible states involved when a user starts a trip through the system.
 This process begins when the user opens the app and decides to start a new trip by inserting the desired start and end points. Once these points are defined, the system activates the Path Suggestion System, which is responsible for generating and ranking candidate bike paths that best fit the user’s request.
@@ -102,11 +149,11 @@ At this point, the user enters the Browsing state, where they can inspect all su
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/State_Diagrams/starting_trip.png}
+	\includegraphics[width=0.8\textwidth]{Images/State_Diagrams/starting_trip.png}
 	\caption{Starting Trip State Diagram}
 \end{figure}
 
-\textbf{Manually creating a new path}:
+\subsubsection{Manually creating a new path}
 
 The following diagram illustrates the states related to the manual creation of a new path by a logged-in user.
 A logged-in user can start the manual creation process by selecting the “Create Path” option. Once this action is triggered, the system leaves the idle state and enters the Editing Metadata state, where the user provides general information about the path, such as its name, description, visibility, and other optional details.
@@ -119,11 +166,11 @@ Throughout the process, the user can cancel the creation, which immediately retu
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/State_Diagrams/manual_path_creation.png}
+	\includegraphics[width=0.8\textwidth]{Images/State_Diagrams/manual_path_creation.png}
 	\caption{Manual Path Creation State Diagram}
 \end{figure}
 
-\textbf{Automatically creating a new path}:
+\subsubsection{Automatically creating a new path}
 
 The following diagram illustrates the states involved in the automatic creation of a new path by a logged-in user using GPS tracking.
 After accessing the application, the user can start the automatic creation process by selecting the “Automatic Mode” option. Once this action is triggered, the system leaves the idle state and enters the Editing Metadata State, where the user can provide information about the path. After confirming the metadata, the system transitions to the Waiting GPS Lock state, where it requests location permissions and attempts to establish a stable GPS connection.
@@ -138,11 +185,11 @@ Once the path has been successfully saved, the process reaches its final state, 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/State_Diagrams/automatic_path_creation.png}
+	\includegraphics[width=0.6\textwidth]{Images/State_Diagrams/automatic_path_creation.png}
 	\caption{Automatic Path Creation State Diagram}
 \end{figure}
 
-\textbf{Manually inserting a report about an obstacle}:
+\subsubsection{Manually inserting a report about an obstacle}
 
 The following diagram illustrates the states related to the manual reporting process, which allows a logged-in user to create a report manually.
 Starting from the Idle state, the user initiates the manual report creation process by selecting the appropriate option from the interface. Once the process begins, the system moves to the Editing Metadata state, where the user can enter or modify relevant information, such as the description, and obstacle type.
@@ -155,11 +202,11 @@ When the report is successfully saved, the system reaches the final state, confi
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/State_Diagrams/manual_report.png}
+	\includegraphics[width=0.8\textwidth]{Images/State_Diagrams/manual_report.png}
 	\caption{Manual Report State Diagram}
 \end{figure}
 
-\textbf{Automatically detecting and reporting an obstacle}:
+\subsubsection{Automatically detecting and reporting an obstacle}
 
 The following diagram represents the states involved in the automatic reporting process, where a logged-in user can generate a report automatically when a relevant event or sensor input is detected.
 The process starts from the Idle state. When the system detects a sensor signal or an anomaly (SensorDetection), it transitions to the Confirming Report state, where the user is asked to confirm whether the detected event should be reported.
@@ -173,7 +220,7 @@ Finally, if the saving procedure completes successfully (saveComplete), the syst
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/State_Diagrams/automatic_report.png}
+	\includegraphics[width=0.8\textwidth]{Images/State_Diagrams/automatic_report.png}
 	\caption{Automatic Report State Diagram}
 \end{figure}
 
@@ -244,7 +291,7 @@ The following points outline the main functionalities offered by the system from
 
 	      During a ride, logged-in users may receive pop-up alerts about nearby issues reported by others, such as “Possible pothole ahead” or “Path requires maintenance.”
 	      As they approach the location, users can confirm that the issue persists or reject it if the path is clear.
-	      Their feedback is instantly recorded by BBP and influences the reliability of reports—confirmed ones gain credibility, while frequently rejected ones are downgraded or removed.
+	      Their feedback is instantly recorded by BBP and influences the reliability of reports-confirmed ones gain credibility, while frequently rejected ones are downgraded or removed.
 
 	\item \textbf{Trip Confirmation of Automatically Detected Anomalies}:
 
@@ -313,7 +360,6 @@ The design and implementation of the BBP system are subject to the following con
 	\item The application must conform to accessibility and usability guidelines defined by major mobile platforms (Android and iOS).
 	\item Any third-party APIs used for maps, weather, or notifications must be employed in compliance with their respective terms of service and usage quotas.
 \end{itemize}
-.
 
 \subsection{Domain Assumptions}
 \label{sec:domain_assumptions}
