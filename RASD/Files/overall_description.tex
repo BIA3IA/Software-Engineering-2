@@ -16,7 +16,7 @@ Representative scenarios illustrate how different types of users interact with B
 	      Giuseppe is a former professional cyclist who wants to start cycling again to stay fit. Among the various options available, he decides to use Best Bike Paths (BBP) to track his cycling activities and discover new routes.
 	      He chooses BBP because it offers cyclist-oriented features such as creating personalized paths and sharing the current conditions of bike tracks with other users.
 	      Once he opens the BBP app, Giuseppe realizes that he can already use some functionalities of the system without creating an account, such as searching for bike paths and receiving suggestions based on other users' rankings.
-	      However, he soon notices that he cannot record his own cycling activities without registering.
+	      However, he soon notices that he can't record his own cycling activities without registering.
 	      Therefore, he decides to create an account to take full advantage of all BBP's features.
 	      The registration process is simple and quick, requiring only basic information such as name, email, and password.
 	      After successfully registering, Giuseppe gains access to the full set of functionalities, including creating personalized routes, recording his cycling sessions, and sharing information about the condition of bike paths with the BBP community.
@@ -35,8 +35,8 @@ Representative scenarios illustrate how different types of users interact with B
 
 	\item \textbf{A logged-in user starts a trip}:
 
-	      Cesare decides to start a new bike trip. 
-		  After selecting one of the suggested bike paths, he presses the start button, available only when the GPS position matches the path origin. At this point, BBP asks him whether he wants to enable the Automatic Mode.
+	      Cesare decides to start a new bike trip.
+	      After selecting one of the suggested bike paths, he presses the start button, available only when the GPS position matches the path origin. At this point, BBP asks him whether he wants to enable the Automatic Mode.
 	      Cesare confirms by selecting Yes, and the trip begins.
 	      As he starts, BBP begins collecting data from the sensors available on his mobile device.
 	      The GPS continuously updates his position, allowing the system to reconstruct the exact path he follows.
@@ -261,7 +261,7 @@ The following points outline the main functionalities offered by the system from
 	      The system allows new users to register and existing users to log in through a dedicated interface accessible from the main page of BBP.
 	      Registration requires only basic personal information such as name, email, and password.
 	      Once logged-in, users gain access to additional functionalities that are not available to guest users, including the ability to record and track personal cycling trips, create personalized bike paths, view trip history and performance statistics, and contribute information to the community by reporting or confirming bike path conditions.
-	      Guest Users can browse available bike paths, search for routes between two locations, and receive path suggestions based on community rankings, but they cannot record trips, create new paths, or contribute by making reports.
+	      Guest Users can browse available bike paths, search for routes between two locations, and receive path suggestions based on community rankings, but they can't record trips, create new paths, or contribute by making reports.
 
 	\item \textbf{Bike Path Search and Visualization}:
 
@@ -365,7 +365,7 @@ The following points outline the main functionalities offered by the system from
 	\item \textbf{User Profile Management and Account Settings}:
 
 	      Logged-in users can access a dedicated section to view and update their personal information, such as username, email address, and password.
-		  Logged-in users can also manage their account settings, including privacy options.
+	      Logged-in users can also manage their account settings, including privacy options.
 	      Profile changes are validated and stored by BBP, ensuring that future trips, statistics, and community contributions are always associated with the updated account data.
 
 \end{itemize}
@@ -385,15 +385,23 @@ Each group has distinct goals, permissions, and levels of interaction with the s
 	      Guest users interact with the system without performing any authentication.
 	      They may either be users who have not created an account, or users who have an existing account but are currently logged out.
 	      Guest users can explore existing bike paths, view global information such as distance, rankings, and general statistics, and consult public reports about obstacles or road conditions.
-	      Their interaction with the system is limited to browsing and visualization. They are not allowed to create, edit, or report any paths or obstacles.
+	      Guest users are also allowed to start a trip.
+	      However, they can't enable the Automatic Mode, can't submit obstacle reports, can't confirm reports submitted by others, and do not receive pop-ups related to anomaly detection or confirmation.
+	      At the end of the trip, no data is stored in the system: guest users have no trip history and do not have access to overall or per-trip statistics.
+	      They are not allowed to create or delete any paths, nor to modify any existing data in the system.
 
 	\item \textbf{Logged-in users}:
 
 	      Logged-in users have full access to the system's functionalities after creating an account and logging in.
 	      They can create new bike paths using GPS tracking, or by manually drawing on a map interface.
+		  They can choose whether to keep their created paths private or share them with the community.
+	      They can also delete any paths they have created.
+	      During trips, logged-in users can enable the Automatic Mode to allow BBP to detect potential obstacles using device sensors.
 	      They can also submit obstacle reports, and validate or confirm existing ones shared by other users.
-	      If the automatic report mode is enabled, the user can confirm detected obstacles before submission.
-	      Furthermore, logged-in users can store their trips within their personal profiles, allowing them to view historical data and general and per-trip statistics such as distance covered, average speed, and total time spent cycling.
+	      Furthermore, logged-in users can store their trips and view their personal trip history.
+		  They can access both overall statistics summarizing their cycling activities over time, and detailed statistics for each individual trip.
+		  Logged-in users can also manage their profile information and account settings.
+
 \end{itemize}
 
 % --------------------------------------------------------------------------
