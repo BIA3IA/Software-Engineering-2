@@ -8,27 +8,30 @@
 \section{User Interfaces}
 \label{sec:user_interfaces}%
 
-The following section presents an overview of the user interfaces
-designed for the Best Bike Paths (BBP) app.
-All mockups included here are conceptual prototypes aimed at illustrating the expected
-interaction flow and the general layout of the main pages of the system. They are not intended to represent
-the final graphical design, which will be refined during implementation.
+All mockups included here are conceptual prototypes that illustrate the expected interaction flow,
+the structure of each screen, and the behaviour of both logged-in and guest users. While the visual
+style is representative of the final layout, the graphical design may undergo refinements during
+implementation.
 
-The purpose of this section is to provide a clear, high-level visualization of how users will access
-core functionalities, such as registration, login, path exploration, trip recording, reporting,
-and profile management.
+This section provides a high-level visualization of how users interact with the system across its main
+features, including authentication, map exploration, path search and selection, trip navigation,
+obstacle reporting, custom path creation and management, and profile settings.
+The screens also highlight how certain functionalities change depending on the user state
+(guest or logged-in), ensuring a clear understanding of the overall user experience.
 
 \subsection{Welcome Screen}
 \label{sec:welcome_screen}%
 
-When opening the app for the first time, users are greeted with a welcome screen
-that introduces the Best Bike Paths (BBP) system.
-This screen presents the app logo, a short tagline summarizing its main purpose, and
-a “Get Started” button that allows the user to proceed to the authentication flow.
-The screen serves as a simple entry point, offering a clean overview of the app before
-accessing any functionality.
-At this stage, no interaction with backend services is required. The screen only guides
-users toward signing in or creating an account.
+The screen displays the app logo, the application name, and a short tagline summarizing
+its purpose: discovering bike paths, tracking rides, and joining a cycling community.
+Three navigation options are provided: Sign In, Log In, and Continue as Guest.
+The Sign In button directs new users to the registration screen to create an account, while
+the Log In button allows returning users to access their existing accounts.
+The Continue as Guest option enables users to explore the app without registering,
+offering limited functionality.
+This screen serves as the entry point to all subsequent interactions and does not
+require any backend communication. Its goal is to guide the user toward authentication
+or guest access in a clear, minimal, and intuitive way.
 
 \begin{figure}[H]
 	\centering
@@ -40,13 +43,11 @@ users toward signing in or creating an account.
 \subsection{Login Screen}
 \label{sec:login_screen}%
 
-After selecting Get Started from the welcome screen, users are taken to the login screen.
-This interface allows returning users to authenticate by entering their username and
-password. The screen also provides shortcuts to the Sign Up screen for new users and
-an option to continue as a Guest, enabling limited access without registration.
-The purpose of this screen is to act as the main entry point into the app,
-ensuring that only logged-in users can access all features such as trip recording
-path creation, and reporting.
+After choosing the Log In option from the Welcome Screen, the user is taken to the Login Screen.
+This interface allows returning users to authenticate by entering their email address and password.
+Below the login form, users can navigate back to the Welcome Screen.
+This screen ensures secure access to all BBP features that require authentication, including trip
+recording with data storage, path creation, reporting, and access to statistics.
 
 \begin{figure}[H]
 	\centering
@@ -58,12 +59,11 @@ path creation, and reporting.
 \subsection{Signup Screen}
 \label{sec:signup_screen}%
 
-The sign-up screen enables new users to create an account by providing an email,
-username, and password.
+The Signup Screen, reachable through the welcome page, enables new users to create an account
+by providing a username, email address, password, and password confirmation.
 This interface is designed to keep the registration process simple, requiring only
 the essential information needed to activate a personal profile.
-From this screen, users can switch to the Login screen if they already have an account,
-or continue as a Guest if they prefer to explore the system without registering.
+Users can switch to the Welcome Screen by pressing the dedicated button.
 Creating an account unlocks all core functionalities of BBP, such as recording trips,
 submitting reports, managing custom paths, and accessing personal statistics.
 
@@ -77,27 +77,27 @@ submitting reports, managing custom paths, and accessing personal statistics.
 \subsection{Home Screen}
 \label{sec:home_screen}%
 
-The home screen provides access to the core features of the app through an interactive map
-and a bottom navigation bar.
-At the top of the screen, users can specify an origin and a destination to initiate a
-path search. The origin will be automatically set to the user's current location by default,
-but can be modified as needed. The Search Path button triggers the path computation process,
-and results are later displayed.
-The interactive map occupies most of the screen and shows the user’s current position.
-A floating button, rendered as a marker icon with a plus symbol in the lower-right corner,
-allows logged-in users to create a new path and enter the creation flow with one tap.
-The bottom navigation bar grants access to all main sections of the app
-(home, trip history, path history, and user profile). All functionalities are fully
-available for logged-in users.
+The Home Screen is the central hub of the BBP application, allowing users to search for bike paths,
+view the interactive map, and navigate to all major sections of the app.
 
-Guest users access a simplified version of the home screen.
-While the map and the search form (origin, destination, and Search Path button) remain
-available, all other features require authentication and are therefore visually disabled.
-Items in the bottom navigation bar appear greyed out, indicating restricted access.
-If the user attempts to tap any disabled icon, the app displays a pop-up
-prompting them to sign up or log in in order to unlock the full feature set.
-This layout clearly communicates the distinction between browsing capabilities and the
-additional features unlocked through registration.
+At the top of the interface, users can enter a Starting point and a Destination using two text fields.
+By default, the starting point is set to the user’s current GPS location, but it can be manually edited
+if needed. Below the input fields, the Find Paths button initiates the path search process,
+retrieving all available bike routes that connect the selected points.
+The map occupies most of the screen, displaying the user's current position and any computed paths.
+In the lower-right corner, a floating action button with a plus icon is available for logged-in users.
+Pressing it opens the path creation flow, allowing them to create a custom bike path.
+
+At the bottom of the screen, a persistent navigation bar provides access to the main sections of the app:
+Home, Trip History, Path History, and User Profile.
+
+Guest users can fully interact with the map and use the path search form.
+However, features that require authentication, such as creating new paths, viewing personal trip history, 
+or accessing the user profile, remain disabled.
+Icons in the bottom navigation bar appear visually greyed out, and a lock symbol indicates restricted access.
+Tapping a disabled icon triggers a pop-up inviting the user to sign in to unlock all the app's features.
+The creation floating action button is also greyed out, as path creation is restricted to logged-in users.
+This interface clearly conveys the distinction between freely accessible features and those requiring authentication.
 
 \begin{figure}[H]
 	\centering
@@ -119,15 +119,16 @@ additional features unlocked through registration.
 \subsection{Authentication Pop-up for Guest Users}
 \label{sec:authentication_pop_up_guest_users}%
 
-When a guest user attempts to interact with any restricted feature, the app
-displays a modal pop-up overlay.
-The pop-up clearly communicates that advanced functionalities
-are available only to registered or logged-in users. It provides two action buttons
-that redirect the user to the authentication flow.
-The rest of the interface is dimmed to highlight the modal and prevent interaction with the
-disabled elements. If the user taps outside the pop-up, the modal closes and the guest user
-is returned to the current screen, allowing them to continue exploring the map or searching
-for bike paths without interruption.
+When a guest user attempts to access a restricted feature, the app displays a modal pop-up overlay
+informing them that the selected functionality is available only to authenticated users.
+The pop-up contains a short explanation and two action buttons: one to sign in, and one to 
+continue as a guest without enabling the restricted action.
+
+Behind the pop-up, the rest of the interface is dimmed and temporarily disabled, ensuring that 
+the user’s attention remains on the modal and preventing interaction with the underlying elements.
+The modal can be closed either by selecting one of the available actions or by tapping outside
+the pop-up area, returning the guest user to the current screen and allowing them to continue
+browsing the map or searching for bike paths uninterrupted.
 
 \begin{figure}[H]
 	\centering
@@ -139,19 +140,18 @@ for bike paths without interruption.
 \subsection{Search Results}
 \label{sec:search_results}%
 
-After submitting an origin and a destination, the app displays the search results showing
-all suggested paths between the two points. Each result includes the path name, its current condition
-(e.g., \textbf{Optimal}, \textbf{Requires Maintenance}), and the number of aggregated reports supporting
-that evaluation. The optimal path found is also displayed on the map, which provides an estimate of
-distance and travel time.
+After the user submits a path search from the home screen, the app displays an “Available Paths”
+panel anchored to the top of the map.
+The panel lists all suggested paths matching the search criteria.
+Each item shows the path name, a short description if available, estimated distance and travel time,
+and its current condition (e.g., Optimal, Maintenance) together with the number of aggregated reports.
+The underlying map remains visible as a background reference centered on the searched area,
+while the user scrolls through the list to compare the alternatives.
+Tapping the close icon in the top-right corner of the panel dismisses the results and returns
+the interface to the previous state, where the user can enter a new search and run it again.
 
-If the user taps the search bar and enters a new origin or destination, the current results are cleared.
-The interface returns to the initial state by showing the \textbf{Search Paths} button again, allowing
-the user to perform a new search with the updated locations.
-
-The overall structure of the screen is identical for both logged-in and guest users. However,
-only logged-in users can interact with advanced features. In guest mode, these elements, as well as
-their corresponding icons in the bottom navigation bar, appear disabled.
+The behavior is identical for logged-in and guest users, except for the general restrictions
+applied to guests.
 
 \begin{figure}[H]
 	\centering
@@ -173,27 +173,36 @@ their corresponding icons in the bottom navigation bar, appear disabled.
 \subsection{Path Selection}
 \label{sec:path_selection}%
 
-When the user taps on one of the suggested paths in the results list, BBP selects that path
-and displays it on the map. The selection is visually indicated by turning the textual
-information (name, condition, aggregated reports) blue while the card background remains
-white, making the active suggestion stand out from the others. Tapping the same path again
-deselects it, while tapping a different path updates the selection accordingly.
+When the user taps on one of the suggested paths in the results list, BBP highlights the selected
+option by applying a blue outline around the corresponding card. This visual cue clearly indicates 
+which path is currently active while keeping the rest of the list unchanged. Tapping a different 
+card updates the selection, tapping on the same card again deselects it, while tapping outside does
+not alter the current state.
 
-The map visualization shows the complete path, the estimated travel time and distance.
-If the selected path contains confirmed reports, these are displayed directly on the map
-using warning icons, allowing the user to immediately identify critical or deteriorated segments.
-Tapping one of these markers opens a small dialog containing the associated report details,
-providing additional insight into the nature and current status of the issue.
+Once a path is selected, the app displays the corresponding route on the map. The route is shown 
+using a bold blue polyline, along with the estimated distance and travel time, giving the user an 
+immediate visual understanding of the full trip.
+If the selected path includes confirmed reports, their corresponding markers are displayed on the
+map, allowing the user to identify potentially problematic segments.
 
-Editing either the origin or destination input fields automatically clears the current selection
-and removes the existing results. Once the user submits the updated values, the interface enables
-a new search.
+A “Start Trip” button appears inside the selected card only when the path origin matches the user’s
+current GPS position.
+If the origin does not correspond to the current position, the app displays the path preview and its
+route on the map, but the user can't start a trip from that location.
 
-The behaviour is identical for both logged-in and guest users, except that restricted actions
-are disabled for guests and remain accessible only to logged-in users.
+When the Start Trip button is available and pressed, for logged-in users, the system opens a
+pop-up requesting whether to enable the Automatic Report Mode. Once the mode is selected, the 
+trip begins.
 
-Multiple mockups are provided to illustrate different scenarios, including paths with no reports
-and paths containing obstacle indicators.
+For guest users, the trip can still be started, but the activity is not stored in the system
+and no automatic detection features are available.
+
+Pressing the close icon at the top of the results panel hides the list and returns the interface 
+to the standard map view without an active selection.
+
+The behaviour is identical for logged-in and guest users regarding map visualization, path selection,
+and result browsing. However, only logged-in users can access advanced features from the bottom 
+navigation bar, which appear disabled in guest mode.
 
 \begin{figure}[H]
 	\centering
@@ -201,76 +210,34 @@ and paths containing obstacle indicators.
         \centering
         \includegraphics[width=\textwidth]{Design/7_select.png}
         \caption{Path Selection Mockup}
-        \label{fig:path_selection_no_reports_mockup}
+        \label{fig:path_selection_mockup}
     \end{minipage}
     \hfill
     \begin{minipage}{0.48\textwidth}
         \centering
         \includegraphics[width=\textwidth]{Design/7_select_guest.png}
         \caption{Path Selection Mockup for Guest Users}
-        \label{fig:path_selection_no_reports_guest_mockup}
+        \label{fig:path_selection_mockup_guest}
     \end{minipage}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \begin{minipage}{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{Design/7_select_report.png}
-        \caption{Path Selection Mockup with Report Markers}
-        \label{fig:path_selection_with_reports_mockup}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{Design/7_select_report_guest.png}
-        \caption{Path Selection Mockup with Report Markers for Guest Users}
-        \label{fig:path_selection_with_reports_guest_mockup}
-    \end{minipage}
-\end{figure}
-
-\subsection{Path Preview}
-\label{sec:path_preview}%
-
-If the origin specified in the search does not match the user's current physical location,
-the system allows the user to view the results but prevents trip initiation. In this case,
-the \textbf{Start Trip} button will not appear. The user can explore the path but cannot
-begin navigation until the actual position coincides with the search origin.
-
-This behaviour is consistent for both logged-in and guest users, with the latter
-having limited access to restricted features.
-
-\begin{figure}[H]
-    \centering
-    \begin{minipage}{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{Design/8_search_no_origin.png}
-        \caption{Detailed Path Preview Mockup}
-        \label{fig:detailed_path_preview_mockup}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{Design/8_search_no_origin_guest.png}
-        \caption{Detailed Path Preview Mockup for Guest Users}
-        \label{fig:detailed_path_preview_guest_mockup}
-    \end{minipage}
-\end{figure}
 
 \subsection{Automatic Mode Activation}
 \label{sec:automatic_mode_activation}%
 
-After tapping the \textbf{Start Trip} button, logged-in users are prompted to choose
-whether to enable the Automatic Mode. This mode activates automatic obstacle detection
-and data collection using the available external sensors. Even when Automatic Mode is
-enabled, the user may still submit manual reports at any time by tapping the dedicated
-report icon during the trip.
-Once the user makes a selection, the app immediately starts the
-trip session and begins tracking the user's movement along the selected path.
+After tapping the Start Trip button, logged-in users are shown a pop-up prompting them to enable
+the Automatic Report Mode. This mode activates the device’s sensors (gyroscope and accelerometer)
+to automatically detect potential obstacles such as potholes or rough surfaces. Whenever an anomaly
+is detected, BBP prepares a pre-filled report and displays a confirmation prompt for the user to
+review, edit, or submit.
+
+If the user continues, the trip starts immediately and the system begins tracking the movement
+along the selected path. Automatic detection does not prevent manual reporting: users may still
+send manual reports at any time during the trip through the dedicated interface.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{Design/9_mode.png}
+	\includegraphics[width=0.5\textwidth]{Design/8_mode.png}
 	\caption{Automatic Mode Activation Mockup}
     \label{fig:automatic_mode_activation_mockup}
 \end{figure}
@@ -278,37 +245,41 @@ trip session and begins tracking the user's movement along the selected path.
 \subsection{Navigation View}
 \label{sec:navigation_view}%
 
-During an active trip, the app switches to a dedicated navigation view showing the user's
-real-time position on the selected path. The path remains highlighted in blue, and the 
-interface provides two main controls: a \textbf{Stop Trip} button at the top of the screen 
-and a \textbf{report button} for submitting manual obstacle reports.
-Both logged-in and guest users can enter this view once they press \textbf{Start Trip}, the
-difference lies in what data is retained and which controls remain available.
+During an active trip, the interface switches to a dedicated full-screen navigation mode.
+The map occupies the entire screen, displaying the user’s real-time position and the selected
+path highlighted with a thick blue route polyline. No bottom navigation elements are accessible 
+during a trip, ensuring that the user remains fully focused on navigation.
 
-A trip can end in three situations: when the user presses \textbf{Stop Trip}, when the destination
-is reached, or when the system detects that the user has moved significantly away from the planned 
-path. In all cases, the app stops the trip and notifies the user that the session has ended.
+At the bottom of the screen, a large Complete Trip button allows the user to manually end the 
+session at any moment. On the lower-right side, the interface shows a floating report button
+red and active for logged-in users, enabling manual obstacle reporting.
+The button is grey and disabled for guest users, who can't submit reports, and if clicked
+it triggers a pop-up inviting them to sign in.
+The button’s floating position and color clearly distinguish whether reporting is available.
 
-If the user is logged-in, the completed trip is then saved to their activity history. If the user is
-a guest, no information is saved, even though the navigation experience is identical.
+A trip session ends when the user presses the Complete Trip button, the destination is reached or
+when the system detects that the user has significantly deviated from the planned path.
+When the trip ends, BBP stops tracking and displays a confirmation message.
 
-The \textbf{report button} allows logged-in users to submit manual reports at any moment during
-the trip. This feature is disabled in guest mode, where only the \textbf{Stop Trip} button remains
-active. All other trip-related controls, including the bottom navigation bar and the \textbf{report button},
-appear greyed out to stress that the trip can be ridden but not stored or enriched with reports.
+For logged-in users, the trip data is stored in their personal history.
+For guest users, the navigation experience is identical, but no information is saved once the trip 
+is completed.
+
+This view visually reinforces the functional difference between user types: although both can ride
+along a selected path, only logged-in users can contribute reports and preserve their trip data.
 
 \begin{figure}[H]
     \centering
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{Design/10_trip_started.png}
+        \includegraphics[width=\textwidth]{Design/9_in_trip.png}
         \caption{Navigation View Mockup}
         \label{fig:navigation_view_mockup}
     \end{minipage}
     \hfill
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{Design/10_trip_started_guest.png}
+        \includegraphics[width=\textwidth]{Design/9_in_trip_guest.png}
         \caption{Navigation View Mockup for Guest Users}
         \label{fig:navigation_view_guest_mockup}
     \end{minipage}
@@ -317,31 +288,35 @@ appear greyed out to stress that the trip can be ridden but not stored or enrich
 \subsection{Trip Completion}
 \label{sec:trip_completion}%
 
-At the end of a trip, the app displays a pop-up informing the user that the navigation 
-session has been completed. The pop-up appears both when the user manually stops the trip and 
-when the system ends it automatically upon reaching the destination or detecting a significant
-deviation from the planned path.
+At the end of a trip, the app displays a completion pop-up that summarizes the outcome
+of the session.
+This pop-up appears in all termination scenarios.
 
-For logged-in users, the pop-up includes a \textbf{Check Summary} button that redirects them
-directly to the summary screen of the completed trip. The pop-up can also be dismissed by tapping
-anywhere outside the dialog.
+For logged-in users, the pop-up shows the message “Great Ride!” and includes a View Stats button.
+Tapping this button redirects the user to the Trip History screen and automatically opens the detailed
+summary of the trip that has just been completed.
+If the user taps outside the dialog, the pop-up simply closes and the map becomes interactive again.
 
-In guest mode, no summary is available because guest trips are not stored. The pop-up therefore
-contains no action buttons and simply closes when the user taps outside the dialog, returning
-them to the map.
+For guest users, the pop-up displays “Trip Complete” along with a reminder that trip statistics are
+not saved in guest mode.
+Only one button is shown, which closes the dialog.
+Since guest trips are never stored, no option to view statistics is provided.
+
+In both cases, the background map is dimmed while the modal is visible, preventing interaction
+until the user acknowledges the pop-up.
 
 \begin{figure}[H]
     \centering
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{Design/11_finished_trip.png}
+        \includegraphics[width=\textwidth]{Design/10_trip_completed.png}
         \caption{Trip Completion Mockup}
         \label{fig:trip_completion_mockup}
     \end{minipage}
     \hfill
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{Design/11_finished_trip_guest.png}
+        \includegraphics[width=\textwidth]{Design/10_trip_completed_guest.png}
         \caption{Trip Completion Mockup for Guest Users}
         \label{fig:trip_completion_guest_mockup}
     \end{minipage}
@@ -350,41 +325,71 @@ them to the map.
 \subsection{Report Submission}
 \label{sec:report_submission}%
 
-During an active trip, users may submit reports through a dedicated pop-up interface.
-This dialog appears in two situations: when the user manually taps the \textbf{report button}, or
-when the Automatic Mode detects a potential obstacle. In the manual case, the fields
-are initially empty and must be filled in by the user. When the pop-up is triggered by an
-automatic detection, the form is pre-compiled with the estimated path status and obstacle
-type inferred from sensor data, although the user remains free to modify or discard the
-report.
+During an active trip, logged-in users can submit a report through a dedicated pop-up interface.
+The report dialog appears when the user taps the red report button or when an automatic detection
+triggers a report prompt. The pop-up overlays the current navigation view and pauses the map 
+interaction by dimming the background.
 
-Only logged-in users can complete this action. In guest mode, the
-report function is disabled and the corresponding button appears greyed out.
+The pop-up contains two fields:
+Path Condition, allowing the user to assign the current status of the affected segment
+(e.g., Optimal, Requires Maintenance, Closed), and Obstacle Type, specifying the encountered issue
+(e.g., Obstacle, Path Damage, Work in Progress).
+
+For manual submissions, both fields are initially empty and must be filled in by the user before
+submitting. For automatic detections, the fields are pre-filled with the values inferred from sensor
+data, but the user may freely edit the information, confirm it, or discard the report entirely.
+
+Once the report is successfully submitted, the app displays a confirmation pop-up titled
+“Report Submitted”, thanking the user for contributing to the community. The dialog includes
+a Continue Trip button, which closes the pop-up and returns the user to the navigation view so
+they can resume riding without interruption.
+If the user does not interact with the dialog, it will automatically close after a short timeout. 
+
+Only logged-in users can access this feature. In guest mode, the report button is visible but appears
+greyed out and can't be pressed.
 
 \begin{figure}[H]
-	\centering
-	\includegraphics[width=0.5\textwidth]{Design/12_report.png}
-	\caption{Report Submission Mockup}
-	\label{fig:report_submission_mockup}
+    \centering
+    \begin{minipage}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Design/11_report.png}
+		\caption{Report Submission Mockup}
+		\label{fig:report_submission_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Design/11_report_success.png}
+		\caption{Report Submission Success Message Mockup}
+		\label{fig:report_submission_success_mockup}
+	\end{minipage}
 \end{figure}
 
 \subsection{Report Confirmation}
 \label{sec:report_confirmation}%
 
-While following a path during an active trip, the system notifies logged-in users
-when they pass near a location where a previous report was submitted by another user.
-In these cases, a confirmation pop-up appears, asking whether the reported obstacle is
-still present. The dialog offers two options: \textbf{Confirm}, to validate the existing
-report, or \textbf{Reject}, to indicate that the obstacle is no longer observed.
+While following a path during an active trip, BBP notifies logged-in users when they approach 
+a location where another cyclist previously submitted a report.
+In this situation, a confirmation pop-up appears at the top of the screen with the message
+“Obstacle Detected”, informing the user that an obstacle was previously reported at that spot.
 
-If the user does not interact with the pop-up within a short timeout period, the dialog
-automatically disappears to avoid interrupting the navigation experience. This feature is
-available only for logged-in users. Guest users are not prompted for report
-confirmations and cannot participate in the validation process.
+The dialog asks the user to confirm whether the issue is still present, offering two options, 
+one to confirm that the report is still valid and another to mark it as no longer present.
+
+The background map is dimmed to draw attention to the dialog while keeping the navigation visible.
+If the user does not respond within a short timeout, the pop-up automatically closes so as not to
+interrupt the ride. 
+
+After the user chooses either option, a second pop-up briefly appears to confirm that their response
+has been recorded, allowing them to immediately resume their trip.
+This confirmation dialog automatically closes after a short delay if the user does not interact with it
+
+This feature is available only for logged-in users, guest users do not receive confirmation prompts
+and can't validate reports.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{Design/13_confirm_report.png}
+	\includegraphics[width=0.5\textwidth]{Design/12_confirm_report.png}
 	\caption{Report Confirmation Mockup}
 	\label{fig:report_confirmation_mockup}
 \end{figure}
@@ -392,27 +397,25 @@ confirmations and cannot participate in the validation process.
 \subsection{Path Creation}
 \label{sec:path_creation}%
 
-When the user selects the path creation feature, a pop-up form appears requesting the
-basic metadata required to define a new bike path. The form includes fields for the path
-title, an optional description, the desired visibility level (e.g., public or private), and the
-creation mode. The visibility setting determines whether the path will be accessible to all users
-or only to the creator. It will be pre-set according to the user's preferences in the Settings screen,
-but can be modified for each new path.
+When the user selects the path creation feature, a pop-up form appears at the top of the screen,
+requesting the basic information needed to define a new bike path.
+The form includes Path Name, where the user enters the title of the new path, Description,
+an optional text field for adding details about the route, Visibility, allowing the user to
+choose whether the new path will be public or private. The user can also select 
+the Creation Mode, which determines how the path will be constructed: either manually by drawing
+it on the map, or automatically by recording the GPS track during a ride.
 
-The \textbf{Creation Mode} determines how the new path will be generated. If the user
-selects the manual mode, the path will be drawn directly on the map by placing and
-adjusting waypoints. If the automatic mode is selected, the user will start cycling and the
-app will record the GPS trace of the trip, using it as the final path geometry once
-the recording is completed.
+Once the required fields are completed, the user may proceed by tapping Start Creating,
+which closes the dialog and starts the selected creation flow.
+If the user chooses not to continue, the pop-up can be dismissed at any time using the button
+in the upper-right corner.
 
-After filling in the required fields, the user may proceed by tapping \textbf{Start Creation}
-or dismiss the dialog with the \textbf{Close} button.
+Only logged-in users can create new paths, this feature is not available in guest mode.
 
-Only logged-in users can create new paths.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{Design/14_creation.png}
+	\includegraphics[width=0.5\textwidth]{Design/13_create.png}
 	\caption{Path Creation Mockup}
 	\label{fig:path_creation_mockup}
 \end{figure}
@@ -420,25 +423,32 @@ Only logged-in users can create new paths.
 \subsection{Creation View}
 \label{sec:finish_creation}%
 
-During the path creation, the app switches to a dedicated creation view showing the user's
-real-time position on the selected path if the automatic mode is chosen, or allowing the user to
-draw the path by placing waypoints on the map in manual mode.
+When the user begins creating a new path, the app transitions into a dedicated creation view.
+The interface expands to a full-screen map and hides all navigation elements, allowing the user 
+to focus entirely on constructing the path.
 
-The interface provides a \textbf{Finish Creation} button at the top of the screen, which 
-the user can tap to complete the process and save the newly created path together with the 
-metadata provided in the initial form.
-After the path is successfully stored, the app displays a confirmation message 
-informing the user that the new path has been saved.
+The content of this screen depends on the selected creation mode.
+In Automatic Mode, the map shows the user’s real-time position as they cycle.
+As the user moves, the app draws a blue polyline representing the segment of the path already
+recorded. The line continuously updates to reflect the ongoing GPS trace.
+This view allows the user to visually monitor the path being generated as they ride.
 
-If the user wishes to cancel the creation, they can
-tap the home icon in the bottom navigation bar, which will discard the current path and return
-them to the home screen.
+In Manual Mode, the user can manually define the route by interacting with the map.
+Each waypoint placed by the user extends the blue polyline, progressively shaping the 
+final path. This mode allows full manual control over the geometry of the route.
 
-These actions are available only to logged-in users.
+At any moment, the user may cancel the creation by tapping the button in the upper-left corner, 
+which closes the creation view and discards the current progress.
+
+When the user is satisfied with the path, they can save it by tapping the Save Path button
+at the bottom of the screen.
+This action stores the new path together with the metadata previously entered in the creation form.
+
+Only logged-in users can access the creation view and save newly created paths.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{Design/15_finish_creation.png}
+	\includegraphics[width=0.5\textwidth]{Design/14_during_creation.png}
 	\caption{Creation View Mockup}
 	\label{fig:finish_creation_mockup}
 \end{figure}
@@ -446,18 +456,22 @@ These actions are available only to logged-in users.
 \subsection{Creation Completion}
 \label{sec:creation_completion}%
 
-After completing the creation workflow, the system confirms the successful creation of the new path
-by displaying a pop-up notification. The dialog informs the user that the path has been saved and
-provides a single action button, \textbf{Check Path}, which redirects directly to the detail screen
-of the newly created path.
+After the user completes the path creation process and saves the new route, the app displays 
+a confirmation pop-up titled “Path Created!”.
+The dialog informs the user that the new path has been successfully stored and is now ready to use.
 
-The pop-up can also be dismissed by tapping anywhere outside the dialog, returning the user to the
-map view. Only logged-in users can access this confirmation dialog, as guests cannot create or store
-custom paths.
+The pop-up includes a single action button, “Go to My Paths”, which redirects the user to the 
+section containing all the paths they have created. From there, they can view the newly saved 
+path in detail or manage their collection.
+
+If the user taps outside the dialog, the pop-up simply closes and the app returns to the map view,
+allowing them to continue exploring the interface.
+
+This confirmation appears only for logged-in users, as guests can't create or save custom paths.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{Design/16_creation_success.png}
+	\includegraphics[width=0.5\textwidth]{Design/15_creation_completed.png}
 	\caption{Creation Completion Mockup}
 	\label{fig:creation_completion_mockup}
 \end{figure}
@@ -465,183 +479,259 @@ custom paths.
 \subsection{Trip History Screen}
 \label{sec:trip_history_page}%
 
-The \textbf{My Trips} screen provides logged-in users with an overview of all previously
-recorded trips. It is accessible through the second icon in the bottom
-navigation bar.
+The Trip History screen allows logged-in users to review all their previously recorded cycling
+activities and is accessible through the second icon in the bottom navigation bar. The top 
+section includes a sorting control placed beside the screen title. Tapping it opens a compact
+dropdown menu that lets the user reorder the list of trips by date, distance, duration,
+or alphabetical order. Once a sorting option is selected, the list immediately updates to 
+reflect the new ordering.
 
-At the top of the screen, a small arrow icon appears next to the \textbf{My Trips} title.
-Tapping this icon opens a compact overlay menu that allows the user to choose how the trips
-should be sorted, for example by date, distance, or alphabetical order. 
-Selecting an option immediately updates the ordering of the list.
+All trips are presented as compact cards showing essential information about each session, 
+including the trip name, the total distance, the duration, and the date of completion. A delete 
+icon also appears on each card, allowing users to remove a trip from their history. When the user
+presses the delete icon, a confirmation pop-up appears to prevent accidental deletions. When the user 
+taps a trip card, it expands smoothly into a detailed view. In this expanded state, the interface 
+displays a map preview showing the route followed during the session, enriched with a weather badge
+positioned in the corner of the map. Beneath the map, a summary section reports the date, duration,
+and the name of the selected path, followed by a performance panel showing additional metrics such 
+as distance, average speed, maximum speed, and elevation.
 
-Each entry displays the destination name, date, total distance, and trip
-duration. Tapping on a trip record expands it to show a detailed summary, including a
-map visualization of the followed path, the weather conditions at the time of the trip,
-and additional metrics such as average speed and elevation level. Tapping the same
-record again collapses the details, returning the list to its compact form.
+If the user taps the weather badge, the app reveals an additional panel containing detailed 
+meteorological information, such as temperature, humidity, wind speed, visibility, pressure, and 
+overall weather conditions at the time of the trip. When the recorded activity includes confirmed 
+reports, the corresponding markers appear directly on the map. Selecting one of them opens a small 
+dialog containing the details of the associated issue, allowing the user to inspect what was 
+encountered along the route.
 
-If the displayed weather badge is selected, the app reveals additional
-weather-related information, providing a more complete snapshot of the environmental
-conditions encountered during the trip.
+Tapping the trip header again collapses the view, returning the interface to the scrollable list of 
+compact cards. This screen provides a rich and well-structured overview of past cycling activities,
+enabling users to explore their performance and recall the conditions of each session. 
 
-If the path contained confirmed reports, these are displayed directly on the map using
-warning markers, allowing the user to identify critical segments encountered during the
-trip. Tapping on a marker opens a small dialog showing the details of the corresponding
-report, enabling the user to inspect the nature and severity of the issue encountered on
-that segment.
-
-This screen presents all trip-related information in a unified and structured format,
-making it easy for users to review past sessions and compare their performance over
-time.
-
-This functionality is available only for logged-in users.
+The Trip History is available exclusively to logged-in users, as guest users can't store or view past trips.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{Design/17_trips.png}
-	\caption{Trip History Screen Mockup}
-	\label{fig:trip_history_screen_mockup}
+	\begin{minipage}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Design/16_trip_history.png}
+		\caption{Trip History Screen Mockup}
+		\label{fig:trip_history_screen_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Design/16_trip_order.png}
+		\caption{Trip Sorting Options Mockup}
+		\label{fig:trip_sorting_options_mockup}
+	\end{minipage}
 \end{figure}
 
-\subsection{Path History Screen}
-\label{sec:path_history_screen}%
-
-The \textbf{My Paths} screen displays all custom bike paths created by the logged-in
-user.  It is accessible through the third icon in the bottom
-navigation bar, represented by the bike icon.
-
-At the top of the screen, a small arrow icon appears next to the \textbf{My Paths} title.
-Tapping this icon opens a compact overlay menu that allows the user to choose how the paths
-should be sorted, for example by date, distance, or alphabetical order. 
-Selecting an option immediately updates the ordering of the list.
-
-Each entry shows the path title, date of creation, total distance, and estimated
-duration. Tapping on a path expands the entry and reveals a preview of the path on the
-map. Tapping the same entry again collapses the view and returns the list to its compact layout.
-
-Each path provides a set of management actions. The visibility icon allows the user to
-toggle the path's visibility between public and private, while the delete icon permanently
-removes the path from the user's collection. 
-
-When the user selects the \textbf{Start} button inside a path entry, the app redirects
-them to the home screen with the origin and destination fields automatically filled with the
-path's endpoints, and the corresponding path already selected. The user may then start
-the trip directly, provided that their current physical position matches the starting point
-of the path.
-
-This section is accessible only to logged-in users. Guest users cannot create, view,
-or manage custom paths.
+\begin{figure}[H]
+	\centering
+	\begin{minipage}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Design/16_trip_expanded.png}
+		\caption{Trip History Details Mockup}
+		\label{fig:trip_history_details_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Design/16_trip_stats.png}
+		\caption{Trip Statistics Mockup}
+		\label{fig:trip_statistics_mockup}
+	\end{minipage}
+\end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{Design/18_paths.png}
-	\caption{Path History Screen Mockup}
-	\label{fig:path_history_screen_mockup}
+	\begin{minipage}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Design/16_trip_weather.png}
+	\caption{Trip Weather Details Mockup}
+	\label{fig:trip_weather_details_mockup}	
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Design/16_delete_trip.png}
+		\caption{Trip Deletion Confirmation Mockup}
+		\label{fig:trip_deletion_confirmation_mockup}
+	\end{minipage}
+\end{figure}
+
+\subsection{My Paths Screen}
+\label{sec:my_paths_screen}%
+
+The My Paths screen displays all custom bike paths created by the logged-in user and is accessible 
+through the third icon in the bottom navigation bar. At the top of the page, a small arrow icon next
+to the screen title opens a compact sorting menu, allowing the user to reorder their paths by date,
+distance, alphabetical order, or visibility. Once an option is selected, the list is immediately
+re-sorted.
+
+Each item in the list shows the path title, a short description, the total distance, the creation
+date, and two management icons: one for toggling visibility and one for deletion. Tapping a path
+expands it and reveals a map preview showing the full route. When expanded, the entry also provides 
+a Start This Path button, which redirects the user to the home screen with the selected path already
+loaded on the map. If the user’s current position matches the path’s starting point, the trip can be
+started immediately.
+
+Managing a path triggers dedicated confirmation dialogs. Changing visibility opens a pop-up asking
+the user to confirm whether they want to switch the path between public and private. The change is
+applied only after confirmation. Deleting a path opens a separate confirmation dialog warning that
+the action is permanent, and the path is removed only if the user explicitly confirms.
+
+Collapsing an expanded path restores the compact list layout, allowing users to browse their 
+collection efficiently. 
+
+All interactions inside this screen are available exclusively to logged-in users. Guests can't view,
+create, start, or manage custom paths.
+
+\begin{figure}[H]
+	\centering
+	\begin{minipage}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Design/17_paths.png}
+		\caption{My Paths Screen Mockup}
+		\label{fig:my_paths_screen_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Design/17_path_expanded.png}
+		\caption{Path Details Mockup}
+		\label{fig:my_path_details_mockup}
+	\end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{minipage}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Design/17_path_visibility.png}
+		\caption{Path Visibility Toggle Mockup}
+		\label{fig:path_visibility_toggle_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Design/17_delete_path.png}
+		\caption{Path Deletion Confirmation Mockup}
+		\label{fig:path_deletion_confirmation_mockup}
+	\end{minipage}
 \end{figure}
 
 \subsection{Profile Screen}
 \label{sec:profile_screen}%
 
-The \textbf{Profile} screen provides logged-in users with an overview of their personal
-statistics and riding activity. It is accessible through the fourth icon in the bottom
-navigation bar, represented by the avatar icon.
+The Profile screen provides logged-in users with a complete overview of their cycling activity
+and personal account details. It is accessible through the fourth icon in the bottom navigation bar.
 
-At the top of the screen, users can view their profile information together with aggregated
-metrics such as total distance travelled and total number of recorded trips. A small pencil
-icon appears next to the user's name, tapping it opens a dedicated screen where the user can
-update their personal details, including name, email, and password. A shortcut is also provided
-to start a new trip directly from this section, that will redirect the user to the home screen
-when selected.
+At the top of the page, the user’s profile card displays their avatar, name, and email address. 
+A small edit icon next to the name allows the user to update their personal information, such as name
+or email. A settings icon is available in the top-right corner and redirects to the Settings screen,
+where account preferences and configuration options can be adjusted.
 
-The screen includes a summary of the user's most recent trip, followed by a weekly analysis
-showing the average ride duration for each day of the week. Additional statistics, such as
-total weekly distance, average speed, and elevation level—are presented in a dedicated
-section to offer a comprehensive overview of the user's performance and progress over time.
+Below the profile header, the screen shows a set of Overall Stats, summarising the user’s total 
+distance ridden, total number of recorded trips, and the total number of custom paths they have created.
+These metrics provide a quick snapshot of the user’s long-term activity.
 
-A calendar icon is available within the statistics area. Tapping it opens a pop-up that allows
-the user to filter the displayed metrics, selecting, for example, monthly statistics or data
-related to a specific day.
+Further down, the Activity Stats section offers a more detailed breakdown. A compact dropdown
+menu allows the user to filter the statistics by time period, such as monthly activity. 
+The metrics displayed include the number of paths and trips completed during the selected 
+period, the total distance travelled, total riding time, average and maximum speed, elevation gain, 
+calories burned, and other performance indicators. Each metric is represented with its own colourful
+icon for quick visual identification.
 
-A settings icon is also available in the top-right corner of the screen. Selecting it redirects
-the user to the \textbf{Settings} screen, where personal preferences and privacy options can be
-configured.
-
-This screen is available exclusively to logged-in users.
+All information in this section is available exclusively to logged-in usersGuests cannot access 
+the Profile screen or view personal statistics.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{Design/19_profile.png}
+	\includegraphics[width=0.5\textwidth]{Design/18_profile.png}
 	\caption{Profile Screen Mockup}
 	\label{fig:profile_screen_mockup}
+\end{figure}
+
+\subsection{Personal Information}
+\label{sec:personal_informations}%
+
+The Personal Information screen allows logged-in users to update their account details.
+It includes editable fields for the Username and Email Address, followed by a dedicated section 
+for changing the password.
+
+To update the password, the user must enter their Current Password, then provide a New Password, 
+and finally confirm it in the Confirm Password field. This ensures that the new credentials are 
+correctly entered and match before proceeding.
+
+Once all desired changes have been made, the user can tap Save Changes to submit the updated 
+information. The app validates the input and, if successful, stores the new data and returns the 
+user to the previous screen. A Cancel button is also available, allowing the user to dismiss the 
+form without applying any modifications.
+
+This screen is accessible exclusively to logged-in users and is reached from the Profile screen by
+tapping the pencil icon next to the user’s name. The user can return to the Profile view
+at any time by tapping the back arrow in the top-left corner.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Design/19_edit_profile.png}
+    \caption{Personal Information Mockup}
+    \label{fig:personal_information_mockup}
 \end{figure}
 
 \subsection{Settings Screen}
 \label{sec:settings_screen}
 
-The \textbf{Settings} screen, accessible from the Profile section, allows logged-in users
-to customize their app preferences and manage their privacy settings. The screen
-includes options such as enabling or disabling Dark Mode and selecting the preferred
-data sharing level (e.g., public or private). 
+The Settings screen allows logged-in users to customize their app experience and manage a small set
+of personal preferences. It is accessible from the Profile screen through the settings icon 
+in the top-right corner.
 
-The \textbf{Contact Us} option redirects the user to the app's store screen (Google
-Play Store or Apple App Store, depending on the platform), where they can access the
-official support channel or submit feedback.
+At the top, the Appearance option lets the user choose the visual theme of the application.
+The current theme is displayed on the right side of the row, and tapping the selector opens a small
+menu where the user can switch between the available modes (e.g. Light or Dark).
 
-At the bottom of the screen, the user can log out from their account through the
-\textbf{Log Out} button, which immediately terminates the current session and returns the
-app to guest mode.
+Below it, the Default Privacy setting controls the visibility assigned to newly created paths. 
+The user can choose whether new paths should be public or private by default. This preference 
+applies automatically during path creation but can still be overridden manually for each individual path.
 
-This screen is available only to logged-in users, as guest users do not manage personal
-preferences or sharing settings.
+The Get Help section provides quick access to the support channel, allowing the user to contact the 
+team if assistance is needed.
+
+At the bottom of the screen, the Sign Out button logs the user out of their account and returns the
+application to guest mode.
+
+This screen is available exclusively to logged-in users, as guest users do not manage appearance 
+preferences, default visibility settings, or account actions.
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.5\textwidth]{Design/20_settings.png}
 	\caption{Settings Screen Mockup}
-	\label{fig:settings_screen _mockup}
-\end{figure}
-
-
-\subsection{Personal Information}
-\label{sec:personal_informations}%
-
-The \textbf{Personal Information} screen allows logged-in users to update their account details.
-The screen displays editable fields for the username, email address, and password.
-To change the password, the user must enter the new password twice, once in the \textbf{Password}
-field and again in the \textbf{Repeat Password} field, to ensure consistency.
-
-Once the desired changes have been made, the user can tap the \textbf{Save Changes} button to submit
-the updated information. The app validates the input and, if the update is successful,
-stores the new account details and returns the user to the previous screen.
-
-This screen is accessible exclusively to logged-in users and can be reached from the \textbf{Profile}
-screen by tapping the pencil icon next to the user's name. To return to the profile view, the user can
-simply tap the profile icon again in the bottom navigation bar.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.5\textwidth]{Design/21_personal_info.png}
-    \caption{Personal Information Mockup}
-    \label{fig:personal_information_mockup}
+	\label{fig:settings_screen_mockup}
 \end{figure}
 
 \subsection{Error Pop-ups}
 \label{sec:error_popups}%
 
-The app includes a global error-handling mechanism to ensure consistent feedback
-across all user interactions. Whenever an unexpected issue occurs, such as a network failure,
-invalid input, or an internal processing error, the system displays a dedicated error pop-up.
-The dialog replaces the message with the specific error description relevant to the situation.
+The app includes a global error-handling mechanism that provides consistent feedback whenever
+an unexpected issue occurs. In these cases, a dedicated Error pop-up appears at the top of the screen,
+displaying a clear title and a short description of what went wrong. The message shown in the dialog
+is dynamically replaced with the specific error text relevant to the situation, such as network 
+failures, permission issues, or invalid operations.
 
-The pop-up is dismissed when the user taps anywhere outside the dialog. This behaviour is
-consistent across the entire app.
+The pop-up dims the underlying interface to draw attention to the alert and includes a single 
+Close button that dismisses the dialog and returns the user to the previous screen. Tapping outside 
+the pop-up also closes the notification.
 
-This error pop-up may appear during any operation, including searching for paths, 
-starting or saving trips, submitting reports, or managing custom paths.
+This error dialog can appear at any point in the app, including during path searches, trip management,
+report submission, navigation, or when modifying custom paths.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{Design/22_error.png}
+	\includegraphics[width=0.5\textwidth]{Design/21_error.png}
 	\caption{Error Pop-up Mockup}
 	\label{fig:error_popups_mockup}
 \end{figure}
+
+% TODO add biking prompt section, a section that describes only the flow, and make a shadow around the images
