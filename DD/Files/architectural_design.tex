@@ -2,14 +2,8 @@
 % Architectural Design
 % --------------------------------------------------------------------------
 
-% --------------------------------------------------------------------------
-% Overview
-% --------------------------------------------------------------------------
-\section{Overview: High-level components and their interactions}
+\section{Architectural Overview: High-level components and their interactions}
 \label{sec:overview}%
-
-\section{Architectural Overview}
-\label{sec:architectural_overview}
 
 The architecture of the Best Bike Paths (BBP) system follows a classic
 \textbf{three-tier structure}, separating the software into a presentation layer,
@@ -33,7 +27,7 @@ This layer is responsible for:
 
 The mobile app is intentionally designed as a \textbf{thin client}.
 All domain logic, decision processes, ranking operations, and aggregation of path
-information are delegated to the app layer.
+information are delegated to the application layer.
 The app interacts with device-level subsystems such as the GPS module
 and external sensors (when available), but these elements are not part of the backend architecture.
 The mobile app also uses the secure storage facilities provided by the operating system
@@ -41,9 +35,9 @@ The mobile app also uses the secure storage facilities provided by the operating
 
 \subsection*{Application Layer}
 
-The app layer embodies the \textbf{core business logic} of BBP.
+The application layer embodies the \textbf{core business logic} of BBP.
 It is implemented as a modular backend composed of independent yet cooperating \textbf{components},
-each encapsulating a well–defined responsibility.
+each encapsulating a well-defined responsibility.
 These components are logically independent in terms of responsibilities and interfaces,
 but they are part of a single backend app.
 The main functional components include:
@@ -52,21 +46,20 @@ The main functional components include:
 	\item \textbf{User Module}: contains the \textbf{AuthManager} and the
 	      \textbf{UserManager}, responsible for authentication, credential verification,
 	      and management of user profiles.
-	\item \textbf{Trip Module}: contains the \textbf{TripManager}, which handles
+	\item \textbf{TripManager}: handles
 	      the lifecycle of a cycling trip and produces trip summaries enriched with
 	      contextual weather data.
-	\item \textbf{Path Module}: contains the \textbf{PathManager}, responsible for
+	\item \textbf{PathManager}:  responsible for
 	      maintaining bike-path data, computing routes, and ranking candidate paths according to
 	      their condition and effectiveness.
-	\item \textbf{Report Module}: contains the \textbf{ReportManager}, responsible
+	\item \textbf{ReportManager}: responsible
 	      for storing and aggregating reports, managing confirmations, and updating
 	      path-condition indicators.
-	\item \textbf{Statistics Module}: contains the \textbf{StatsManager}, which
-	      computes and stores user statistics and per-trip metrics.
+	\item \textbf{StatsManager}: computes and stores user statistics and per-trip metrics.
+	\item \textbf{WeatherManager}: interfaces with an external weather service to retrieve
+	      meteorological data.
 \end{itemize}
 
-The app layer also includes the \textbf{WeatherManager}, which interacts
-with an external weather service to retrieve meteorological data.
 All modules are accessed through the \textbf{API Gateway}, which exposes a set of
 RESTful sub-APIs and routes incoming requests to the appropriate Manager.
 
@@ -85,7 +78,7 @@ information relevant to the system’s domain, including:
 All interactions with the DBMS are mediated by a single \textbf{QueryManager},
 which centralises data-access operations and offers a uniform interface for
 executing queries. This design keeps persistence concerns separated from the
-app logic and reduces duplication across components.
+application logic and reduces duplication across components.
 
 % --------------------------------------------------------------------------
 % Component View
@@ -367,9 +360,11 @@ network or server errors trigger an appropriate error message on the client side
 
 \subsubsection*{[UC6] - Create a Path in Manual mode}
 
-When a logged-in user wants to create a new path, he will be asked to choose between
-manual and automatic creation modes. If he opts for creating the path in \textbf{manual mode},
-he will be presented with a form to fill in the required metadata and segment list.
+When a logged-in user wants to create a new path, he will be presented with a form to fill
+in the required metadata and choose between manual and automatic creation modes. If he opts
+for creating the path in \textbf{manual mode}, an interactive map is displayed on the mobile app,
+allowing the user to define the path by drawing it. The user will be able to
+save the path, sending the saving request to the backend.
 
 Before sending the request, the app performs local validation to ensure that all
 mandatory fields and segments are correctly specified.
@@ -386,7 +381,6 @@ The gateway responds with a \textbf{201 Created} status and the new pathId. The 
 displays a confirmation message to the user. In the event of network failures or
 server-side errors, the app notifies the user accordingly.
 
-
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/create_manual.png}
@@ -398,9 +392,10 @@ server-side errors, the app notifies the user accordingly.
 \subsubsection*{[UC7] - Create a Path in Automatic Mode}
 
 When a logged-in user chooses to create a new bike path, he first selects the
-\textbf{automatic creation mode} from the mobile app. The app displays a form for entering
-the required metadata, such as the path name, description, and other relevant details.
-The app performs a first local validation. If the fields are invalid, the user is immediately notified.
+creation mode from the mobile app. The app displays a form for entering
+the required metadata, such as the path name, description, and other relevant details, and
+choosing the desired mode. If the user chooses automatic mode, 
+the app proceeds to performs a first local validation. If the fields are invalid, the user is immediately notified.
 
 Once the input is valid, the app attempts to activate \textbf{GPS tracking}. If activation fails
 (e.g., permissions or hardware issues), an error is shown. If tracking succeeds, the \textbf{GPS
@@ -419,7 +414,6 @@ the path in the \textbf{DBMS}. The system inserts metadata and user association 
 and upon successful insertion returns a \textbf{201 Created} response containing the new pathId.
 The mobile app receives the response and displays a success message,
 indicating that the new automatically generated path has been saved.
-
 
 \begin{figure}[H]
 	\centering
@@ -447,7 +441,6 @@ Successful deletion results in a \textbf{204} response, upon which the mobile ap
 confirms the removal to the user. Network or server-side failures prompt the mobile app
 to display a generic error message.
 
-
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/delete_path.png}
@@ -470,7 +463,6 @@ If at any point the \textbf{GPS module} reports a loss of signal, the app displa
 error message to the user. No backend interaction occurs in this use case, as guest
 trips are not recorded or stored.
 
-
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/start_guest.png}
@@ -481,9 +473,9 @@ trips are not recorded or stored.
 
 \subsubsection*{[UC10] - Start a Trip in Manual Mode as a Logged-in User}
 
-In this scenario, a logged-in user starts a trip by selecting a path and enabling \textbf{manual tracking}.
+In this scenario, a logged-in user starts a trip by selecting a path.
 The interaction begins when the user initiates the trip from the mobile app, which
-displays the chosen path on the map. The user then selects the \textbf{Manual mode},
+displays the chosen path on the map. The user chooses not to enable automatic mode,
 and then the app activates the \textbf{GPS module}.
 If the GPS fails to activate, the mobile app immediately notifies the user with an error
 message. Otherwise, GPS tracking begins, and the device periodically emits position
@@ -493,7 +485,6 @@ The trip identifier is generated and maintained locally by the app during tracki
 During the trip, if the GPS signal is lost at any point, the GPS module reports an error
 and the mobile app displays a corresponding warning to the user, interrupting the normal
 flow of position updates.
-
 
 \begin{figure}[H]
 	\centering
@@ -505,7 +496,7 @@ flow of position updates.
 
 \subsubsection*{[UC11] - Start a Trip in Automatic Mode as a Logged-in user}
 
-When a logged-in user selects a path and chooses to start the trip in \textbf{automatic mode},
+When a logged-in user selects a path and chooses to enable \textbf{automatic mode},
 the mobile app first displays the map and then attempts to establish a connection with
 the \textbf{external sensors} required for automatic detection.
 
