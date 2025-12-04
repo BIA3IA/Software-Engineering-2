@@ -8,13 +8,13 @@
 		\node[
 			inner sep=0pt,
 			outer sep=0pt,
-			rounded corners=13pt, % regola se vuoi più o meno tondo
+			rounded corners=14pt, % regola se vuoi più o meno tondo
 			clip
 		] (img) {\includegraphics[#1]{#2}};
 
 		% --- BORDO ATTORNO ALLO SCHERMO (ben visibile) ---
 		\draw[
-			rounded corners=13pt,
+			rounded corners=14pt,
 			line width=0.9pt,
 			color=black!65
 		] (img.north west) rectangle (img.south east);
@@ -61,34 +61,49 @@ obstacle reporting, custom path creation and management, and profile settings.
 The screens also highlight how certain functionalities change depending on the user state
 (guest or logged-in), ensuring a clear understanding of the overall user experience.
 
+\section{Authentication and Guest Access}
+\label{sec:authentication_and_guest_access}%
 
 \begin{figure}[H]
 	\centering
-	\begin{minipage}[t]{0.65\textwidth}
-
-		\subsection*{Welcome Screen}
-		\label{sec:welcome_screen}%
-
-		The welcome screen displays the app logo, the app's name, and a short tagline summarizing
-		its purpose: discovering bike paths, tracking rides, and joining a cycling community.
-		Three navigation options are provided: Sign In, Log In, and Continue as Guest.
-		The Sign In button directs new users to the registration screen to create an account, while
-		the Log In button allows returning users to access their existing accounts.
-		The Continue as Guest option enables users to explore the app without registering,
-		offering limited functionality.
-		This screen serves as the entry point to all subsequent interactions and does not
-		require any backend communication. Its goal is to guide the user toward authentication
-		or guest access in a clear, minimal, and intuitive way.
-
-	\end{minipage}
-	\hspace{5pt} 
-	\begin{minipage}[c]{0.25\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
+		\vspace{0pt}
 		\phoneimage[width=\textwidth]{Design/1_welcome.png}
 		\caption{Welcome Screen}
 		\label{fig:welcome_screen_mockup}
 	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/2_login.png}
+		\caption{Login Screen}
+		\label{fig:login_screen_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/3_signup.png}
+		\caption{Signup Screen}
+		\label{fig:signup_screen_mockup}
+	\end{minipage}
 \end{figure}
+
+\subsection*{Welcome Screen}
+\label{sec:welcome_screen}%
+
+The welcome screen displays the app logo, the app's name, and a short tagline summarizing
+its purpose: discovering bike paths, tracking rides, and joining a cycling community.
+Three navigation options are provided: Sign In, Log In, and Continue as Guest.
+The Sign In button directs new users to the registration screen to create an account, while
+the Log In button allows returning users to access their existing accounts.
+The Continue as Guest option enables users to explore the app without registering,
+offering limited functionality.
+This screen serves as the entry point to all subsequent interactions and does not
+require any backend communication. Its goal is to guide the user toward authentication
+or guest access in a clear, minimal, and intuitive way.
 
 \subsection*{Login Screen}
 \label{sec:login_screen}%
@@ -110,20 +125,33 @@ Users can switch to the Welcome Screen by pressing the dedicated button.
 Creating an account unlocks all core functionalities of BBP, such as recording trips,
 submitting reports, managing custom paths, and accessing personal statistics.
 
+\section{Home for Logged-in and Guest Users}
+\label{sec:home_for_logged_in_and_guest_users}%
+
 \begin{figure}[H]
 	\centering
-	\begin{minipage}{0.48\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
-		\phoneimage[width=\textwidth]{Design/2_login.png}
-		\caption{Login Screen}
-		\label{fig:login_screen_mockup}
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/4_home.png}
+		\caption{Home Screen}
+		\label{fig:home_screen_mockup}
 	\end{minipage}
 	\hfill
-	\begin{minipage}{0.48\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
-		\phoneimage[width=\textwidth]{Design/3_signup.png}
-		\caption{Signup Screen}
-		\label{fig:signup_screen_mockup}
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/4_home_guest.png}
+		\caption{Home Screen for Guests}
+		\label{fig:home_screen_mockup_guest}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/5_unlock.png}
+		\caption{Authentication Pop-up}
+		\label{fig:authentication_pop_up_guest_users_mockup}
 	\end{minipage}
 \end{figure}
 
@@ -152,23 +180,6 @@ Tapping a disabled icon triggers a pop-up inviting the user to sign in to unlock
 The creation floating action button is also greyed out, as path creation is restricted to logged-in users.
 This interface clearly conveys the distinction between freely accessible features and those requiring authentication.
 
-\begin{figure}[H]
-	\centering
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/4_home.png}
-		\caption{Home Screen Mockup}
-		\label{fig:home_screen_mockup}
-	\end{minipage}
-	\hfill
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/4_home_guest.png}
-		\caption{Home Screen Mockup for Guest Users}
-		\label{fig:home_screen_mockup_guest}
-	\end{minipage}
-\end{figure}
-
 \subsection*{Authentication Pop-up for Guest Users}
 \label{sec:authentication_pop_up_guest_users}%
 
@@ -183,12 +194,64 @@ The modal can be closed either by selecting one of the available actions or by t
 the pop-up area, returning the guest user to the current screen and allowing them to continue
 browsing the map or searching for bike paths uninterrupted.
 
+\section{Path Search}
+\label{sec:path_search}%
+
+
 \begin{figure}[H]
 	\centering
-	\phoneimage[width=0.5\textwidth]{Design/5_unlock.png}
-	\caption{Authentication Pop-up Mockup for Guest Users}
-	\label{fig:authentication_pop_up_guest_users_mockup}
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/6_search.png}
+		\caption{Search Results}
+		\label{fig:search_results_mockup}
+	\end{minipage}
+	\hspace{0.05\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/6_search_guest.png}
+		\caption{Search Results for Guests}
+		\label{fig:search_results_guests_mockup}
+	\end{minipage}
 \end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/22_biking_prompt.png}
+		\caption{Automatic Ride Detection}
+		\label{fig:automatic_ride_detection_popup_mockup}
+	\end{minipage}
+	\hspace{0.05\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/22_biking_prompt_guest.png}
+		\caption{Automatic Ride Detection for Guests}
+		\label{fig:automatic_ride_detection_popup_guest_mockup}
+	\end{minipage}
+\end{figure}
+
+
+\subsection*{Search Results}
+\label{sec:search_results}%
+
+After the user submits a path search from the home screen, the app displays an “Available Paths”
+panel anchored to the top of the map.
+The panel lists all suggested paths matching the search criteria.
+Each item shows the path name, a short description if available, estimated distance and travel time,
+and its current condition (e.g., Optimal, Maintenance) together with the number of aggregated reports.
+The underlying map remains visible as a background reference centered on the searched area,
+while the user scrolls through the list to compare the alternatives.
+Tapping the close icon in the top-right corner of the panel dismisses the results and returns
+the interface to the previous state, where the user can enter a new search and run it again.
+
+The behavior is identical for logged-in and guest users, except for the general restrictions
+applied to guests.
 
 \subsection*{Automatic Ride Detection}
 \label{sec:automatic_ride_detection}%
@@ -207,53 +270,33 @@ The behaviour is the same for logged-in and guest users in terms of detection an
 However, as outlined in the other screens, only logged-in users will have their trip stored and
 included in their personal statistics.
 
-\begin{figure}[H]
-	\centering
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/22_biking_prompt.png}
-		\caption{Automatic Ride Detection Pop-up Mockup}
-		\label{fig:automatic_ride_detection_popup_mockup}
-	\end{minipage}
-	\hfill
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/22_biking_prompt_guest.png}
-		\caption{Automatic Ride Detection Pop-up  Mockup for Guest Users}
-		\label{fig:automatic_ride_detection_popup_guest_mockup}
-	\end{minipage}
-\end{figure}
-
-\subsection*{Search Results}
-\label{sec:search_results}%
-
-After the user submits a path search from the home screen, the app displays an “Available Paths”
-panel anchored to the top of the map.
-The panel lists all suggested paths matching the search criteria.
-Each item shows the path name, a short description if available, estimated distance and travel time,
-and its current condition (e.g., Optimal, Maintenance) together with the number of aggregated reports.
-The underlying map remains visible as a background reference centered on the searched area,
-while the user scrolls through the list to compare the alternatives.
-Tapping the close icon in the top-right corner of the panel dismisses the results and returns
-the interface to the previous state, where the user can enter a new search and run it again.
-
-The behavior is identical for logged-in and guest users, except for the general restrictions
-applied to guests.
+\section{Path Selection and Trip Start}
+\label{sec:path_selection_and_trip_start}%
 
 \begin{figure}[H]
 	\centering
-	\begin{minipage}{0.48\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
-		\phoneimage[width=\textwidth]{Design/6_search.png}
-		\caption{Search Results Mockup}
-		\label{fig:search_results_mockup}
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/7_select.png}
+		\caption{Path Selection}
+		\label{fig:path_selection_mockup}
 	\end{minipage}
 	\hfill
-	\begin{minipage}{0.48\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
-		\phoneimage[width=\textwidth]{Design/6_search_guest.png}
-		\caption{Search Results Mockup for Guest Users}
-		\label{fig:search_results_mockup_guest}
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/7_select_guest.png}
+		\caption{Path Selection for Guests}
+		\label{fig:path_selection_mockup_guest}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/8_mode.png}
+		\caption{Automatic Mode Activation}
+		\label{fig:automatic_mode_activation_popup_mockup}
 	\end{minipage}
 \end{figure}
 
@@ -291,24 +334,6 @@ The behaviour is identical for logged-in and guest users regarding map visualiza
 and result browsing. However, only logged-in users can access advanced features from the bottom
 navigation bar, which appear disabled in guest mode.
 
-\begin{figure}[H]
-	\centering
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/7_select.png}
-		\caption{Path Selection Mockup}
-		\label{fig:path_selection_mockup}
-	\end{minipage}
-	\hfill
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/7_select_guest.png}
-		\caption{Path Selection Mockup for Guest Users}
-		\label{fig:path_selection_mockup_guest}
-	\end{minipage}
-\end{figure}
-
-
 \subsection*{Automatic Mode Activation}
 \label{sec:automatic_mode_activation}%
 
@@ -322,11 +347,44 @@ If the user continues, the trip starts immediately and the system begins trackin
 along the selected path. Automatic detection does not prevent manual reporting: users may still
 send manual reports at any time during the trip through the dedicated interface.
 
+\section{Navigation and Trip Completion}
+\label{sec:navigation_and_trip_completion}%
+
 \begin{figure}[H]
 	\centering
-	\phoneimage[width=0.5\textwidth]{Design/8_mode.png}
-	\caption{Automatic Mode Activation Pop-up Mockup}
-	\label{fig:automatic_mode_activation_popup_mockup}
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/9_in_trip.png}
+		\caption{Navigation View }
+		\label{fig:navigation_view_mockup}
+	\end{minipage}
+	\hspace{0.05\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/9_in_trip_guest.png}
+		\caption{Navigation View for Guest Users}
+		\label{fig:navigation_view_guest_mockup}
+	\end{minipage}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/10_trip_completed.png}
+		\caption{Trip Completion}
+		\label{fig:trip_completion_mockup}
+	\end{minipage}
+	\hspace{0.05\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/10_trip_completed_guest.png}
+		\caption{Trip Completion for Guest Users}
+		\label{fig:trip_completion_guest_mockup}
+	\end{minipage}
 \end{figure}
 
 \subsection*{Navigation View}
@@ -355,23 +413,6 @@ is completed.
 This view visually reinforces the functional difference between user types: although both can ride
 along a selected path, only logged-in users can contribute reports and preserve their trip data.
 
-\begin{figure}[H]
-	\centering
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/9_in_trip.png}
-		\caption{Navigation View Mockup}
-		\label{fig:navigation_view_mockup}
-	\end{minipage}
-	\hfill
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/9_in_trip_guest.png}
-		\caption{Navigation View Mockup for Guest Users}
-		\label{fig:navigation_view_guest_mockup}
-	\end{minipage}
-\end{figure}
-
 \subsection*{Trip Completion}
 \label{sec:trip_completion}%
 
@@ -392,20 +433,33 @@ Since guest trips are never stored, no option to view statistics is provided.
 In both cases, the background map is dimmed while the modal is visible, preventing interaction
 until the user acknowledges the pop-up.
 
+\section{Reports}
+\label{sec:reports}%
+
 \begin{figure}[H]
 	\centering
-	\begin{minipage}{0.48\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
-		\phoneimage[width=\textwidth]{Design/10_trip_completed.png}
-		\caption{Trip Completion Pop-up Mockup}
-		\label{fig:trip_completion_mockup}
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/11_report.png}
+		\caption{Report Submission }
+		\label{fig:report_submission_mockup}
 	\end{minipage}
 	\hfill
-	\begin{minipage}{0.48\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
-		\phoneimage[width=\textwidth]{Design/10_trip_completed_guest.png}
-		\caption{Trip Completion Pop-up Mockup for Guest Users}
-		\label{fig:trip_completion_guest_mockup}
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/11_report_success.png}
+		\caption{Report Submission Success}
+		\label{fig:report_submission_success_popup_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/12_confirm_report.png}
+		\caption{Report Confirmation }
+		\label{fig:report_confirmation_mockup}
 	\end{minipage}
 \end{figure}
 
@@ -435,23 +489,6 @@ If the user does not interact with the dialog, it will automatically close after
 Only logged-in users can access this feature. In guest mode, the report button is visible but appears
 greyed out and can't be pressed.
 
-\begin{figure}[H]
-	\centering
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/11_report.png}
-		\caption{Report Submission Mockup}
-		\label{fig:report_submission_mockup}
-	\end{minipage}
-	\hfill
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/11_report_success.png}
-		\caption{Report Submission Success Pop-up Mockup}
-		\label{fig:report_submission_success_popup_mockup}
-	\end{minipage}
-\end{figure}
-
 \subsection*{Report Confirmation}
 \label{sec:report_confirmation}%
 
@@ -474,11 +511,34 @@ This confirmation dialog automatically closes after a short delay if the user do
 This feature is available only for logged-in users, guest users do not receive confirmation prompts
 and can't validate reports.
 
+\section{Path Creation for Logged-in Users}
+\label{sec:path_creation_for_logged_in_users}%
+
 \begin{figure}[H]
 	\centering
-	\phoneimage[width=0.5\textwidth]{Design/12_confirm_report.png}
-	\caption{Report Confirmation Mockup}
-	\label{fig:report_confirmation_mockup}
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/13_create.png}
+		\caption{Path Creation }
+		\label{fig:path_creation_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/14_during_creation.png}
+		\caption{Creation View }
+		\label{fig:finish_creation_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/15_creation_completed.png}
+		\caption{Creation Completion }
+		\label{fig:creation_completion_mockup}
+	\end{minipage}
 \end{figure}
 
 \subsection*{Path Creation}
@@ -498,14 +558,6 @@ If the user chooses not to continue, the pop-up can be dismissed at any time usi
 in the upper-right corner.
 
 Only logged-in users can create new paths, this feature is not available in guest mode.
-
-
-\begin{figure}[H]
-	\centering
-	\phoneimage[width=0.5\textwidth]{Design/13_create.png}
-	\caption{Path Creation Mockup}
-	\label{fig:path_creation_mockup}
-\end{figure}
 
 \subsection*{Creation View}
 \label{sec:finish_creation}%
@@ -533,13 +585,6 @@ This action stores the new path together with the metadata previously entered in
 
 Only logged-in users can access the creation view and save newly created paths.
 
-\begin{figure}[H]
-	\centering
-	\phoneimage[width=0.5\textwidth]{Design/14_during_creation.png}
-	\caption{Creation View Mockup}
-	\label{fig:finish_creation_mockup}
-\end{figure}
-
 \subsection*{Creation Completion}
 \label{sec:creation_completion}%
 
@@ -556,15 +601,62 @@ allowing them to continue exploring the interface.
 
 This confirmation appears only for logged-in users, as guests can't create or save custom paths.
 
+\section{Trip Management for Logged-in Users}
+\label{sec:trip_management_for_logged_in_users}%
+
 \begin{figure}[H]
 	\centering
-	\phoneimage[width=0.5\textwidth]{Design/15_creation_completed.png}
-	\caption{Creation Completion Mockup}
-	\label{fig:creation_completion_mockup}
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/16_trip_history.png}
+		\caption{Trip History Screen }
+		\label{fig:trip_history_screen_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/16_trip_order.png}
+		\caption{Trip Sorting }
+		\label{fig:trip_sorting_options_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/16_trip_expanded.png}
+		\caption{Trip Details }
+		\label{fig:trip_history_details_mockup}
+	\end{minipage}
 \end{figure}
 
-\subsection*{Trip History Screen}
-\label{sec:trip_history_page}%
+\begin{figure}[H]
+	\centering
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/16_trip_stats.png}
+		\caption{Trip Statistics }
+		\label{fig:trip_statistics_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/16_trip_weather.png}
+		\caption{Trip Weather }
+		\label{fig:trip_weather_details_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/16_delete_trip.png}
+		\caption{Trip Deletion }
+		\label{fig:trip_deletion_confirmation_mockup}
+	\end{minipage}
+\end{figure}
 
 The Trip History screen allows logged-in users to review all their previously recorded cycling
 activities and is accessible through the second icon in the bottom navigation bar. The top
@@ -596,59 +688,48 @@ enabling users to explore their performance and recall the conditions of each se
 
 The Trip History is available exclusively to logged-in users, as guest users can't store or view past trips.
 
+
+
+\section{Paths Management for Logged-in Users}
+\label{sec:paths_management_for_logged_in_users}%
+
 \begin{figure}[H]
 	\centering
-	\begin{minipage}{0.48\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
-		\phoneimage[width=\textwidth]{Design/16_trip_history.png}
-		\caption{Trip History Screen Mockup}
-		\label{fig:trip_history_screen_mockup}
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/17_paths.png}
+		\caption{My Paths Screen }
+		\label{fig:my_paths_screen_mockup}
 	\end{minipage}
-	\hfill
-	\begin{minipage}{0.48\textwidth}
+	\hspace{0.05\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
-		\phoneimage[width=\textwidth]{Design/16_trip_order.png}
-		\caption{Trip Sorting Options Mockup}
-		\label{fig:trip_sorting_options_mockup}
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/17_path_expanded.png}
+		\caption{Path Details }
+		\label{fig:my_path_details_mockup}
 	\end{minipage}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\begin{minipage}{0.48\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
-		\phoneimage[width=\textwidth]{Design/16_trip_expanded.png}
-		\caption{Trip History Details Mockup}
-		\label{fig:trip_history_details_mockup}
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/17_path_visibility.png}
+		\caption{Path Visibility }
+		\label{fig:path_visibility_toggle_mockup}
 	\end{minipage}
-	\hfill
-	\begin{minipage}{0.48\textwidth}
+	\hspace{0.05\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
-		\phoneimage[width=\textwidth]{Design/16_trip_stats.png}
-		\caption{Trip Statistics Mockup}
-		\label{fig:trip_statistics_mockup}
-	\end{minipage}
-\end{figure}
-
-\begin{figure}[H]
-	\centering
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/16_trip_weather.png}
-		\caption{Trip Weather Details Mockup}
-		\label{fig:trip_weather_details_mockup}
-	\end{minipage}
-	\hfill
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/16_delete_trip.png}
-		\caption{Trip Deletion Confirmation Mockup}
-		\label{fig:trip_deletion_confirmation_mockup}
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/17_delete_path.png}
+		\caption{Path Deletion }
+		\label{fig:path_deletion_confirmation_mockup}
 	\end{minipage}
 \end{figure}
-
-\subsection*{My Paths Screen}
-\label{sec:my_paths_screen}%
 
 The My Paths screen displays all custom bike paths created by the logged-in user and is accessible
 through the third icon in the bottom navigation bar. At the top of the page, a small arrow icon next
@@ -674,37 +755,32 @@ collection efficiently.
 All interactions inside this screen are available exclusively to logged-in users. Guests can't view,
 create, start, or manage custom paths.
 
-\begin{figure}[H]
-	\centering
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/17_paths.png}
-		\caption{My Paths Screen Mockup}
-		\label{fig:my_paths_screen_mockup}
-	\end{minipage}
-	\hfill
-	\begin{minipage}{0.48\textwidth}
-		\centering
-		\phoneimage[width=\textwidth]{Design/17_path_expanded.png}
-		\caption{Path Details Mockup}
-		\label{fig:my_path_details_mockup}
-	\end{minipage}
-\end{figure}
+\section{Profile and Settings for Logged-in Users}
 
 \begin{figure}[H]
 	\centering
-	\begin{minipage}{0.48\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
-		\phoneimage[width=\textwidth]{Design/17_path_visibility.png}
-		\caption{Path Visibility Toggle Mockup}
-		\label{fig:path_visibility_toggle_mockup}
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/18_profile.png}
+		\caption{Profile Screen }
+		\label{fig:profile_screen_mockup}
 	\end{minipage}
 	\hfill
-	\begin{minipage}{0.48\textwidth}
+	\begin{minipage}[t]{0.31\textwidth}
 		\centering
-		\phoneimage[width=\textwidth]{Design/17_delete_path.png}
-		\caption{Path Deletion Confirmation Mockup}
-		\label{fig:path_deletion_confirmation_mockup}
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/20_settings.png}
+		\caption{Settings Screen }
+		\label{fig:settings_screen_mockup}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/19_edit_profile.png}
+		\caption{Edit Profile }
+		\label{fig:edit_profile_mockup}
 	\end{minipage}
 \end{figure}
 
@@ -733,13 +809,6 @@ icon for quick visual identification.
 All information in this section is available exclusively to logged-in users. Guests cannot access
 the Profile screen or view personal statistics.
 
-\begin{figure}[H]
-	\centering
-	\phoneimage[width=0.5\textwidth]{Design/18_profile.png}
-	\caption{Profile Screen Mockup}
-	\label{fig:profile_screen_mockup}
-\end{figure}
-
 \subsection*{Edit Profile}
 \label{sec:edit_profile}%
 
@@ -760,12 +829,6 @@ This screen is accessible exclusively to logged-in users and is reached from the
 tapping the pencil icon next to the user’s name. The user can return to the Profile view
 at any time by tapping the back arrow in the top-left corner.
 
-\begin{figure}[H]
-	\centering
-	\phoneimage[width=0.5\textwidth]{Design/19_edit_profile.png}
-	\caption{Edit Profile Mockup}
-	\label{fig:edit_profile_mockup}
-\end{figure}
 
 \subsection*{Settings Screen}
 \label{sec:settings_screen}
@@ -791,34 +854,33 @@ application to guest mode.
 This screen is available exclusively to logged-in users, as guest users do not manage appearance
 preferences, default visibility settings, or account actions.
 
-\begin{figure}[H]
-	\centering
-	\phoneimage[width=0.5\textwidth]{Design/20_settings.png}
-	\caption{Settings Screen Mockup}
-	\label{fig:settings_screen_mockup}
-\end{figure}
-
-\subsection*{Error Pop-ups}
-\label{sec:error_popups}%
-
-The app includes a global error-handling mechanism that provides consistent feedback whenever
-an unexpected issue occurs. In these cases, a dedicated Error pop-up appears at the top of the screen,
-displaying a clear title and a short description of what went wrong. The message shown in the dialog
-is dynamically replaced with the specific error text relevant to the situation, such as network
-failures, permission issues, or invalid operations.
-
-The pop-up dims the underlying interface to draw attention to the alert and includes a single
-Close button that dismisses the dialog and returns the user to the previous screen. Tapping outside
-the pop-up also closes the notification.
-
-This error dialog can appear at any point in the app, including during path searches, trip management,
-report submission, navigation, or when modifying custom paths.
+\section{Error Messages}
+\label{sec:error_messages}%
 
 \begin{figure}[H]
 	\centering
-	\phoneimage[width=0.5\textwidth]{Design/21_error.png}
-	\caption{Error Pop-up Mockup}
-	\label{fig:error_popups_mockup}
+	\begin{minipage}[t]{0.65\textwidth}
+		The app includes a global error-handling mechanism that provides consistent feedback whenever
+		an unexpected issue occurs. In these cases, a dedicated Error pop-up appears at the top of the screen,
+		displaying a clear title and a short description of what went wrong. The message shown in the dialog
+		is dynamically replaced with the specific error text relevant to the situation, such as network
+		failures, permission issues, or invalid operations.
+
+		The pop-up dims the underlying interface to draw attention to the alert and includes a single
+		Close button that dismisses the dialog and returns the user to the previous screen. Tapping outside
+		the pop-up also closes the notification.
+
+		This error dialog can appear at any point in the app, including during path searches, trip management,
+		report submission, navigation, or when modifying custom paths.
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\vspace{0pt}
+		\phoneimage[width=\textwidth]{Design/21_error.png}
+		\caption{Error Pop-up }
+		\label{fig:error_popups_mockup}
+	\end{minipage}
 \end{figure}
 
 % --------------------------------------------------------------------------
