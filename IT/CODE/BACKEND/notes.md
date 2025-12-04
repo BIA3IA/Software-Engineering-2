@@ -91,3 +91,110 @@
 - Docker ensures consistent environment across developers.
 - Easy to ship as containers: `api`, `postgres`.
 - Deployment platforms handle builds automatically.
+
+## 9. Project Configuration
+
+### Initial Setup
+
+```bash
+# Initialize Node.js project with default settings
+npm init -y 
+
+# Install TypeScript and Node.js type definitions
+npm install typescript @types/node @tsconfig/node24 -D
+# @tsconfig/node24: Base TypeScript config optimized for Node.js 24
+
+# Create tsconfig.json
+# Configure: module=ESNext, target=ES2023, strict mode, outDir=dist
+
+# Install Express.js framework
+npm install express
+npm install @types/express -D  # TypeScript definitions for Express
+
+# Install development watcher (auto-restart on file changes)
+npm install tsc-watch -D
+# Configure scripts: 
+#   - build: tsc (compile TypeScript)
+#   - start: node ./dist/server.js (run compiled code)
+#   - dev: tsc-watch --onSuccess "node ./dist/server.js" (watch mode)
+
+# Install middleware
+npm install cors morgan  # CORS & HTTP request logger
+npm install @types/cors @types/morgan -D  # TypeScript definitions
+```
+
+### Prisma setup
+
+- https://www.prisma.io/docs/
+- https://www.prisma.io/docs/postgres (easy to go when you don't have a db, generous free tier, cloud based instance)
+- https://www.prisma.io/docs/orm (local instance, you need an adapter to connect your existing db)
+
+
+### Key Configuration Files
+
+**tsconfig.json**
+- `module: "ESNext"` - Modern ES modules
+- `target: "ES2023"` - Latest JavaScript features
+- `strict: true` - Enable all strict type checks
+- `outDir: "./dist"` - Compiled output directory
+- `rootDir: "./src"` - Source files location
+
+**package.json**
+- `"type": "module"` - Use ES modules instead of CommonJS
+- Scripts for build, dev, and production modes
+
+**prisma/schema.prisma**
+- Database provider: PostgreSQL
+- Models definition (User, Trip, Path, etc.)
+- Relations between entities
+
+**.env**
+- `DATABASE_URL` - PostgreSQL connection string
+- Other environment variables (JWT secrets, ports, etc.)
+
+### Common Prisma Commands
+
+```bash
+# Development workflow
+npx prisma migrate --create-only --name <migration_name>  # Create migration without applying, useful for review
+npx prisma migrate dev --name <migration_name>  # Create & apply migration
+npx prisma generate  # Regenerate Prisma Client after schema changes
+npx prisma studio    # Open database GUI
+
+# Production deployment
+npx prisma migrate deploy  # Apply pending migrations (no interactive prompts)
+
+# Database management
+npx prisma migrate reset   # Reset database & reapply all migrations
+npx prisma db push         # Sync schema without creating migration (prototyping)
+```
+
+### Project Structure
+
+```bash
+src/
+├── middleware              # Middlewares
+├── prisma/                 # Prisma setup
+│   └── schema.prisma       # Prisma schema file
+│   └── migrations/         # Prisma migrations
+├── managers/               # Business logic
+│   └── user/...            # User-related logic
+│   └── query/...           # Query-related logic
+│   └── .../...             # Other related logic
+├── routes/                 # API route definitions
+│   └── v1/                 # Version 1 of the API
+│       └── auth.routes.ts  # Authentication routes
+│       └── user.routes.ts  # User routes
+│       └── ...             # Other routes
+│       └── index.ts        # Central router for v1
+├── types/                  # TypeScript type definitions if needed i don't know
+├── utils/                  # Utility functions
+│   └── prisma-client.ts    # Prisma client instance
+│   └── ...                 # Other utility functions
+├── .env                    # Environment variables
+├── tsconfig.json           # TypeScript configuration
+├── prisma.config.ts        # Prisma configuration
+├── package.json            # Package configuration
+├── package.lock.json       # Package lock file
+└── server.ts               # Server entry point
+```
