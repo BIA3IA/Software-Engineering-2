@@ -1,29 +1,11 @@
 import { Router } from 'express';
 import { userManager } from '../../managers/user/index.js';
+import { verifyAccessToken } from '../../middleware/jwt.auth.js';
 
-const router = Router();
+const userRouter = Router();
 
-// POST /api/v1/users/create
-router.post('/create', async (req, res, next) => {
-    try {
-        const { email, password, name } = req.body;
+// define /profile route to get user profile. Note the use of verifyAccessToken middleware and the binding of userManager method in order 
+// to preserve the correct 'this' context. This is because we are delegating the request handling to a class method.
+userRouter.get('/profile', verifyAccessToken, userManager.getProfile.bind(userManager));
 
-        const user = await userManager.createUser({ email, password, name });
-
-        res.status(201).json({
-            success: true,
-            message: 'User created successfully',
-            data: user
-        });
-    } catch (error) {
-        // try a custom error
-        res.status(500).json({
-            success: false,
-            message: 'Internal Server Error',
-            error: "concettina"
-        });
-        console.log(error);
-    }
-});
-
-export { router as userRouter };
+export { userRouter };

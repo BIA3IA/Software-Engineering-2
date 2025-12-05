@@ -198,3 +198,23 @@ src/
 ├── package.lock.json       # Package lock file
 └── server.ts               # Server entry point
 ```
+## 10. General notes
+
+- an example of installing jsonwebtoken and its types:
+```bash
+npm install jsonwebtoken
+npm install --save-dev @types/jsonwebtoken
+```
+- Managers in our case are either controllers and business logic handlers. They handle requests, process data, and interact with the database via Prisma. All the managers use the query manager to perform database operations. Our case is a MVC like architecture where:
+  - Models are represented by Prisma schema and generated client
+  - Views are the API responses sent to clients
+  - Controllers are the route handlers that use managers to process requests
+- Route handlers should be kept thin, delegating most of the logic to managers
+- In the types folder we can add custom types or interfaces if needed, useful for type safety and to see errors at compile time.
+- Versioning the API (e.g., v1, v2) allows for backward compatibility and easier future updates
+- Use async/await for all asynchronous operations to ensure non-blocking behavior
+- Use environment variables for sensitive data and configuration settings
+- Indexing database fields at the end of the development phase for performance optimization, once we have all the queries defined
+- TODO: Add a correct error handling middleware
+- TODO: Add a middleware to validate request bodies using express-validator or joi
+- TODO: Perform unit and integration testing using Jest

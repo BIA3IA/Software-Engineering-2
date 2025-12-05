@@ -13,15 +13,24 @@ datasource db {
 }
 
 
-// user model for testing purposes
-
+// user table, use cuid for better indexing
+// @@map is used to map the model to an existing table name in the database (useful when you have legacy databases)
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  userId                String   @id @default(cuid())
+  email                 String   @unique
+  password              String
+  username              String   @unique
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  systemPreferences     String[]
+  refreshTokens         RefreshToken[]
+}
 
-  @@map("users")
+model RefreshToken {
+  tokenId     String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  token       String   @unique
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
 }
