@@ -174,6 +174,11 @@ npx prisma db push         # Sync schema without creating migration (prototyping
 ```bash
 src/
 ├── middleware              # Middlewares
+│   └── jwt.auth.ts        # JWT authentication middleware
+│   └── http.logger.ts     # HTTP request logging middleware
+│   └── ...                 # Other middlewares
+├── errors/                 # Custom error classes
+│   └── app.errors.ts     # Application-specific errors
 ├── prisma/                 # Prisma setup
 │   └── schema.prisma       # Prisma schema file
 │   └── migrations/         # Prisma migrations
@@ -215,6 +220,6 @@ npm install --save-dev @types/jsonwebtoken
 - Use async/await for all asynchronous operations to ensure non-blocking behavior
 - Use environment variables for sensitive data and configuration settings
 - Indexing database fields at the end of the development phase for performance optimization, once we have all the queries defined
-- TODO: Add a correct error handling middleware
-- TODO: Add a middleware to validate request bodies using express-validator or joi
+- Custom error handling middleware implemented in order to catch and respond to errors consistently across the application
+- Logging middleware using Pino for low overhead and high performance logging, accompanied also by a custom http logger
 - TODO: Perform unit and integration testing using Jest
