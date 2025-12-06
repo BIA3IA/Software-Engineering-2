@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { JwtPayload, } from '../types/index.js';
 import { getJwtSecrets } from '../utils/utils.js'
+import { UnauthorizedError, ForbiddenError } from '../errors/index.js';
 
 // Function to generate access and refresh tokens. Set expiration times as needed, here 15 minutes for access and 1 hour for refresh.
 // The sign method creates a JWT token by encoding the payload (userId) with the secret key. 
@@ -25,8 +26,9 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
     const token = req.cookies.accessToken;
 
     if (!token) {
-        // unauthorized
-        return res.status(401).json({ error: 'Access token required' });
+        // Unauthorized
+        // Now we can use the custom UnauthorizedError class, but we need to use next() to pass it to the error handler
+        return next(new UnauthorizedError('Access token required', 'ACCESS_TOKEN_MISSING'));
     }
 
     try {
@@ -34,13 +36,17 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
         req.user = decoded;
         next();
     } catch (error) {
-        // forbidden
-        return res.status(403).json({ error: 'Invalid or expired token' });
+        // Forbidden
+        return next(new ForbiddenError('Invalid or expired token', 'INVALID_ACCESS_TOKEN'));
     }
 };
 
 // Function to verify refresh token. Returns decoded payload if valid, otherwise throws an error.
 export const verifyRefreshToken = (token: string): JwtPayload => {
     const { refreshTokenSecret } = getJwtSecrets();
-    return jwt.verify(token, refreshTokenSecret) as JwtPayload;
+    try {
+        return jwt.verify(token, refreshTokenSecret) as JwtPayload;
+    } catch (error) {
+        throw new ForbiddenError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
+    }
 };

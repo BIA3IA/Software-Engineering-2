@@ -1,32 +1,34 @@
 import { queryManager } from "../query/index.js";
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import { UnauthorizedError, NotFoundError } from "../../errors/app.errors.js";
 
 export class UserManager {
     
-    // Logic to get user profile from the database using userId from the JWT payload (at the moment with fake data)
-    async getProfile(req: Request, res: Response) {
+    // Logic to get user profile from the database using userId from the JWT payload
+    async getProfile(req: Request, res: Response, next: NextFunction) {
         try {
             const userId = req.user?.userId;
 
             if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
+                throw new UnauthorizedError('Unauthorized', 'USER_NOT_AUTHENTICATED');
             }
 
             const user = await queryManager.getUserById(userId);
             
             if (!user) {
-                return res.status(404).json({ error: 'User not found' });
+                throw new NotFoundError('User not found', 'USER_NOT_FOUND');
             }
 
             res.json({
                 success: true,
                 data: {
-                    bio: 'Is this working?',
-                    trips: 'Yes it is',
+                    userId: user.userId,
+                    email: user.email,
+                    username: user.username,
                 }
             });
-        } catch (error: any) {
-            res.status(500).json({ error: error.message });
+        } catch (error) {
+            next(error);
         }
     }
 

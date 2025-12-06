@@ -1,7 +1,8 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { queryManager } from "../query/index.js";
 import bcrypt from 'bcrypt';
 import { generateTokens, verifyRefreshToken } from "../../middleware/jwt.auth.js";
+import { UnauthorizedError, BadRequestError, NotFoundError, ForbiddenError } from '../../errors/app.errors.js';
 
 export class AuthManager {
     
@@ -9,23 +10,23 @@ export class AuthManager {
     // Cookies are set to httpOnly and secure in production for security.
     // Responds with user info on successful login (maybe to be changed i don't know at the moment).
     // Uses bcrypt to compare hashed passwords.
-    async login(req: Request, res: Response) {
+    async login(req: Request, res: Response, next: NextFunction) {
         try {
             const { email, password } = req.body;
             
             if (!email || !password) {
-                return res.status(400).json({ error: 'Email and password are required' });
+                return next(new BadRequestError('Email and password are required', 'MISSING_CREDENTIALS'));
             }
 
             const user = await queryManager.getUserByEmail(email);
             if (!user) {
-                return res.status(401).json({ error: 'Invalid credentials' });
+                return next(new UnauthorizedError('Invalid credentials', 'INVALID_CREDENTIALS'));
             }
 
             // Compare hashed passwords
             const isValid = await bcrypt.compare(password, user.password);
             if (!isValid) {
-                return res.status(401).json({ error: 'Invalid credentials' });
+                return next(new UnauthorizedError('Invalid credentials', 'INVALID_CREDENTIALS'));
             }
 
             const { accessToken, refreshToken } = generateTokens(user.userId);
@@ -48,30 +49,30 @@ export class AuthManager {
                     username: user.username
                 }
             });
-        } catch (error: any) {
-            res.status(500).json({ error: error.message });
+        } catch (error) {
+            next(error);
         }
     }
 
     // Handle user registration. Checks for existing user/email, hashes password, creates user.
     // Responds with created user info (excluding password).
     // Uses bcrypt to hash passwords before storing.
-    async register(req: Request, res: Response) {
+    async register(req: Request, res: Response, next: NextFunction) {
         try {
             const { email, password, username } = req.body;
             
             if (!email || !password || !username) {
-                return res.status(400).json({ error: 'Email, password and username are required' });
+                return next(new BadRequestError('Email, password and username are required', 'MISSING_CREDENTIALS'));
             }
 
             const existingUser = await queryManager.getUserByEmail(email);
             if (existingUser) {
-                return res.status(400).json({ error: 'User already exists' });
+                return next(new BadRequestError('User already exists', 'USER_ALREADY_EXISTS'));
             }
 
             const existingUsername = await queryManager.getUserByUsername(username);
             if (existingUsername) {
-                return res.status(400).json({ error: 'Username already taken' });
+                return next(new BadRequestError('Username already taken', 'USERNAME_ALREADY_TAKEN'));
             }
 
             // Hash password
@@ -88,26 +89,28 @@ export class AuthManager {
                     username: user.username
                 }
             });
-        } catch (error: any) {
-            res.status(500).json({ error: error.message });
+        } catch (error) {
+            next(error);
         }
     }
 
     // Handle user logout. Deletes refresh token from DB and clears cookies.
-    async logout(req: Request, res: Response) {
+    // Avoid to let user logout if no refresh token is present (should we?)
+    async logout(req: Request, res: Response, next: NextFunction) {
         try {
             const refreshToken = req.cookies.refreshToken;
-            
-            if (refreshToken) {
-                await queryManager.deleteRefreshToken(refreshToken);
+
+            if (!refreshToken) {
+                return next(new UnauthorizedError('No refresh token provided', 'MISSING_REFRESH_TOKEN'));
             }
 
+            await queryManager.deleteRefreshToken(refreshToken);
             res.clearCookie('accessToken');
             res.clearCookie('refreshToken');
             
             res.json({ success: true, message: 'Logged out successfully' });
-        } catch (error: any) {
-            res.status(500).json({ error: error.message });
+        } catch (error) {
+            next(error);
         }
     }
 
@@ -115,12 +118,12 @@ export class AuthManager {
     // Responds with success message on successful refresh. 
     // Ensures old refresh token is deleted from DB to prevent reuse.
     // Verifies both JWT validity and database existence/expiration of the refresh token.
-    async refresh(req: Request, res: Response) {
+    async refresh(req: Request, res: Response, next: NextFunction) {
         try {
             const oldRefreshToken = req.cookies.refreshToken;
 
             if (!oldRefreshToken) {
-                return res.status(401).json({ error: 'Refresh token required' });
+                return next(new UnauthorizedError('Refresh token required', 'MISSING_REFRESH_TOKEN'));
             }
 
             // Verify JWT signature and expiration
@@ -128,25 +131,25 @@ export class AuthManager {
             try {
                 decoded = verifyRefreshToken(oldRefreshToken);
             } catch (error) {
-                return res.status(403).json({ error: 'Invalid or expired refresh token' });
+                return next(new ForbiddenError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN'));
             }
 
             // Check if token exists in database
             const tokenData = await queryManager.getRefreshToken(oldRefreshToken);
             
             if (!tokenData) {
-                return res.status(403).json({ error: 'Refresh token not found' });
+                return next(new ForbiddenError('Refresh token not found', 'REFRESH_TOKEN_NOT_FOUND'));
             }
 
             // Check database expiration
             if (tokenData.expiresAt < new Date()) {
                 await queryManager.deleteRefreshToken(oldRefreshToken);
-                return res.status(403).json({ error: 'Refresh token expired' });
+                return next(new ForbiddenError('Refresh token expired', 'REFRESH_TOKEN_EXPIRED'));
             }
 
             const user = await queryManager.getUserById(decoded.userId);
             if (!user) {
-                return res.status(404).json({ error: 'User not found' });
+                return next(new NotFoundError('User not found', 'USER_NOT_FOUND'));
             }
 
             // Delete old refresh token
@@ -166,8 +169,8 @@ export class AuthManager {
             res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 60 * 60 * 1000 });
 
             res.json({ success: true, message: 'Tokens refreshed successfully' });
-        } catch (error: any) {
-            res.status(500).json({ error: error.message });
+        } catch (error) {
+            next(error);
         }
     }
 }

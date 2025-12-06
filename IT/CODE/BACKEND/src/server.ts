@@ -1,8 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import morgan from 'morgan';
 import routesV1 from './routes/v1/index.js';
 import cookieParser from 'cookie-parser';
+import { errorHandler, notFoundHandler, httpLogger} from './middleware/index.js';
+import logger from './utils/logger.js';
 
 const app = express();
 
@@ -16,11 +17,14 @@ app.use(cors({
     credentials: true,
 }));
 
-app.use(morgan('tiny'));
+app.use(httpLogger);
 
 app.use('/api/v1', routesV1); 
 
+app.use(notFoundHandler);
+app.use(errorHandler);
+
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    logger.info(`Server is running on port ${PORT}`);
 });
