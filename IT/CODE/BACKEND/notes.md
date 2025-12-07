@@ -1,9 +1,9 @@
-
 # Radom Notes
 
 ## 1. Runtime & Language
 
 ### Node.js + TypeScript
+
 - High consistency with the mobile app, which is also written in TypeScript.
 - Fast learning curve for the whole team.
 - Excellent ecosystem for REST APIs.
@@ -13,6 +13,7 @@
 ## 2. Backend Framework
 
 ### NestJS
+
 - Built with TypeScript in mind.
 - Enforces a clean modular architecture: modules, controllers, services.
 - Built‑in dependency injection.
@@ -20,14 +21,15 @@
 - Swagger documentation support out of the box.
 - Structure highly appreciated in academic/enterprise contexts.
 
-
 ### Express.js
+
 - Extremely lightweight.
 - Simple and flexible.
 - No structure by default.
 - Requires manual setup of validation, routing organization, error handling, etc.
 
 ### Fastify
+
 - Very fast.
 - Modern and modular.
 - Smaller ecosystem compared to NestJS.
@@ -42,16 +44,19 @@
 - Great compatibility with Prisma ORM.
 
 ### MySQL / MariaDB
+
 - Stable, well‑known relational DBs.
 - PostgreSQL generally offers more advanced features.
 
 ### MongoDB
+
 - Good for flexible, schema‑less data.
 - BBP uses structured, relational data; forcing MongoDB would add complexity.
 
 ## 4. ORM / Database Toolkit
 
 ### Prisma
+
 - Strong integration with TypeScript.
 - Generates fully typed queries -> fewer errors.
 - Simple and clear schema file.
@@ -59,10 +64,12 @@
 - Great developer experience.
 
 ### TypeORM
+
 - Popular with NestJS.
 - More complex internals, sometimes fragile migrations.
 
 ### Sequelize
+
 - Used for years in many projects.
 - TypeScript support is less clean.
 - Harder to maintain in large codebases.
@@ -70,6 +77,7 @@
 ## 5. Authentication
 
 ### JWT (Access + Refresh Tokens)
+
 - Standard solution for mobile apps.
 - Stateless -> no server‑side session storage.
 - Easy to refresh tokens securely.
@@ -78,6 +86,7 @@
 ## 6. API Style & Documentation
 
 ### REST API + Swagger
+
 - Simple and predictable.
 - Easy to test and reason about.
 - Fully sufficient given BBP’s requirements.
@@ -88,6 +97,7 @@
 ## 8. Deployment
 
 ### Dockerized Deployment + VPS
+
 - Docker ensures consistent environment across developers.
 - Easy to ship as containers: `api`, `postgres`.
 - Deployment platforms handle builds automatically.
@@ -98,7 +108,7 @@
 
 ```bash
 # Initialize Node.js project with default settings
-npm init -y 
+npm init -y
 
 # Install TypeScript and Node.js type definitions
 npm install typescript @types/node @tsconfig/node24 -D
@@ -113,7 +123,7 @@ npm install @types/express -D  # TypeScript definitions for Express
 
 # Install development watcher (auto-restart on file changes)
 npm install tsc-watch -D
-# Configure scripts: 
+# Configure scripts:
 #   - build: tsc (compile TypeScript)
 #   - start: node ./dist/server.js (run compiled code)
 #   - dev: tsc-watch --onSuccess "node ./dist/server.js" (watch mode)
@@ -129,10 +139,10 @@ npm install @types/cors @types/morgan -D  # TypeScript definitions
 - https://www.prisma.io/docs/postgres (easy to go when you don't have a db, generous free tier, cloud based instance)
 - https://www.prisma.io/docs/orm (local instance, you need an adapter to connect your existing db)
 
-
 ### Key Configuration Files
 
 **tsconfig.json**
+
 - `module: "ESNext"` - Modern ES modules
 - `target: "ES2023"` - Latest JavaScript features
 - `strict: true` - Enable all strict type checks
@@ -140,15 +150,18 @@ npm install @types/cors @types/morgan -D  # TypeScript definitions
 - `rootDir: "./src"` - Source files location
 
 **package.json**
+
 - `"type": "module"` - Use ES modules instead of CommonJS
 - Scripts for build, dev, and production modes
 
 **prisma/schema.prisma**
+
 - Database provider: PostgreSQL
 - Models definition (User, Trip, Path, etc.)
 - Relations between entities
 
 **.env**
+
 - `DATABASE_URL` - PostgreSQL connection string
 - Other environment variables (JWT secrets, ports, etc.)
 
@@ -174,11 +187,11 @@ npx prisma db push         # Sync schema without creating migration (prototyping
 ```bash
 src/
 ├── middleware              # Middlewares
-│   └── jwt.auth.ts        # JWT authentication middleware
-│   └── http.logger.ts     # HTTP request logging middleware
+│   └── jwt.auth.ts         # JWT authentication middleware
+│   └── http.logger.ts      # HTTP request logging middleware
 │   └── ...                 # Other middlewares
 ├── errors/                 # Custom error classes
-│   └── app.errors.ts     # Application-specific errors
+│   └── app.errors.ts       # Application-specific errors
 ├── prisma/                 # Prisma setup
 │   └── schema.prisma       # Prisma schema file
 │   └── migrations/         # Prisma migrations
@@ -192,24 +205,34 @@ src/
 │       └── user.routes.ts  # User routes
 │       └── ...             # Other routes
 │       └── index.ts        # Central router for v1
-├── types/                  # TypeScript type definitions if needed i don't know
+├── types/                  # TypeScript type definitions
+│   └── error.types.ts      # error types/interfaces
+│   └── ...                 # Other type definitions
 ├── utils/                  # Utility functions
 │   └── prisma-client.ts    # Prisma client instance
 │   └── ...                 # Other utility functions
+├── tests/                  # Test files
+│   └── auth.test.ts        # Authentication tests
+│   └── user.test.ts        # User tests
+│   └── ...                 # Other tests
 ├── .env                    # Environment variables
 ├── tsconfig.json           # TypeScript configuration
+├── jest.config.mjs         # Jest configuration
 ├── prisma.config.ts        # Prisma configuration
 ├── package.json            # Package configuration
 ├── package.lock.json       # Package lock file
 └── server.ts               # Server entry point
 ```
+
 ## 10. General notes
 
 - an example of installing jsonwebtoken and its types:
+
 ```bash
 npm install jsonwebtoken
 npm install --save-dev @types/jsonwebtoken
 ```
+
 - Managers in our case are either controllers and business logic handlers. They handle requests, process data, and interact with the database via Prisma. All the managers use the query manager to perform database operations. Our case is a MVC like architecture where:
   - Models are represented by Prisma schema and generated client
   - Views are the API responses sent to clients
