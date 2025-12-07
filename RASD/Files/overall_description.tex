@@ -7,77 +7,100 @@ The Best Bike Paths (BBP) system operates within an environment that includes us
 
 \subsection{Scenarios}
 \label{sec:scenarios}
-Representative scenarios illustrate how different types of users interact with BBP in realistic situations, showing the system’s main functionalities and objectives.
+Representative scenarios illustrate how different types of users interact with BBP in realistic situations, showing the system's main functionalities and objectives.
 
 \begin{enumerate}
 
 	\item \textbf{A user wants to use the system}:
 
 	      Giuseppe is a former professional cyclist who wants to start cycling again to stay fit. Among the various options available, he decides to use Best Bike Paths (BBP) to track his cycling activities and discover new routes.
-	      He chooses BBP because it offers cyclist-oriented features such as creating personalized paths and sharing the current conditions of bike tracks with other users. \newline
-	      Once he opens the BBP app, Giuseppe realizes that he can already use some functionalities of the system without creating an account, such as searching for bike paths and receiving suggestions based on other users’ rankings.
-	      However, he soon notices that he cannot record his own cycling activities without registering. \newline
-	      Therefore, he decides to create an account to take full advantage of all BBP’s features.
+	      He chooses BBP because it offers cyclist-oriented features such as creating personalized paths and sharing the current conditions of bike tracks with other users.
+	      Once he opens the BBP app, Giuseppe realizes that he can already use some functionalities of the system without creating an account, such as searching for bike paths and receiving suggestions based on other users' rankings.
+	      However, he soon notices that he can't record his own cycling activities without registering.
+	      Therefore, he decides to create an account to take full advantage of all BBP's features.
 	      The registration process is simple and quick, requiring only basic information such as name, email, and password.
 	      After successfully registering, Giuseppe gains access to the full set of functionalities, including creating personalized routes, recording his cycling sessions, and sharing information about the condition of bike paths with the BBP community.
 
-	\item \textbf{A user starts to browse and create paths}:
+	\item \textbf{A logged-in user starts to browse and create paths}:
 
 	      Irene accesses the BBP app to plan her next cycling trip.
-	      From the main page, she specifies a starting point and a destination. BBP displays on a map all available bike paths connecting the two points.
+	      From the main page, the system automatically sets her current position as the starting point, while she manually specifies her desired destination. BBP then displays on a map all available bike paths connecting these two points.
 	      Each path is shown with its current condition based on feedback provided by other users. The paths are ranked according to an overall score computed by the system,
-	      taking into account their condition and effectiveness in connecting the selected origin and destination. \newline
+	      taking into account their condition and effectiveness in connecting the selected origin and destination.
 	      After reviewing the suggested routes, Irene realizes that none of them fully meet her preferences.
-	      Since she is logged into her BBP account, she decides to create a new custom path. \newline
-	      BBP offers her either a manual or an automatic mode for path creation. She chooses the manual mode, where she can specify the names of the street segments composing her desired route and provide initial information about their condition.
-	      Irene carefully enters the street names that form her preferred path, adds a brief description, and saves it to her personal collection. \newline
-	      The newly created path is now available in Irene's account and can be selected for future trips. If she decides to make it publishable later, other users will also be able to discover and use it.
+	      Since she is logged into her BBP account, she decides to create a new custom path.
+	      BBP offers her the option to create a new path by first providing a title and a short description, and by choosing whether the path should remain private or be publishable for the community. The system also asks her to select the creation mode: manual or automatic.
+	      Irene chooses the manual mode. In this mode, she can define the path by drawing it directly on the map or by selecting the map segments that compose her desired path. Once satisfied with the resulting path, she confirms the creation and saves it to her personal collection.
+	      The newly created path is now available in Irene's account and can be selected for future trips. If she has chosen to make it publishable, other users will also be able to discover and use it.
 
 	\item \textbf{A logged-in user starts a trip}:
 
-	      Cesare decides to start a new bike trip. After selecting a suggested bike path, BBP asks him which data acquisition mode he prefers: manual or automatic.
-	      Cesare chooses the automatic mode and presses the Start button to begin his ride. \newline
+	      Cesare decides to start a new bike trip.
+	      After selecting one of the suggested bike paths, he presses the start button, available only when the GPS position matches the path origin. At this point, BBP asks him whether he wants to enable the Automatic Mode.
+	      Cesare confirms by selecting Yes, and the trip begins.
 	      As he starts, BBP begins collecting data from the sensors available on his mobile device.
 	      The GPS continuously updates his position, allowing the system to reconstruct the exact path he follows.
-	      At the same time, the accelerometer and gyroscope detect small irregular movements that may indicate the presence of bumps or potholes along the road. \newline
+	      At the same time, the accelerometer and gyroscope detect small irregular movements that may indicate the presence of bumps or potholes along the road.
 	      On the screen, BBP dynamically shows his current position.
-	      The system also enriches Cesare's trip data with weather conditions such as temperature, humidity, and wind speed retrieved from an external meteorological service.\newline
-	      Once he reaches his destination BBP processes the collected data and generates a detailed summary, including total distance, duration, average speed, and other performance metrics that Cesare can review later in his personal activity history.
+	      The system also enriches Cesare's trip data with weather conditions such as temperature, humidity, and wind speed retrieved from an external meteorological service.
+	      Once he reaches his destination BBP processes the collected data and generates a detailed summary, including total distance, duration, average speed, and other performance metrics that Cesare can review later in his personal trip history.
 
-	\item \textbf{A logged-in user browse his cycling activities}:
+	\item \textbf{A logged-in user browses his cycling activities}:
 
 	      Luca, a logged-in user of BBP, opens the app to view his previous trips.
-	      From the main page, he accesses the "My Activities' section", where BBP displays a list of his recorded trips over time.\newline
-	      Each activity is accompanied by summary information such as the date, distance traveled, duration, and primary location.
-	      Luca can sort trips by date or distance and scrolling through the list, he recognizes some of his favorite routes and notices that BBP automatically updates aggregate statistics such as total number of trips, kilometers traveled, and weekly average giving him a general overview of his progress over time. \newline
+	      From the main page, he accesses the corresponding section, where BBP displays a list of his recorded trips over time.
+	      Each trip is accompanied by summary information such as the date, distance traveled, duration, and  destination.
+	      Luca can sort trips by date or distance and scrolling through the list, he recognizes some of his favorite routes.
 	      After identifying a recent trip he's interested in analyzing in more detail, Luca decides to open it to view the details.
 
-	\item \textbf{A logged-in user access his trip and per trip statistics}:
+	\item \textbf{A logged-in user accesses his trip and per trip statistics}:
 
-	      Pietro selects his latest trip from his activity list. BBP opens the route details page, displaying the entire route on a map.
+	      Pietro selects his latest trip from his trip list. BBP opens the path details page, displaying the entire path on a map.
 	      In the same page, the app presents a complete summary of the recorded data: total distance, duration, average and maximum speed.
-	      Thanks to integration with the device's sensors, Pietro can also view the weather conditions he encountered during the trip, including average temperature and wind direction.\newline
-	      Scrolling through the map, Pietro notices some points where the accelerometer detected abnormal movement.\newline
+	      Thanks to integration with the external weather service, Pietro can also view the weather conditions he encountered during the trip, including average temperature and wind direction.
+	      Scrolling through the map, Pietro notices some points where the accelerometer detected abnormal movement, and he had confirmed the presence of obstacles during the ride.
 	      Satisfied with his analysis, Pietro closes the trip tab and returns to the general overview of his activities.
 
 	\item \textbf{A logged-in user wants to insert information about a bike path condition}:
 
-	      Giulia is cycling along a local bike path using the manual reporting mode.
-	      During her ride, she notices that a section of the route is partially blocked by some fallen branches.
-	      Since she wants to help other cyclists avoid potential issues, she decides to report the current condition of the path to the BBP community.\newline
-	      From the app menu, Giulia selects Report Path Condition and once the interactive map is opened, selects the affected segment, and writes a short description of the obstacle, choosing “requires maintenance” as the current status of that path.
-	      After confirming the report, BBP stores the information and sends it for aggregation with other users’ data about the same route.
+	      Giulia is cycling along a local bike path. During her ride, she notices that a section of the path is partially blocked by some fallen branches.
+	      Since she wants to help other cyclists avoid potential issues, she decides to report the current condition of the path to the BBP community.
+	      From the app, Giulia selects the report button. Then, she selects the obstacle type, and chooses “requires maintenance” as the current status of that path.
+	      After confirming the report, BBP stores the information and sends it for aggregation with other users' data about the same path.
 
 	\item \textbf{A logged-in user wants to confirm the condition of a bike path}:
 
-	      While cycling through a familiar route, Marco receives a notification with a small pop-up alert which states that there is a possible obstacle ahead reported by another user.
+	      While cycling through a familiar path, Marco receives a pop-up alert informing him that there is a possible obstacle ahead reported by another user.
 	      Marco slows down and observes the road segment. He notices that the obstacle is indeed still present, so he decides to confirm the report.
-	      Directly from the notification, he presses Confirm, and BBP registers his feedback as an additional confirmation for that path condition. \newline
-	      Later, while continuing his ride, Marco receives another notification about a reported bump on the same road, but this time the road surface looks perfectly fine.
-	      He therefore selects Reject, indicating that the problem has been resolved or no longer exists. \newline
+	      Directly from the pop-up, he presses the confirmation button, and BBP registers his feedback as an additional confirmation for that path condition.
+	      Later, while continuing his ride, Marco receives another pop-up alert about a reported bump on the same road, but this time the road surface looks perfectly fine.
+	      He therefore indicates that the problem has been resolved or no longer exists, by clicking the corresponding button.
 	      BBP updates the internal data accordingly. Each confirmation or rejection contributes to refining the aggregated information that determines the official status of that bike path.
-	      This way, Marco’s participation, along with that of other cyclists, helps the system keep path conditions accurate and up to date for the entire community.
+	      This way, Marco's participation, along with that of other cyclists, helps the system keep path conditions accurate and up to date for the entire community.
 
+	\item \textbf{A logged-in user unintentionally leaves the planned path}:
+
+	      Stefania is cycling while following one of the suggested routes previously selected in BBP. During her trip, she gets distracted and forgets to turn right at a crucial intersection, gradually moving away from the planned path without realizing it.
+	      BBP continuously compares her real-time GPS position with the expected path.
+	      When the system detects that Stefania has deviated significantly from the planned path, it automatically stops the current trip. A pop-up appears on her screen informing her that the trip has been stopped due to a deviation from the selected path and that the recorded data has been safely saved.
+	      Stefania slows down and decides to resume her ride.
+	      Since her current position is now different from the original path, she opens the BBP app and starts a new trip: the system automatically sets her current position as the starting point, and she manually enters the destination again.
+	      BBP displays all available bike paths that connect her new origin to the chosen destination, ordering them according to their overall score and current condition.
+	      After reviewing the suggested options, Stefania selects the path that best fits her needs and starts her new trip from the updated location.
+
+	\item \textbf{A logged-in user forgets to start a trip}:
+
+	      Eugenia is cycling on a familiar road while the BBP app is open on her phone.
+	      She intends to track her trip to later review her statistics, but she gets distracted and forgets to press the start button before beginning her ride.
+	      As she continues pedaling, BBP analyzes her speed and GPS movement.
+	      After detecting that Eugenia is likely biking, the system shows a pop-up alert, asking if she wants to start recording her trip.
+	      Eugenia slows down for a moment and decides she indeed wants her cycling session to be tracked.
+	      She confirms the prompt, and BBP asks her to enter her desired destination.
+	      The system automatically sets her current GPS position as the origin.
+	      After entering the destination, BBP displays all available bike paths connecting her current location to the selected destination, sorted by their overall score and current condition.
+	      Eugenia selects the option that suits her best and presses the start button. She then chooses whether to activate the automatic report mode.
+	      The trip officially begins, and BBP starts recording GPS and sensor data as she resumes cycling.
+	      At the end of her ride, Eugenia will find the complete trip summary in her trip history, including distance, duration, speed, and weather information retrieved from the external meteorological service.
 \end{enumerate}
 
 \subsection{Domain Class Diagram}
@@ -85,7 +108,7 @@ Representative scenarios illustrate how different types of users interact with B
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/Domain_Class_Diagram/diagram.png}
+	\includegraphics[width=\textwidth]{Images/DomainClassDiagram/diagram.png}
 	\caption{Domain Class Diagram}
 \end{figure}
 
@@ -101,7 +124,7 @@ The central object of the system is the Path, which is defined as a
 sequence of PathSegments linking an origin to a destination GeoPoint.
 Each Path has a status (from the PathStatus enumeration), a computed
 score, and a boolean flag indicating if it is public. A PathSegment is an
-atomic portion of a route, identified by a segmentId and a
+atomic portion of a path, identified by a segmentId and a
 streetName, and maintains a reference to the next segment in the path.
 
 Logged-in Users may record a Trip that follows a specific Path.
@@ -134,12 +157,12 @@ This integrated design ensures a comprehensive system for creating, recording, v
 
 \subsection{State Diagrams}
 \label{sec:state_diagrams}
-The UML State Diagrams shown below describe the system’s main behavioral processes, focusing on the most relevant user interactions. These include starting a trip, creating paths (manually and automatically), and reporting obstacles (manually and automatically).
+The UML State Diagrams shown below describe the system's main behavioral processes, focusing on the most relevant user interactions. These include browsing and selecting a path, creating paths, and reporting obstacles.
 
-\subsubsection{Starting a trip}
+\subsubsection{Selecting a Path}
 
-The following diagram illustrates the possible states involved when a user starts a trip through the system.
-This process begins when the user opens the app and decides to start a new trip by inserting the desired start and end points. Once these points are defined, the system activates the Path Suggestion System, which is responsible for generating and ranking candidate bike paths that best fit the user’s request.
+The following diagram illustrates the possible states involved when a user performs a search, browses through results and selects a path.
+This process begins when the user opens the app and decides to perform a new search by inserting the desired start and end points. Once these points are defined, the system activates the Path Suggestion System, which is responsible for generating and ranking candidate bike paths that best fit the user's request.
 
 Inside the Path Suggestion System, the process goes through several internal states. First, the system enters the Waiting for Data state, where it collects environmental and contextual information (such as existing paths and reports). When all required data have been gathered, the system transitions to the Evaluating state to verify their validity and consistency.
 If the data are valid, the system proceeds to Scoring, where each segment is analyzed and assigned a score based on its quality and reliability. Afterward, in the Merging and Building Candidates states, segments are merged and combined to form complete candidate paths. Finally, in the Ranking state, the system orders these candidates according to computed scores.
@@ -149,16 +172,16 @@ At this point, the user enters the Browsing state, where they can inspect all su
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.8\textwidth]{Images/State_Diagrams/starting_trip.png}
-	\caption{Starting Trip State Diagram}
+	\includegraphics[width=0.8\textwidth]{Images/State_Diagrams/selecting_path.png}
+	\caption{Selecting a Path State Diagram}
 \end{figure}
 
-\subsubsection{Manually creating a new path}
+\subsubsection{Manual Path Creation}
 
 The following diagram illustrates the states related to the manual creation of a new path by a logged-in user.
-A logged-in user can start the manual creation process by selecting the “Create Path” option. Once this action is triggered, the system leaves the idle state and enters the Editing Metadata state, where the user provides general information about the path, such as its name, description, visibility, and other optional details.
+A logged-in user can start the manual creation process by pressing the create path button. Once this action is triggered, the system leaves the idle state and enters the Editing Metadata state, where the user provides general information about the path, such as its name, description, visibility, and creation mode, where he should select manual creation.
 
-After the metadata are confirmed and saved, the process continues in the Adding Segments state. In this phase, the user manually draws or selects the path segments on the map to define the complete route. When all segments have been added, the user proceeds to the Validating Path state, where the system checks the consistency and continuity of the selected route.
+After the metadata are confirmed and saved, the process continues in the Adding Segments state. In this phase, the user manually draws or selects the path segments on the map to define the complete path. When all segments have been added, the user proceeds to the Validating Path state, where the system checks the consistency and continuity of the selected path.
 If the validation succeeds, the process transitions to the Saving Path state, during which the system stores the new path in the database. In case of a validation failure or a save error, the system moves to an error path and returns to the idle state, allowing the user to retry or discard the creation.
 
 If the saving process completes successfully, the system reaches the final state, confirming that the new path has been correctly created and stored.
@@ -170,15 +193,16 @@ Throughout the process, the user can cancel the creation, which immediately retu
 	\caption{Manual Path Creation State Diagram}
 \end{figure}
 
-\subsubsection{Automatically creating a new path}
+\subsubsection{Automatic Path Creation}
 
 The following diagram illustrates the states involved in the automatic creation of a new path by a logged-in user using GPS tracking.
-After accessing the application, the user can start the automatic creation process by selecting the “Automatic Mode” option. Once this action is triggered, the system leaves the idle state and enters the Editing Metadata State, where the user can provide information about the path. After confirming the metadata, the system transitions to the Waiting GPS Lock state, where it requests location permissions and attempts to establish a stable GPS connection.
-If the GPS signal is successfully acquired, the system transitions to the Recording state, during which the user’s movements are continuously tracked and converted into path segments.
+After accessing the application, the user can start the automatic creation process by selecting the create path button. Once this action is triggered, the system leaves the idle state and enters the Editing Metadata State, where the user can provide information about the path,
+and where he should select the automatic mode for path creation. After confirming the metadata, the system transitions to the Waiting GPS Lock state, where it requests location permissions and attempts to establish a stable GPS connection.
+If the GPS signal is successfully acquired, the system transitions to the Recording state, during which the user's movements are continuously tracked and converted into path segments.
 
 While recording, the user can manually stop the tracking (userStop), or the process can automatically stop if a long period of inactivity is detected.
 If the GPS connection is lost for a prolonged time or the user denies permission, the process transitions to the failed path, ending unsuccessfully and returning to the idle state.
-When the user stops the recording or the system detects the end of movement, the process enters the Validating Path state, where the recorded route is checked for continuity, consistency, and potential GPS anomalies.
+When the user stops the recording or the system detects the end of movement, the process enters the Validating Path state, where the recorded path is checked for continuity, consistency, and potential GPS anomalies.
 
 If the validation succeeds, the system moves to the Saving Path state, where the path data are stored in the database. Any validation or saving errors cause a transition to a failure path, returning to the idle state.
 Once the path has been successfully saved, the process reaches its final state, confirming that the automatically tracked path has been correctly recorded and stored.
@@ -192,9 +216,9 @@ Once the path has been successfully saved, the process reaches its final state, 
 \subsubsection{Manually inserting a report about an obstacle}
 
 The following diagram illustrates the states related to the manual reporting process, which allows a logged-in user to create a report manually.
-Starting from the Idle state, the user initiates the manual report creation process by selecting the appropriate option from the interface. Once the process begins, the system moves to the Editing Metadata state, where the user can enter or modify relevant information, such as the description, and obstacle type.
+Starting from the Idle state, the user initiates the manual report creation process by selecting the appropriate option from the interface. Once the process begins, the system moves to the Editing Metadata state, where the user can enter or modify relevant information, such as path status and obstacle type.
 
-After the metadata are saved, the process continues in the Waiting for GPS state. In this phase, the system attempts to obtain the user’s current position to associate the report with a specific geographic location.
+After the metadata are saved, the process continues in the Waiting for GPS state. In this phase, the system attempts to obtain the user's current position to associate the report with a specific geographic location.
 If the GPS lock is successfully acquired, the process transitions to the Saving Report state, where the report is stored in the database.
 
 If any error occurs during the GPS acquisition or the saving phase (GPSError, saveError), or if the user decides to cancel the operation (reportCanceled), the process terminates prematurely and returns to the Idle state.
@@ -209,9 +233,8 @@ When the report is successfully saved, the system reaches the final state, confi
 \subsubsection{Automatically detecting and reporting an obstacle}
 
 The following diagram represents the states involved in the automatic reporting process, where a logged-in user can generate a report automatically when a relevant event or sensor input is detected.
-The process starts from the Idle state. When the system detects a sensor signal or an anomaly (SensorDetection), it transitions to the Confirming Report state, where the user is asked to confirm whether the detected event should be reported.
-
-If the user confirms, the process continues in the Editing Metadata state, allowing the user to optionally edit or add information related to the report, such as a short description or obstacle type. Once the metadata are saved, the system moves to the Waiting for GPS state, where it tries to obtain the current position to associate it with the report.
+The process starts from the Idle state. When the system detects a sensor signal or an anomaly (sensorDetection), it transitions to the Editing Metadata state, allowing the user to optionally edit
+or add information related to the report, such as a short description or obstacle type. Once the metadata are saved, the system moves to the Waiting for GPS state, where it tries to obtain the current position to associate it with the report.
 
 If the GPS signal becomes active, the system transitions to the Saving Report state, where the report data are finalized and stored in the database.
 If at any point the user cancels the report (reportCanceled), or the GPS fails to provide a valid location (GPSError), the process terminates prematurely and returns to the idle state.
@@ -230,80 +253,120 @@ Finally, if the saving procedure completes successfully (saveComplete), the syst
 \section{Product functions}
 \label{sec:product_functions}
 
-The following points outline the main functionalities offered by the system from the user’s perspective.
+The following points outline the main functionalities offered by the system from the user's perspective.
 
 \begin{itemize}
 	\item \textbf{User Registration and Login}:
 
 	      The system allows new users to register and existing users to log in through a dedicated interface accessible from the main page of BBP.
 	      Registration requires only basic personal information such as name, email, and password.
-	      Once logged-in, users gain access to additional functionalities that are not available to guest users, including the ability to record and track personal cycling trips, create personalized bike paths, view personal activity history and performance statistics, and contribute information to the community by reporting or confirming bike path conditions.
-	      Guest Users can browse available bike paths, search for routes between two locations, and receive route suggestions based on community rankings, but they cannot record trips, create new paths, or contribute reports.
+	      Once logged-in, users gain access to additional functionalities that are not available to guest users, including the ability to record and track personal cycling trips, create personalized bike paths, view trip history and performance statistics, and contribute information to the community by reporting or confirming bike path conditions.
+	      Guest Users can browse available bike paths, search for routes between two locations, and receive path suggestions based on community rankings, but they can’t store recorded trips, create new paths, or contribute by making reports.
 
 	\item \textbf{Bike Path Search and Visualization}:
 
 	      Any user can search for bike paths by specifying an origin and a destination.
 	      BBP displays on a map all available routes connecting the two selected points. Each path has information about its current condition, derived from aggregated feedback provided by logged-in users.
-	      The displayed paths are ranked according to an overall score computed by the system. This score takes into account both the physical condition of the path (e.g., optimal, medium, requires maintenance) and its effectiveness in connecting the specified origin and destination.
-	      Users can explore the visualized paths, view their details, and select the most suitable route for their needs. However, only logged-in users can start recording a trip or contribute new information about the selected paths.
+	      The displayed paths are ranked according to an overall score computed by the system, displayed as path status (e.g., optimal, medium, requires maintenance, closed).
+	      Users can explore the visualized paths, view their details, select the most suitable path for their needs and start a trip. However, only logged-in users can record a trip or contribute with new information about the selected paths.
 
 	\item \textbf{Bike Path Creation}:
 
 	      Logged-in users can create new custom bike paths using two different approaches.
-	      In manual mode, the user specifies the names of the street segments that compose the desired route and provides information about the characteristics of each segment.
-	      This allows cyclists to define personalized routes that may not yet be present in the system or that better match their preferences.
-	      Alternatively, in automatic mode, the system dynamically creates a new path by recording GPS data while the user follows their desired route during an actual trip.
-	      As the user bikes, BBP collects positional information to reconstruct the exact path in real time. This approach enables users to create paths simply by cycling along them, without needing to manually specify street names or segments beforehand.
-	      Regardless of the creation method, the newly created path can remain private to the user or be made publishable for the entire community.
+	      In manual mode, the user draws the path directly on the map or selects the segments they wish to include. This allows cyclists to define personalized paths that may not yet exist in the system or that better fit their preferences, without manually entering street names.
+	      In automatic mode, the system constructs the path by recording GPS data as the user physically cycles along it. While the user rides, BBP collects positional information and reconstructs the path in real time.
+	      Regardless of the chosen method, the newly created path may remain private or be marked as publishable for the entire BBP community.
+
+	\item \textbf{Bike Path Visibility Management}:
+
+	      Logged-in users can modify the visibility of the bike paths they have created.
+	      Each user-created path can be	either kept \textit{private}, accessible only to its creator, or marked as \textit{public}, making it available to the entire BBP community.
+	      Users can change this setting at any time from the path details page.
+	      When the visibility is updated, BBP reflects the new status immediately in future searches and suggestions.
+	      This functionality ensures user control over which paths are shared with the community.
+
+	\item \textbf{Bike Path Deletion}:
+
+	      Logged-in users can delete any bike path they have personally created.
+	      From the path details page, the user may select the delete option, after which BBP removes the path and all its associated metadata from the system.
+	      Deleted paths are no longer available for future searches or for the community.
 
 	\item \textbf{Trip Recording and Data Acquisition}:
 
-	      A logged-in user starts a trip by choosing a route on the map and selecting the data acquisition mode: manual (distance, time, and average speed only, without automatic detections) or automatic.
-	      In automatic mode, BBP uses GPS, an accelerometer, and a gyroscope to track the route and identify potential irregularities in the road surface.
-	      Pressing Start begins the trip: the app displays the user's real-time location and provides navigation to the destination.
-	      The activity stops automatically upon arrival or manually with Stop, then the system processes the data and generates a summary.
-	      If recording is automatic, BBP sends pop-ups to confirm or correct any detected anomalies before the data is made available to the community.
+	      A logged-in user can start a trip by selecting a suggested bike path and reaching its origin, which must match the user's current GPS position.
+	      Before starting the trip, BBP asks whether the user wants to enable the \textit{Automatic Mode}.
+	      GPS tracking is always active, while the use of accelerometer and gyroscope is enabled only when Automatic Mode is selected.
+	      In automatic mode, BBP uses the external sensors to identify potential irregularities in the road surface that may indicate obstacles or potholes.
+	      Each detected event triggers a pop-up asking the user to confirm, edit, or reject the anomaly before it is stored as a report.
+	      When automatic mode is disabled, reporting is possible only through manual user input.
+	      During the trip, BBP continuously collects GPS data to track the user's path and provides navigation to the destination.
+	      The trip stops automatically upon arrival or manually by clicking the stop button, then the system processes the data and generates a summary
+	      which is stored in the user's trip history.
 
-	\item \textbf{Cycling Activity History and Aggregate Statistics}:
+	\item \textbf{Automatic Ride Detection and Trip Start Suggestion}:
 
-	      Logged-in users can access the "My Activities' section" to review their personal cycling history.
-	      This section displays both a chronological list of all recorded trips and aggregate statistics summarizing the users overall performance over time.
-	      The aggregate statistics are presented on the same page as the trip list and include metrics such as total number of trips, total kilometers traveled, average speed across all activities, and weekly or monthly riding frequency.
-	      Each trip entry in the list includes summary information such as the date, distance covered, duration, and primary route followed.
-	      Users can sort the list by date or distance to easily find specific activities.
-	      The trip list and aggregate statistics remain securely linked to the users account, allowing them to track their performance and monitor improvements over time.
+	      BBP continuously analyzes the user's movement whenever the app is open.
+	      If the system detects, based on GPS speed and movement patterns, that the user is likely biking without having started a trip, it displays a pop-up suggesting to begin recording the activity.
+	      The pop-up prompts the user to start a new trip. If the user agrees, they should insert the destination, while the system automatically sets the current GPS location as the origin.
+	      Then, BBP displays the available suggested paths from the current position to the chosen destination.
+	      Once the user selects one, and chooses whether to enable the automatic mode, the trip starts normally, with full GPS tracking and (if enabled) sensor-based anomaly detection.
+	      If the user dismisses the pop-up, BBP returns to idle state without recording any data.
+	      This functionality ensures that users do not miss the opportunity to record their trip, maintain complete statistics, and benefit from trip tracking even when they forget to manually start a trip.
 
-	\item \textbf{Trip Specific Statistics and Environmental Data}:
+	\item \textbf{Automatic Trip Interruption on Path Deviation}:
 
-	      Logged-in users can select any trip from their activity list to access detailed trip specific statistics.
-	      For each individual trip, BBP provides total distance, duration, average and maximum speed.
-	      The trip page also displays a map showing the complete route followed by the user. If environmental data were available during the ride either from the users external device or from an external meteorological service they are presented alongside the trip statistics.
-	      These environmental data may include average temperature, humidity levels, and wind speed and direction.
-	      Additionally, either if the user recorded the trip in automatic mode or manual mode, the map highlights points where the accelerometer detected abnormal movements, indicating possible obstacles or rough surfaces encountered along the route or points where the user manually reported issues.
+	      BBP continuously compares the user's real-time GPS position with the selected path.
+	      If the system detects a significant deviation from the planned route, it automatically stops the trip, saves recorded data, and displays a pop-up informing the user of the interruption.
+	      The user can then start a new trip from the updated position by selecting a new destination.
+	      This mechanism ensures accurate tracking and prevents invalid trip recordings when the user leaves the chosen path.
 
 	\item \textbf{Manual Reporting of Bike Path Conditions}:
 
-	      BBP enables logged-in users to manually report the condition of any bike path they encounter.
-	      This feature helps keep route information accurate, especially when users spot issues like obstacles or closures.
-	      By selecting Report Path Condition in the app, users can mark the affected segment on a map, describe the issue, and assign a status such as “optimal,” “medium,” “requires maintenance,” or “closed.”
+	      BBP allows logged-in users to manually report the condition of a bike path only while they are on an active trip. This feature helps to keep path information accurate, especially when users encounter issues such as obstacles or partial closures.
+	      By selecting the report button during the ride, the user can choose the type of issue from a predefined list (e.g., obstacle, debris, surface damage). In addition, the user may assign an overall status to the affected path segment, such as “optimal,” “medium,” “requires maintenance,” or “closed.”
+	      The system automatically retrieves the user's current GPS position and associates the report with the corresponding path segment, without requiring the user to manually indicate the affected location.
 
-	\item \textbf{Real Time Confirmation and Rejection of Reported Path Conditions}:
+	\item \textbf{Real Time Confirmation of Reported Path Conditions}:
 
-	      During a ride, logged-in users may receive pop-up alerts about nearby issues reported by others, such as “Possible pothole ahead” or “Path requires maintenance.”
-	      As they approach the location, users can confirm that the issue persists or reject it if the path is clear.
-	      Their feedback is instantly recorded by BBP and influences the reliability of reports-confirmed ones gain credibility, while frequently rejected ones are downgraded or removed.
+	      During a ride, logged-in users may receive pop-up alerts about nearby issues reported by others.
+	      As they approach the location, users can confirm that the issue persists or reject it, if the problem has been resolved or was inaccurately reported.
+	      Their feedback is instantly recorded by BBP and influences the path's overall condition status.
+	      This real-time confirmation mechanism helps maintain accurate and up-to-date information about bike path conditions, benefiting the entire BBP community.
 
-	\item \textbf{Trip Confirmation of Automatically Detected Anomalies}:
+	\item \textbf{Confirmation of Automatically Detected Anomalies}:
 
-	      When a logged-in user records a trip in automatic mode, BBP uses the device’s sensors to detect irregularities such as potholes or obstacles.
-	      To prevent false positives, detected anomalies are not immediately published. Instead, the user is shown a confirmation screen to review and validate or correct each detection.
-	      Only confirmed data becomes publishable, ensuring accuracy and reliability of shared path information.
+	      When a logged-in user is riding in automatic mode, BBP uses the device's sensors to detect potential anomalies, such as bumps or sudden irregular movements, that may indicate potholes or obstacles.
+	      To avoid false positives, detected anomalies are not published immediately. As soon as an anomaly is detected, BBP shows a confirmation prompt allowing the user to validate, edit or reject it in real time. Only confirmed detections become publishable.
+	      Users can still submit manual reports at any time during the trip, regardless of whether the automatic mode is enabled.
+
+
+	\item \textbf{Overall Statistics}:
+
+	      Logged-in users can access aggregate statistics summarizing the users' overall performance over time.
+	      The aggregate statistics include metrics such as number of trips, number of paths created, kilometers traveled and average speed.
+	      Users can select a specific time range (e.g., last week, last month, last year) to filter the statistics accordingly.
+	      The overall statistics are linked to the users account, allowing them to track their performance and monitor improvements over time.
+
+	\item \textbf{Trip Specific Statistics and Environmental Data}:
+
+	      Logged-in users can access their personal cycling history, that displays a list of all recorded trips.
+	      Users can select any trip from their trip list to access detailed trip specific statistics.
+	      Users can also sort the list by date or distance to easily find specific activities.
+	      For each individual trip, BBP displays a map showing the complete path followed by the user and provides statistics such as total distance, duration and average speed.
+	      There is also information about meteorological conditions during the ride, such as average temperature, humidity levels, and wind speed or direction.
+	      Additionally, regardless of whether the trip was recorded in automatic or manual mode, the map highlights both the points where the accelerometer detected irregular movements that the user confirmed during the ride and the points where the user submitted manual reports.
 
 	\item \textbf{Aggregation and Merging of Bike Path Condition Reports}:
 
 	      BBP combines multiple user reports about the same bike path into a single, updated condition overview.
 	      The system prioritizes recent and consistent reports, giving more weight to those confirmed by several users.
-	      In case of conflicting information, BBP determines the path’s status based on the most recent and widely supported data, ensuring an up-to-date representation of path conditions.
+	      In case of conflicting information, BBP determines the path's status based on the most recent and widely supported data, ensuring an up-to-date representation of path conditions.
+
+	\item \textbf{User Profile Management and Account Settings}:
+
+	      Logged-in users can access a dedicated section to view and update their personal information, such as username, email address, and password.
+	      Logged-in users can also manage their account settings, including privacy options.
+	      Profile changes are validated and stored by BBP, ensuring that future trips, statistics, and community contributions are always associated with the updated account data.
 
 \end{itemize}
 
@@ -322,15 +385,23 @@ Each group has distinct goals, permissions, and levels of interaction with the s
 	      Guest users interact with the system without performing any authentication.
 	      They may either be users who have not created an account, or users who have an existing account but are currently logged out.
 	      Guest users can explore existing bike paths, view global information such as distance, rankings, and general statistics, and consult public reports about obstacles or road conditions.
-	      Their interaction with the system is limited to browsing and visualization; they are not allowed to create, edit, or report any paths or obstacles.
+	      Guest users are also allowed to start a trip.
+	      However, they can't enable the Automatic Mode, can't submit obstacle reports, can't confirm reports submitted by others, and do not receive pop-ups related to anomaly detection or confirmation.
+	      At the end of the trip, no data is stored in the system: guest users have no trip history and do not have access to overall or per-trip statistics.
+	      They are not allowed to create or delete any paths, nor to modify any existing data in the system.
 
 	\item \textbf{Logged-in users}:
 
-	      Logged-in users have full access to the system’s functionalities after creating an account and logging in.
-	      They can create new bike paths using GPS tracking, or by manually selecting points on a map interface.
-	      They can also manually or automatically submit obstacle reports, and validate or confirm existing ones shared by other users.
-	      If the automatic mode is used, the user can confirm the detected obstacles before submission.
-	      Furthermore, logged-in users can record trips, which are then stored within their personal profiles, allowing them to view historical data and general and per-trip statistics such as distance covered, average speed, and total time spent cycling.
+	      Logged-in users have full access to the system's functionalities after creating an account and logging in.
+	      They can create new bike paths using GPS tracking, or by manually drawing on a map interface.
+		  They can choose whether to keep their created paths private or share them with the community.
+	      They can also delete any paths they have created.
+	      During trips, logged-in users can enable the Automatic Mode to allow BBP to detect potential obstacles using device sensors.
+	      They can also submit obstacle reports, and validate or confirm existing ones shared by other users.
+	      Furthermore, logged-in users can store their trips and view their personal trip history.
+		  They can access both overall statistics summarizing their cycling activities over time, and detailed statistics for each individual trip.
+		  Logged-in users can also manage their profile information and account settings.
+
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -368,10 +439,11 @@ This subsection lists the assumptions about the real world that are taken as tru
 \begin{itemize}
 	\item[\textbf{[D1]}] The system has access to a geographic map service and geocoding capabilities to process origin/destination and render paths.
 	\item[\textbf{[D2]}] External meteorological services are reachable and operational with acceptable latency during normal operation.
-	\item[\textbf{[D3]}] Users’ mobile devices are equipped with GPS and have granted the BBP app access to location and motion sensors.
+	\item[\textbf{[D3]}] Users' mobile devices are equipped with GPS and have granted the BBP app access to location and motion sensors.
 	\item[\textbf{[D4]}] Motion sensors (accelerometer, gyroscope) and GPS provide data of sufficient accuracy and reliability for obstacle detection.
 	\item[\textbf{[D5]}] Manual input provided by logged-in users is assumed to be truthful, accurate, and sufficiently complete for a path/report entry.
 	\item[\textbf{[D6]}] A bike path is either a dedicated bicycle track or a low-traffic road where motor-vehicle speed limits are compatible with average cycling speed.
-	\item[\textbf{[D7]}] Notifications or pop-ups sent by the BBP system reach users within 5 minutes.
+	\item[\textbf{[D7]}] GPS position updates are received with sufficient frequency (e.g., at least 1 update per second) to detect movement, deviations, and trip progress.
 	\item[\textbf{[D8]}] Reported conditions may become obsolete over time; data “freshness” decays and is considered by the aggregation/ranking logic.
+	\item[\textbf{[D9]}] The map service returns valid, connected, and navigable path segments for any origin/destination pair inside its coverage.
 \end{itemize}
