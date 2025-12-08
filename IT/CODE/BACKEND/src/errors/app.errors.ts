@@ -5,6 +5,7 @@ export const HttpStatus = {
     UNAUTHORIZED: 401,
     FORBIDDEN: 403,
     NOT_FOUND: 404,
+    CONFLICT: 409,
     INTERNAL_SERVER_ERROR: 500,
 } as const;
 
@@ -48,6 +49,13 @@ export class ForbiddenError extends AppError {
 export class NotFoundError extends AppError {
     constructor(message: string = 'Resource not found', code?: string) {
         super(message, HttpStatus.NOT_FOUND, code || 'NOT_FOUND');
+    }
+}
+
+// 409 - Conflict
+export class ConflictError extends AppError {
+    constructor(message: string = 'Conflict', code?: string) {
+        super(message, HttpStatus.CONFLICT, code || 'CONFLICT');
     }
 }
 
