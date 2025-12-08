@@ -31,66 +31,73 @@
 
  \textbf{R7} & The system shall allow guest users to stop a currently active trip. & TripManager \\ \hline
 
- \textbf{R8} & The system shall allow logged-in users to start a cycling trip in manual or automatic mode. & TripManager \\ \hline
+ \textbf{R8} & The system shall allow the user to start a trip only when their GPS position matches the path origin. & TripManager \\ \hline
 
- \textbf{R9} & The system shall allow logged-in users to stop a currently active trip and save the recorded data. & TripManager, QueryManager \\ \hline
+ \textbf{R9} & The system shall display a pop-up suggesting to start a trip when cycling is detected while no trip is active and the app is open. & TripManager \\ \hline
 
- \textbf{R10} & The system shall collect GPS data during trip recording. & TripManager \\ \hline
+ \textbf{R10} & The system shall set the current GPS position as trip origin when starting from auto-detection. & TripManager \\ \hline
 
- \textbf{R11} & The system shall collect motion sensor data (accelerometer, gyroscope) during trip recording when available. & TripManager \\ \hline
+ \textbf{R11} & The system shall automatically stop the active trip when the user’s GPS position deviates from the selected path within a certain threshold. & TripManager \\ \hline
 
- \textbf{R12} & The system shall allow logged-in users to view the list of their recorded trips. & TripManager, QueryManager \\ \hline
+ \textbf{R12} & The system shall allow logged-in users to start a cycling trip in manual or automatic mode. & TripManager \\ \hline
 
- \textbf{R13} & The system shall allow logged-in users to view a summary of their overall cycling statistics (total distance, total time, average speed, etc.). & StatsManager, QueryManager \\ \hline
+ \textbf{R13} & The system shall allow logged-in users to stop a currently active trip and save the recorded data. & TripManager, QueryManager \\ \hline
 
- \textbf{R14} & The system shall allow logged-in users to view statistics for each trip (distance, speed, duration, etc.). &  StatsManager, QueryManager \\ \hline
+ \textbf{R14} & The system shall collect GPS data during trip recording. & TripManager \\ \hline
 
- \textbf{R15} & The system shall display the route and reported obstacles associated with a recorded trip. & TripManager, QueryManager \\ \hline
+ \textbf{R15} & The system shall collect motion sensor data (accelerometer, gyroscope) during trip recording when available. & TripManager \\ \hline
 
- \textbf{R16} & The system shall allow logged-in users to delete a recorded trip. & TripManager, QueryManager \\ \hline
+ \textbf{R16} & The system shall allow logged-in users to view the list of their recorded trips. & TripManager, QueryManager \\ \hline
 
- \textbf{R17} & The system shall communicate with external weather services to retrieve meteorological data related to the time and location of a trip. & TripManager, WeatherManager\\ \hline
+ \textbf{R17} & The system shall allow logged-in users to view a summary of their overall cycling statistics (total distance, total time, average speed, etc.). & StatsManager, QueryManager \\ \hline
 
- \textbf{R18} & The system shall detect when a user is cycling based on speed and acceleration patterns. & TripManager \\ \hline
+ \textbf{R18} & The system shall allow logged-in users to view statistics for each trip (distance, speed, duration, etc.). & StatsManager, QueryManager \\ \hline
 
- \textbf{R19} & The system shall detect irregular movements from sensor data that may suggest potholes or surface defects. & ReportManager \\ \hline
+ \textbf{R19} & The system shall display the route and reported obstacles associated with a recorded trip. & TripManager, PathManager, Reports Manager, QueryManager \\ \hline
 
- \textbf{R20} & The system shall present automatically detected path and obstacle data to the user for manual confirmation before publishing. & ReportManager, QueryManager \\ \hline
+ \textbf{R20} & The system shall allow logged-in users to delete a recorded trip. & TripManager, QueryManager \\ \hline
 
- \textbf{R21} & The system shall allow logged-in users to manually create a new bike path by drawing or specifying street segments. & PathManager, QueryManager \\ \hline
+ \textbf{R21} & The system shall communicate with external weather services to retrieve meteorological data related to the time and location of a trip. & TripManager, WeatherManager\\ \hline
 
- \textbf{R22} & The system shall allow logged-in users to manually report obstacles or problems on a bike path. & ReportManager, QueryManager \\ \hline
+ \textbf{R22} & The system shall detect when a user is cycling based on speed and acceleration patterns. & TripManager \\ \hline
 
- \textbf{R23} & The system shall allow logged-in users to manually confirm or reject the presence of obstacles reported by other users. & ReportManager, QueryManager \\ \hline
+ \textbf{R23} & The system shall detect irregular movements from sensor data that may suggest potholes or surface defects. & Reports Manager \\ \hline
 
- \textbf{R24} & The system shall allow logged-in users to create a new bike path in automatic mode using GPS tracking. & PathManager, QueryManager \\ \hline
+ \textbf{R24} & The system shall present automatically detected path and obstacle data to the user for manual confirmation before publishing. & Reports Manager, QueryManager \\ \hline
 
- \textbf{R25} & The system shall allow logged-in users to delete or edit their previously created paths. & PathManager, QueryManager \\ \hline
+ \textbf{R25} & The system shall allow logged-in users to manually create a new bike path by drawing or specifying street segments. & PathManager, QueryManager \\ \hline
 
- \textbf{R26} & The system shall allow logged-in users to set the visibility of their created paths as public or private. & PathManager, QueryManager \\ \hline
+ \textbf{R26} & The system shall allow logged-in users to manually report obstacles or problems on a bike path. & Reports Manager, QueryManager \\ \hline
 
- \textbf{R27} & The system shall aggregate multiple user reports referring to the same path segment. & ReportManager, QueryManager \\ \hline
+ \textbf{R27} & The system shall allow logged-in users to manually confirm or reject the presence of obstacles reported by other users. & Reports Manager, QueryManager \\ \hline
 
- \textbf{R28} & The system shall evaluate the reliability of each path segment based on the number of confirmations and report freshness. & PathManager \\ \hline
+ \textbf{R28} & The system shall allow logged-in users to create a new bike path in automatic mode using GPS tracking. & PathManager, TripManager, QueryManager \\ \hline
 
- \textbf{R29} & The system shall determine the current status of a path (optimal, medium, sufficient, requires maintenance, closed). & PathManager \\ \hline
+ \textbf{R29} & The system shall allow logged-in users to delete or edit their previously created paths. & PathManager, QueryManager \\ \hline
 
- \textbf{R30} & The system shall allow any user (guest or logged-in) to view the detailed status and latest reports of a selected bike path. & PathManager, QueryManager \\ \hline
+ \textbf{R30} & The system shall allow logged-in users to set the visibility of their created paths as public or private. & PathManager, QueryManager \\ \hline
 
- \textbf{R31} & The system shall allow any user (guest or logged-in) to browse available public bike paths on a map. & PathManager, QueryManager \\ \hline
+ \textbf{R31} & The system shall aggregate multiple user reports referring to the same path segment. & Reports Manager, PathManager, QueryManager \\ \hline
 
- \textbf{R32} & The system shall allow any user to search for bike paths connecting two locations. & PathManager, QueryManager \\ \hline
+ \textbf{R32} & The system shall evaluate the reliability of each path segment based on the number of confirmations and report freshness. & Reports Manager, PathManager \\ \hline
 
- \textbf{R33} & The system shall compute suggested routes based on path quality and distance. & PathManager \\ \hline
+ \textbf{R33} & The system shall determine the current status of a path (optimal, medium, sufficient, requires maintenance, closed). & Reports Manager, PathManager \\ \hline
 
- \textbf{R34} & The system shall rank suggested routes according to their safety and quality. & PathManager \\ \hline
+ \textbf{R34} & The system shall allow any user (guest or logged-in) to view the detailed status and latest reports of a selected bike path. & PathManager, Reports Manager, QueryManager \\ \hline
 
- \textbf{R35}  & The system shall display the user’s current GPS position during navigation along a selected path. & TripManager \\ \hline
+ \textbf{R35} & The system shall allow any user (guest or logged-in) to browse available public bike paths on a map. & PathManager, QueryManager \\ \hline
 
- \textbf{R36} & The system shall send in-app notifications or pop-ups to warn users about nearby obstacles or closed path segments during navigation. & TripManager, QueryManager \\ \hline
+ \textbf{R36} & The system shall allow any user to search for bike paths connecting two locations. & PathManager, QueryManager \\ \hline
+
+ \textbf{R37} & The system shall compute suggested routes based on path quality and distance. & PathManager \\ \hline
+
+ \textbf{R38} & The system shall rank suggested routes according to their safety and quality. & PathManager \\ \hline
+
+ \textbf{R39} & The system shall display the user’s current GPS position during navigation along a selected path. & TripManager, PathManager \\ \hline
+
+ \textbf{R40} & The system shall send in-app notifications or pop-ups to warn users about nearby obstacles or closed path segments during navigation. & TripManager, Reports Manager \\ \hline
  
- \textbf{R37} & The system shall interface with map and geocoding services to translate addresses into coordinates and render paths. & PathManager, TripManager, QueryManager \\ \hline
+ \textbf{R41} & The system shall interface with map and geocoding services to translate addresses into coordinates and render paths. & PathManager, QueryManager \\ \hline
 
- \textbf{R38} & The system shall ensure that communication with all external services (map, weather) handles temporary unavailability gracefully. & WeatherManager \\ \hline
-    % We wll see if we need a Map Manager to handle map services
+ \textbf{R42} & The system shall ensure that communication with all external services (map, weather) handles temporary unavailability gracefully. & PathManager, WeatherManager \\ \hline
 \end{longtable}
