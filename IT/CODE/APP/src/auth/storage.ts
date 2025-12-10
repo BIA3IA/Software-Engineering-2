@@ -1,15 +1,44 @@
-import * as SecureStore from 'expo-secure-store'
+import { create } from "zustand"
+import * as SecureStore from "expo-secure-store"
 
-const TOKEN_KEY = 'bbp_token'
-
-export async function saveToken(token: string) {
-  await SecureStore.setItemAsync(TOKEN_KEY, token)
+type User = {
+  id: string
+  username: string
 }
 
-export async function getToken() {
-  return SecureStore.getItemAsync(TOKEN_KEY)
+type AuthState = {
+  user: User | null
+  loading: boolean
+  initAuth: () => Promise<void>
+  login: (user: User, token: string) => Promise<void>
+  logout: () => Promise<void>
 }
 
-export async function clearToken() {
-  await SecureStore.deleteItemAsync(TOKEN_KEY)
-}
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  loading: true,
+
+  initAuth: async () => {
+    const token = await SecureStore.getItemAsync("bbp_token")
+
+    if (!token) {
+      set({ user: null, loading: false })
+      return
+    }
+
+    set({
+      user: { id: "1", username: "Guest" },
+      loading: false,
+    })
+  },
+
+  login: async (user, token) => {
+    await SecureStore.setItemAsync("bbp_token", token)
+    set({ user })
+  },
+
+  logout: async () => {
+    await SecureStore.deleteItemAsync("bbp_token")
+    set({ user: null })
+  },
+}))

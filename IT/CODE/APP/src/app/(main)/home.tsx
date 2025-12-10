@@ -1,7 +1,7 @@
-import MapView, { Polyline } from 'react-native-maps'
 import * as Location from 'expo-location'
 import { useEffect, useState } from 'react'
-import { YStack, Text, Button } from 'tamagui'
+import { View, Text, StyleSheet } from 'react-native'
+import { Button } from 'react-native-paper'
 
 type Coord = { latitude: number; longitude: number }
 
@@ -20,7 +20,7 @@ export default function NavigationScreen() {
     await Location.watchPositionAsync(
       {
         accuracy: Location.Accuracy.Highest,
-        distanceInterval: 2, // meters
+        distanceInterval: 2,
       },
       (location) => {
         const { latitude, longitude } = location.coords
@@ -31,37 +31,44 @@ export default function NavigationScreen() {
 
   if (hasPermission === false) {
     return (
-      <YStack flex={1}>
+      <View style={styles.container}>
         <Text>Location permission denied</Text>
-      </YStack>
+      </View>
     )
   }
 
   return (
-    <YStack flex={1}>
-      <YStack p="$3">
-        <Button onPress={startTracking}>Start Tracking</Button>
-      </YStack>
+    <View style={styles.container}>
+      <View style={styles.section}>
+        <Button mode="contained" onPress={startTracking}>
+          Start Tracking
+        </Button>
+      </View>
 
-      <MapView
-        style={{ flex: 1 }}
-        showsUserLocation
-        followsUserLocation
-        initialRegion={{
-          latitude: 45.4642,
-          longitude: 9.1900,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-      >
-        {coords.length > 1 && (
-          <Polyline
-            coordinates={coords}
-            strokeColor="#6d28d9"
-            strokeWidth={4}
-          />
+      <View style={styles.section}>
+        <Text style={styles.label}>Tracked points: {coords.length}</Text>
+        {coords.at(-1) ? (
+          <Text>
+            Last position: {coords.at(-1)?.latitude.toFixed(5)}, {coords.at(-1)?.longitude.toFixed(5)}
+          </Text>
+        ) : (
+          <Text>No points yet. Tap “Start Tracking”.</Text>
         )}
-      </MapView>
-    </YStack>
+      </View>
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    gap: 16,
+  },
+  section: {
+    gap: 8,
+  },
+  label: {
+    fontWeight: "700",
+  },
+})

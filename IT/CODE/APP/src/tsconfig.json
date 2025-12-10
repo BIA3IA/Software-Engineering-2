@@ -8,15 +8,11 @@
     "moduleResolution": "node",
     "noEmit": true,
     "types": [
-      "tamagui",
       "react",
       "react-native",
       "expo"
     ],
     "paths": {
-      "tamagui.config": [
-        "./tamagui.config.ts"
-      ],
       "@/*": [
         "./*"
       ]
