@@ -1,0 +1,36 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// user table, use cuid for better indexing
+// @@map is used to map the model to an existing table name in the database (useful when you have legacy databases)
+model User {
+  userId                String   @id @default(cuid())
+  email                 String   @unique
+  password              String
+  username              String   @unique
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  systemPreferences     String[]
+  refreshTokens         RefreshToken[]
+}
+
+model RefreshToken {
+  tokenId     String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  token       String   @unique
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+}
