@@ -89,8 +89,27 @@ Representative scenarios illustrate how different types of users interact with B
 	\caption{Domain Class Diagram}
 \end{figure}
 
-The Domain Class Diagram for the Best Bike Paths (BBP) system illustrates the key entities and their relationships for managing bike paths, trips, and associated information in a unified manner. The system's core functionality revolves around the User entity, defined by a userId and current position as a GeoPoint (latitude, longitude). A specialized role is the LoggedInUser (inheriting from User), who can register with a username, email, and password. The central object is the Path, which is composed of one or more PathSegment entities, linking an origin and destination GeoPoint. A Path holds attributes like pathId, score, description, isPublic, creationDate, and a PathStatus enumeration value. A PathSegment is an atomic portion of a route, identified by a segmentId and streetName, includes an array of geoCoordinates, and refers to the nextSegmentPathSegment. A MapService renders both Paths and PathSegments, and a LoggedInUser selects and searches for paths through this service. A LoggedInUser may record a Trip. A Trip includes temporal information (startTime, endTime) and metrics like totalDistanceTraveled. A Trip has one or more OverallStatistics records (which a LoggedInUser also tracks), summarizing performance with values such as avgSpeed and maxSpeed. A Trip has 0 or 1 WeatherInfo record, including temperature and humidity, which is provided by a WeatherProvider (defined by a name and apiKey). Data about obstacles is collected through Report entities, which are made by a LoggedInUser using an AcquisitionMode (from the Mode enumeration: MANUAL or AUTOMATIC). A Report specifies an ObstacleType and has a reportId, creationDate, and a reportStatus (from the ReportStatus enumeration). The system uses Sensors (e.g., ACCELEROMETER, GYROSCOPE types) to detect and suggest Reports in the automatic acquisition mode. All temporal data within the system is represented using the DateTime entity, storing values as an epochTime Integer.
-This integrated design ensures a comprehensive system for creating, recording, validating, and sharing bike path information.
+The Domain Class Diagram for the Best Bike Paths (BBP) system illustrates the key entities and their
+relationships for managing bike paths, trips, and associated information in a unified manner. The system's
+core functionality revolves around the User entity, defined by a userId and current position as a GeoPoint
+(latitude, longitude). A specialized role is the LoggedInUser (inheriting from User), who can register with
+a username, email, and password. The central object is the Path, which is composed of one or more PathSegment
+entities, linking an origin and destination GeoPoint. A Path holds attributes like pathId, score, description,
+isPublic, creationDate, and a PathStatus enumeration value. A PathSegment is an atomic portion of a route,
+identified by a segmentId and streetName, includes an array of geoCoordinates, and refers to the nextSegmentPathSegment. 
+A MapService renders both Paths and PathSegments, and a LoggedInUser selects and searches for paths through
+this service. A LoggedInUser may record a Trip. A Trip includes temporal information (startTime, endTime) 
+and metrics like totalDistanceTraveled. A Trip has one or more OverallStatistics records (which a LoggedInUser also
+tracks), summarizing performance with values such as avgSpeed and maxSpeed. A Trip has 0 or 1 WeatherInfo
+record, including temperature and humidity, which is provided by a WeatherProvider (defined by a name and
+apiKey). Data about obstacles is collected through Report entities, which are made by a LoggedInUser using
+an AcquisitionMode (from the Mode enumeration: MANUAL or AUTOMATIC). A Report specifies an ObstacleType 
+and has a reportId, creationDate, and a reportStatus (from the ReportStatus enumeration). The system uses
+Sensors (e.g., ACCELEROMETER, GYROSCOPE types) to detect and suggest Reports in the automatic acquisition 
+mode. All temporal data within the system is represented using the DateTime entity, storing values as an 
+epochTime Integer.
+This integrated design ensures a comprehensive system for creating, recording, validating, and sharing 
+bike path information.
 
 \subsection{State Diagrams}
 \label{sec:state_diagrams}
