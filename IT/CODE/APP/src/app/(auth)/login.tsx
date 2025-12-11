@@ -66,12 +66,12 @@ export default function LogInScreen() {
   }
 
   function handleBack() {
-    router.back()
+    router.replace("/(auth)/welcome")
   }
 
   return (
     <View style={[layoutStyles.screen, { backgroundColor: palette.bgPrimary }]}>
-      <View style={[styles.header, layoutStyles.horizontalPadding, { backgroundColor: palette.gradientStart }]}>
+      <View style={[styles.header, layoutStyles.horizontalPadding, { backgroundColor: palette.bgAccent }]}>
         <Text style={[textStyles.screenTitle, styles.headerTitle, { color: palette.titleColor }]}>
           Welcome Back
         </Text>
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     paddingBottom: verticalScale(32),
   },
   backWrapper: {
-    marginTop: verticalScale(24),
+    marginTop: verticalScale(16),
     alignItems: "center",
   },
   backText: {

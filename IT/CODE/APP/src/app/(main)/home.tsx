@@ -1,74 +1,70 @@
-import * as Location from 'expo-location'
-import { useEffect, useState } from 'react'
-import { View, Text, StyleSheet } from 'react-native'
-import { Button } from 'react-native-paper'
+import React from "react"
+import { View, StyleSheet, Pressable } from "react-native"
+import MapView from "react-native-maps"
+import { Plus } from "lucide-react-native"
 
-type Coord = { latitude: number; longitude: number }
+import { layoutStyles, scale, verticalScale, radius } from "@/theme/layout"
+import Colors from "@/constants/Colors"
+import { useColorScheme } from "@/hooks/useColorScheme"
+import { useAuthStore } from "@/auth/storage"
+import { useLoginPrompt } from "@/hooks/useLoginPrompt"
 
-export default function NavigationScreen() {
-  const [coords, setCoords] = useState<Coord[]>([])
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null)
+export default function HomeScreen() {
+  const scheme = useColorScheme() ?? "light"
+  const palette = Colors[scheme]
+  const user = useAuthStore((s) => s.user)
+  const isGuest = user?.id === "guest"
+  const requireLogin = useLoginPrompt()
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync()
-      setHasPermission(status === 'granted')
-    })()
-  }, [])
+  const fabBg = isGuest ? palette.mutedBg : palette.primary
+  const iconColor = isGuest ? palette.muted : palette.textInverse
 
-  const startTracking = async () => {
-    await Location.watchPositionAsync(
-      {
-        accuracy: Location.Accuracy.Highest,
-        distanceInterval: 2,
-      },
-      (location) => {
-        const { latitude, longitude } = location.coords
-        setCoords(prev => [...prev, { latitude, longitude }])
-      }
-    )
-  }
-
-  if (hasPermission === false) {
-    return (
-      <View style={styles.container}>
-        <Text>Location permission denied</Text>
-      </View>
-    )
+  function handleFabPress() {
+    if (isGuest) {
+      requireLogin()
+      return
+    }
+    // TODO trigger creation
+    console.log("Create new path tapped")
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.section}>
-        <Button mode="contained" onPress={startTracking}>
-          Start Tracking
-        </Button>
-      </View>
+    <View style={layoutStyles.screen}>
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: 45.478,
+          longitude: 9.227,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }}
+      />
 
-      <View style={styles.section}>
-        <Text style={styles.label}>Tracked points: {coords.length}</Text>
-        {coords.at(-1) ? (
-          <Text>
-            Last position: {coords.at(-1)?.latitude.toFixed(5)}, {coords.at(-1)?.longitude.toFixed(5)}
-          </Text>
-        ) : (
-          <Text>No points yet. Tap “Start Tracking”.</Text>
-        )}
-      </View>
+      <Pressable style={[styles.fab, { backgroundColor: fabBg, opacity: isGuest ? 0.7 : 1 }]} onPress={handleFabPress}>
+        <Plus size={scale(24)} color={iconColor} strokeWidth={2} />
+      </Pressable>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  map: {
     flex: 1,
-    padding: 16,
-    gap: 16,
   },
-  section: {
-    gap: 8,
-  },
-  label: {
-    fontWeight: "700",
+  fab: {
+    position: "absolute",
+    bottom: verticalScale(24),
+    right: scale(24),
+    width: scale(56),
+    height: scale(56),
+    borderRadius: radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 14,
+    elevation: 8,
+    opacity: 0.85,
   },
 })

@@ -3,6 +3,7 @@ const brand = {
   primaryLight: "#38bdf8",
   primaryDark: "#0284c7",
   primaryDarker: "#0369a1",
+  primarySoft: "#e0f2fe"
 }
 
 const neutral = {
@@ -19,6 +20,8 @@ const neutral = {
   950: "#020617",
 }
 
+const white = "#ffffff"
+
 const feedback = {
   success: "#22c55e",
   warning: "#eab308",
@@ -28,18 +31,21 @@ const feedback = {
 export default {
   light: {
     textPrimary: neutral[900],
-    textSecondary: neutral[600],
-    textTertiary: neutral[500],
-    textInverse: "#ffffff",
+    textSecondary: neutral[500],
+    textTertiary: neutral[400],
+    textInverse: white,
     textAccent: brand.primary,
 
-    titleColor: "#ffffff",
+    titleColor: white,
     subtitleColor: "#e5f1ff",
 
-    bgPrimary: "#ffffff",
+    navItemColor: white,
+    disabledNavItemColor: neutral[100],
+
+    bgPrimary: white,
     bgSecondary: neutral[50],
-    bgElevated: "#ffffff",
-    bgAccent: brand.primaryLight,
+    bgElevated: brand.primarySoft,
+    bgAccent: brand.primary,
 
     primary: brand.primary,
     primaryLight: brand.primaryLight,
@@ -49,7 +55,7 @@ export default {
     gradientStart: brand.primaryLight,
     gradientEnd: brand.primaryDarker,
 
-    cardBg: "#ffffff",
+    cardBg: white,
     cardBorder: neutral[200],
     cardText: neutral[900],
 
@@ -61,31 +67,34 @@ export default {
     inputBorder: neutral[200],
 
     buttonPrimaryBg: brand.primary,
-    buttonPrimaryText: "#ffffff",
-    buttonSecondaryBg: "#ffffff",
+    buttonPrimaryText: white,
+    buttonSecondaryBg: white,
     buttonSecondaryBorder: neutral[300],
     buttonSecondaryText: brand.primary,
-    buttonOutlineBorder: "#ffffff",
-    buttonOutlineText: "#ffffff",
+    buttonOutlineBorder: white,
+    buttonOutlineText: white,
 
     success: feedback.success,
     warning: feedback.warning,
     destructive: feedback.destructive,
 
-    muted: neutral[300],
-    mutedBg: neutral[100],
+    muted: neutral[200],
+    mutedBg: neutral[400],
     accent: brand.primary,
   },
 
   dark: {
-    textPrimary: "#ffffff",
+    textPrimary: white,
     textSecondary: neutral[300],
     textTertiary: neutral[500],
     textInverse: neutral[900],
     textAccent: brand.primaryLight,
 
-    titleColor: "#ffffff",
+    titleColor: white,
     subtitleColor: "#e5f1ff",
+
+    navItemColor: white,
+    disabledNavItemColor: neutral[100],
 
     bgPrimary: neutral[800],
     bgSecondary: neutral[700],
@@ -102,22 +111,22 @@ export default {
 
     cardBg: neutral[700],
     cardBorder: neutral[600],
-    cardText: "#ffffff",
+    cardText: white,
 
     border: "rgba(255,255,255,0.12)",
 
     inputBg: neutral[800],
-    inputText: "#ffffff",
+    inputText: white,
     inputPlaceholder: neutral[500],
     inputBorder: neutral[700],
 
     buttonPrimaryBg: brand.primary,
-    buttonPrimaryText: "#ffffff",
-    buttonSecondaryBg: "#ffffff",
+    buttonPrimaryText: white,
+    buttonSecondaryBg: white,
     buttonSecondaryBorder: neutral[600],
     buttonSecondaryText: brand.primary,
-    buttonOutlineBorder: "#ffffff",
-    buttonOutlineText: "#ffffff",
+    buttonOutlineBorder: white,
+    buttonOutlineText: white,
 
     success: feedback.success,
     warning: feedback.warning,

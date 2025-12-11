@@ -9,6 +9,7 @@ type AuthState = {
   loading: boolean
   initAuth: () => Promise<void>
   login: (user: User, token: string) => Promise<void>
+  loginAsGuest: (user: User) => void
   logout: () => Promise<void>
 }
 
@@ -44,6 +45,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       SecureStore.setItemAsync(TOKEN_KEY, token),
     ])
     set({ user, accessToken: token })
+  },
+
+  loginAsGuest(user) {
+    set({ user, accessToken: null })
   },
 
   async logout() {

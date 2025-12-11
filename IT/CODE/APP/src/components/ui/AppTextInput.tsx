@@ -10,6 +10,7 @@ import {
 
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
+import { radius } from "@/theme/layout"
 import { textStyles } from "@/theme/typography"
 
 type Props = {
@@ -105,7 +106,7 @@ const styles = StyleSheet.create({
     inputWrapper: {
         flexDirection: "row",
         alignItems: "center",
-        borderRadius: 9999,
+        borderRadius: radius.pill,
         borderWidth: 1,
         paddingHorizontal: 16,
         height: 52,

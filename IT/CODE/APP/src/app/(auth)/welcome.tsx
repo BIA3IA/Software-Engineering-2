@@ -9,16 +9,13 @@ import { useColorScheme } from "@/hooks/useColorScheme"
 import { AppButton } from "@/components/ui/AppButton"
 import { useAuthStore } from "@/auth/storage"
 import { textStyles } from "@/theme/typography"
-import { scale, verticalScale, moderateScale } from "@/theme/layout"
+import { scale, verticalScale, moderateScale, radius } from "@/theme/layout"
 
 export default function WelcomeScreen() {
   const router = useRouter()
-  const login = useAuthStore(s => s.login)
+  const loginAsGuest = useAuthStore((s) => s.loginAsGuest)
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
-
-  const gradientStart = palette.gradientStart ?? "#38bdf8"
-  const gradientEnd = palette.gradientEnd ?? "#0369a1"
 
   const titleColor = palette.titleColor
   const subtitleColor = palette.subtitleColor
@@ -32,17 +29,18 @@ export default function WelcomeScreen() {
     router.push("/(auth)/login")
   }
 
-  async function handleGuest() {
-    await login({
-      id: "guest", username: "Guest",
-      email: ""
-    }, "guest")
+  function handleGuest() {
+    loginAsGuest({
+      id: "guest",
+      username: "Guest",
+      email: "",
+    })
     router.replace("/(main)/home")
   }
 
   return (
     <LinearGradient
-      colors={[gradientStart, gradientEnd]}
+      colors={[palette.gradientStart, palette.gradientEnd]}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
       style={styles.gradient}
@@ -53,7 +51,7 @@ export default function WelcomeScreen() {
           <View style={styles.card}>
             <Bike
               size={scale(120)}
-              color={gradientStart}
+              color={palette.primary}
               strokeWidth={1.8}
             />
           </View>
@@ -71,24 +69,13 @@ export default function WelcomeScreen() {
 
         <View style={styles.buttons}>
           <View style={styles.button}>
-            <AppButton
-              title="Sign Up"
-              variant="secondary"
-              onPress={handleSignIn}
-            />
+            <AppButton title="Sign Up" variant="primary" onPress={handleSignIn} />
           </View>
-          <View style={[styles.button, styles.buttonSpacing]}>
-            <AppButton
-              title="Log In"
-              variant="outline"
-              onPress={handleLogIn}
-            />
+          <View style={[styles.button]}>
+            <AppButton title="Log In" variant="secondary" onPress={handleLogIn} />
           </View>
-          <Text
-            onPress={handleGuest}
-            style={[styles.guest, { color: guestTextColor }]}
-          >
-            Continue as Guest
+          <Text onPress={handleGuest} style={[textStyles.bodyBold, styles.guest, { color: guestTextColor }]}>
+            Guest Mode
           </Text>
         </View>
 
@@ -120,13 +107,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: scale(230),
     height: scale(230),
-    borderRadius: scale(115),
+    borderRadius: radius.full,
     backgroundColor: "rgba(255,255,255,0.20)",
   },
   card: {
     width: scale(200),
     height: scale(200),
-    borderRadius: moderateScale(40),
+    borderRadius: radius.xxl,
     backgroundColor: "#ffffff",
     alignItems: "center",
     justifyContent: "center",
@@ -151,20 +138,12 @@ const styles = StyleSheet.create({
   buttons: {
     width: "100%",
     alignItems: "center",
-    gap: verticalScale(12),
-    marginTop: verticalScale(4),
+    gap: verticalScale(16),
   },
   button: {
     width: scale(240),
   },
-  buttonSpacing: {
-    marginTop: verticalScale(4),
-  },
   guest: {
-    fontSize: moderateScale(15),
-    fontWeight: "600",
     textAlign: "center",
-    marginTop: verticalScale(8),
-    opacity: 0.9,
   },
 })

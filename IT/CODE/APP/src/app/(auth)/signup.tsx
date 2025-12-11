@@ -2,7 +2,6 @@ import React from "react"
 import { View, Text, StyleSheet, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
 import { Controller, useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { User, Mail, Lock, LockKeyhole } from "lucide-react-native"
 
 import { AppTextInput } from "@/components/ui/AppTextInput"
@@ -30,6 +29,8 @@ export default function SignUpScreen() {
     defaultValues: {
       email: "",
       password: "",
+      username: "",
+      confirm: "",
     },
     mode: "onSubmit",
     reValidateMode: "onChange",
@@ -67,12 +68,12 @@ export default function SignUpScreen() {
   }
 
   function handleBack() {
-    router.back()
+    router.replace("/(auth)/welcome")
   }
 
   return (
     <View style={[layoutStyles.screen, { backgroundColor: palette.bgPrimary }]}>
-      <View style={[styles.header, layoutStyles.horizontalPadding, { backgroundColor: palette.gradientStart }]}>
+      <View style={[styles.header, layoutStyles.horizontalPadding, { backgroundColor: palette.bgAccent }]}>
         <Text style={[textStyles.screenTitle, styles.headerTitle, { color: palette.titleColor }]}>
           Create Account
         </Text>
@@ -191,7 +192,7 @@ const styles = StyleSheet.create({
     paddingBottom: verticalScale(32),
   },
   backWrapper: {
-    marginTop: verticalScale(24),
+    marginTop: verticalScale(16),
     alignItems: "center",
   },
   backText: {

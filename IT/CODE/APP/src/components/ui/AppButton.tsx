@@ -2,6 +2,7 @@ import React from "react"
 import { StyleSheet } from "react-native"
 import { Button } from "react-native-paper"
 import { useAppTheme } from "@/theme/paperTheme"
+import { radius } from "@/theme/layout"
 
 type Variant = "primary" | "secondary" | "outline"
 
@@ -51,7 +52,7 @@ export function AppButton({ title, variant = "primary", onPress }: AppButtonProp
 const styles = StyleSheet.create({
   button: {
     height: 50,
-    borderRadius: 9999,
+    borderRadius: radius.pill,
     justifyContent: "center",
   },
   label: {
