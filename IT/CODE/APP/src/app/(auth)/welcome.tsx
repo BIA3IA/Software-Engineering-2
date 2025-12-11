@@ -9,7 +9,7 @@ import { useColorScheme } from "@/hooks/useColorScheme"
 import { AppButton } from "@/components/ui/AppButton"
 import { useAuthStore } from "@/auth/storage"
 import { textStyles } from "@/theme/typography"
-import { scale, verticalScale, moderateScale } from "@/utils/layout"
+import { scale, verticalScale, moderateScale } from "@/theme/layout"
 
 export default function WelcomeScreen() {
   const router = useRouter()
@@ -33,7 +33,10 @@ export default function WelcomeScreen() {
   }
 
   async function handleGuest() {
-    await login({ id: "guest", username: "Guest" }, "guest")
+    await login({
+      id: "guest", username: "Guest",
+      email: ""
+    }, "guest")
     router.replace("/(main)/home")
   }
 
@@ -45,7 +48,6 @@ export default function WelcomeScreen() {
       style={styles.gradient}
     >
       <View style={styles.container}>
-        {/* CARD ICONA */}
         <View style={styles.cardWrapper}>
           <View style={styles.cardGlow} />
           <View style={styles.card}>

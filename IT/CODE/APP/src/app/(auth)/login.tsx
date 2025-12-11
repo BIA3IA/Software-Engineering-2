@@ -1,26 +1,68 @@
-import React, { useState } from "react"
+import React from "react"
 import { View, Text, StyleSheet, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
-import { User, Mail, Lock, LockKeyhole } from "lucide-react-native"
+import { Controller, useForm } from "react-hook-form"
+import { Mail, Lock } from "lucide-react-native"
 
 import { AppTextInput } from "@/components/ui/AppTextInput"
 import { AppButton } from "@/components/ui/AppButton"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
-import { layoutStyles, spacingStyles } from "@/theme/layout"
+import { layoutStyles, spacingStyles, verticalScale } from "@/theme/layout"
 import { textStyles } from "@/theme/typography"
+import { useAuthStore } from "@/auth/storage"
+import { loginSchema, type LoginFormValues } from "@/auth/validation"
 
 export default function LogInScreen() {
   const router = useRouter()
+  const login = useAuthStore((s) => s.login)
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
   const iconColor = palette.textSecondary
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<LoginFormValues>({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+  })
 
-  function handleSubmit() {
-    // TODO: chiamata API
+  async function onSubmit(values: LoginFormValues) {
+
+    // ZOD validation
+    const result = loginSchema.safeParse(values)
+
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors
+
+      // errors from ZOD to react-hook-form
+      Object.entries(fieldErrors).forEach(([name, messages]) => {
+        const message = Array.isArray(messages) ? messages[0] : undefined
+        if (!message) return
+
+        setError(name as keyof LoginFormValues, {
+          type: "zod",
+          message,
+        })
+      })
+
+      return
+    }
+
+    // if valid -> login TODO real Login
+    const valid = result.data
+    const fakeUser = { id: "1", username: "Bianca", email: valid.email }
+    const fakeToken = "abc123"
+
+    await login(fakeUser, fakeToken)
+    router.replace("/(main)/home")
   }
 
   function handleBack() {
@@ -41,34 +83,46 @@ export default function LogInScreen() {
       <View style={[styles.formContainer, layoutStyles.roundedTopXL, { backgroundColor: palette.bgPrimary }]}>
         <ScrollView contentContainerStyle={[styles.content, layoutStyles.horizontalPadding]} keyboardShouldPersistTaps="handled">
 
-          <AppTextInput
-            label="E-mail Address"
-            placeholder="Enter your e-mail"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            icon={<Mail size={20} color={iconColor} />}
+          <Controller
+            control={control}
+            name="email"
+            render={({ field }) => (
+              <AppTextInput
+                label="Email Address"
+                placeholder="Enter your email"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                icon={<Mail size={20} color={iconColor} />}
+                errorMessage={errors.email?.message}
+              />
+            )}
           />
 
           <View style={spacingStyles.md} />
 
-          <AppTextInput
-            label="Password"
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            icon={<Lock size={20} color={iconColor} />}
+          <Controller
+            control={control}
+            name="password"
+            render={({ field }) => (
+              <AppTextInput
+                label="Password"
+                placeholder="Enter your password"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                secureTextEntry
+                icon={<Lock size={20} color={iconColor} />}
+                errorMessage={errors.password?.message}
+              />
+            )}
           />
 
           <View style={spacingStyles.xl} />
 
-          <AppButton
-            title="Log In"
-            variant="primary"
-            onPress={handleSubmit}
-          />
+          <AppButton title={isSubmitting ? "Logging In..." : "Log In"} variant="primary" onPress={handleSubmit(onSubmit)} />
 
           <View style={styles.backWrapper}>
             <Text style={[textStyles.bodyBold, styles.backText, { color: palette.textSecondary }]} onPress={handleBack}>
@@ -83,23 +137,23 @@ export default function LogInScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    paddingTop: 56,
-    paddingBottom: 42,
+    paddingTop: verticalScale(56),
+    paddingBottom: verticalScale(42),
   },
   headerTitle: {
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   formContainer: {
     flex: 1,
-    marginTop: -24,
+    marginTop: -verticalScale(24),
     overflow: "hidden",
   },
   content: {
-    paddingTop: 32,
-    paddingBottom: 32,
+    paddingTop: verticalScale(32),
+    paddingBottom: verticalScale(32),
   },
   backWrapper: {
-    marginTop: 24,
+    marginTop: verticalScale(24),
     alignItems: "center",
   },
   backText: {

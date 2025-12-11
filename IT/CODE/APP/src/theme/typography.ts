@@ -1,32 +1,36 @@
 import { StyleSheet } from "react-native"
+import { moderateScale } from "@/theme/layout"
 
 export const textStyles = StyleSheet.create({
   heroTitle: {
-    fontSize: 36,
+    fontSize: moderateScale(36),
     fontWeight: "800",
     textAlign: "center",
   },
   heroSubtitle: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: "600",
     textAlign: "center",
     opacity: 0.95,
   },
   screenTitle: {
-    fontSize: 24,
+    fontSize: moderateScale(24),
     fontWeight: "800",
   },
   screenSubtitle: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: "600",
   },
   formLabel: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: "600",
   },
   bodyBold: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: "600",
   },
+  caption: {
+    fontSize: moderateScale(12),
+    fontWeight: "500",
+  },
 })
-

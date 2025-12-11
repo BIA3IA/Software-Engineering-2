@@ -1,33 +1,35 @@
 import { StyleSheet } from "react-native"
+import { scale, verticalScale, moderateScale } from "@/utils/layout"
+
+export { scale, verticalScale, moderateScale } from "@/utils/layout"
 
 export const layoutStyles = StyleSheet.create({
   screen: {
     flex: 1,
   },
   roundedTopXL: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: moderateScale(32),
+    borderTopRightRadius: moderateScale(32),
   },
   horizontalPadding: {
-    paddingHorizontal: 24,
+    paddingHorizontal: scale(24),
   },
 })
 
 export const spacingStyles = StyleSheet.create({
   xs: {
-    height: 8,
+    height: verticalScale(8),
   },
   sm: {
-    height: 12,
+    height: verticalScale(12),
   },
   md: {
-    height: 16,
+    height: verticalScale(16),
   },
   lg: {
-    height: 24,
+    height: verticalScale(24),
   },
   xl: {
-    height: 32,
+    height: verticalScale(32),
   },
 })
-

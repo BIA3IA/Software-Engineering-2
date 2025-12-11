@@ -22,6 +22,7 @@ type Props = {
     keyboardType?: KeyboardTypeOptions
     autoCapitalize?: TextInputProps["autoCapitalize"]
     autoCorrect?: boolean
+    errorMessage?: string
 } & Omit<TextInputProps, "style" | "onChangeText" | "value">
 
 export function AppTextInput({
@@ -34,10 +35,12 @@ export function AppTextInput({
     keyboardType,
     autoCapitalize = "none",
     autoCorrect = false,
+    errorMessage,
     ...rest
 }: Props) {
     const scheme = useColorScheme() ?? "light"
     const palette = Colors[scheme]
+    const hasError = Boolean(errorMessage)
 
     return (
         <View style={styles.container}>
@@ -58,7 +61,7 @@ export function AppTextInput({
                     styles.inputWrapper,
                     {
                         backgroundColor: palette.inputBg,
-                        borderColor: palette.inputBorder,
+                        borderColor: hasError ? palette.destructive : palette.inputBorder,
                         shadowColor: palette.border,
                     },
                 ]}
@@ -82,6 +85,12 @@ export function AppTextInput({
                     {...rest}
                 />
             </View>
+
+            {hasError && (
+                <Text style={[textStyles.caption, styles.errorMessage, { color: palette.destructive }]}>
+                    {errorMessage}
+                </Text>
+            )}
         </View>
     )
 }
@@ -112,5 +121,8 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 14,
         fontWeight: "500",
+    },
+    errorMessage: {
+        marginTop: 6,
     },
 })
