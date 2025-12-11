@@ -10,14 +10,16 @@ import Colors from "@/constants/Colors"
 import { layoutStyles, spacingStyles } from "@/theme/layout"
 import { textStyles } from "@/theme/typography"
 
-export default function LogInScreen() {
+export default function SignUpScreen() {
   const router = useRouter()
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
   const iconColor = palette.textSecondary
 
+  const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirm, setConfirm] = useState("")
 
   function handleSubmit() {
     // TODO: chiamata API
@@ -31,19 +33,29 @@ export default function LogInScreen() {
     <View style={[layoutStyles.screen, { backgroundColor: palette.bgPrimary }]}>
       <View style={[styles.header, layoutStyles.horizontalPadding, { backgroundColor: palette.gradientStart }]}>
         <Text style={[textStyles.screenTitle, styles.headerTitle, { color: palette.titleColor }]}>
-          Welcome Back
+          Create Account
         </Text>
         <Text style={[textStyles.screenSubtitle, { color: palette.subtitleColor }]}>
-          Login to continue riding with BestBikePaths
+          Join BestBikePaths today
         </Text>
       </View>
 
       <View style={[styles.formContainer, layoutStyles.roundedTopXL, { backgroundColor: palette.bgPrimary }]}>
         <ScrollView contentContainerStyle={[styles.content, layoutStyles.horizontalPadding]} keyboardShouldPersistTaps="handled">
+          <AppTextInput
+            label="Username"
+            placeholder="Choose a username"
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
+            icon={<User size={20} color={iconColor} />}
+          />
+
+          <View style={spacingStyles.md} />
 
           <AppTextInput
-            label="E-mail Address"
-            placeholder="Enter your e-mail"
+            label="Email Address"
+            placeholder="Enter your email"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -55,17 +67,28 @@ export default function LogInScreen() {
 
           <AppTextInput
             label="Password"
-            placeholder="Enter your password"
+            placeholder="Create a secure password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             icon={<Lock size={20} color={iconColor} />}
           />
 
+          <View style={spacingStyles.md} />
+
+          <AppTextInput
+            label="Confirm Password"
+            placeholder="Confirm your password"
+            value={confirm}
+            onChangeText={setConfirm}
+            secureTextEntry
+            icon={<LockKeyhole size={20} color={iconColor} />}
+          />
+
           <View style={spacingStyles.xl} />
 
           <AppButton
-            title="Log In"
+            title="Sign Up"
             variant="primary"
             onPress={handleSubmit}
           />

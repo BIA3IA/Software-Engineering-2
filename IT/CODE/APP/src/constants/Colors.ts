@@ -55,10 +55,10 @@ export default {
 
     border: "rgba(0,0,0,0.1)",
 
-    inputBg: neutral[100],
+    inputBg: neutral[50],
     inputText: neutral[900],
-    inputPlaceholder: neutral[500],
-    inputBorder: neutral[300],
+    inputPlaceholder: neutral[400],
+    inputBorder: neutral[200],
 
     buttonPrimaryBg: brand.primary,
     buttonPrimaryText: "#ffffff",
@@ -87,9 +87,9 @@ export default {
     titleColor: "#ffffff",
     subtitleColor: "#e5f1ff",
 
-    bgPrimary: neutral[950],
-    bgSecondary: neutral[900],
-    bgElevated: neutral[800],
+    bgPrimary: neutral[800],
+    bgSecondary: neutral[700],
+    bgElevated: neutral[600],
     bgAccent: brand.primaryDark,
 
     primary: brand.primary,
@@ -100,8 +100,8 @@ export default {
     gradientStart: brand.primaryDark,
     gradientEnd: neutral[950],
 
-    cardBg: neutral[900],
-    cardBorder: neutral[700],
+    cardBg: neutral[700],
+    cardBorder: neutral[600],
     cardText: "#ffffff",
 
     border: "rgba(255,255,255,0.12)",
@@ -124,7 +124,7 @@ export default {
     destructive: feedback.destructive,
 
     muted: neutral[700],
-    mutedBg: neutral[900],
+    mutedBg: neutral[800],
     accent: brand.primaryLight,
   },
 }

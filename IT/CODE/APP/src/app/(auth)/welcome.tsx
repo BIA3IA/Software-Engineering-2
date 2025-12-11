@@ -8,6 +8,7 @@ import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { AppButton } from "@/components/ui/AppButton"
 import { useAuthStore } from "@/auth/storage"
+import { textStyles } from "@/theme/typography"
 import { scale, verticalScale, moderateScale } from "@/utils/layout"
 
 export default function WelcomeScreen() {
@@ -24,7 +25,7 @@ export default function WelcomeScreen() {
   const guestTextColor = palette.subtitleColor
 
   function handleSignIn() {
-    router.push("/(auth)/signin")
+    router.push("/(auth)/signup")
   }
 
   function handleLogIn() {
@@ -57,10 +58,10 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.textBlock}>
-          <Text style={[styles.title, { color: titleColor }]}>
+          <Text style={[textStyles.heroTitle, styles.title, { color: titleColor }]}>
             BestBikePaths
           </Text>
-          <Text style={[styles.subtitle, { color: subtitleColor }]}>
+          <Text style={[textStyles.heroSubtitle, styles.subtitle, { color: subtitleColor }]}>
             Discover amazing bike paths, track your rides, and join a community
             of cyclists
           </Text>
@@ -69,7 +70,7 @@ export default function WelcomeScreen() {
         <View style={styles.buttons}>
           <View style={styles.button}>
             <AppButton
-              title="Sign In"
+              title="Sign Up"
               variant="secondary"
               onPress={handleSignIn}
             />
@@ -81,14 +82,14 @@ export default function WelcomeScreen() {
               onPress={handleLogIn}
             />
           </View>
+          <Text
+            onPress={handleGuest}
+            style={[styles.guest, { color: guestTextColor }]}
+          >
+            Continue as Guest
+          </Text>
         </View>
 
-        <Text
-          onPress={handleGuest}
-          style={[styles.guest, { color: guestTextColor }]}
-        >
-          Continue as Guest 
-        </Text>
       </View>
     </LinearGradient>
   )
@@ -141,14 +142,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: moderateScale(40, 0.7),
-    fontWeight: "800",
-    textAlign: "center",
   },
   subtitle: {
     fontSize: moderateScale(14),
-    fontWeight: "600",
-    textAlign: "center",
-    opacity: 0.95,
   },
   buttons: {
     width: "100%",
