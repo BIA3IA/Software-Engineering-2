@@ -33,6 +33,9 @@ export default {
     textInverse: "#ffffff",
     textAccent: brand.primary,
 
+    titleColor: "#ffffff",
+    subtitleColor: "#e5f1ff",
+
     bgPrimary: "#ffffff",
     bgSecondary: neutral[50],
     bgElevated: "#ffffff",
@@ -61,7 +64,7 @@ export default {
     buttonPrimaryText: "#ffffff",
     buttonSecondaryBg: "#ffffff",
     buttonSecondaryBorder: neutral[300],
-    buttonSecondaryText: neutral[900],
+    buttonSecondaryText: brand.primary,
     buttonOutlineBorder: "#ffffff",
     buttonOutlineText: "#ffffff",
 
@@ -80,6 +83,9 @@ export default {
     textTertiary: neutral[500],
     textInverse: neutral[900],
     textAccent: brand.primaryLight,
+
+    titleColor: "#ffffff",
+    subtitleColor: "#e5f1ff",
 
     bgPrimary: neutral[950],
     bgSecondary: neutral[900],
@@ -109,7 +115,7 @@ export default {
     buttonPrimaryText: "#ffffff",
     buttonSecondaryBg: "#ffffff",
     buttonSecondaryBorder: neutral[600],
-    buttonSecondaryText: neutral[900],
+    buttonSecondaryText: brand.primary,
     buttonOutlineBorder: "#ffffff",
     buttonOutlineText: "#ffffff",
 
