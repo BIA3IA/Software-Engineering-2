@@ -4,7 +4,7 @@ import { Slot, useRouter } from "expo-router"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { BottomNav } from "@/components/BottomNav"
-import { AppPopup } from "@/components/AppPopup"
+import { AppPopup } from "@/components/ui/AppPopup"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { layoutStyles } from "@/theme/layout"

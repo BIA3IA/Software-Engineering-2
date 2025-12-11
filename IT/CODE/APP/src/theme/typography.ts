@@ -25,9 +25,21 @@ export const textStyles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontWeight: "600",
   },
+  cardTitle: {
+    fontSize: moderateScale(16),
+    fontWeight: "700",
+  },
+  body: {
+    fontSize: moderateScale(16),
+    fontWeight: "400",
+  },
   bodyBold: {
     fontSize: moderateScale(14),
     fontWeight: "600",
+  },
+  bodySmall: {
+    fontSize: moderateScale(14),
+    fontWeight: "400",
   },
   caption: {
     fontSize: moderateScale(12),

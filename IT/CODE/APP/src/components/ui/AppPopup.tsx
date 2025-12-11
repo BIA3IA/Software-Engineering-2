@@ -16,7 +16,7 @@ import { AppButton } from "@/components/ui/AppButton"
 type PopupButtonConfig = {
   label: string
   onPress: (event: GestureResponderEvent) => void
-  variant?: "primary" | "secondary" | "outline"
+  variant?: "primary" | "secondary" | "outline" | "destructive"
 }
 
 type AppPopupProps = {
@@ -28,6 +28,8 @@ type AppPopupProps = {
   onClose?: () => void
   dismissOnBackdropPress?: boolean
   primaryButton: PopupButtonConfig
+  secondaryButton?: PopupButtonConfig
+  destructiveButton?: PopupButtonConfig
 }
 
 export function AppPopup({
@@ -39,6 +41,8 @@ export function AppPopup({
   onClose,
   dismissOnBackdropPress = true,
   primaryButton,
+  secondaryButton,
+  destructiveButton,
 }: AppPopupProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
@@ -49,6 +53,9 @@ export function AppPopup({
     if (!dismissOnBackdropPress) return
     onClose?.()
   }
+
+  const hasSecondary = Boolean(secondaryButton)
+  const hasDestructive = Boolean(destructiveButton)
 
   return (
     <Modal
@@ -92,18 +99,51 @@ export function AppPopup({
               style={[
                 textStyles.heroSubtitle,
                 styles.message,
-                { color: palette.textSecondary},
+                { color: palette.textSecondary },
               ]}
             >
               {message}
             </Text>
 
-            <View style={styles.button}>
-              <AppButton
-                title={primaryButton.label}
-                variant={primaryButton.variant ?? "primary"}
-                onPress={() => primaryButton.onPress({} as GestureResponderEvent)}
-              />
+            <View style={styles.buttonsColumn}>
+              <View style={styles.buttonRow}>
+                {hasSecondary ? (
+                  <>
+                    <View style={[styles.button, styles.buttonLeft]}>
+                      <AppButton
+                        title={primaryButton.label}
+                        variant={primaryButton.variant ?? "primary"}
+                        onPress={() => primaryButton.onPress({} as GestureResponderEvent)}
+                      />
+                    </View>
+                    <View style={styles.button}>
+                      <AppButton
+                        title={secondaryButton!.label}
+                        variant={secondaryButton!.variant ?? "secondary"}
+                        onPress={() => secondaryButton!.onPress({} as GestureResponderEvent)}
+                      />
+                    </View>
+                  </>
+                ) : (
+                  <View style={styles.button}>
+                    <AppButton
+                      title={primaryButton.label}
+                      variant={primaryButton.variant ?? "primary"}
+                      onPress={() => primaryButton.onPress({} as GestureResponderEvent)}
+                    />
+                  </View>
+                )}
+              </View>
+
+              {hasDestructive && (
+                <View style={[styles.button, styles.destructiveButton]}>
+                  <AppButton
+                    title={destructiveButton!.label}
+                    variant={destructiveButton!.variant ?? "destructive"}
+                    onPress={() => destructiveButton!.onPress({} as GestureResponderEvent)}
+                  />
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -159,7 +199,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: verticalScale(20),
   },
-  button: {
+  buttonsColumn: {
     width: "100%",
+    gap: verticalScale(12),
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: scale(12),
+  },
+  button: {
+    flex: 1,
+  },
+  buttonLeft: {
+    marginRight: 0,
+  },
+  destructiveButton: {
+    alignSelf: "stretch",
   },
 })

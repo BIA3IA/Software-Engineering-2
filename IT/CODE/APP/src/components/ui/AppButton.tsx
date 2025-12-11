@@ -4,7 +4,7 @@ import { Button } from "react-native-paper"
 import { useAppTheme } from "@/theme/paperTheme"
 import { radius } from "@/theme/layout"
 
-type Variant = "primary" | "secondary" | "outline"
+type Variant = "primary" | "secondary" | "outline" | "destructive"
 
 interface AppButtonProps {
   title: string
@@ -25,12 +25,16 @@ export function AppButton({ title, variant = "primary", onPress }: AppButtonProp
   const outlineBorder = colors.buttonOutlineBorder
   const outlineText = colors.buttonOutlineText
 
+  const destructiveBg = colors.buttonDestructiveBg
+  const destructiveText = colors.buttonDestructiveText
+
   const isPrimary = variant === "primary"
   const isSecondary = variant === "secondary"
   const isOutline = variant === "outline"
+  const isDestructive = variant === "destructive"
 
-  const buttonColor = isPrimary ? primaryBg : isSecondary ? secondaryBg : "transparent"
-  const textColor = isPrimary ? primaryText : isSecondary ? secondaryText : outlineText
+  const buttonColor = isPrimary ? primaryBg : isSecondary ? secondaryBg : isDestructive ? destructiveBg : "transparent"
+  const textColor = isPrimary ? primaryText : isSecondary ? secondaryText : isDestructive ? destructiveText : outlineText
   const borderColor = isSecondary ? secondaryBorder : isOutline ? outlineBorder : undefined
   const mode = isOutline ? "outlined" : "contained"
 

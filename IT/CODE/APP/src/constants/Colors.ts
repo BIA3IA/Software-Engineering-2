@@ -1,3 +1,5 @@
+import { green50, purple50, red50 } from "react-native-paper/lib/typescript/styles/themes/v2/colors"
+
 const brand = {
   primary: "#0ea5e9",
   primaryLight: "#38bdf8",
@@ -7,7 +9,7 @@ const brand = {
 }
 
 const neutral = {
-  50:  "#f8fafc",
+  50: "#f8fafc",
   100: "#f1f5f9",
   200: "#e2e8f0",
   300: "#cbd5e1",
@@ -26,6 +28,29 @@ const feedback = {
   success: "#22c55e",
   warning: "#eab308",
   destructive: "#ef4444",
+}
+
+const colors = {
+
+  green50: "#ecfdf5",
+  green100: "#d1fae5",
+  green400: "#34d399",
+  green700: "#047857",
+
+  purple50: "#f5f3ff",
+  purple100: "#ede9fe",
+  purple400: "#a78bfa",
+  purple700: "#7c3aed",
+
+  orange50: "#fff7ed",
+  orange100: "#ffedd5",
+  orange400: "#fbbf24",
+  orange700: "#b45309",
+
+  red50: "#fef2f2",
+  red100: "#fee2e2",
+  red400: "#f87171",
+  red700: "#b91c1c",
 }
 
 export default {
@@ -51,6 +76,13 @@ export default {
     primaryLight: brand.primaryLight,
     primaryDark: brand.primaryDark,
     primaryDarker: brand.primaryDarker,
+    primarySoft: brand.primarySoft,
+
+    purpleSoft: colors.purple50,
+    purpleDark: colors.purple700,
+
+    greenSoft: colors.green50,
+    greenDark: colors.green700,
 
     gradientStart: brand.primaryLight,
     gradientEnd: brand.primaryDarker,
@@ -73,6 +105,8 @@ export default {
     buttonSecondaryText: brand.primary,
     buttonOutlineBorder: white,
     buttonOutlineText: white,
+    buttonDestructiveBg: feedback.destructive,
+    buttonDestructiveText: white,
 
     success: feedback.success,
     warning: feedback.warning,
@@ -105,6 +139,13 @@ export default {
     primaryLight: brand.primaryLight,
     primaryDark: brand.primaryDark,
     primaryDarker: brand.primaryDarker,
+    primarySoft: brand.primarySoft,
+
+    purpleSoft: colors.purple50,
+    purpleDark: colors.purple700,
+
+    greenSoft: colors.green50,
+    greenDark: colors.green700,
 
     gradientStart: brand.primaryDark,
     gradientEnd: neutral[950],
@@ -127,6 +168,8 @@ export default {
     buttonSecondaryText: brand.primary,
     buttonOutlineBorder: white,
     buttonOutlineText: white,
+    buttonDestructiveBg: feedback.destructive,
+    buttonDestructiveText: white,
 
     success: feedback.success,
     warning: feedback.warning,

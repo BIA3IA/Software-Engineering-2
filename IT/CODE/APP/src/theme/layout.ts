@@ -37,6 +37,7 @@ export const spacingStyles = StyleSheet.create({
 export const radius = {
   full: 9999,
   pill: 9999,
+  xxxl: moderateScale(80),
   xxl: moderateScale(40),
   xl: scale(32),
   lg: scale(24),
