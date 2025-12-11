@@ -1,13 +1,8 @@
-import { useEffect } from "react"
 import { Redirect } from "expo-router"
 import { useAuthStore } from "@/auth/storage"
 
 export default function Index() {
-  const { user, loading, initAuth } = useAuthStore()
-
-  useEffect(() => {
-    initAuth()
-  }, [initAuth])
+  const { user, loading } = useAuthStore()
 
   if (loading) {
     return null
@@ -16,6 +11,8 @@ export default function Index() {
   if (!user) {
     return <Redirect href="/(auth)/welcome" />
   }
+
+  // return <Redirect href="/(main)/home" />
 
   return <Redirect href="/(auth)/welcome" />
 }

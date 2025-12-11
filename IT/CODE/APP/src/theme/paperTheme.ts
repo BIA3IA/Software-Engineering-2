@@ -1,6 +1,6 @@
 import { MD3LightTheme, MD3DarkTheme, useTheme, type MD3Colors, type MD3Theme } from "react-native-paper"
 import Colors from "@/constants/Colors"
-import { useColorScheme } from "@/components/useColorScheme"
+import { useColorScheme } from "@/hooks/useColorScheme"
 
 export type AppTheme = MD3Theme & { colors: MD3Colors }
 

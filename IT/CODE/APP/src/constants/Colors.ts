@@ -59,7 +59,7 @@ export default {
 
     buttonPrimaryBg: brand.primary,
     buttonPrimaryText: "#ffffff",
-    buttonSecondaryBg: "transparent",
+    buttonSecondaryBg: "#ffffff",
     buttonSecondaryBorder: neutral[300],
     buttonSecondaryText: neutral[900],
     buttonOutlineBorder: "#ffffff",
@@ -107,9 +107,9 @@ export default {
 
     buttonPrimaryBg: brand.primary,
     buttonPrimaryText: "#ffffff",
-    buttonSecondaryBg: "transparent",
+    buttonSecondaryBg: "#ffffff",
     buttonSecondaryBorder: neutral[600],
-    buttonSecondaryText: "#ffffff",
+    buttonSecondaryText: neutral[900],
     buttonOutlineBorder: "#ffffff",
     buttonOutlineText: "#ffffff",
 

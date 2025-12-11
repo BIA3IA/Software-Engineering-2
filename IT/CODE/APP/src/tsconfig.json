@@ -5,7 +5,8 @@
     "resolveJsonModule": true,
     "allowJs": true,
     "jsx": "react-native",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
     "noEmit": true,
     "types": [
       "react",

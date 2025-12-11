@@ -2,10 +2,10 @@ import React from "react"
 import { View, Text, StyleSheet } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { useRouter } from "expo-router"
-import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { Bike } from "lucide-react-native"
 
 import Colors from "@/constants/Colors"
-import { useColorScheme } from "@/components/useColorScheme"
+import { useColorScheme } from "@/hooks/useColorScheme"
 import { AppButton } from "@/components/ui/AppButton"
 import { useAuthStore } from "@/auth/storage"
 
@@ -19,7 +19,7 @@ export default function WelcomeScreen() {
   const gradientEnd = palette.gradientEnd ?? "#0369a1"
   const titleColor = "#ffffff"
   const subtitleColor = "#d8e9ff"
-  const guestTextColor = palette.textAccent ?? "#d0e8ff"
+  const guestTextColor = "#d0e8ff"
 
   function handleSignIn() {
     router.push("/(auth)/login")
@@ -38,9 +38,8 @@ export default function WelcomeScreen() {
     <LinearGradient colors={[gradientStart, gradientEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
       <View style={styles.container}>
         <View style={styles.cardWrapper}>
-          <View style={styles.cardGlow} />
           <View style={styles.card}>
-            <MaterialCommunityIcons name="bicycle" size={92} color={gradientStart} />
+            <Bike size={140} color={gradientStart} strokeWidth={1.6} />
           </View>
         </View>
 
@@ -53,7 +52,7 @@ export default function WelcomeScreen() {
 
         <View style={styles.buttons}>
           <View style={styles.button}>
-            <AppButton title="Sign In" variant="primary" onPress={handleSignIn} />
+            <AppButton title="Sign In" variant="secondary" onPress={handleSignIn} />
           </View>
           <View style={[styles.button, styles.buttonSpacing]}>
             <AppButton title="Log In" variant="outline" onPress={handleLogIn} />
@@ -61,7 +60,7 @@ export default function WelcomeScreen() {
         </View>
 
         <Text onPress={handleGuest} style={[styles.guest, { color: guestTextColor }]}>
-          Continue as Guest →
+          Continue as Guest
         </Text>
       </View>
     </LinearGradient>
@@ -83,19 +82,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  cardGlow: {
-    position: "absolute",
-    top: -28,
-    bottom: -28,
-    left: -28,
-    right: -28,
-    borderRadius: 120,
-    backgroundColor: "rgba(255,255,255,0.18)",
-  },
   card: {
-    width: 160,
-    height: 160,
-    borderRadius: 32,
+    width: 200,
+    height: 200,
+    borderRadius: 40,
     backgroundColor: "#ffffff",
     alignItems: "center",
     justifyContent: "center",
