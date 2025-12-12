@@ -156,7 +156,7 @@ export default function ProfileScreen() {
         email={email}
         initial={initial}
         onSettingsPress={() => router.push("/settings")}
-        onEditPress={() => {}}
+        onEditPress={() => router.push("/edit-profile")}
       />
 
       <View style={styles.content}>

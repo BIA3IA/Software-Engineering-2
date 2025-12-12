@@ -51,11 +51,18 @@ export function ProfileHeroHeader({
       </View>
 
       <View style={styles.userRow}>
-        <View style={[styles.avatarOuter, { backgroundColor: palette.primarySoft, borderColor: palette.primary }] }>
+        <Pressable
+          onPress={onEditPress}
+          style={({ pressed }) => [
+            styles.avatarOuter,
+            { backgroundColor: palette.primarySoft, borderColor: palette.primary },
+            pressed && { opacity: 0.9 },
+          ]}
+        >
           <View style={[styles.avatar, { backgroundColor: palette.bgPrimary }] }>
             <Text style={[textStyles.cardTitle, { color: palette.primaryDark }]}>{initial}</Text>
           </View>
-        </View>
+        </Pressable>
 
         <View style={styles.userInfo}>
           <View style={styles.nameRow}>
