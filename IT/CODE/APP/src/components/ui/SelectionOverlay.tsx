@@ -20,6 +20,8 @@ type SelectionOverlayProps = {
 
   topOffset?: number
   rightOffset?: number
+  width?: number
+  absoluteTop?: number
 }
 
 export function SelectionOverlay({
@@ -30,12 +32,14 @@ export function SelectionOverlay({
   onSelect,
   topOffset = verticalScale(76),
   rightOffset = scale(16),
+  width,
+  absoluteTop,
 }: SelectionOverlayProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
   const insets = useSafeAreaInsets()
 
-  const cardTop = topOffset + insets.top
+  const cardTop = typeof absoluteTop === "number" ? absoluteTop : topOffset + insets.top
 
   return (
     <Modal
@@ -55,6 +59,7 @@ export function SelectionOverlay({
               backgroundColor: palette.bgPrimary,
               top: cardTop,
               right: rightOffset,
+              width: width ?? scale(190),
               shadowColor: palette.border,
             },
           ]}
@@ -101,7 +106,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.12)",
+    backgroundColor: "transparent",
   },
   card: {
     position: "absolute",

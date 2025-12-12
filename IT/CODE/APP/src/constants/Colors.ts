@@ -5,7 +5,8 @@ const brand = {
   primaryLight: "#38bdf8",
   primaryDark: "#0284c7",
   primaryDarker: "#0369a1",
-  primarySoft: "#e0f2fe"
+  primarySoft: "#e0f2fe",
+  primarySofter: "#f0f9ff",
 }
 
 const neutral = {
@@ -69,7 +70,7 @@ export default {
 
     bgPrimary: white,
     bgSecondary: neutral[50],
-    bgElevated: brand.primarySoft,
+    bgElevated: brand.primarySofter,
     bgAccent: brand.primary,
 
     primary: brand.primary,

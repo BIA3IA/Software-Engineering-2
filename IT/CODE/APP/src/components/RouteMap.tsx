@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { View, Text, StyleSheet, Pressable, Modal, Dimensions } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps"
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE, Circle } from "react-native-maps"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
@@ -127,11 +127,20 @@ export function RouteMap({
             )}
 
             {start && (
-              <Marker coordinate={start} title="Start" />
+              <Circle
+                center={start}
+                radius={18}
+                strokeColor={palette.primary}
+                fillColor={`${palette.primary}33`}
+              />
             )}
 
             {end && (
-              <Marker coordinate={end} title="End" />
+              <Marker
+                coordinate={end}
+                title="End"
+                pinColor={palette.primary}
+              />
             )}
           </MapView>
         </View>

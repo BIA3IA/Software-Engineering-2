@@ -13,6 +13,7 @@ export type SearchResult = {
   title: string
   description: string
   tags: PathResultTag[]
+  route: { latitude: number; longitude: number }[]
 }
 
 type SearchResultsSheetProps = {
@@ -22,6 +23,10 @@ type SearchResultsSheetProps = {
   onClose: () => void
   title?: string
   maxHeight?: number
+  selectedResultId?: string | null
+  onSelectResult?: (result: SearchResult) => void
+  actionLabel?: string
+  onActionPress?: (result: SearchResult) => void
 }
 
 export function SearchResultsSheet({
@@ -31,6 +36,10 @@ export function SearchResultsSheet({
   onClose,
   title = "Available Paths",
   maxHeight = verticalScale(260),
+  selectedResultId = null,
+  onSelectResult,
+  actionLabel = "Start Trip",
+  onActionPress,
 }: SearchResultsSheetProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
@@ -85,7 +94,15 @@ export function SearchResultsSheet({
       >
         {results.map((result) => (
           <View key={result.id} style={styles.cardWrapper}>
-            <PathResultCard title={result.title} description={result.description} tags={result.tags} />
+            <PathResultCard
+              title={result.title}
+              description={result.description}
+              tags={result.tags}
+              selected={selectedResultId === result.id}
+              actionLabel={actionLabel}
+              onActionPress={() => onActionPress?.(result)}
+              onPress={() => onSelectResult?.(result)}
+            />
           </View>
         ))}
       </ScrollView>

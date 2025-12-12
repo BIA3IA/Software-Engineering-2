@@ -1,5 +1,5 @@
 import React from "react"
-import { View, Text, StyleSheet } from "react-native"
+import { View, Text, StyleSheet, Pressable } from "react-native"
 
 import { radius, scale, verticalScale } from "@/theme/layout"
 import { textStyles } from "@/theme/typography"
@@ -16,25 +16,43 @@ export type PathResultCardProps = {
   title: string
   description: string
   tags?: PathResultTag[]
+  selected?: boolean
+  onPress?: () => void
+  actionLabel?: string
+  onActionPress?: () => void
 }
 
-export function PathResultCard({ title, description, tags = [] }: PathResultCardProps) {
+export function PathResultCard({
+  title,
+  description,
+  tags = [],
+  selected = false,
+  onPress,
+  actionLabel,
+  onActionPress,
+}: PathResultCardProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
+  const cardBg = selected ? palette.bgElevated : palette.bgPrimary
+  const cardBorder = selected ? palette.primaryLight : palette.border
+  const titleColor = selected ? palette.primaryDark : palette.textAccent
+  const descriptionColor = selected ? palette.primaryDark : palette.textSecondary
 
   return (
-    <View
-      style={[
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
         styles.card,
         {
-          borderColor: palette.border,
-          backgroundColor: palette.bgPrimary,
+          borderColor: cardBorder,
+          backgroundColor: cardBg,
           shadowColor: palette.border,
         },
+        pressed && { opacity: 0.9 },
       ]}
     >
-      <Text style={[textStyles.bodyBold, styles.title, { color: palette.textAccent }]}>{title}</Text>
-      <Text style={[textStyles.caption, styles.description, { color: palette.textSecondary }]}>{description}</Text>
+      <Text style={[textStyles.bodyBold, styles.title, { color: titleColor }]}>{title}</Text>
+      <Text style={[textStyles.caption, styles.description, { color: descriptionColor }]}>{description}</Text>
 
       {tags.length > 0 && (
         <View style={styles.tagsRow}>
@@ -50,7 +68,22 @@ export function PathResultCard({ title, description, tags = [] }: PathResultCard
           ))}
         </View>
       )}
-    </View>
+
+      {selected && actionLabel && (
+        <Pressable
+          onPress={onActionPress}
+          style={({ pressed }) => [
+            styles.actionButton,
+            { backgroundColor: palette.primary },
+            pressed && { opacity: 0.85 },
+          ]}
+        >
+          <Text style={[textStyles.bodySmall, styles.actionText, { color: palette.textInverse }]}>
+            {actionLabel}
+          </Text>
+        </Pressable>
+      )}
+    </Pressable>
   )
 }
 
@@ -82,6 +115,16 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(4),
   },
   tagText: {
+    fontWeight: "600",
+  },
+  actionButton: {
+    marginTop: verticalScale(10),
+    borderRadius: radius.full,
+    paddingVertical: verticalScale(8),
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionText: {
     fontWeight: "600",
   },
 })
