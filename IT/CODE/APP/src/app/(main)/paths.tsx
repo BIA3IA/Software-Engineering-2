@@ -3,7 +3,7 @@ import { View, FlatList, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } f
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { RouteCard, RouteItem } from "@/components/RouteCard"
-import { RouteHistoryHeader } from "@/components/RouteHistoryHeader"
+import { ScreenHeader } from "@/components/ScreenHeader"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { scale, verticalScale } from "@/theme/layout"
@@ -204,12 +204,12 @@ export default function PathsScreen() {
     : ""
 
   const visibilityIconColor =
-    pendingVisibilityChange?.target === "private" ? palette.muted : palette.green
+    pendingVisibilityChange?.target === "private" ? palette.mutedBg : palette.green
 
   const visibilityIconBackground =
     pendingVisibilityChange?.target === "private"
-      ? `${palette.muted}22`
-      : `${palette.greenSoft}55`
+      ? `${palette.muted}`
+      : `${palette.greenSoft}`
 
   const visibilityPrimaryButtonColor = visibilityIconColor
   const visibilityPrimaryTextColor = palette.textInverse
@@ -238,7 +238,7 @@ export default function PathsScreen() {
         )}
         ListHeaderComponent={
           <View style={styles.listHeader}>
-            <RouteHistoryHeader
+            <ScreenHeader
               title="Paths Library"
               subtitle="Browse and manage your paths"
               onSortPress={handleSortPress}
@@ -265,7 +265,6 @@ export default function PathsScreen() {
         icon={<Trash2 size={deleteIconSize} color={palette.destructive} />}
         iconBackgroundColor={`${palette.destructive}22`}
         onClose={handleCancelDeletePath}
-        dismissOnBackdropPress={false}
         primaryButton={{
           label: "Yes, Delete",
           variant: "destructive",
@@ -291,7 +290,6 @@ export default function PathsScreen() {
         }
         iconBackgroundColor={visibilityIconBackground}
         onClose={handleCancelVisibilityChange}
-        dismissOnBackdropPress={true}
         primaryButton={{
           label: "Yes, Change",
           variant: "primary",

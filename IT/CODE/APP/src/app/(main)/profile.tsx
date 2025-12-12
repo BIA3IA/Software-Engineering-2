@@ -9,18 +9,9 @@ import { StatCard } from "@/components/ui/StatsCard"
 import { MetricCircle } from "@/components/ui/MetricCircle"
 import { useAuthStore } from "@/auth/storage"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
-import {
-  Settings,
-  Pencil,
-  MapPin,
-  Route,
-  TrendingUp,
-  Clock,
-  Mountain,
-  Target,
-  Leaf,
-  ChevronDown,
-} from "lucide-react-native"
+import { useRouter } from "expo-router"
+import { MapPin, Route, TrendingUp, Clock, Mountain, Target, Leaf, ChevronDown, Bike } from "lucide-react-native"
+import { ProfileHeroHeader } from "@/components/ProfileHeroHeader"
 
 type PaletteKey = keyof (typeof Colors)["light"]
 type IconType = React.ComponentType<{ size?: number; color?: string }>
@@ -51,15 +42,15 @@ const OVERALL_STATS: OverallStat[] = [
     icon: MapPin,
     value: "342.7",
     label: "Total km",
-    accent: "primaryDark",
+    accent: "primary",
     background: "primarySoft",
   },
   {
     id: "trips",
-    icon: Route,
+    icon: Bike,
     value: "56",
     label: "Trips",
-    accent: "purpleDark",
+    accent: "purple",
     background: "purpleSoft",
   },
   {
@@ -67,14 +58,14 @@ const OVERALL_STATS: OverallStat[] = [
     icon: Route,
     value: "8",
     label: "Paths",
-    accent: "greenDark",
+    accent: "green",
     background: "greenSoft",
   },
 ]
 
 const ACTIVITY_STATS: Record<ActivityPeriod, ActivityStat[]> = {
   day: [
-    { id: "paths", icon: Route, value: "1", label: "Paths", accent: "green", progress: 0.2 },
+    { id: "paths", icon: Bike, value: "1", label: "Paths", accent: "green", progress: 0.2 },
     { id: "trip-count", icon: Route, value: "2", label: "Trips", accent: "purple", progress: 0.3 },
     { id: "distance", icon: MapPin, value: "18.4 km", label: "Distance", accent: "primary", progress: 0.4 },
     { id: "time", icon: Clock, value: "1h 20m", label: "Time", accent: "orange", progress: 0.32 },
@@ -143,6 +134,7 @@ export default function ProfileScreen() {
   const palette = Colors[scheme]
   const insets = useSafeAreaInsets()
   const NAV_H = verticalScale(72)
+  const router = useRouter()
   const user = useAuthStore((s) => s.user)
   const displayName = user?.username ?? user?.email?.split("@")[0] ?? "Guest"
   const email = user?.email ?? "guest@bestbikepaths.com"
@@ -159,45 +151,13 @@ export default function ProfileScreen() {
       contentContainerStyle={{ paddingBottom: NAV_H + insets.bottom }}
       showsVerticalScrollIndicator={false}
     >
-      <View style={[styles.hero, { backgroundColor: palette.accent, paddingTop: insets.top + verticalScale(24) }]}>
-        <View style={styles.heroHeader}>
-          <View>
-            <Text style={[textStyles.screenTitle, styles.heroTitle, { color: palette.titleColor }]}>Profile</Text>
-            <Text style={[textStyles.heroSubtitle, { color: palette.subtitleColor }]}>Your cycling journey</Text>
-          </View>
-
-          <Pressable
-            onPress={() => {}}
-            style={({ pressed }) => [
-              styles.settingsBtn,
-              { backgroundColor: palette.buttonSecondaryBg, shadowColor: palette.border },
-              pressed && { opacity: 0.85 },
-            ]}
-          >
-            <Settings size={iconSizes.md} color={palette.buttonSecondaryText} />
-          </Pressable>
-        </View>
-
-        <View style={styles.heroUserRow}>
-          <View style={[styles.avatarOuter, { backgroundColor: palette.primarySoft, borderColor: palette.primary }]}>
-            <View style={[styles.avatar, { backgroundColor: palette.bgPrimary }]}>
-              <Text style={[textStyles.cardTitle, { color: palette.primaryDark }]}>{initial}</Text>
-            </View>
-          </View>
-
-          <View style={styles.userInfo}>
-            <View style={styles.nameRow}>
-              <Text style={[textStyles.cardTitle, { color: palette.titleColor }]}>{displayName}</Text>
-
-              <Pressable onPress={() => {}} style={({ pressed }) => [styles.editBtn, pressed && { opacity: 0.85 }]}>
-                <Pencil size={iconSizes.sm} color={palette.titleColor} />
-              </Pressable>
-            </View>
-
-            <Text style={[textStyles.caption, { color: palette.subtitleColor }]}>{email}</Text>
-          </View>
-        </View>
-      </View>
+      <ProfileHeroHeader
+        name={displayName}
+        email={email}
+        initial={initial}
+        onSettingsPress={() => router.push("/settings")}
+        onEditPress={() => {}}
+      />
 
       <View style={styles.content}>
         <View style={[styles.card, { backgroundColor: palette.bgPrimary, shadowColor: palette.border }]}>
@@ -211,7 +171,7 @@ export default function ProfileScreen() {
               return (
                 <StatCard
                   key={stat.id}
-                  icon={<Icon size={iconSizes.sm} color={accent} />}
+                  icon={<Icon size={iconSizes.xl} color={accent} />}
                   value={stat.value}
                   label={stat.label}
                   backgroundColor={background}
@@ -269,7 +229,7 @@ export default function ProfileScreen() {
               return (
                 <MetricCircle
                   key={stat.id}
-                  icon={<Icon size={iconSizes.sm} color={accent} />}
+                  icon={<Icon size={iconSizes.lg} color={accent} />}
                   value={stat.value}
                   label={stat.label}
                   accentColor={accent}
@@ -299,63 +259,6 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    paddingHorizontal: scale(24),
-    paddingBottom: verticalScale(52),
-    borderBottomLeftRadius: radius.xxxl,
-    borderBottomRightRadius: radius.xxxl,
-  },
-  heroHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  heroTitle: {
-    marginBottom: verticalScale(4),
-  },
-  settingsBtn: {
-    width: scale(40),
-    height: scale(40),
-    borderRadius: radius.full,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  heroUserRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: verticalScale(20),
-  },
-  avatarOuter: {
-    width: scale(74),
-    height: scale(74),
-    borderRadius: radius.full,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: scale(14),
-    borderWidth: 2,
-  },
-  avatar: {
-    width: scale(64),
-    height: scale(64),
-    borderRadius: radius.full,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  userInfo: {
-    flex: 1,
-  },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  editBtn: {
-    marginLeft: scale(8),
-    padding: scale(6),
-  },
   content: {
     marginTop: -verticalScale(36),
     paddingHorizontal: scale(20),

@@ -36,25 +36,25 @@ export function PerformanceMetric({
       >
         <View style={styles.grid}>
           <MetricCircle
-            icon={<MapPin size={iconSizes.md} color={palette.purple} />}
+            icon={<MapPin size={iconSizes.lg} color={palette.purple} />}
             value={duration}
             label="Duration"
             accentColor={palette.purple}
           />
           <MetricCircle
-            icon={<TrendingUp size={iconSizes.md} color={palette.primary} />}
+            icon={<TrendingUp size={iconSizes.lg} color={palette.primary} />}
             value={avgSpeed}
             label="Avg Speed"
             accentColor={palette.primary}
           />
           <MetricCircle
-            icon={<TrendingUp size={iconSizes.md} color={palette.orange} />}
+            icon={<TrendingUp size={iconSizes.lg} color={palette.orange} />}
             value={maxSpeed}
             label="Max Speed"
             accentColor={palette.orange}
           />
           <MetricCircle
-            icon={<Mountain size={iconSizes.md} color={palette.green} />}
+            icon={<Mountain size={iconSizes.lg} color={palette.green} />}
             value={elevation}
             label="Elevation"
             accentColor={palette.green}

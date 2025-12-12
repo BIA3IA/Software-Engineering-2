@@ -3,7 +3,7 @@ import { View, StyleSheet, FlatList, NativeSyntheticEvent, NativeScrollEvent } f
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { RouteCard, RouteItem } from "@/components/RouteCard"
-import { RouteHistoryHeader } from "@/components/RouteHistoryHeader"
+import { ScreenHeader } from "@/components/ScreenHeader"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { scale, verticalScale } from "@/theme/layout"
@@ -206,7 +206,7 @@ export default function TripHistoryScreen() {
         )}
         ListHeaderComponent={
           <View style={styles.listHeader}>
-            <RouteHistoryHeader onSortPress={handleSortPress} />
+            <ScreenHeader onSortPress={handleSortPress} />
             <View style={styles.headerSpacer} />
           </View>
         }
@@ -229,7 +229,6 @@ export default function TripHistoryScreen() {
         icon={<Trash2 size={deleteIconSize} color={palette.destructive} />}
         iconBackgroundColor={`${palette.destructive}22`}
         onClose={handleCancelDeleteTrip}
-        dismissOnBackdropPress={false}
         primaryButton={{
           label: "Yes, Delete",
           variant: "destructive",

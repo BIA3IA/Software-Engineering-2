@@ -29,7 +29,6 @@ type AppPopupProps = {
   icon?: React.ReactNode
   iconBackgroundColor?: string
   onClose?: () => void
-  dismissOnBackdropPress?: boolean
   primaryButton: PopupButtonConfig
   secondaryButton?: PopupButtonConfig
   destructiveButton?: PopupButtonConfig
@@ -42,7 +41,6 @@ export function AppPopup({
   icon,
   iconBackgroundColor,
   onClose,
-  dismissOnBackdropPress = true,
   primaryButton,
   secondaryButton,
   destructiveButton,
@@ -70,7 +68,6 @@ export function AppPopup({
   const accentColor = primaryButton.buttonColor ?? getVariantAccent(primaryVariant)
 
   function handleBackdropPress() {
-    if (!dismissOnBackdropPress) return
     onClose?.()
   }
 
