@@ -10,7 +10,7 @@ import {
 
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
-import { radius } from "@/theme/layout"
+import { radius, scale, verticalScale } from "@/theme/layout"
 import { textStyles } from "@/theme/typography"
 
 type Props = {
@@ -80,7 +80,7 @@ export function AppTextInput({
                     autoCorrect={autoCorrect}
                     style={[
                         styles.input,
-                        icon ? { paddingLeft: 8 } : null,
+                        icon ? { paddingLeft: scale(8) } : null,
                         { color: palette.inputText },
                     ]}
                     {...rest}
@@ -101,29 +101,29 @@ const styles = StyleSheet.create({
         width: "100%",
     },
     label: {
-        marginBottom: 6,
+        marginBottom: verticalScale(6),
     },
     inputWrapper: {
         flexDirection: "row",
         alignItems: "center",
         borderRadius: radius.pill,
         borderWidth: 1,
-        paddingHorizontal: 16,
-        height: 52,
+        paddingHorizontal: scale(16),
+        height: verticalScale(52),
         shadowOpacity: 0.08,
         shadowOffset: { width: 0, height: 8 },
         shadowRadius: 12,
         elevation: 4,
     },
     icon: {
-        marginRight: 8,
+        marginRight: scale(8),
     },
     input: {
         flex: 1,
-        fontSize: 14,
+        fontSize: scale(14),
         fontWeight: "500",
     },
     errorMessage: {
-        marginTop: 6,
+        marginTop: verticalScale(6),
     },
 })

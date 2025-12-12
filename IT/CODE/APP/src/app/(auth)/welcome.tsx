@@ -8,7 +8,7 @@ import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { AppButton } from "@/components/ui/AppButton"
 import { useAuthStore } from "@/auth/storage"
-import { textStyles } from "@/theme/typography"
+import { textStyles, iconSizes } from "@/theme/typography"
 import { scale, verticalScale, moderateScale, radius } from "@/theme/layout"
 
 export default function WelcomeScreen() {
@@ -48,9 +48,14 @@ export default function WelcomeScreen() {
       <View style={styles.container}>
         <View style={styles.cardWrapper}>
           <View style={styles.cardGlow} />
-          <View style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: palette.bgPrimary, shadowColor: palette.border },
+            ]}
+          >
             <Bike
-              size={scale(120)}
+              size={iconSizes.hero}
               color={palette.primary}
               strokeWidth={1.8}
             />
@@ -114,10 +119,8 @@ const styles = StyleSheet.create({
     width: scale(200),
     height: scale(200),
     borderRadius: radius.xxl,
-    backgroundColor: "#ffffff",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000000",
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 20 },
     shadowRadius: 30,

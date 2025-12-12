@@ -9,7 +9,7 @@ import { AppButton } from "@/components/ui/AppButton"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { layoutStyles, spacingStyles, verticalScale } from "@/theme/layout"
-import { textStyles } from "@/theme/typography"
+import { textStyles, iconSizes } from "@/theme/typography"
 import { useAuthStore } from "@/auth/storage"
 import { loginSchema, type LoginFormValues } from "@/auth/validation"
 
@@ -19,6 +19,7 @@ export default function LogInScreen() {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
   const iconColor = palette.textSecondary
+  const fieldIconSize = iconSizes.md
 
   const {
     control,
@@ -95,7 +96,7 @@ export default function LogInScreen() {
                 onBlur={field.onBlur}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                icon={<Mail size={20} color={iconColor} />}
+                icon={<Mail size={fieldIconSize} color={iconColor} />}
                 errorMessage={errors.email?.message}
               />
             )}
@@ -114,7 +115,7 @@ export default function LogInScreen() {
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
                 secureTextEntry
-                icon={<Lock size={20} color={iconColor} />}
+                icon={<Lock size={fieldIconSize} color={iconColor} />}
                 errorMessage={errors.password?.message}
               />
             )}

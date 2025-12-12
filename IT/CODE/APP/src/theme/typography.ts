@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native"
-import { moderateScale } from "@/theme/layout"
+import { moderateScale, scale } from "@/theme/layout"
 
 export const textStyles = StyleSheet.create({
   heroTitle: {
@@ -46,3 +46,12 @@ export const textStyles = StyleSheet.create({
     fontWeight: "500",
   },
 })
+
+export const iconSizes = {
+  xs: scale(14),
+  sm: scale(16),
+  md: scale(20),
+  lg: scale(24),
+  xl: scale(32),
+  hero: scale(120),
+}

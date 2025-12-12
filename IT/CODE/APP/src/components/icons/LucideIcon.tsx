@@ -1,6 +1,7 @@
 import React from "react"
 import type { ComponentType } from "react"
 import { icons } from "lucide-react-native"
+import { iconSizes } from "@/theme/typography"
 
 type IconRegistry = typeof icons
 type LucideIconName = keyof IconRegistry
@@ -80,7 +81,7 @@ function resolveIcon(name?: string): ComponentType<{ color?: string; size?: numb
   return icons[DEFAULT_ICON]
 }
 
-export function LucideIcon({ name, color = "currentColor", size = 24, strokeWidth = 2 }: LucideIconProps) {
+export function LucideIcon({ name, color = "currentColor", size = iconSizes.lg, strokeWidth = 2 }: LucideIconProps) {
   const IconComponent = resolveIcon(name)
   return <IconComponent color={color} size={size} strokeWidth={strokeWidth} />
 }

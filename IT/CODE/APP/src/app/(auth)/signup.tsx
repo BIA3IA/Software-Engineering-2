@@ -9,7 +9,7 @@ import { AppButton } from "@/components/ui/AppButton"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { layoutStyles, spacingStyles, verticalScale } from "@/theme/layout"
-import { textStyles } from "@/theme/typography"
+import { textStyles, iconSizes } from "@/theme/typography"
 import { signupSchema, type SignupFormValues } from "@/auth/validation"
 import { useAuthStore } from "@/auth/storage"
 
@@ -19,6 +19,7 @@ export default function SignUpScreen() {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
   const iconColor = palette.textSecondary
+  const fieldIconSize = iconSizes.md
 
   const {
     control,
@@ -95,7 +96,7 @@ export default function SignUpScreen() {
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
                 autoCapitalize="none"
-                icon={<User size={20} color={iconColor} />}
+                icon={<User size={fieldIconSize} color={iconColor} />}
                 errorMessage={errors.username?.message}
               />
             )}
@@ -115,7 +116,7 @@ export default function SignUpScreen() {
                 onBlur={field.onBlur}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                icon={<Mail size={20} color={iconColor} />}
+                icon={<Mail size={fieldIconSize} color={iconColor} />}
                 errorMessage={errors.email?.message}
               />
             )}
@@ -134,7 +135,7 @@ export default function SignUpScreen() {
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
                 secureTextEntry
-                icon={<Lock size={20} color={iconColor} />}
+                icon={<Lock size={fieldIconSize} color={iconColor} />}
                 errorMessage={errors.password?.message}
               />
             )}
@@ -153,7 +154,7 @@ export default function SignUpScreen() {
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
                 secureTextEntry
-                icon={<LockKeyhole size={20} color={iconColor} />}
+                icon={<LockKeyhole size={fieldIconSize} color={iconColor} />}
                 errorMessage={errors.confirm?.message}
               />
             )}

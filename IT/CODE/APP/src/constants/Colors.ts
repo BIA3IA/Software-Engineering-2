@@ -79,10 +79,20 @@ export default {
     primarySoft: brand.primarySoft,
 
     purpleSoft: colors.purple50,
+    purple: colors.purple400,
     purpleDark: colors.purple700,
 
     greenSoft: colors.green50,
+    green: colors.green400,
     greenDark: colors.green700,
+
+    orangeSoft: colors.orange50,
+    orange: colors.orange400,
+    orangeDark: colors.orange700,
+
+    redSoft: colors.red50,
+    red: colors.red400,
+    redDark: colors.red700,
 
     gradientStart: brand.primaryLight,
     gradientEnd: brand.primaryDarker,
@@ -142,10 +152,20 @@ export default {
     primarySoft: brand.primarySoft,
 
     purpleSoft: colors.purple50,
+    purple: colors.purple400,
     purpleDark: colors.purple700,
 
     greenSoft: colors.green50,
+    green: colors.green400,
     greenDark: colors.green700,
+
+    orangeSoft: colors.orange50,
+    orange: colors.orange400,
+    orangeDark: colors.orange700,
+
+    redSoft: colors.red50,
+    red: colors.red400,
+    redDark: colors.red700,
 
     gradientStart: brand.primaryDark,
     gradientEnd: neutral[950],

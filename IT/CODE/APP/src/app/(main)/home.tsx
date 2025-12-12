@@ -4,10 +4,12 @@ import MapView from "react-native-maps"
 import { Plus } from "lucide-react-native"
 
 import { layoutStyles, scale, verticalScale, radius } from "@/theme/layout"
+import { iconSizes } from "@/theme/typography"
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { useAuthStore } from "@/auth/storage"
 import { useLoginPrompt } from "@/hooks/useLoginPrompt"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -15,6 +17,7 @@ export default function HomeScreen() {
   const user = useAuthStore((s) => s.user)
   const isGuest = user?.id === "guest"
   const requireLogin = useLoginPrompt()
+  const insets = useSafeAreaInsets()
 
   const fabBg = isGuest ? palette.mutedBg : palette.primary
   const iconColor = isGuest ? palette.muted : palette.textInverse
@@ -40,8 +43,19 @@ export default function HomeScreen() {
         }}
       />
 
-      <Pressable style={[styles.fab, { backgroundColor: fabBg, opacity: isGuest ? 0.7 : 1 }]} onPress={handleFabPress}>
-        <Plus size={scale(24)} color={iconColor} strokeWidth={2} />
+      <Pressable
+        style={[
+          styles.fab,
+          {
+            backgroundColor: fabBg,
+            opacity: isGuest ? 0.7 : 1,
+            shadowColor: palette.border,
+            bottom: verticalScale(90) + insets.bottom,
+          },
+        ]}
+        onPress={handleFabPress}
+      >
+        <Plus size={iconSizes.lg} color={iconColor} strokeWidth={2} />
       </Pressable>
     </View>
   )
@@ -53,14 +67,12 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: "absolute",
-    bottom: verticalScale(24),
     right: scale(24),
     width: scale(56),
     height: scale(56),
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
     shadowOpacity: 0.15,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 14,

@@ -2,7 +2,7 @@ import React from "react"
 import { View, Text, StyleSheet } from "react-native"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
-import { scale, verticalScale } from "@/theme/layout"
+import { scale, verticalScale, radius } from "@/theme/layout"
 import { textStyles } from "@/theme/typography"
 
 type MetricPillProps = {
@@ -17,6 +17,7 @@ export function MetricPill({ icon, value, backgroundColor, textColor }: MetricPi
     const palette = Colors[scheme]
 
     const bg = backgroundColor ?? palette.bgAccent
+    const contentColor = textColor ?? palette.textPrimary
 
     return (
         <View style={[styles.container, { backgroundColor: bg }]}>
@@ -26,7 +27,7 @@ export function MetricPill({ icon, value, backgroundColor, textColor }: MetricPi
                 <Text
                     style={[
                         textStyles.bodySmall,
-                        { color: textColor },
+                        { color: contentColor },
                     ]}
                 >
                     {value}
@@ -39,7 +40,7 @@ export function MetricPill({ icon, value, backgroundColor, textColor }: MetricPi
 const styles = StyleSheet.create({
     container: {
         flexDirection: "row",
-        borderRadius: 999,
+        borderRadius: radius.full,
         paddingHorizontal: scale(10),
         paddingVertical: verticalScale(4),
         alignItems: "center",

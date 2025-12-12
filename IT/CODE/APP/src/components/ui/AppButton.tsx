@@ -1,7 +1,8 @@
 import React from "react"
 import { StyleSheet } from "react-native"
 import { Button } from "react-native-paper"
-import { useAppTheme } from "@/theme/paperTheme"
+import { useColorScheme } from "@/hooks/useColorScheme"
+import Colors from "@/constants/Colors"
 import { radius } from "@/theme/layout"
 
 type Variant = "primary" | "secondary" | "outline" | "destructive"
@@ -10,32 +11,55 @@ interface AppButtonProps {
   title: string
   variant?: Variant
   onPress?: () => void
+  textColor?: string
+  borderColor?: string
 }
 
-export function AppButton({ title, variant = "primary", onPress }: AppButtonProps) {
-  const { colors } = useAppTheme()
+export function AppButton({
+  title,
+  variant = "primary",
+  onPress,
+  textColor,
+  borderColor,
+}: AppButtonProps) {
+  const scheme = useColorScheme() ?? "light"
+  const palette = Colors[scheme]
 
-  const primaryBg = colors.buttonPrimaryBg
-  const primaryText = colors.buttonPrimaryText
+  const primaryBg = palette.buttonPrimaryBg
+  const primaryText = palette.buttonPrimaryText
 
-  const secondaryBg = colors.buttonSecondaryBg
-  const secondaryText = colors.buttonSecondaryText
-  const secondaryBorder = colors.buttonSecondaryBorder
+  const secondaryBg = palette.buttonSecondaryBg
+  const secondaryText = palette.buttonSecondaryText
+  const secondaryBorder = palette.buttonSecondaryBorder
 
-  const outlineBorder = colors.buttonOutlineBorder
-  const outlineText = colors.buttonOutlineText
+  const outlineBorder = palette.buttonOutlineBorder
+  const outlineText = palette.buttonOutlineText
 
-  const destructiveBg = colors.buttonDestructiveBg
-  const destructiveText = colors.buttonDestructiveText
+  const destructiveBg = palette.buttonDestructiveBg
+  const destructiveText = palette.buttonDestructiveText
 
   const isPrimary = variant === "primary"
   const isSecondary = variant === "secondary"
   const isOutline = variant === "outline"
   const isDestructive = variant === "destructive"
 
-  const buttonColor = isPrimary ? primaryBg : isSecondary ? secondaryBg : isDestructive ? destructiveBg : "transparent"
-  const textColor = isPrimary ? primaryText : isSecondary ? secondaryText : isDestructive ? destructiveText : outlineText
-  const borderColor = isSecondary ? secondaryBorder : isOutline ? outlineBorder : undefined
+  const buttonColor = isPrimary
+    ? primaryBg
+    : isSecondary
+      ? secondaryBg
+      : isDestructive
+        ? destructiveBg
+        : "transparent"
+  const computedTextColor = isPrimary
+    ? primaryText
+    : isSecondary
+      ? secondaryText
+      : isDestructive
+        ? destructiveText
+        : outlineText
+  const resolvedTextColor = textColor ?? computedTextColor
+  const computedBorderColor = isSecondary ? secondaryBorder : isOutline ? outlineBorder : undefined
+  const resolvedBorderColor = borderColor ?? computedBorderColor
   const mode = isOutline ? "outlined" : "contained"
 
   return (
@@ -43,8 +67,11 @@ export function AppButton({ title, variant = "primary", onPress }: AppButtonProp
       mode={mode}
       onPress={onPress}
       buttonColor={buttonColor as any}
-      textColor={textColor as any}
-      style={[styles.button, { borderColor, borderWidth: borderColor ? 1 : 0 }]}
+      textColor={resolvedTextColor as any}
+      style={[
+        styles.button,
+        { borderColor: resolvedBorderColor, borderWidth: resolvedBorderColor ? 1 : 0 },
+      ]}
       labelStyle={styles.label}
       contentStyle={{ height: 50 }}
     >

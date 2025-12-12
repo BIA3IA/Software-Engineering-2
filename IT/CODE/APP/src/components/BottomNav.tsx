@@ -1,4 +1,3 @@
-// components/navigation/BottomNav.tsx
 import React from "react"
 import { View, TouchableOpacity, StyleSheet } from "react-native"
 import { useRouter, usePathname } from "expo-router"
@@ -8,6 +7,7 @@ import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { useAuthStore } from "@/auth/storage"
 import { scale, verticalScale, radius } from "@/theme/layout"
+import { iconSizes } from "@/theme/typography"
 
 type BottomNavProps = {
     onRequireLogin?: () => void
@@ -31,7 +31,7 @@ export function BottomNav({ onRequireLogin }: BottomNavProps) {
     }
 
     return (
-        <View style={[styles.container, { backgroundColor: palette.bgAccent }]}>
+        <View style={[styles.container, { backgroundColor: palette.bgAccent, shadowColor: palette.border }]}>
             <NavItem
                 icon={Map}
                 active={pathname === "/home"}
@@ -78,20 +78,21 @@ type NavItemProps = {
 function NavItem({ icon: Icon, active, disabled, onPress, palette }: NavItemProps) {
     const baseColor = active ? palette.navItemColor : palette.disabledNavItemColor
     const isDimmed = disabled || !active
+    const iconSize = iconSizes.lg
+    const lockSize = iconSizes.xs
 
     return (
         <TouchableOpacity
             onPress={onPress}
             style={[styles.item, isDimmed && styles.dimmed]}
             activeOpacity={0.8}
-            disabled={disabled}
         >
             <View
                 style={[
                     styles.iconWrapper,
                 ]}
             >
-                <Icon size={scale(28)} color={baseColor} strokeWidth={2} />
+                <Icon size={iconSize} color={baseColor} strokeWidth={2} />
 
                 {disabled && (
                     <View
@@ -100,7 +101,7 @@ function NavItem({ icon: Icon, active, disabled, onPress, palette }: NavItemProp
                         ]}
                     >
                         <Lock
-                            size={scale(14)}
+                            size={lockSize}
                             color={palette.disabledNavItemColor}
                             strokeWidth={2}
                         />
@@ -118,7 +119,6 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         paddingHorizontal: scale(22),
-        shadowColor: "#000000",
         shadowOpacity: 0.12,
         shadowOffset: { width: 0, height: 10 },
         shadowRadius: 30,

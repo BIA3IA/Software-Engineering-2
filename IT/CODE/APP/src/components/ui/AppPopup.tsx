@@ -48,6 +48,23 @@ export function AppPopup({
   const palette = Colors[scheme]
 
   const iconBg = iconBackgroundColor ?? palette.bgAccent
+  const primaryVariant = primaryButton.variant ?? "primary"
+
+  function getVariantAccent(variant: PopupButtonConfig["variant"]) {
+    switch (variant) {
+      case "secondary":
+        return palette.buttonSecondaryText
+      case "outline":
+        return palette.buttonOutlineText
+      case "destructive":
+        return palette.buttonDestructiveBg
+      case "primary":
+      default:
+        return palette.buttonPrimaryBg
+    }
+  }
+
+  const accentColor = getVariantAccent(primaryVariant)
 
   function handleBackdropPress() {
     if (!dismissOnBackdropPress) return
@@ -89,7 +106,7 @@ export function AppPopup({
               style={[
                 textStyles.screenTitle,
                 styles.title,
-                { color: palette.textAccent },
+                { color: accentColor },
               ]}
             >
               {title}
@@ -120,6 +137,8 @@ export function AppPopup({
                       <AppButton
                         title={secondaryButton!.label}
                         variant={secondaryButton!.variant ?? "secondary"}
+                        textColor={accentColor}
+                        borderColor={accentColor}
                         onPress={() => secondaryButton!.onPress({} as GestureResponderEvent)}
                       />
                     </View>
