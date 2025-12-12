@@ -12,6 +12,7 @@ type MetricCircleProps = {
   label: string
   accentColor: string
   progress?: number
+  columns?: number
 }
 
 export function MetricCircle({
@@ -20,6 +21,7 @@ export function MetricCircle({
   label,
   accentColor,
   progress = 0.72,
+  columns = 2,
 }: MetricCircleProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
@@ -31,7 +33,7 @@ export function MetricCircle({
   const dashOffset = c * (1 - clamp01(progress))
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { width: `${100 / columns}%` }]}>
       <View style={styles.ringWrap}>
         <Svg width={size} height={size}>
           <Circle
@@ -54,9 +56,6 @@ export function MetricCircle({
             strokeLinecap="round"
             strokeDasharray={`${c} ${c}`}
             strokeDashoffset={dashOffset}
-            rotation={-90}
-            originX={size / 2}
-            originY={size / 2}
           />
         </Svg>
 
@@ -65,7 +64,7 @@ export function MetricCircle({
         </View>
       </View>
 
-      <Text style={[textStyles.bodySmall, styles.value, { color: palette.textAccent }]}>
+      <Text style={[textStyles.bodySmall, styles.value, { color: accentColor }]}>
         {value}
       </Text>
       <Text style={[textStyles.caption, { color: palette.textSecondary }]}>
@@ -83,7 +82,6 @@ function clamp01(n: number) {
 
 const styles = StyleSheet.create({
   container: {
-    width: "50%",
     alignItems: "center",
     paddingVertical: verticalScale(10),
   },
