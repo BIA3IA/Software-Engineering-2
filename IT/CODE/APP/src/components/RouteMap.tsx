@@ -7,6 +7,7 @@ import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
 import { radius, scale, verticalScale } from "@/theme/layout"
 import { Cloud } from "lucide-react-native"
+import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
 
 type LatLng = { latitude: number; longitude: number }
 
@@ -114,6 +115,8 @@ export function RouteMap({
             pitchEnabled={false}
             rotateEnabled={false}
             toolbarEnabled={false}
+            customMapStyle={scheme === "dark" ? darkMapStyle : lightMapStyle}
+            showsCompass={false}
           >
             {route.length > 1 && (
               <Polyline
