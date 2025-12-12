@@ -17,12 +17,15 @@ import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
 import { ReportIssueModal } from "@/components/ReportIssueModal"
 import { AppPopup } from "@/components/ui/AppPopup"
+import { useRouter, usePathname } from "expo-router"
+import { set } from "zod"
 
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
   const user = useAuthStore((s) => s.user)
   const isGuest = user?.id === "guest"
+  const router = useRouter()
   const requireLogin = useLoginPrompt()
   const insets = useSafeAreaInsets()
   const { setHidden: setNavHidden } = useBottomNavVisibility()
@@ -38,6 +41,7 @@ export default function HomeScreen() {
   const locationWatcherRef = React.useRef<Location.LocationSubscription | null>(null)
   const [reportVisible, setReportVisible] = React.useState(false)
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
+  const [isCompletedPopupVisible, setCompletedPopupVisible] = React.useState(false)
 
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -149,6 +153,11 @@ export default function HomeScreen() {
     setActiveTrip(null)
     setSelectedResult(null)
     setReportVisible(false)
+    setCompletedPopupVisible(true)
+  }
+
+  function go(to: string) {
+    router.replace(to as any)
   }
 
   function handleSubmitReport(values: { condition: string; obstacle: string }) {
@@ -456,6 +465,22 @@ export default function HomeScreen() {
           label: "Great!",
           variant: "primary",
           onPress: () => setSuccessPopupVisible(false),
+          buttonColor: palette.success,
+          textColor: palette.textInverse,
+        }}
+      />
+
+      <AppPopup
+        visible={isCompletedPopupVisible}
+        title={isGuest ? "Trip Completed" : "Great Ride!"}
+        message={isGuest ? "Log in to save your trip stats and track your progress." : "Your trip has been saved to your profile successfully."}
+        icon={<CheckCircle size={iconSizes.xl} color={palette.success} />}
+        iconBackgroundColor={`${palette.success}22`}
+        onClose={() => setCompletedPopupVisible(false)}
+        primaryButton={{
+          label: isGuest ? "Log In" : "View Stats",
+          variant: "primary",
+          onPress: () => {isGuest ? go("/login") : go("/trips")},
           buttonColor: palette.success,
           textColor: palette.textInverse,
         }}
