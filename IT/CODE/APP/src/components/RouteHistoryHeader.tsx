@@ -6,11 +6,19 @@ import { textStyles, iconSizes } from "@/theme/typography"
 import { scale, verticalScale, radius } from "@/theme/layout"
 import { ArrowUpDown } from "lucide-react-native"
 
-type TripHistoryHeaderProps = {
-  onSortPress: () => void
+type RouteHistoryHeaderProps = {
+  title?: string
+  subtitle?: string
+  onSortPress?: () => void
+  showSortButton?: boolean
 }
 
-export function TripHistoryHeader({ onSortPress }: TripHistoryHeaderProps) {
+export function RouteHistoryHeader({
+  title = "Trip History",
+  subtitle = "Track your progress",
+  onSortPress,
+  showSortButton = true,
+}: RouteHistoryHeaderProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
   const iconSize = iconSizes.md
@@ -30,7 +38,7 @@ export function TripHistoryHeader({ onSortPress }: TripHistoryHeaderProps) {
             { color: palette.titleColor },
           ]}
         >
-          Trip History
+          {title}
         </Text>
         <Text
           style={[
@@ -39,20 +47,22 @@ export function TripHistoryHeader({ onSortPress }: TripHistoryHeaderProps) {
             { color: palette.subtitleColor },
           ]}
         >
-          Track your progress
+          {subtitle}
         </Text>
       </View>
 
-      <Pressable
-        onPress={onSortPress}
-        style={({ pressed }) => [
-          styles.sortButton,
-          { backgroundColor: palette.buttonSecondaryBg, shadowColor: palette.border },
-          pressed && { opacity: 0.85 },
-        ]}
-      >
-        <ArrowUpDown size={iconSize} color={palette.buttonSecondaryText} />
-      </Pressable>
+      {showSortButton && onSortPress && (
+        <Pressable
+          onPress={onSortPress}
+          style={({ pressed }) => [
+            styles.sortButton,
+            { backgroundColor: palette.buttonSecondaryBg, shadowColor: palette.border },
+            pressed && { opacity: 0.85 },
+          ]}
+        >
+          <ArrowUpDown size={iconSize} color={palette.buttonSecondaryText} />
+        </Pressable>
+      )}
     </View>
   )
 }

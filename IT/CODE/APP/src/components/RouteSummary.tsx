@@ -5,24 +5,24 @@ import Colors from "@/constants/Colors"
 import { textStyles } from "@/theme/typography"
 import { radius, scale, verticalScale } from "@/theme/layout"
 
-type TripSummaryProps = {
+type RouteSummaryProps = {
   date: string
   durationLabel: string
   pathName: string
 }
 
-export function TripSummary({
+export function RouteSummary({
   date,
   durationLabel,
   pathName,
-}: TripSummaryProps) {
+}: RouteSummaryProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
 
   return (
     <View style={styles.section}>
       <Text style={[textStyles.cardTitle, { color: palette.textAccent }]}>
-        Trip Summary
+        Route Summary
       </Text>
 
       <View

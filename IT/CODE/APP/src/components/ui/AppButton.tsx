@@ -13,6 +13,7 @@ interface AppButtonProps {
   onPress?: () => void
   textColor?: string
   borderColor?: string
+  buttonColor?: string
 }
 
 export function AppButton({
@@ -21,6 +22,7 @@ export function AppButton({
   onPress,
   textColor,
   borderColor,
+  buttonColor,
 }: AppButtonProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
@@ -43,13 +45,14 @@ export function AppButton({
   const isOutline = variant === "outline"
   const isDestructive = variant === "destructive"
 
-  const buttonColor = isPrimary
+  const defaultButtonColor = isPrimary
     ? primaryBg
     : isSecondary
       ? secondaryBg
       : isDestructive
         ? destructiveBg
         : "transparent"
+  const resolvedButtonColor = buttonColor ?? defaultButtonColor
   const computedTextColor = isPrimary
     ? primaryText
     : isSecondary
@@ -66,7 +69,7 @@ export function AppButton({
     <Button
       mode={mode}
       onPress={onPress}
-      buttonColor={buttonColor as any}
+      buttonColor={resolvedButtonColor as any}
       textColor={resolvedTextColor as any}
       style={[
         styles.button,

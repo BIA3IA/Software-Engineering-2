@@ -17,6 +17,9 @@ type PopupButtonConfig = {
   label: string
   onPress: (event: GestureResponderEvent) => void
   variant?: "primary" | "secondary" | "outline" | "destructive"
+  textColor?: string
+  borderColor?: string
+  buttonColor?: string
 }
 
 type AppPopupProps = {
@@ -64,7 +67,7 @@ export function AppPopup({
     }
   }
 
-  const accentColor = getVariantAccent(primaryVariant)
+  const accentColor = primaryButton.buttonColor ?? getVariantAccent(primaryVariant)
 
   function handleBackdropPress() {
     if (!dismissOnBackdropPress) return
@@ -131,14 +134,18 @@ export function AppPopup({
                         title={primaryButton.label}
                         variant={primaryButton.variant ?? "primary"}
                         onPress={() => primaryButton.onPress({} as GestureResponderEvent)}
+                        textColor={primaryButton.textColor}
+                        borderColor={primaryButton.borderColor}
+                        buttonColor={primaryButton.buttonColor}
                       />
                     </View>
                     <View style={styles.button}>
                       <AppButton
                         title={secondaryButton!.label}
                         variant={secondaryButton!.variant ?? "secondary"}
-                        textColor={accentColor}
-                        borderColor={accentColor}
+                        textColor={secondaryButton!.textColor ?? accentColor}
+                        borderColor={secondaryButton!.borderColor ?? accentColor}
+                        buttonColor={secondaryButton!.buttonColor}
                         onPress={() => secondaryButton!.onPress({} as GestureResponderEvent)}
                       />
                     </View>
@@ -149,6 +156,9 @@ export function AppPopup({
                       title={primaryButton.label}
                       variant={primaryButton.variant ?? "primary"}
                       onPress={() => primaryButton.onPress({} as GestureResponderEvent)}
+                      textColor={primaryButton.textColor}
+                      borderColor={primaryButton.borderColor}
+                      buttonColor={primaryButton.buttonColor}
                     />
                   </View>
                 )}

@@ -2,8 +2,8 @@ import React, { useMemo, useState } from "react"
 import { View, StyleSheet, FlatList, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
-import { TripCard, TripItem } from "@/components/TripCard"
-import { TripHistoryHeader } from "@/components/TripHistoryHeader"
+import { RouteCard, RouteItem } from "@/components/RouteCard"
+import { RouteHistoryHeader } from "@/components/RouteHistoryHeader"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { scale, verticalScale } from "@/theme/layout"
@@ -11,7 +11,7 @@ import { iconSizes } from "@/theme/typography"
 import { Trash2 } from "lucide-react-native"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
 
-const MOCK_TRIPS: TripItem[] = [
+const MOCK_TRIPS: RouteItem[] = [
   {
     id: "1",
     name: "Central Park Loop",
@@ -103,11 +103,11 @@ export default function TripHistoryScreen() {
   const { setHidden: setNavHidden } = useBottomNavVisibility()
   const deleteIconSize = iconSizes.xl
 
-  const [trips, setTrips] = useState<TripItem[]>(MOCK_TRIPS)
+  const [trips, setTrips] = useState<RouteItem[]>(MOCK_TRIPS)
   const [expandedTripId, setExpandedTripId] = useState<string | null>(null)
   const [isSortMenuVisible, setSortMenuVisible] = useState(false)
   const [sortOption, setSortOption] = useState<SortOption>("date")
-  const [pendingDeleteTrip, setPendingDeleteTrip] = useState<TripItem | null>(null)
+  const [pendingDeleteTrip, setPendingDeleteTrip] = useState<RouteItem | null>(null)
   const lastScrollOffset = React.useRef(0)
 
   const sortedTrips = useMemo(() => {
@@ -148,7 +148,7 @@ export default function TripHistoryScreen() {
     setSortMenuVisible(false)
   }
 
-  function handleRequestDeleteTrip(trip: TripItem) {
+  function handleRequestDeleteTrip(trip: RouteItem) {
     setPendingDeleteTrip(trip)
   }
 
@@ -196,7 +196,7 @@ export default function TripHistoryScreen() {
         ]}
         renderItem={({ item, index }) => (
           <View style={index === 0 ? styles.firstCardWrapper : undefined}>
-            <TripCard
+            <RouteCard
               trip={item}
               isExpanded={expandedTripId === item.id}
               onToggle={() => handleToggleTrip(item.id)}
@@ -206,7 +206,7 @@ export default function TripHistoryScreen() {
         )}
         ListHeaderComponent={
           <View style={styles.listHeader}>
-            <TripHistoryHeader onSortPress={handleSortPress} />
+            <RouteHistoryHeader onSortPress={handleSortPress} />
             <View style={styles.headerSpacer} />
           </View>
         }

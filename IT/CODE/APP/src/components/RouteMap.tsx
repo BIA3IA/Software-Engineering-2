@@ -18,13 +18,15 @@ export type WeatherDetails = {
   pressure: string
 }
 
-type TripMapProps = {
+type RouteMapProps = {
   route: LatLng[]
   temperatureLabel?: string
   weather?: WeatherDetails
+  showWeatherBadge?: boolean
+  title?: string
 }
 
-export function TripMap({
+export function RouteMap({
   route,
   temperatureLabel = "18°",
   weather = {
@@ -34,7 +36,9 @@ export function TripMap({
     visibility: "10 km",
     pressure: "1013 hPa",
   },
-}: TripMapProps) {
+  showWeatherBadge = true,
+  title = "Trip Map",
+}: RouteMapProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
   const insets = useSafeAreaInsets()
@@ -95,7 +99,7 @@ export function TripMap({
   return (
     <View style={styles.section}>
       <Text style={[textStyles.cardTitle, { color: palette.textAccent }]}>
-        Path Map
+        {title}
       </Text>
 
       <View style={styles.mapWrapper}>
@@ -129,70 +133,73 @@ export function TripMap({
           </MapView>
         </View>
 
-        <Pressable
-          ref={badgeRef}
-          onLayout={(event) => {
-            setBadgeHeight(event.nativeEvent.layout.height)
-          }}
-          onPress={toggleWeather}
-          style={({ pressed }) => [
-            styles.weatherBadge,
-            { backgroundColor: palette.bgPrimary, shadowColor: palette.border },
-            pressed && { opacity: 0.85 },
-          ]}
-        >
-          <Cloud size={badgeIconSize} color={palette.primaryDark} />
-          <Text style={[textStyles.bodySmall, styles.weatherText, { color: palette.textAccent }]}>
-            {temperatureLabel}
-          </Text>
-        </Pressable>
-
-      </View>
-
-      <Modal
-        visible={weatherOpen}
-        animationType="fade"
-        transparent
-        statusBarTranslucent
-        onRequestClose={() => setWeatherOpen(false)}
-      >
-        <View style={styles.overlayWrapper}>
+        {showWeatherBadge && (
           <Pressable
-            style={styles.overlayScrim}
-            onPress={() => setWeatherOpen(false)}
-          />
-
-          <View
-            style={[
-              styles.overlayCard,
-              {
-                backgroundColor: palette.bgPrimary,
-                shadowColor: palette.border,
-                top:
-                  (overlayPosition?.top ??
-                    (badgeHeight
-                      ? badgeHeight + verticalScale(24)
-                      : verticalScale(60))) +
-                  insets.top,
-                right: overlayPosition?.right ?? scale(16),
-              },
+            ref={badgeRef}
+            onLayout={(event) => {
+              setBadgeHeight(event.nativeEvent.layout.height)
+            }}
+            onPress={toggleWeather}
+            style={({ pressed }) => [
+              styles.weatherBadge,
+              { backgroundColor: palette.bgPrimary, shadowColor: palette.border },
+              pressed && { opacity: 0.85 },
             ]}
           >
-            <View style={styles.weatherHeaderRow}>
-              <Text style={[textStyles.cardTitle, { color: palette.textAccent }]}>
-                Weather Details
-              </Text>
-              <Cloud size={overlayIconSize} color={palette.primaryDark} />
-            </View>
+            <Cloud size={badgeIconSize} color={palette.primaryDark} />
+            <Text style={[textStyles.bodySmall, styles.weatherText, { color: palette.textAccent }]}>
+              {temperatureLabel}
+            </Text>
+          </Pressable>
+        )}
+      </View>
 
-            <WeatherRow label="Condition" value={weather.condition} />
-            <WeatherRow label="Wind Speed" value={weather.windSpeed} />
-            <WeatherRow label="Humidity" value={weather.humidity} />
-            <WeatherRow label="Visibility" value={weather.visibility} />
-            <WeatherRow label="Pressure" value={weather.pressure} />
+      {showWeatherBadge && (
+        <Modal
+          visible={weatherOpen}
+          animationType="fade"
+          transparent
+          statusBarTranslucent
+          onRequestClose={() => setWeatherOpen(false)}
+        >
+          <View style={styles.overlayWrapper}>
+            <Pressable
+              style={styles.overlayScrim}
+              onPress={() => setWeatherOpen(false)}
+            />
+
+            <View
+              style={[
+                styles.overlayCard,
+                {
+                  backgroundColor: palette.bgPrimary,
+                  shadowColor: palette.border,
+                  top:
+                    (overlayPosition?.top ??
+                      (badgeHeight
+                        ? badgeHeight + verticalScale(24)
+                        : verticalScale(60))) +
+                    insets.top,
+                  right: overlayPosition?.right ?? scale(16),
+                },
+              ]}
+            >
+              <View style={styles.weatherHeaderRow}>
+                <Text style={[textStyles.cardTitle, { color: palette.textAccent }]}>
+                  Weather Details
+                </Text>
+                <Cloud size={overlayIconSize} color={palette.primaryDark} />
+              </View>
+
+              <WeatherRow label="Condition" value={weather.condition} />
+              <WeatherRow label="Wind Speed" value={weather.windSpeed} />
+              <WeatherRow label="Humidity" value={weather.humidity} />
+              <WeatherRow label="Visibility" value={weather.visibility} />
+              <WeatherRow label="Pressure" value={weather.pressure} />
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
     </View>
   )
 }
