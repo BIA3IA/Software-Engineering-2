@@ -1,7 +1,7 @@
 import React from "react"
 import { View, StyleSheet, Pressable, Text } from "react-native"
 import MapView, { Marker, Polyline, Circle } from "react-native-maps"
-import { AlertTriangle, Navigation, MapPin, Plus } from "lucide-react-native"
+import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle } from "lucide-react-native"
 import * as Location from "expo-location"
 
 import { layoutStyles, scale, verticalScale, radius } from "@/theme/layout"
@@ -16,6 +16,7 @@ import { SearchResultsSheet, type SearchResult } from "@/components/SearchResult
 import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
 import { ReportIssueModal } from "@/components/ReportIssueModal"
+import { AppPopup } from "@/components/ui/AppPopup"
 
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -36,6 +37,9 @@ export default function HomeScreen() {
   const mapRef = React.useRef<MapView | null>(null)
   const locationWatcherRef = React.useRef<Location.LocationSubscription | null>(null)
   const [reportVisible, setReportVisible] = React.useState(false)
+  const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
+
+  const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const displayRoute = (activeTrip?.route ?? selectedResult?.route) ?? []
   const destinationPoint = displayRoute[displayRoute.length - 1]
@@ -76,8 +80,6 @@ export default function HomeScreen() {
     }
     setReportVisible(true)
   }
-
-  // TODO When report submitted make a popup using the component already existing with a success message - it should be similar to the succcess when saving profile - green
 
   function handleFindPaths() {
     if (!startPoint.trim() || !destination.trim()) {
@@ -152,7 +154,25 @@ export default function HomeScreen() {
   function handleSubmitReport(values: { condition: string; obstacle: string }) {
     console.log("Report issue", values)
     setReportVisible(false)
+    setSuccessPopupVisible(true)
+
+    if (successTimerRef.current) {
+      clearTimeout(successTimerRef.current)
+    }
+
+    successTimerRef.current = setTimeout(() => {
+      setSuccessPopupVisible(false)
+    }, 2500)
   }
+
+  React.useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current)
+      }
+    }
+  }, [])
+
 
   React.useEffect(() => {
     let cancelled = false
@@ -272,158 +292,174 @@ export default function HomeScreen() {
           ref={(ref) => {
             mapRef.current = ref
           }}
-        style={styles.map}
-        initialRegion={{
-          latitude: 45.478,
-          longitude: 9.227,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-        customMapStyle={scheme === "dark" ? darkMapStyle : lightMapStyle}
-        showsCompass={false}
-        showsUserLocation
-        showsMyLocationButton={false}
-      >
-        {hasActiveNavigation && traversedRoute.length > 1 && (
-          <Polyline coordinates={traversedRoute} strokeColor={palette.muted} strokeWidth={4} />
-        )}
-        {upcomingRoute.length > 1 && (
-          <Polyline coordinates={upcomingRoute} strokeColor={palette.primaryDark} strokeWidth={4} />
-        )}
-        {startRoutePoint && (
-          <Circle
-            center={startRoutePoint}
-            radius={18}
-            strokeColor={palette.primary}
-            fillColor={`${palette.primary}33`}
-          />
-        )}
-        {destinationPoint && (
-          <Marker
-            coordinate={destinationPoint}
-            title="Destination"
-            pinColor={palette.primary}
-          />
-        )}
-      </MapView>
+          style={styles.map}
+          initialRegion={{
+            latitude: 45.478,
+            longitude: 9.227,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
+          customMapStyle={scheme === "dark" ? darkMapStyle : lightMapStyle}
+          showsCompass={false}
+          showsUserLocation
+          showsMyLocationButton={false}
+        >
+          {hasActiveNavigation && traversedRoute.length > 1 && (
+            <Polyline coordinates={traversedRoute} strokeColor={palette.muted} strokeWidth={4} />
+          )}
+          {upcomingRoute.length > 1 && (
+            <Polyline coordinates={upcomingRoute} strokeColor={palette.primaryDark} strokeWidth={4} />
+          )}
+          {startRoutePoint && (
+            <Circle
+              center={startRoutePoint}
+              radius={18}
+              strokeColor={palette.primary}
+              fillColor={`${palette.primary}33`}
+            />
+          )}
+          {destinationPoint && (
+            <Marker
+              coordinate={destinationPoint}
+              title="Destination"
+              pinColor={palette.primary}
+            />
+          )}
+        </MapView>
 
-      {!hasActiveNavigation && (
-        <>
-          <View
-            style={[
-              styles.searchContainer,
-              {
-                top: insets.top + verticalScale(16),
-              },
-            ]}
-          >
-            <View style={styles.inputWrapper}>
-              <AppTextInput
-                placeholder="Starting point"
-                value={startPoint}
-                onChangeText={setStartPoint}
-                autoCapitalize="words"
-                icon={<Navigation size={iconSizes.md} color={palette.textSecondary} />}
-                returnKeyType="next"
-              />
-            </View>
-            <View style={styles.inputWrapper}>
-              <AppTextInput
-                placeholder="Where to?"
-                value={destination}
-                onChangeText={setDestination}
-                autoCapitalize="words"
-                icon={<MapPin size={iconSizes.md} color={palette.textSecondary} />}
-                returnKeyType="done"
-              />
+        {!hasActiveNavigation && (
+          <>
+            <View
+              style={[
+                styles.searchContainer,
+                {
+                  top: insets.top + verticalScale(16),
+                },
+              ]}
+            >
+              <View style={styles.inputWrapper}>
+                <AppTextInput
+                  placeholder="Starting point"
+                  value={startPoint}
+                  onChangeText={setStartPoint}
+                  autoCapitalize="words"
+                  icon={<Navigation size={iconSizes.md} color={palette.textSecondary} />}
+                  returnKeyType="next"
+                />
+              </View>
+              <View style={styles.inputWrapper}>
+                <AppTextInput
+                  placeholder="Where to?"
+                  value={destination}
+                  onChangeText={setDestination}
+                  autoCapitalize="words"
+                  icon={<MapPin size={iconSizes.md} color={palette.textSecondary} />}
+                  returnKeyType="done"
+                />
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.findButton,
+                  {
+                    backgroundColor: palette.primary,
+                    shadowColor: palette.border,
+                  },
+                  pressed && { opacity: 0.9 },
+                ]}
+                onPress={handleFindPaths}
+              >
+                <Text style={[styles.findButtonText, { color: palette.textInverse }]}>
+                  Find Paths
+                </Text>
+              </Pressable>
             </View>
 
             <Pressable
+              style={[
+                styles.fab,
+                {
+                  backgroundColor: isGuest ? palette.mutedBg : palette.primary,
+                  opacity: isGuest ? 0.7 : 1,
+                  shadowColor: palette.border,
+                  bottom: verticalScale(90) + insets.bottom,
+                },
+              ]}
+              onPress={handleCreatePath}
+            >
+              <Plus size={iconSizes.lg} color={isGuest ? palette.muted : palette.textInverse} strokeWidth={2} />
+            </Pressable>
+
+            <SearchResultsSheet
+              visible={resultsVisible}
+              results={results}
+              topOffset={insets.top + verticalScale(16)}
+              onClose={() => setResultsVisible(false)}
+              selectedResultId={selectedResult?.id ?? null}
+              onSelectResult={handleSelectResult}
+              onActionPress={handleStartTrip}
+            />
+          </>
+        )}
+
+        {hasActiveNavigation && (
+          <>
+            <Pressable
+              style={[
+                styles.fab,
+                {
+                  backgroundColor: palette.destructive,
+                  shadowColor: palette.border,
+                  bottom: verticalScale(90) + insets.bottom,
+                },
+              ]}
+              onPress={handleReportIssue}
+            >
+              <AlertTriangle size={iconSizes.lg} color={palette.textInverse} strokeWidth={2.2} />
+            </Pressable>
+
+            <Pressable
               style={({ pressed }) => [
-                styles.findButton,
+                styles.completeButton,
                 {
                   backgroundColor: palette.primary,
+                  bottom: insets.bottom + verticalScale(24),
                   shadowColor: palette.border,
                 },
-                pressed && { opacity: 0.9 },
+                pressed && { opacity: 0.85 },
               ]}
-              onPress={handleFindPaths}
+              onPress={handleCompleteTrip}
             >
-              <Text style={[styles.findButtonText, { color: palette.textInverse }]}>
-                Find Paths
+              <Text style={[styles.completeButtonText, { color: palette.textInverse }]}>
+                Complete Trip
               </Text>
             </Pressable>
-          </View>
+          </>
+        )}
+      </View>
+      <ReportIssueModal
+        visible={reportVisible}
+        onClose={() => setReportVisible(false)}
+        onSubmit={handleSubmitReport}
+        conditionOptions={ISSUE_CONDITION_OPTIONS}
+        obstacleOptions={OBSTACLE_TYPE_OPTIONS}
+      />
 
-          <Pressable
-            style={[
-              styles.fab,
-              {
-                backgroundColor: isGuest ? palette.mutedBg : palette.primary,
-                opacity: isGuest ? 0.7 : 1,
-                shadowColor: palette.border,
-                bottom: verticalScale(90) + insets.bottom,
-              },
-            ]}
-            onPress={handleCreatePath}
-          >
-            <Plus size={iconSizes.lg} color={isGuest ? palette.muted : palette.textInverse} strokeWidth={2} />
-          </Pressable>
-
-          <SearchResultsSheet
-            visible={resultsVisible}
-            results={results}
-            topOffset={insets.top + verticalScale(16)}
-            onClose={() => setResultsVisible(false)}
-            selectedResultId={selectedResult?.id ?? null}
-            onSelectResult={handleSelectResult}
-            onActionPress={handleStartTrip}
-          />
-        </>
-      )}
-
-      {hasActiveNavigation && (
-        <>
-          <Pressable
-            style={[
-              styles.fab,
-              {
-                backgroundColor: palette.destructive,
-                shadowColor: palette.border,
-                bottom: verticalScale(90) + insets.bottom,
-              },
-            ]}
-            onPress={handleReportIssue}
-          >
-            <AlertTriangle size={iconSizes.lg} color={palette.textInverse} strokeWidth={2.2} />
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.completeButton,
-              {
-                backgroundColor: palette.primary,
-                bottom: insets.bottom + verticalScale(24),
-                shadowColor: palette.border,
-              },
-              pressed && { opacity: 0.85 },
-            ]}
-            onPress={handleCompleteTrip}
-          >
-            <Text style={[styles.completeButtonText, { color: palette.textInverse }]}>
-              Complete Trip
-            </Text>
-          </Pressable>
-        </>
-      )}
-    </View>
-    <ReportIssueModal
-      visible={reportVisible}
-      onClose={() => setReportVisible(false)}
-      onSubmit={handleSubmitReport}
-      conditionOptions={ISSUE_CONDITION_OPTIONS}
-      obstacleOptions={OBSTACLE_TYPE_OPTIONS}
-    />
+      <AppPopup
+        visible={isSuccessPopupVisible}
+        title="Report Submitted"
+        message="Thank you for helping keep our cycling community safe and informed."
+        icon={<CheckCircle size={iconSizes.xl} color={palette.success} />}
+        iconBackgroundColor={`${palette.success}22`}
+        onClose={() => setSuccessPopupVisible(false)}
+        primaryButton={{
+          label: "Great!",
+          variant: "primary",
+          onPress: () => setSuccessPopupVisible(false),
+          buttonColor: palette.success,
+          textColor: palette.textInverse,
+        }}
+      />
     </>
   )
 }
