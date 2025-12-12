@@ -1,5 +1,4 @@
 import prisma from "../../utils/prisma-client.js";
-import { User } from "@prisma/client";
 
 export class QueryManager {
 
