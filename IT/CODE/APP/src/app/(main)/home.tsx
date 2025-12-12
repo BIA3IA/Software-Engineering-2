@@ -13,12 +13,14 @@ import { useLoginPrompt } from "@/hooks/useLoginPrompt"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { AppTextInput } from "@/components/ui/AppTextInput"
 import { SearchResultsSheet, type SearchResult } from "@/components/SearchResultsSheet"
+import { CreatePathModal } from "@/components/CreatePathModal"
 import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
 import { ReportIssueModal } from "@/components/ReportIssueModal"
 import { AppPopup } from "@/components/ui/AppPopup"
-import { useRouter, usePathname } from "expo-router"
-import { set } from "zod"
+import { useRouter } from "expo-router"
+import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
+import { type PrivacyPreference } from "@/constants/privacy"
 
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -29,6 +31,7 @@ export default function HomeScreen() {
   const requireLogin = useLoginPrompt()
   const insets = useSafeAreaInsets()
   const { setHidden: setNavHidden } = useBottomNavVisibility()
+  const defaultVisibility = usePrivacyPreference()
   const [startPoint, setStartPoint] = React.useState("")
   const [destination, setDestination] = React.useState("")
   const [resultsVisible, setResultsVisible] = React.useState(false)
@@ -42,6 +45,7 @@ export default function HomeScreen() {
   const [reportVisible, setReportVisible] = React.useState(false)
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
   const [isCompletedPopupVisible, setCompletedPopupVisible] = React.useState(false)
+  const [isCreateModalVisible, setCreateModalVisible] = React.useState(false)
 
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -74,7 +78,13 @@ export default function HomeScreen() {
       requireLogin()
       return
     }
-    console.log("Create new path tapped")
+    setCreateModalVisible(true)
+  }
+
+  function handleStartCreating(values: { name: string; description: string; visibility: PrivacyPreference }) {
+    setCreateModalVisible(false)
+    const query = `?name=${encodeURIComponent(values.name)}&description=${encodeURIComponent(values.description)}&visibility=${values.visibility}`
+    router.push(`/create-path${query}` as any)
   }
 
   function handleReportIssue() {
@@ -484,6 +494,12 @@ export default function HomeScreen() {
           buttonColor: palette.success,
           textColor: palette.textInverse,
         }}
+      />
+      <CreatePathModal
+        visible={isCreateModalVisible}
+        onClose={() => setCreateModalVisible(false)}
+        onSubmit={handleStartCreating}
+        initialVisibility={defaultVisibility}
       />
     </>
   )

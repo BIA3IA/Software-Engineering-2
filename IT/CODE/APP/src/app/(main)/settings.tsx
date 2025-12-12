@@ -2,6 +2,7 @@ import React from "react"
 import { ScrollView, StyleSheet, View, Text, Pressable, Dimensions } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useColorScheme, useThemePreference, useSetThemePreference, type AppearancePreference } from "@/hooks/useColorScheme"
+import { usePrivacyPreference, useSetPrivacyPreference } from "@/hooks/usePrivacyPreference"
 import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
 import { radius, scale, verticalScale } from "@/theme/layout"
@@ -12,6 +13,7 @@ import { useRouter } from "expo-router"
 import { BottomNavVisibilityContext } from "@/hooks/useBottomNavVisibility"
 import { ScreenHeader } from "@/components/ScreenHeader"
 import { useAuthStore } from "@/auth/storage"
+import { PRIVACY_OPTIONS, type PrivacyPreference } from "@/constants/privacy"
 
 type PaletteKey = keyof (typeof Colors)["light"]
 
@@ -26,11 +28,6 @@ const APPEARANCE_OPTIONS: PickerOption[] = [
   { key: "system", label: "System" },
 ]
 
-const PRIVACY_OPTIONS: PickerOption[] = [
-  { key: "public", label: "Public" },
-  { key: "private", label: "Private" },
-]
-
 export default function SettingsScreen() {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
@@ -40,7 +37,8 @@ export default function SettingsScreen() {
   const appearancePreference = useThemePreference()
   const setAppearancePreference = useSetThemePreference()
   const logout = useAuthStore((state) => state.logout)
-  const [defaultPrivacy, setDefaultPrivacy] = React.useState("public")
+  const defaultPrivacy = usePrivacyPreference()
+  const setDefaultPrivacy = useSetPrivacyPreference()
   const [activePicker, setActivePicker] = React.useState<"appearance" | "privacy" | null>(null)
   const [overlayPosition, setOverlayPosition] = React.useState<{ top: number; right: number } | null>(null)
   const appearanceButtonRef = React.useRef<View | null>(null)
@@ -81,7 +79,7 @@ export default function SettingsScreen() {
     if (activePicker === "appearance") {
       setAppearancePreference(optionKey as AppearancePreference)
     } else if (activePicker === "privacy") {
-      setDefaultPrivacy(optionKey)
+      setDefaultPrivacy(optionKey as PrivacyPreference)
     }
     closePicker()
   }

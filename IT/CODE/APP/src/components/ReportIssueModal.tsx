@@ -1,12 +1,13 @@
 import React from "react"
-import { Modal, View, Text, StyleSheet, Pressable, Dimensions } from "react-native"
+import { Modal, View, Text, StyleSheet, Pressable } from "react-native"
 
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { radius, scale, verticalScale } from "@/theme/layout"
 import { textStyles, iconSizes } from "@/theme/typography"
-import { AlertTriangle, ChevronDown } from "lucide-react-native"
+import { AlertTriangle } from "lucide-react-native"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
+import { SelectField } from "@/components/ui/SelectField"
 
 export type ReportIssueOption = {
   key: string
@@ -177,58 +178,6 @@ export function ReportIssueModal({
   )
 }
 
-type SelectFieldProps = {
-  label: string
-  valueLabel: string
-  onOpen: (anchor: { top: number; right: number; width: number }) => void
-  active: boolean
-}
-
-function SelectField({ label, valueLabel, onOpen, active }: SelectFieldProps) {
-  const scheme = useColorScheme() ?? "light"
-  const palette = Colors[scheme]
-  const containerRef = React.useRef<View | null>(null)
-
-  return (
-    <View
-      style={styles.selectField}
-      ref={(node) => {
-        containerRef.current = node
-      }}
-    >
-      <Text style={[textStyles.caption, styles.selectLabel, { color: palette.textSecondary }]}>
-        {label}
-      </Text>
-      <Pressable
-        style={({ pressed }) => [
-          styles.selectInput,
-          {
-            borderColor: palette.border,
-            backgroundColor: palette.inputBg,
-          },
-          pressed && { opacity: 0.9 },
-          active && { borderColor: palette.primary },
-        ]}
-        onPress={() => {
-          const windowWidth = Dimensions.get("window").width
-          containerRef.current?.measureInWindow((x, y, width, height) => {
-            onOpen({
-              top: y + height,
-              right: Math.max(0, windowWidth - (x + width)),
-              width,
-            })
-          })
-        }}
-      >
-        <Text style={[textStyles.body, { color: palette.textPrimary }]}>
-          {valueLabel}
-        </Text>
-        <ChevronDown size={iconSizes.sm} color={palette.textSecondary} />
-      </Pressable>
-    </View>
-  )
-}
-
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
@@ -275,21 +224,6 @@ const styles = StyleSheet.create({
   subtitle: {
     textAlign: "center",
     marginBottom: verticalScale(6),
-  },
-  selectField: {
-    width: "100%",
-  },
-  selectLabel: {
-    marginBottom: verticalScale(6),
-  },
-  selectInput: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingHorizontal: scale(14),
-    paddingVertical: verticalScale(12),
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
   },
   submitButton: {
     marginTop: verticalScale(20),
