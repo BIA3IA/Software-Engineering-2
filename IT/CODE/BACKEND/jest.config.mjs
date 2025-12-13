@@ -10,4 +10,5 @@ export default {
     moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1'
     },
+    setupFilesAfterEnv: ['./setup.test.ts'],
 }
