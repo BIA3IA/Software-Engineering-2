@@ -5,12 +5,13 @@ export class QueryManager {
     // CRUD methods to create a new user
     
     // create user
-    async createUser(email: string, password: string, username: string) {
+    async createUser(email: string, password: string, username: string, systemPreferences: string[] ) {
         return await prisma.user.create({
             data: {
                 email,
                 password,
                 username,
+                systemPreferences,
             },
         });
     }
@@ -33,6 +34,24 @@ export class QueryManager {
     async getUserByUsername(username: string) {
         return await prisma.user.findUnique({
             where: { username },
+        });
+    }
+
+    // update user profile
+    async updateUserProfile(userId: string, data: {
+        username?: string;
+        email?: string;
+        password?: string;
+        systemPreferences?: string[];
+    }) {
+        return await prisma.user.update({
+            where: { userId },
+            data: {
+                ...(data.username && { username: data.username }), // avoid overwriting with undefined
+                ...(data.email && { email: data.email }),
+                ...(data.password && { password: data.password }),
+                ...(data.systemPreferences && { systemPreferences: data.systemPreferences }),
+            },
         });
     }
 
