@@ -24,7 +24,12 @@ app.use('/api/v1', routesV1);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
+// Used for testing
+export { app };
 
-app.listen(PORT, () => {
-    logger.info(`Server is running on port ${PORT}`);
-});
+
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        logger.info(`Server is running on port ${PORT}`);
+    });
+}
