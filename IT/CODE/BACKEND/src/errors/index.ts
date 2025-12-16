@@ -7,4 +7,5 @@ export {
     ForbiddenError,
     NotFoundError,
     InternalServerError,
+    ConflictError,
 } from './app.errors.js';

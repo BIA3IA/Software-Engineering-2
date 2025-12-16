@@ -1,4 +1,6 @@
-import prisma from "../../utils/prisma-client.js";
+import { sortSegmentsByChain, prisma } from "../../utils/index";
+import { TripSegments, WeatherData} from "../../types/index";
+
 
 export class QueryManager {
 
@@ -79,6 +81,39 @@ export class QueryManager {
     async deleteRefreshToken(token: string) {
         return await prisma.refreshToken.delete({
             where: { token },
+        });
+    }
+
+    // TRIP
+
+    // get trip by id with segments
+    async getTripById(tripId: string): Promise<TripSegments | null> {
+        const trip = await prisma.trip.findUnique({
+            where: { tripId },
+            include: {
+                tripSegments: {
+                    include: { segment: true },
+                },
+            },
+        });
+
+        if (!trip) {
+            return null;
+        }
+
+        return {
+            ...trip,
+            tripSegments: sortSegmentsByChain(trip.tripSegments),
+        };
+    }
+
+    // WEATHER
+
+    // update trip weather data
+    async updateTripWeather(tripId: string, weather: WeatherData) {
+        return await prisma.trip.update({
+            where: { tripId },
+            data: { weather },
         });
     }
 

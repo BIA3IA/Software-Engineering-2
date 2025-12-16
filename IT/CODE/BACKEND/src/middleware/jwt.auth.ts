@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { JwtPayload, } from '../types/index.js';
-import { getJwtSecrets } from '../utils/utils.js'
-import { UnauthorizedError, ForbiddenError } from '../errors/index.js';
+import { JwtPayload, } from '../types/index';
+import { getJwtSecrets } from '../utils/utils'
+import { UnauthorizedError, ForbiddenError } from '../errors/index';
 
 // Function to generate access and refresh tokens. Set expiration times as needed, here 15 minutes for access and 1 hour for refresh.
 // The sign method creates a JWT token by encoding the payload (userId) with the secret key. 

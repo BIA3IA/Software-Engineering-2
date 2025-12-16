@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import logger from '../utils/logger.js';
+import logger from '../utils/logger';
 
 // HTTP request logger middleware (replaces Morgan)
 export const httpLogger = (req: Request, res: Response, next: NextFunction): void => {

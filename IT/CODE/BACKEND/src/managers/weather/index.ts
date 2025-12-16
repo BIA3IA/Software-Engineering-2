@@ -1,0 +1,1 @@
+export { weatherManager } from './weather.manager';

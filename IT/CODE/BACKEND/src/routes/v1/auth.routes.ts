@@ -1,7 +1,7 @@
-import { Router, Request, Response } from 'express';
-import { authManager } from '../../managers/auth/index.js';
-import { loginSchema, registerSchema } from '../../schemas/auth.schema.js';
-import { validate } from '../../middleware/index.js';
+import { Router } from 'express';
+import { authManager } from '../../managers/auth/index';
+import { loginSchema } from '../../schemas/index';
+import { validate } from '../../middleware/index';
 
 const authRouter = Router();
 
