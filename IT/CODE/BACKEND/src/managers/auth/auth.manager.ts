@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
-import { queryManager } from "../query/index";
+import { queryManager } from "../query/index.js";
 import bcrypt from 'bcrypt';
-import { generateTokens, verifyRefreshToken } from "../../middleware/index";
-import { UnauthorizedError, BadRequestError, NotFoundError, ForbiddenError } from '../../errors/index';
+import { generateTokens, verifyRefreshToken } from "../../middleware/index.js";
+import { UnauthorizedError, BadRequestError, NotFoundError, ForbiddenError } from '../../errors/index.js';
 
 export class AuthManager {
     

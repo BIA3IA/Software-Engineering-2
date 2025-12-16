@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { userRouter } from './user.routes';
-import { authRouter } from './auth.routes';
-import { weatherRouter } from './weather.routes';
+import { userRouter } from './user.routes.js';
+import { authRouter } from './auth.routes.js';
+import { weatherRouter } from './weather.routes.js';
 
 // central router for v1 API
 

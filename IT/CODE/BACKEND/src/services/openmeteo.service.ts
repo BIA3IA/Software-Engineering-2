@@ -131,16 +131,17 @@ export async function fetchWeatherForCoordinates(coord: Coordinates): Promise<Po
         }
 
         const data = await response.json() as OpenMeteoWeather;
+        const current = data.current;
 
         return {
-            temperature: data.temperature_2m,
-            apparentTemperature: data.apparent_temperature,
-            humidity: data.relative_humidity_2m,
-            windSpeed: data.wind_speed_10m,
-            windDirection: data.wind_direction_10m,
-            pressure: data.pressure_msl,
-            weatherDescription: getWeatherDescription(data.weather_code),
-            precipitation: data.precipitation,
+            temperature: current.temperature_2m,
+            apparentTemperature: current.apparent_temperature,
+            humidity: current.relative_humidity_2m,
+            windSpeed: current.wind_speed_10m,
+            windDirection: current.wind_direction_10m,
+            pressure: current.pressure_msl,
+            weatherDescription: getWeatherDescription(current.weather_code),
+            precipitation: current.precipitation,
         };
 
     } catch (error) {

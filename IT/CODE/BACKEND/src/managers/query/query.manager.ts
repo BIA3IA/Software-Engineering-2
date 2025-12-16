@@ -1,5 +1,5 @@
-import { sortSegmentsByChain, prisma } from "../../utils/index";
-import { TripSegments, WeatherData} from "../../types/index";
+import { sortSegmentsByChain, prisma } from "../../utils/index.js";
+import { TripSegments, WeatherData} from "../../types/index.js";
 
 
 export class QueryManager {

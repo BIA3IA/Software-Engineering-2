@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ErrorResponse } from '../types/index.js';
-import { HttpStatus, AppError } from '../errors/index';
-import logger from '../utils/logger';
+import { HttpStatus, AppError } from '../errors/index.js';
+import logger from '../utils/logger.js';
 
 // Type guard: if it has statusCode, it's our custom error
 // There are different ways to implement type guards.. this is a simple one

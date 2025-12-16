@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { weatherManager } from '../../managers/weather/index';
-import { verifyAccessToken } from '../../middleware/jwt.auth';
+import { weatherManager } from '../../managers/weather/index.js';
+import { verifyAccessToken } from '../../middleware/jwt.auth.js';
 
 const weatherRouter = Router();
 

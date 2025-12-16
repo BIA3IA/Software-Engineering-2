@@ -1,1 +1,1 @@
-export { weatherManager } from './weather.manager';
+export { weatherManager } from './weather.manager.js';

@@ -1,5 +1,5 @@
 // Central export file for middleware
-export { errorHandler, notFoundHandler } from './error.handler';
-export { httpLogger } from './http.logger';
-export { verifyAccessToken, generateTokens, verifyRefreshToken } from './jwt.auth';
-export { validate } from './validator';
+export { errorHandler, notFoundHandler } from './error.handler.js';
+export { httpLogger } from './http.logger.js';
+export { verifyAccessToken, generateTokens, verifyRefreshToken } from './jwt.auth.js';
+export { validate } from './validator.js';

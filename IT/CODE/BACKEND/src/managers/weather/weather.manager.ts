@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { fetchAndAggregateWeatherData } from '../../services/index';
-import { queryManager } from '../query/index';
-import { Coordinates, TripSegments, WeatherData } from '../../types/index';
-import { NotFoundError, BadRequestError } from '../../errors/index';
+import { fetchAndAggregateWeatherData } from '../../services/index.js';
+import { queryManager } from '../query/index.js';
+import { Coordinates, TripSegments, WeatherData } from '../../types/index.js';
+import { NotFoundError, BadRequestError } from '../../errors/index.js';
 import logger from '../../utils/logger';
 
 

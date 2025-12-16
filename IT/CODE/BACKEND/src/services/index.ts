@@ -1,1 +1,1 @@
-export * from "./openmeteo.service";
+export * from "./openmeteo.service.js";

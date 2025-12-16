@@ -27,12 +27,14 @@ export interface WeatherData {
 
 // OpenMeteo API response (external API structure)
 export interface OpenMeteoWeather {
-    temperature_2m: number; // 2m above ground temperature
-    relative_humidity_2m: number; // 2m above ground relative humidity
-    apparent_temperature: number; // Feels like temperature
-    precipitation: number; // Total precipitation
-    weather_code: number; // WMO weather code
-    pressure_msl: number; // Mean sea level pressure
-    wind_speed_10m: number; // Wind speed at 10m above ground
-    wind_direction_10m: number; // Wind direction at 10m above ground
+    current: {
+        temperature_2m: number; // 2m above ground temperature
+        relative_humidity_2m: number; // 2m above ground relative humidity
+        apparent_temperature: number; // Feels like temperature
+        precipitation: number; // Total precipitation
+        weather_code: number; // WMO weather code
+        pressure_msl: number; // Mean sea level pressure
+        wind_speed_10m: number; // Wind speed at 10m above ground
+        wind_direction_10m: number; // Wind direction at 10m above ground
+    }
 }
