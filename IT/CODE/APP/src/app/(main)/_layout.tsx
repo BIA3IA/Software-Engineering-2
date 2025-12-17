@@ -12,11 +12,13 @@ import { iconSizes } from "@/theme/typography"
 import { Lock } from "lucide-react-native"
 import { LoginPromptProvider } from "@/hooks/useLoginPrompt"
 import { BottomNavVisibilityContext } from "@/hooks/useBottomNavVisibility"
+import { useAuthStore } from "@/auth/storage"
 
 export default function MainLayout() {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
   const router = useRouter()
+  const logout = useAuthStore((s) => s.logout)
 
   const insets = useSafeAreaInsets()
   const NAV_H = verticalScale(72)
@@ -41,8 +43,13 @@ export default function MainLayout() {
     setLoginPopupVisible(false)
   }
 
-  function goToLogin() {
+  async function goToLogin() {
     setLoginPopupVisible(false)
+    try {
+      await logout()
+    } catch (error) {
+      console.warn("Failed to exit guest mode", error)
+    }
     router.replace("/(auth)/login")
   }
 

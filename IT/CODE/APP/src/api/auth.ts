@@ -17,6 +17,10 @@ type UserResponse = {
   email: string
 }
 
+type ProfileResponse = {
+  data: UserResponse
+}
+
 type LoginResponse = {
   user: UserResponse
   tokens: AuthTokens
@@ -24,6 +28,17 @@ type LoginResponse = {
 
 type RefreshResponse = {
   tokens: AuthTokens
+}
+
+type UpdateProfileResponse = {
+  message: string
+}
+
+export type UpdateProfilePayload = {
+  username?: string
+  email?: string
+  password?: string
+  systemPreferences?: string[]
 }
 
 const AUTH_BASE = "/auth"
@@ -64,4 +79,14 @@ export async function logoutApi(refreshToken: string | null): Promise<void> {
 export async function refreshTokenApi(refreshToken: string): Promise<AuthTokens> {
   const res = await api.post<RefreshResponse>(`${AUTH_BASE}/refresh`, { refreshToken })
   return res.data.tokens
+}
+
+export async function getProfileApi(): Promise<User> {
+  const res = await api.get<ProfileResponse>(`${USERS_BASE}/profile`)
+  return mapUser(res.data.data)
+}
+
+export async function updateProfileApi(payload: UpdateProfilePayload): Promise<string> {
+  const res = await api.patch<UpdateProfileResponse>(`${USERS_BASE}/update-profile`, payload)
+  return res.data.message
 }

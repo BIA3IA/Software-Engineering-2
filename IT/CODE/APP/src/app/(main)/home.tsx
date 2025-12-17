@@ -490,7 +490,7 @@ export default function HomeScreen() {
         primaryButton={{
           label: isGuest ? "Log In" : "View Stats",
           variant: "primary",
-          onPress: () => {isGuest ? go("/login") : go("/trips")},
+          onPress: () => {isGuest ? go("/(auth)/login") : go("/trips")},
           buttonColor: palette.success,
           textColor: palette.textInverse,
         }}

@@ -3,7 +3,7 @@ import { ScrollView, View, Text, StyleSheet, Pressable } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import { Controller, useForm } from "react-hook-form"
-import { UserRound, Mail, Lock, X, CheckCircle } from "lucide-react-native"
+import { UserRound, Mail, Lock, X, CheckCircle, AlertTriangle } from "lucide-react-native"
 
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
@@ -16,6 +16,7 @@ import { useAuthStore } from "@/auth/storage"
 import { editProfileSchema } from "@/auth/validation"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { BottomNavVisibilityContext } from "@/hooks/useBottomNavVisibility"
+import { getApiErrorMessage } from "@/utils/apiError"
 
 type EditProfileFormValues = {
   username: string
@@ -35,6 +36,10 @@ export default function EditProfileScreen() {
   const defaultUsername = user?.username ?? user?.email?.split("@")[0] ?? "Guest"
   const defaultEmail = user?.email ?? "guest@bestbikepaths.com"
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
+  const [isErrorPopupVisible, setErrorPopupVisible] = React.useState(false)
+  const [successMessage, setSuccessMessage] = React.useState("Your changes have been saved successfully.")
+  const [errorMessage, setErrorMessage] = React.useState("Unable to save your changes.")
+  const updateProfile = useAuthStore((s) => s.updateProfile)
 
   const {
     control,
@@ -86,15 +91,28 @@ export default function EditProfileScreen() {
       return
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 600))
-    reset({
-      username: result.data.username,
-      email: result.data.email,
-      currentPassword: "",
-      newPassword: "",
-      confirmNewPassword: "",
-    })
-    setSuccessPopupVisible(true)
+    try {
+      const serverMessage =
+        (await updateProfile({
+          username: result.data.username,
+          email: result.data.email,
+          password: result.data.newPassword,
+        })) ?? "Profile updated successfully"
+
+      reset({
+        username: result.data.username,
+        email: result.data.email,
+        currentPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
+      })
+      setSuccessMessage(serverMessage)
+      setSuccessPopupVisible(true)
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to update the profile.")
+      setErrorMessage(message)
+      setErrorPopupVisible(true)
+    }
   }
 
   return (
@@ -235,7 +253,7 @@ export default function EditProfileScreen() {
         <AppPopup
           visible={isSuccessPopupVisible}
           title="Profile Updated"
-          message="Your changes have been saved successfully."
+          message={successMessage}
           icon={<CheckCircle size={iconSizes.xl} color={palette.success} />}
           iconBackgroundColor={`${palette.success}22`}
           onClose={() => setSuccessPopupVisible(false)}
@@ -244,6 +262,21 @@ export default function EditProfileScreen() {
             variant: "primary",
             onPress: () => setSuccessPopupVisible(false),
             buttonColor: palette.success,
+            textColor: palette.textInverse,
+          }}
+        />
+        <AppPopup
+          visible={isErrorPopupVisible}
+          title="Update Failed"
+          message={errorMessage}
+          icon={<AlertTriangle size={iconSizes.xl} color={palette.red} />}
+          iconBackgroundColor={`${palette.red}22`}
+          onClose={() => setErrorPopupVisible(false)}
+          primaryButton={{
+            label: "OK",
+            variant: "primary",
+            onPress: () => setErrorPopupVisible(false),
+            buttonColor: palette.red,
             textColor: palette.textInverse,
           }}
         />

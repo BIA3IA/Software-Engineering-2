@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
 import { Controller, useForm } from "react-hook-form"
 import { User, Mail, Lock, LockKeyhole, AlertTriangle } from "lucide-react-native"
-import axios from "axios"
 
 import { AppTextInput } from "@/components/ui/AppTextInput"
 import { AppButton } from "@/components/ui/AppButton"
@@ -15,7 +14,7 @@ import { layoutStyles, spacingStyles, verticalScale } from "@/theme/layout"
 import { textStyles, iconSizes } from "@/theme/typography"
 import { signupSchema, type SignupFormValues } from "@/auth/validation"
 import { useAuthStore } from "@/auth/storage"
-import { signupApi } from "@/api/auth"
+import { getApiErrorMessage } from "@/utils/apiError"
 
 export default function SignUpScreen() {
   const router = useRouter()
@@ -86,15 +85,11 @@ export default function SignUpScreen() {
       console.log("User signed up successfully")
       router.replace("/(main)/home")
     } catch (error) {
-      const message = axios.isAxiosError(error)
-        ? (error.response?.data?.message as string | undefined) ?? "Controlla i dati inseriti e riprova."
-        : "Qualcosa è andato storto. Riprova più tardi."
+      const message = getApiErrorMessage(error, "Check the data you entered and try again.")
 
-        console.log(error)
-        
       setErrorPopup({
         visible: true,
-        title: "Registrazione non riuscita",
+        title: "Sign up failed",
         message,
       })
     }
@@ -215,8 +210,8 @@ export default function SignUpScreen() {
       </View>
       <AppPopup
         visible={errorPopup.visible}
-        title={errorPopup.title || "Errore"}
-        message={errorPopup.message || "Impossibile completare la registrazione."}
+        title={errorPopup.title || "Error"}
+        message={errorPopup.message || "Unable to complete the registration."}
         icon={<AlertTriangle size={iconSizes.xl} color={palette.red} />}
         iconBackgroundColor={`${palette.red}22`}
         onClose={handleClosePopup}

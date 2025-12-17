@@ -1,8 +1,8 @@
 import { create } from "zustand"
 import * as SecureStore from "expo-secure-store"
 import { setSession, clearSession, onSessionChange, type AuthTokens } from "./authSession"
-import type { User } from "@/api/auth"
-import { loginApi, signupApi, logoutApi } from "@/api/auth"
+import type { User, UpdateProfilePayload } from "@/api/auth"
+import { loginApi, signupApi, logoutApi, getProfileApi, updateProfileApi } from "@/api/auth"
 
 const USER_KEY = "bbp_user"
 const ACCESS_TOKEN_KEY = "bbp_access_token"
@@ -20,6 +20,8 @@ type AuthState = {
   loginAsGuest: (user: User) => void
   logout: () => Promise<void>
   setTokens: (tokens: AuthTokens | null) => Promise<void>
+  fetchProfile: () => Promise<User | null>
+  updateProfile: (payload: UpdateProfilePayload) => Promise<string>
 }
 
 export const useAuthStore = create<AuthState>((set, get) => {
@@ -55,16 +57,20 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
         if (userJson && accessToken && refreshToken) {
           const user = JSON.parse(userJson) as User
-
           setSession({ accessToken, refreshToken })
-
           set({ user, accessToken, refreshToken, loading: false })
+          void get().fetchProfile().catch((error) => {
+            console.warn("Failed to refresh profile after init", error)
+          })
         } else {
           clearSession()
+          await SecureStore.deleteItemAsync(USER_KEY)
           set({ user: null, accessToken: null, refreshToken: null, loading: false })
         }
-      } catch {
+      } catch (error) {
+        console.warn("Failed to initialize auth", error)
         clearSession()
+        await SecureStore.deleteItemAsync(USER_KEY)
         set({ user: null, accessToken: null, refreshToken: null, loading: false })
       }
     },
@@ -91,6 +97,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     loginAsGuest(user) {
       clearSession()
+      void SecureStore.deleteItemAsync(USER_KEY)
       set({ user, accessToken: null, refreshToken: null, loading: false })
     },
 
@@ -105,6 +112,33 @@ export const useAuthStore = create<AuthState>((set, get) => {
       await SecureStore.deleteItemAsync(USER_KEY)
       await get().setTokens(null)
       set({ user: null, loading: false })
+    },
+
+    async fetchProfile() {
+      if (!get().accessToken) {
+        return null
+      }
+
+      try {
+        const profile = await getProfileApi()
+        await SecureStore.setItemAsync(USER_KEY, JSON.stringify(profile))
+        set({ user: profile })
+        return profile
+      } catch (error) {
+        console.warn("Failed to fetch profile", error)
+        throw error
+      }
+    },
+
+    async updateProfile(payload) {
+      try {
+        const message = await updateProfileApi(payload)
+        await get().fetchProfile()
+        return message
+      } catch (error) {
+        console.warn("Failed to update profile", error)
+        throw error
+      }
     },
   }
 })

@@ -10,8 +10,10 @@ import { MetricCircle } from "@/components/ui/MetricCircle"
 import { useAuthStore } from "@/auth/storage"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { useRouter } from "expo-router"
-import { MapPin, Route, TrendingUp, Clock, Mountain, Target, Leaf, ChevronDown, Bike } from "lucide-react-native"
+import { MapPin, Route, TrendingUp, Clock, Mountain, Target, Leaf, ChevronDown, Bike, AlertTriangle } from "lucide-react-native"
 import { ProfileHeroHeader } from "@/components/ProfileHeroHeader"
+import { AppPopup } from "@/components/ui/AppPopup"
+import { getApiErrorMessage } from "@/utils/apiError"
 
 type PaletteKey = keyof (typeof Colors)["light"]
 type IconType = React.ComponentType<{ size?: number; color?: string }>
@@ -136,6 +138,8 @@ export default function ProfileScreen() {
   const NAV_H = verticalScale(72)
   const router = useRouter()
   const user = useAuthStore((s) => s.user)
+  const fetchProfile = useAuthStore((s) => s.fetchProfile)
+  const isGuest = user?.id === "guest"
   const displayName = user?.username ?? user?.email?.split("@")[0] ?? "Guest"
   const email = user?.email ?? "guest@bestbikepaths.com"
   const initial = displayName.charAt(0).toUpperCase()
@@ -144,13 +148,50 @@ export default function ProfileScreen() {
   const [periodOverlayPosition, setPeriodOverlayPosition] = React.useState<{ top: number; right: number } | null>(null)
   const periodButtonRef = React.useRef<View | null>(null)
   const periodLabel = PERIOD_OPTIONS.find((opt) => opt.key === activityPeriod)?.label ?? "Month"
+  const lastFetchedUserId = React.useRef<string | null>(null)
+  const [errorPopup, setErrorPopup] = React.useState({
+    visible: false,
+    title: "Profile error",
+    message: "",
+  })
+
+  const closeProfileError = React.useCallback(() => {
+    setErrorPopup((prev) => ({
+      ...prev,
+      visible: false,
+    }))
+  }, [])
+
+  const showProfileError = React.useCallback((message: string, title = "Profile error") => {
+    setErrorPopup({
+      visible: true,
+      title,
+      message,
+    })
+  }, [])
+
+  React.useEffect(() => {
+    if (!user || isGuest) {
+      lastFetchedUserId.current = null
+      return
+    }
+    if (lastFetchedUserId.current === user.id) {
+      return
+    }
+    lastFetchedUserId.current = user.id
+    void fetchProfile().catch((error) => {
+      const message = getApiErrorMessage(error, "Unable to refresh the profile.")
+      showProfileError(message)
+    })
+  }, [user, isGuest, fetchProfile, showProfileError])
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: palette.bgSecondary }}
-      contentContainerStyle={{ paddingBottom: NAV_H + insets.bottom }}
-      showsVerticalScrollIndicator={false}
-    >
+    <>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: palette.bgSecondary }}
+        contentContainerStyle={{ paddingBottom: NAV_H + insets.bottom }}
+        showsVerticalScrollIndicator={false}
+      >
       <ProfileHeroHeader
         name={displayName}
         email={email}
@@ -242,19 +283,35 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <SelectionOverlay
-        visible={isPeriodMenuVisible}
-        options={PERIOD_OPTIONS}
-        selectedKey={activityPeriod}
-        topOffset={periodOverlayPosition?.top}
-        rightOffset={periodOverlayPosition?.right}
-        onClose={() => setPeriodMenuVisible(false)}
-        onSelect={(key) => {
-          setActivityPeriod(key as ActivityPeriod)
-          setPeriodMenuVisible(false)
+        <SelectionOverlay
+          visible={isPeriodMenuVisible}
+          options={PERIOD_OPTIONS}
+          selectedKey={activityPeriod}
+          topOffset={periodOverlayPosition?.top}
+          rightOffset={periodOverlayPosition?.right}
+          onClose={() => setPeriodMenuVisible(false)}
+          onSelect={(key) => {
+            setActivityPeriod(key as ActivityPeriod)
+            setPeriodMenuVisible(false)
+          }}
+        />
+      </ScrollView>
+      <AppPopup
+        visible={errorPopup.visible}
+        title={errorPopup.title}
+        message={errorPopup.message || "An unexpected error occurred."}
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.red} />}
+        iconBackgroundColor={`${palette.red}22`}
+        onClose={closeProfileError}
+        primaryButton={{
+          label: "OK",
+          variant: "primary",
+          onPress: closeProfileError,
+          buttonColor: palette.red,
+          textColor: palette.textInverse,
         }}
       />
-    </ScrollView>
+    </>
   )
 }
 

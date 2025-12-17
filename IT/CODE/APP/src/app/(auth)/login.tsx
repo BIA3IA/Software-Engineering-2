@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
 import { Controller, useForm } from "react-hook-form"
 import { Mail, Lock, AlertTriangle } from "lucide-react-native"
-import axios from "axios"
 
 import { AppTextInput } from "@/components/ui/AppTextInput"
 import { AppButton } from "@/components/ui/AppButton"
@@ -14,7 +13,7 @@ import { layoutStyles, spacingStyles, verticalScale } from "@/theme/layout"
 import { textStyles, iconSizes } from "@/theme/typography"
 import { useAuthStore } from "@/auth/storage"
 import { loginSchema, type LoginFormValues } from "@/auth/validation"
-import { loginApi } from "@/api/auth"
+import { getApiErrorMessage } from "@/utils/apiError"
 
 export default function LogInScreen() {
   const router = useRouter()
@@ -71,13 +70,10 @@ export default function LogInScreen() {
       await login(valid.email, valid.password)
       router.replace("/(main)/home")
     } catch (error) {
-      const message = axios.isAxiosError(error)
-        ? (error.response?.data?.message as string | undefined) ?? "Controlla le credenziali e riprova."
-        : "Qualcosa è andato storto. Riprova più tardi."
-
+      const message = getApiErrorMessage(error, "Check your credentials and try again.")
       setErrorPopup({
         visible: true,
-        title: "Login non riuscito",
+        title: "Login failed",
         message,
       })
     }
@@ -160,8 +156,8 @@ export default function LogInScreen() {
       </View>
       <AppPopup
         visible={errorPopup.visible}
-        title={errorPopup.title || "Errore"}
-        message={errorPopup.message || "Impossibile completare l'operazione."}
+        title={errorPopup.title || "Error"}
+        message={errorPopup.message || "Unable to complete the request."}
         icon={<AlertTriangle size={iconSizes.xl} color={palette.red} />}
         iconBackgroundColor={`${palette.red}22`}
         onClose={handleClosePopup}
