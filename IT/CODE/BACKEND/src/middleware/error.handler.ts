@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ErrorResponse } from '../types/error.types.js';
+import { ErrorResponse } from '../types/index.js';
 import { HttpStatus, AppError } from '../errors/index.js';
 import logger from '../utils/logger.js';
 
