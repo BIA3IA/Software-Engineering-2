@@ -43,7 +43,7 @@ export default function MainLayout() {
 
   function goToLogin() {
     setLoginPopupVisible(false)
-    router.push("/(auth)/login")
+    router.replace("/(auth)/login")
   }
 
   return (

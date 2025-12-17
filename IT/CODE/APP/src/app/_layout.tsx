@@ -6,7 +6,10 @@ import { usePaperTheme } from "@/theme/paperTheme"
 import { LucideIcon } from "@/components/icons/LucideIcon"
 
 export default function TabsLayout() {
-  const { user, loading, initAuth } = useAuthStore()
+  const user = useAuthStore((s) => s.user)
+  const loading = useAuthStore((s) => s.loading)
+  const initAuth = useAuthStore((s) => s.initAuth)
+
   const segments = useSegments()
   const inAuthGroup = segments[0] === "(auth)"
   const paperTheme = usePaperTheme()
@@ -22,7 +25,13 @@ export default function TabsLayout() {
         icon: (props) => <LucideIcon name={props.name} color={props.color} size={props.size} />,
       }}
     >
-      {loading ? null : !user && !inAuthGroup ? <Redirect href="/(auth)/welcome" /> : <Slot />}
+      {loading ? null : !user && !inAuthGroup ? (
+        <Redirect href="/(auth)/welcome" />
+      ) : user && inAuthGroup ? (
+        <Redirect href="/(main)/home" />
+      ) : (
+        <Slot />
+      )}
     </PaperProvider>
   )
 }

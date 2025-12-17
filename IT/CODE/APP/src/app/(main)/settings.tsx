@@ -15,8 +15,6 @@ import { ScreenHeader } from "@/components/ScreenHeader"
 import { useAuthStore } from "@/auth/storage"
 import { PRIVACY_OPTIONS, type PrivacyPreference } from "@/constants/privacy"
 
-type PaletteKey = keyof (typeof Colors)["light"]
-
 type PickerOption = {
   key: string
   label: string
@@ -36,7 +34,7 @@ export default function SettingsScreen() {
   const bottomNavVisibility = React.useContext(BottomNavVisibilityContext)
   const appearancePreference = useThemePreference()
   const setAppearancePreference = useSetThemePreference()
-  const logout = useAuthStore((state) => state.logout)
+  const logout = useAuthStore((s) => s.logout)
   const defaultPrivacy = usePrivacyPreference()
   const setDefaultPrivacy = useSetPrivacyPreference()
   const [activePicker, setActivePicker] = React.useState<"appearance" | "privacy" | null>(null)
@@ -183,15 +181,15 @@ export default function SettingsScreen() {
         </View>
 
         <View style={[styles.card, { backgroundColor: palette.bgPrimary, shadowColor: palette.border }]}>
-            <Pressable onPress={() => {}} style={({ pressed }) => [styles.simpleRow, pressed && { opacity: 0.85 }]}>
-              <View style={[styles.iconBadge, { backgroundColor: palette.primarySoft }]}>
-                <Mail size={iconSizes.md} color={palette.primary} />
-              </View>
-              <View style={styles.cardTexts}>
-                <Text style={[textStyles.bodyBold, { color: palette.primaryDark }]}>Get Help</Text>
-                <Text style={[textStyles.caption, { color: palette.textSecondary }]}>Contact support team</Text>
-              </View>
-            </Pressable>
+          <Pressable onPress={() => { }} style={({ pressed }) => [styles.simpleRow, pressed && { opacity: 0.85 }]}>
+            <View style={[styles.iconBadge, { backgroundColor: palette.primarySoft }]}>
+              <Mail size={iconSizes.md} color={palette.primary} />
+            </View>
+            <View style={styles.cardTexts}>
+              <Text style={[textStyles.bodyBold, { color: palette.primaryDark }]}>Get Help</Text>
+              <Text style={[textStyles.caption, { color: palette.textSecondary }]}>Contact support team</Text>
+            </View>
+          </Pressable>
         </View>
 
         <View style={[styles.card, styles.signOutCard, { backgroundColor: palette.redSoft, borderColor: `${palette.red}55` }]}>
