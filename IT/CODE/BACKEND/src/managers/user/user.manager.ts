@@ -1,8 +1,8 @@
 import { queryManager } from "../query/index.js";
 import { Request, Response, NextFunction } from 'express';
-import { UnauthorizedError, NotFoundError, BadRequestError, ConflictError} from "../../errors/app.errors.js";
+import { UnauthorizedError, NotFoundError, BadRequestError, ConflictError} from "../../errors/index.js";
 import bcrypt from 'bcrypt';
-import { UpdateProfilePayload } from "../../types/user.types.js";
+import { UpdateProfilePayload } from "../../types/index.js";
 
 export class UserManager {
     

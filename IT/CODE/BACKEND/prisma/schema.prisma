@@ -8,6 +8,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator json {
+  provider = "prisma-json-types-generator"
+}
+
 datasource db {
   provider = "postgresql"
 }
@@ -23,6 +27,7 @@ model User {
   updatedAt         DateTime       @updatedAt
   systemPreferences String[]
   refreshTokens     RefreshToken[]
+  trips             Trip[]
 }
 
 model RefreshToken {
@@ -32,4 +37,42 @@ model RefreshToken {
   token     String   @unique
   createdAt DateTime @default(now())
   expiresAt DateTime
+}
+
+model Trip {
+  tripId       String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
+  startedAt    DateTime
+  finishedAt   DateTime
+  /// [Coordinates]
+  origin       Json
+  /// [Coordinates]
+  destination  Json
+  /// [TripStatistics]
+  statistics   Json
+  /// [WeatherData]
+  weather      Json?
+  tripSegments TripSegment[]
+}
+
+model Segment {
+  segmentId           String        @id @default(cuid())
+  createdAt           DateTime      @default(now())
+  status              String        @default("OPTIMAL")
+  /// [Coordinates[]]
+  polylineCoordinates Json
+  tripSegments        TripSegment[]
+}
+
+model TripSegment {
+  id            String  @id @default(cuid())
+  tripId        String
+  segmentId     String
+  nextSegmentId String?
+  trip          Trip    @relation(fields: [tripId], references: [tripId], onDelete: Cascade)
+  segment       Segment @relation(fields: [segmentId], references: [segmentId], onDelete: Cascade)
+
+  @@unique([tripId, segmentId])
 }

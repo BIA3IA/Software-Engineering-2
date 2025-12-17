@@ -1,9 +1,7 @@
 import { Router } from 'express';
 import { userManager } from '../../managers/user/index.js';
-import { verifyAccessToken } from '../../middleware/jwt.auth.js';
-import { validate } from '../../middleware/index.js';
-import { registerSchema, } from '../../schemas/auth.schema.js';
-import { updateProfileSchema } from '../../schemas/user.schema.js';
+import { validate, verifyAccessToken } from '../../middleware/index.js';
+import { registerSchema, updateProfileSchema } from '../../schemas/index.js';
 
 const userRouter = Router();
 

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ObjectSchema } from 'joi';
-import { BadRequestError } from '../errors/app.errors.js';
+import { BadRequestError } from '../errors/index.js';
 
 // Middleware to validate request data against a Joi schema. 
 // Can validate req.body, req.query, or req.params based on the 'target' parameter.
