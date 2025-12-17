@@ -4,10 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json",
     "start": "node ./dist/server.js",
+    "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
+    "prisma:deploy": "prisma migrate deploy --config=./prisma.config.ts --schema=prisma/schema.prisma",
     "dev": "tsc-watch --onSuccess \"node ./dist/server.js\"",
-    "prisma:generate": "prisma generate",
     "migration:create": "prisma migrate dev --create-only",
     "migration:apply": "prisma migrate dev",
     "test": "NODE_OPTIONS='--localstorage-file=./jest-storage' jest",
@@ -16,7 +17,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
+  "type": "commonjs",
   "devDependencies": {
     "@tsconfig/node24": "^24.0.3",
     "@types/bcrypt": "^6.0.0",
