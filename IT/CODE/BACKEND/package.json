@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json",
     "start": "node ./dist/server.js",
+    "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
+    "prisma:deploy": "prisma migrate deploy --config=./prisma.config.ts --schema=prisma/schema.prisma",
     "dev": "tsc-watch --onSuccess \"node ./dist/server.js\"",
-    "prisma:generate": "prisma generate",
     "migration:create": "prisma migrate dev --create-only",
-    "prisma:deploy": "prisma migrate deploy",
     "test": "NODE_OPTIONS='--localstorage-file=./jest-storage' jest",
     "test:watch": "NODE_OPTIONS='--localstorage-file=./jest-storage' jest --watch"
   },

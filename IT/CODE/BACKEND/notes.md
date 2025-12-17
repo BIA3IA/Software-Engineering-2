@@ -246,3 +246,292 @@ npm install --save-dev @types/jsonwebtoken
 - Custom error handling middleware implemented in order to catch and respond to errors consistently across the application
 - Logging middleware using Pino for low overhead and high performance logging, accompanied also by a custom http logger
 - TODO: Perform unit and integration testing using Jest
+
+
+# BBP Backend Deployment on Hetzner
+**Docker + Shared Nginx + Cloudflare**
+
+This document describes, step by step, the deployment of the BBP backend on a Hetzner VPS using Docker.
+The backend is deployed alongside an already existing website, without interfering with it.
+
+The API is exposed at:
+https://api.bia3ia.com
+
+## 1. Architecture Overview
+
+- Server: Hetzner VPS (Ubuntu)
+- Container runtime: Docker + Docker Compose
+- Reverse proxy: Shared Nginx container
+- TLS: Cloudflare Origin Certificates
+- Database: PostgreSQL via Prisma Accelerate
+- Backend: Node.js (Express) + Prisma
+- Main domain: bia3ia.com
+- API subdomain: api.bia3ia.com
+
+Key concepts:
+- Nginx is the only service exposing ports 80 and 443
+- The backend listens on port 3000 internally
+- Services communicate through a shared Docker network
+
+## 2. Server Directory Structure
+
+```bash
+/opt
+├── nginx
+│   ├── conf.d
+│   │   ├── site.conf
+│   │   └── api.conf
+│   ├── ssl
+│   │   ├── residenzaclasmarina-origin.crt
+│   │   ├── residenzaclasmarina-origin.key
+│   │   ├── bia3ia-origin.crt
+│   │   └── bia3ia-origin.key
+│   └── log
+│       ├── access.log
+│       └── error.log
+│
+├── residenza-clas-marina
+│   └── docker-compose.yml
+│
+├── bbp-backend
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── .env
+```
+
+## 3. Copying the Project to the Server
+
+From the local machine:
+
+```bash
+rsync -avz ./bbp-backend/ bianca@<HETZNER_IP>:/opt/bbp-backend/
+```
+
+## 4. Environment Variables
+
+Create the .env file on the server:
+
+```bash
+cd /opt/bbp-backend
+nano .env
+```
+Example:
+
+```bash
+PORT=3000
+LOG_LEVEL=info
+JWT_SECRET= {{randomly_generated_secret}}
+JWT_REFRESH_SECRET= {{randomly_generated_refresh_secret}}
+DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key={{prisma_accelerate_api_key}}"
+```
+Secrets must never be committed to Git. 
+
+## 5. Docker Compose Configuration
+
+File: docker-compose.yml
+
+Notes:
+- expose makes port 3000 available only inside Docker
+- NODE_ENV=production avoids dev-only dependencies
+- proxy is a shared Docker network used by Nginx
+
+## 6. Dockerfile
+
+File: Dockerfile
+
+Notes:
+- Multi-stage build to keep the final image small.
+- Certificates are required for TLS connections to Prisma Accelerate.
+- Migrations are applied at container startup.
+
+## 7. Logger Configuration (Production-safe)
+
+File: src/utils/logger.ts
+
+Notes:
+- pino-pretty must not be used in production
+- NODE_ENV=production is enforced via Docker Compose
+
+## 8. Docker Network Setup
+
+Create the shared network once:
+
+```bash
+docker network create proxy || true
+```
+
+Connect Containers:
+
+```bash
+docker network connect proxy <nginx_container> || true
+```
+
+In our specific case:
+
+```bash
+docker network connect proxy bbp_api || true
+docker network connect proxy shared_nginx || true
+```
+
+Then verify:
+
+```bash
+docker network inspect proxy
+```
+
+## 9. Nginx Configuration for the API
+
+Reverse proxy from api.bia3ia.com to bbp_api:3000
+TLS via Cloudflare Origin Certificate.
+
+File: /opt/nginx/conf.d/api.conf
+
+```bash
+# HTTP -> HTTPS redirect
+server {
+    listen 80;
+    listen [::]:80;
+    server_name api.bia3ia.com;
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS reverse proxy
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+
+    server_name api.bia3ia.com;
+
+    ssl_certificate     /etc/nginx/ssl/bia3ia-origin.crt;
+    ssl_certificate_key /etc/nginx/ssl/bia3ia-origin.key;
+
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    location / {
+        proxy_pass http://bbp_api:3000;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 60s;
+        proxy_send_timeout 60s;
+
+        client_max_body_size 25m;
+    }
+}
+```
+
+Reload Nginx:
+
+```bash
+docker exec -it shared_nginx nginx -t
+docker exec -it shared_nginx nginx -s reload
+```
+
+## 10. Cloudflare Configuration
+
+I have already a Cloudflare account managing bia3ia.com. (Bianca)
+It is the domain of another site hosted on another server, but we can use the subdomain api.bia3ia.com for our apis.
+
+DNS
+
+| Type | Name | Content    | Proxy   |
+| ---- | ---- | ---------- | ------- |
+| A    | api  | Hetzner IP | Proxied |
+
+SSL/TLS
+Mode: Full (strict)
+Origin certificate:
+Covers bia3ia.com and *.bia3ia.com
+Installed inside the Nginx container
+If SSL is misconfigured, Cloudflare returns error 526.
+
+## 11. Starting the Backend
+
+From the server:
+
+```bash
+cd /opt/bbp-backend
+docker compose build --no-cache
+docker compose up -d
+```
+
+Check Status:
+
+```bash
+docker compose ps
+docker logs -f bbp_api --tail=50
+```
+
+## 12. Testing the Deployment
+
+From the server:
+
+```bash
+curl -i -k -H "Host: api.bia3ia.com" https://127.0.0.1/
+```
+
+From outside:
+
+```bash
+curl -i https://api.bia3ia.com/api/v1/users/profile
+```
+
+Should answer with ACCESS_TOKEN_MISSING because no token is provided
+
+## 13. Common Commands
+
+Restart backend:
+
+```bash
+docker compose restart api
+```
+
+View Logs:
+
+```bash
+docker logs -f bbp_api --tail=100
+```
+
+Reload Nginx after changes:
+
+```bash
+docker exec -it shared_nginx nginx -t
+docker exec -it shared_nginx nginx -s reload
+```
+
+## Note on Nginx usage
+
+In the Residenza Clas Marina project, Nginx is defined inside the docker-compose.yml file because the project is a complete web application.
+
+That application:
+- serves HTML content
+- handles HTTP to HTTPS redirection
+- terminates TLS
+- exposes ports 80 and 443 directly to the internet
+
+For these reasons, Nginx is considered part of the application stack and is deployed together with the frontend.
+
+In contrast, BBP Backend is a pure API service.
+
+The backend:
+- does not serve static or HTML content
+- does not manage TLS certificates
+- does not expose public ports directly
+- is meant to be consumed by a mobile application
+
+Because of this, Nginx is not included in the bbp-backend Docker Compose file.
+Instead, the backend is exposed through a shared Nginx reverse proxy, which acts as infrastructure and routes incoming requests to the correct internal service based on the requested domain.
+
+This separation keeps the backend lightweight, reusable, and independent from the HTTP/TLS layer.
