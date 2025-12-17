@@ -1,7 +1,7 @@
 {
     "extends": "@tsconfig/node24/tsconfig.json",
     "compilerOptions": {
-        "module": "ESNext",
+        "module": "CommonJS",
         "target": "ES2023",
         "strict": true,
         "moduleResolution": "node",

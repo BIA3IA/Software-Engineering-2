@@ -1,0 +1,91 @@
+Non capisco niente :( Su hetzner ho un altro sito dockerizzato, quindi dobbiamo stare attenti a non intaccare quello.  SO che i comandi per buildare il sito sono:
+cd /opt/residenza-clas-marina/
+docker compose build app
+docker compose up -d app
+
+Li dentro opt ho una cartella che si chiama containered e ho residenza-class-marina. Dentro residenza clas marina ho una cartella app, un file docker -compose.yml e poi una cartella nginx. IL docker compose é:
+cat docker-compose.yml 
+services:
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: residenzaclasmarina_app
+    environment:
+      - NODE_ENV=production
+      - NITRO_PORT=3000
+      - HOST=0.0.0.0
+      - NUXT_PUBLIC_EMAILJS_PUBLIC_KEY=iT2XTszXOVQdnAECH
+      - NUXT_PUBLIC_EMAILJS_SERVICE_ID=service_ey3ep8d
+      - NUXT_PUBLIC_EMAILJS_TEMPLATE_ID=template_ua77j1o
+
+    expose:
+      - "3000"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: residenzaclasmarina_nginx
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/log:/var/log/nginx
+    restart: unless-stopped
+
+E invece in ngnx ho conf.d log ed ssl. TI serve sapere altro? 
+
+DOCKER ON HETZNER:
+
+dopo averlo installato farlo partire:
+systemctl start docker
+systemctl enable docker
+
+
+docker network create proxy
+-- caec0d24a3dd3c966944a66b4dbd860c428b4ef00ca0cf49047b38af7f2b5865
+
+docker network connect proxy residenzaclasmarina_nginx
+
+sudo mkdir -p /opt/bbp-backend
+sudo chown -R $USER:$USER /opt/bbp-backend
+cd /opt/bbp-backend
+
+rsync -avz --progress \
+  /home/bianca/Documenti/Code/Bianca/Errigo-Gholami-Ianosel/IT/CODE/BACKEND/ \
+  root@138.201.173.210:/opt/bbp-backend/
+
+MIGRATIIONS:
+ls -1 prisma/migrations
+-- 20251203231448_create_users_table 20251205144834_auth_table migration_lock.toml
+
+docker-compose stop api
+docker-compose run --rm api sh -lc 'npx prisma migrate resolve --applied 20251203231448_create_users_table --config=./prisma.config.ts --schema=prisma/schema.prisma'
+docker-compose run --rm api sh -lc 'npx prisma migrate resolve --applied 20251205144834_auth_table --config=./prisma.config.ts --schema=prisma/schema.prisma'
+
+docker-compose run --rm api sh -lc 'npx prisma migrate deploy --config=./prisma.config.ts --schema=prisma/schema.prisma'
+
+docker-compose up -d
+docker-compose logs -f api
+
+NGNX:
+nginx é gia sotto la cartella residenza-class-marina/nginx quindi non lo sposto solo per non rompere il sito. 
+
+DOCKER:
+docker compose up -d --build
+
+
+docker network create web || true
+docker network connect web residenzaclasmarina_nginx || true
+docker network connect web bbp_api || true
+
+docker network inspect web | grep -A2 Containers
+
+        "Containers": {
+            "ec449477b00bed4ba9543cb6247378139633d78e6e851e59a5bbdaf89c99e73d": {
+                "Name": "residenzaclasmarina_nginx",
+root@bia-server:/opt/bbp-backend# 

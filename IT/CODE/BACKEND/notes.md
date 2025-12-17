@@ -487,7 +487,7 @@ Key concepts:
 From the local machine:
 
 ```bash
-rsync -avz ./bbp-backend/ bianca@<HETZNER_IP>:/opt/bbp-backend/
+rsync -avz ./BACKEND/ bianca@<HETZNER_IP>:/opt/bbp-backend/
 ```
 
 ## 4. Environment Variables
