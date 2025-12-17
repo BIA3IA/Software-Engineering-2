@@ -2,7 +2,8 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios"
 import { refreshAccessToken } from "./tokenManager"
 import { getAccessToken } from "@/auth/authSession"
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.123:3000/api/v1"
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_PROD_API_URL ?? process.env.EXPO_PUBLIC_DEVEL_API_URL
 
 type RequestConfigWithRetry = InternalAxiosRequestConfig & { _retry?: boolean }
 
