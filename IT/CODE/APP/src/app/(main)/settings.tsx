@@ -11,9 +11,9 @@ import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { useRouter } from "expo-router"
 import { BottomNavVisibilityContext } from "@/hooks/useBottomNavVisibility"
-import { ScreenHeader } from "@/components/ScreenHeader"
+import { ScreenHeader } from "@/components/ui/ScreenHeader"
 import { useAuthStore } from "@/auth/storage"
-import { PRIVACY_OPTIONS, type PrivacyPreference } from "@/constants/privacy"
+import { PRIVACY_OPTIONS, type PrivacyPreference } from "@/constants/Privacy"
 
 type PickerOption = {
   key: string
@@ -94,7 +94,7 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: palette.bgSecondary }}
+      style={{ flex: 1, backgroundColor: palette.surface.screen }}
       contentContainerStyle={{ paddingBottom: verticalScale(32) + insets.bottom }}
     >
       <ScreenHeader
@@ -106,27 +106,27 @@ export default function SettingsScreen() {
             onPress={() => router.back()}
             style={({ pressed }) => [
               styles.backButton,
-              { backgroundColor: palette.buttonSecondaryBg, shadowColor: palette.border },
+              { backgroundColor: palette.button.secondary.bg, shadowColor: palette.border.muted },
               pressed && { opacity: 0.9 },
             ]}
           >
-            <X size={iconSizes.md} color={palette.buttonSecondaryText} />
+            <X size={iconSizes.md} color={palette.button.secondary.text} />
           </Pressable>
         }
       />
 
       <View style={styles.sectionsWrapper}>
-        <View style={[styles.card, { backgroundColor: palette.bgPrimary, shadowColor: palette.border }]}>
+        <View style={[styles.card, { backgroundColor: palette.surface.card, shadowColor: palette.border.muted }]}>
           <View style={styles.cardRow}>
-            <View style={[styles.iconBadge, { backgroundColor: `${palette.primarySoft}` }]}>
-              <SunMedium size={iconSizes.md} color={palette.primaryDark} />
+            <View style={[styles.iconBadge, { backgroundColor: `${palette.brand.surface}` }]}>
+              <SunMedium size={iconSizes.md} color={palette.brand.dark} />
             </View>
 
             <View style={styles.cardTexts}>
-              <Text style={[textStyles.bodyBold, { color: palette.primaryDark }]}>
+              <Text style={[textStyles.bodyBold, { color: palette.brand.dark }]}>
                 Appearance
               </Text>
-              <Text style={[textStyles.caption, { color: palette.textSecondary }]}>
+              <Text style={[textStyles.caption, { color: palette.text.secondary }]}>
                 Choose your theme
               </Text>
             </View>
@@ -138,27 +138,27 @@ export default function SettingsScreen() {
               onPress={() => openPicker("appearance")}
               style={({ pressed }) => [
                 styles.selectButton,
-                { backgroundColor: palette.primary, borderColor: palette.primary, shadowColor: palette.border },
+                { backgroundColor: palette.brand.base, borderColor: palette.brand.base, shadowColor: palette.border.muted },
                 pressed && { opacity: 0.9 },
               ]}
             >
-              <Text style={[textStyles.caption, styles.selectLabel, { color: palette.textInverse }]}>{APPEARANCE_OPTIONS.find((opt) => opt.key === appearancePreference)?.label}</Text>
-              <ChevronDown size={iconSizes.xs} color={palette.textInverse} />
+              <Text style={[textStyles.caption, styles.selectLabel, { color: palette.text.onAccent }]}>{APPEARANCE_OPTIONS.find((opt) => opt.key === appearancePreference)?.label}</Text>
+              <ChevronDown size={iconSizes.xs} color={palette.text.onAccent} />
             </Pressable>
           </View>
         </View>
 
-        <View style={[styles.card, { backgroundColor: palette.bgPrimary, shadowColor: palette.border }]}>
+        <View style={[styles.card, { backgroundColor: palette.surface.card, shadowColor: palette.border.muted }]}>
           <View style={styles.cardRow}>
-            <View style={[styles.iconBadge, { backgroundColor: `${palette.primarySoft}` }]}>
-              <Eye size={iconSizes.md} color={palette.primaryDark} />
+            <View style={[styles.iconBadge, { backgroundColor: `${palette.brand.surface}` }]}>
+              <Eye size={iconSizes.md} color={palette.brand.dark} />
             </View>
 
             <View style={styles.cardTexts}>
-              <Text style={[textStyles.bodyBold, { color: palette.primaryDark }]}>
+              <Text style={[textStyles.bodyBold, { color: palette.brand.dark }]}>
                 Default Privacy
               </Text>
-              <Text style={[textStyles.caption, { color: palette.textSecondary }]}>
+              <Text style={[textStyles.caption, { color: palette.text.secondary }]}>
                 For new paths you create
               </Text>
             </View>
@@ -170,39 +170,39 @@ export default function SettingsScreen() {
               onPress={() => openPicker("privacy")}
               style={({ pressed }) => [
                 styles.selectButton,
-                { backgroundColor: palette.primary, borderColor: palette.primary, shadowColor: palette.border },
+                { backgroundColor: palette.brand.base, borderColor: palette.brand.base, shadowColor: palette.border.muted },
                 pressed && { opacity: 0.9 },
               ]}
             >
-              <Text style={[textStyles.caption, styles.selectLabel, { color: palette.textInverse }]}>{PRIVACY_OPTIONS.find((opt) => opt.key === defaultPrivacy)?.label}</Text>
-              <ChevronDown size={iconSizes.xs} color={palette.textInverse} />
+              <Text style={[textStyles.caption, styles.selectLabel, { color: palette.text.onAccent }]}>{PRIVACY_OPTIONS.find((opt) => opt.key === defaultPrivacy)?.label}</Text>
+              <ChevronDown size={iconSizes.xs} color={palette.text.onAccent} />
             </Pressable>
           </View>
         </View>
 
-        <View style={[styles.card, { backgroundColor: palette.bgPrimary, shadowColor: palette.border }]}>
+        <View style={[styles.card, { backgroundColor: palette.surface.card, shadowColor: palette.border.muted }]}>
           <Pressable onPress={() => { }} style={({ pressed }) => [styles.simpleRow, pressed && { opacity: 0.85 }]}>
-            <View style={[styles.iconBadge, { backgroundColor: palette.primarySoft }]}>
-              <Mail size={iconSizes.md} color={palette.primary} />
+            <View style={[styles.iconBadge, { backgroundColor: palette.brand.surface }]}>
+              <Mail size={iconSizes.md} color={palette.brand.base} />
             </View>
             <View style={styles.cardTexts}>
-              <Text style={[textStyles.bodyBold, { color: palette.primaryDark }]}>Get Help</Text>
-              <Text style={[textStyles.caption, { color: palette.textSecondary }]}>Contact support team</Text>
+              <Text style={[textStyles.bodyBold, { color: palette.brand.dark }]}>Get Help</Text>
+              <Text style={[textStyles.caption, { color: palette.text.secondary }]}>Contact support team</Text>
             </View>
           </Pressable>
         </View>
 
-        <View style={[styles.card, styles.signOutCard, { backgroundColor: palette.redSoft, borderColor: `${palette.red}55` }]}>
+        <View style={[styles.card, styles.signOutCard, { backgroundColor: `${palette.status.danger}15`, borderColor: `${palette.status.danger}55` }]}>
           <Pressable
             onPress={handleLogoutPress}
             style={({ pressed }) => [styles.simpleRow, pressed && { opacity: 0.85 }]}
           >
-            <View style={[styles.iconBadge, { backgroundColor: palette.redSoft, borderColor: palette.red, borderWidth: 1 }]}>
-              <LogOut size={iconSizes.md} color={palette.red} />
+            <View style={[styles.iconBadge, { backgroundColor: `${palette.status.danger}18`, borderColor: palette.status.danger, borderWidth: 1 }]}>
+              <LogOut size={iconSizes.md} color={palette.status.danger} />
             </View>
             <View style={styles.cardTexts}>
-              <Text style={[textStyles.bodyBold, { color: palette.redDark }]}>Log Out</Text>
-              <Text style={[textStyles.caption, { color: palette.redDark }]}>Log out of your account</Text>
+              <Text style={[textStyles.bodyBold, { color: palette.status.danger }]}>Log Out</Text>
+              <Text style={[textStyles.caption, { color: palette.status.danger }]}>Log out of your account</Text>
             </View>
           </Pressable>
         </View>
@@ -222,8 +222,8 @@ export default function SettingsScreen() {
         visible={isLogoutPopupVisible}
         title="Log Out?"
         message="Are you sure you want to log out? You'll need to sign back in to sync your rides."
-        icon={<LogOut size={iconSizes.xl} color={palette.red} />}
-        iconBackgroundColor={`${palette.red}22`}
+        icon={<LogOut size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
         onClose={() => setLogoutPopupVisible(false)}
         primaryButton={{
           label: "Yes, Log Out",
@@ -234,8 +234,8 @@ export default function SettingsScreen() {
           label: "No, Cancel",
           variant: "secondary",
           onPress: () => setLogoutPopupVisible(false),
-          textColor: palette.red,
-          borderColor: palette.red,
+          textColor: palette.status.danger,
+          borderColor: palette.status.danger,
         }}
       />
     </ScrollView>

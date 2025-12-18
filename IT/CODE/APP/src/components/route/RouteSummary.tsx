@@ -21,14 +21,14 @@ export function RouteSummary({
 
   return (
     <View style={styles.section}>
-      <Text style={[textStyles.cardTitle, { color: palette.textAccent }]}>
+      <Text style={[textStyles.cardTitle, { color: palette.text.link }]}>
         Route Summary
       </Text>
 
       <View
         style={[
           styles.card,
-          { backgroundColor: palette.bgPrimary, borderColor: palette.border },
+          { backgroundColor: palette.surface.card, borderColor: palette.border.muted },
         ]}
       >
         <Row label="Date" value={date} />
@@ -52,11 +52,11 @@ function Row({
   const palette = Colors[scheme]
 
   return (
-    <View style={[styles.row, !isLast && { borderBottomWidth: 1, borderBottomColor: palette.border }]}>
-      <Text style={[textStyles.bodySmall, { color: palette.textSecondary }]}>
+    <View style={[styles.row, !isLast && { borderBottomWidth: 1, borderBottomColor: palette.border.muted }]}>
+      <Text style={[textStyles.bodySmall, { color: palette.text.secondary }]}>
         {label}
       </Text>
-      <Text style={[textStyles.bodySmall, styles.value, { color: palette.textAccent }]}>
+      <Text style={[textStyles.bodySmall, styles.value, { color: palette.text.link }]}>
         {value}
       </Text>
     </View>

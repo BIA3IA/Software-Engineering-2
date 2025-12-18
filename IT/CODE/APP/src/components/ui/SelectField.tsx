@@ -42,25 +42,25 @@ export function SelectField({ label, valueLabel, onOpen, active }: SelectFieldPr
         containerRef.current = node
       }}
     >
-      <Text style={[textStyles.caption, styles.label, { color: palette.textSecondary }]}>
+      <Text style={[textStyles.caption, styles.label, { color: palette.text.secondary }]}>
         {label}
       </Text>
       <Pressable
         style={({ pressed }) => [
           styles.input,
           {
-            borderColor: palette.border,
-            backgroundColor: palette.inputBg,
+            borderColor: palette.border.muted,
+            backgroundColor: palette.surface.input,
           },
-          active && { borderColor: palette.primary },
+          active && { borderColor: palette.brand.base },
           pressed && { opacity: 0.9 },
         ]}
         onPress={handlePress}
       >
-        <Text style={[textStyles.body, { color: palette.textPrimary }]}>
+        <Text style={[textStyles.body, { color: palette.text.primary }]}>
           {valueLabel}
         </Text>
-        <ChevronDown size={iconSizes.sm} color={palette.textSecondary} />
+        <ChevronDown size={iconSizes.sm} color={palette.text.secondary} />
       </Pressable>
     </View>
   )

@@ -16,8 +16,8 @@ export function MetricPill({ icon, value, backgroundColor, textColor }: MetricPi
     const scheme = useColorScheme() ?? "light"
     const palette = Colors[scheme]
 
-    const bg = backgroundColor ?? palette.bgAccent
-    const contentColor = textColor ?? palette.textPrimary
+    const bg = backgroundColor ?? palette.surface.accent
+    const contentColor = textColor ?? palette.text.primary
 
     return (
         <View style={[styles.container, { backgroundColor: bg }]}>

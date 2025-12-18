@@ -48,20 +48,20 @@ export function AppPopup({
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
 
-  const iconBg = iconBackgroundColor ?? palette.bgAccent
+  const iconBg = iconBackgroundColor ?? palette.surface.accent
   const primaryVariant = primaryButton.variant ?? "primary"
 
   function getVariantAccent(variant: PopupButtonConfig["variant"]) {
     switch (variant) {
       case "secondary":
-        return palette.buttonSecondaryText
+        return palette.button.secondary.text
       case "outline":
-        return palette.buttonOutlineText
+        return palette.button.outline.text
       case "destructive":
-        return palette.buttonDestructiveBg
+        return palette.button.danger.bg
       case "primary":
       default:
-        return palette.buttonPrimaryBg
+        return palette.button.primary.bg
     }
   }
 
@@ -86,10 +86,9 @@ export function AppPopup({
           <View
             style={[
               styles.card,
-              { backgroundColor: palette.bgPrimary, shadowColor: palette.border },
+              { backgroundColor: palette.surface.card, shadowColor: palette.border.muted },
             ]}
           >
-            <View style={styles.handle} />
 
             {icon && (
               <View
@@ -116,7 +115,7 @@ export function AppPopup({
               style={[
                 textStyles.heroSubtitle,
                 styles.message,
-                { color: palette.textSecondary },
+                { color: palette.text.secondary },
               ]}
             >
               {message}
@@ -199,14 +198,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 16 },
     shadowRadius: 32,
     elevation: 10,
-  },
-  handle: {
-    alignSelf: "center",
-    width: scale(44),
-    height: verticalScale(4),
-    borderRadius: radius.full,
-    marginBottom: verticalScale(16),
-    backgroundColor: "rgba(148,163,184,0.6)",
   },
   iconWrapper: {
     alignSelf: "center",

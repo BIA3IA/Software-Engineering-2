@@ -11,11 +11,11 @@ import { useAuthStore } from "@/auth/storage"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { useRouter } from "expo-router"
 import { MapPin, Route, TrendingUp, Clock, Mountain, Target, Leaf, ChevronDown, Bike, AlertTriangle } from "lucide-react-native"
-import { ProfileHeroHeader } from "@/components/ProfileHeroHeader"
+import { ProfileHeroHeader } from "@/components/profile/ProfileHeroHeader"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { getApiErrorMessage } from "@/utils/apiError"
 
-type PaletteKey = keyof (typeof Colors)["light"]
+type AccentName = "brand" | keyof (typeof Colors)["light"]["accent"]
 type IconType = React.ComponentType<{ size?: number; color?: string }>
 
 type OverallStat = {
@@ -23,8 +23,8 @@ type OverallStat = {
   icon: IconType
   value: string
   label: string
-  accent: PaletteKey
-  background: PaletteKey
+  accent: AccentName
+  background: AccentName
 }
 
 type ActivityStat = {
@@ -32,7 +32,7 @@ type ActivityStat = {
   icon: IconType
   value: string
   label: string
-  accent: PaletteKey
+  accent: AccentName
   progress: number
 }
 
@@ -44,8 +44,8 @@ const OVERALL_STATS: OverallStat[] = [
     icon: MapPin,
     value: "342.7",
     label: "Total km",
-    accent: "primary",
-    background: "primarySoft",
+    accent: "brand",
+    background: "brand",
   },
   {
     id: "trips",
@@ -53,7 +53,7 @@ const OVERALL_STATS: OverallStat[] = [
     value: "56",
     label: "Trips",
     accent: "purple",
-    background: "purpleSoft",
+    background: "purple",
   },
   {
     id: "paths",
@@ -61,7 +61,7 @@ const OVERALL_STATS: OverallStat[] = [
     value: "8",
     label: "Paths",
     accent: "green",
-    background: "greenSoft",
+    background: "green",
   },
 ]
 
@@ -69,9 +69,9 @@ const ACTIVITY_STATS: Record<ActivityPeriod, ActivityStat[]> = {
   day: [
     { id: "paths", icon: Bike, value: "1", label: "Paths", accent: "green", progress: 0.2 },
     { id: "trip-count", icon: Route, value: "2", label: "Trips", accent: "purple", progress: 0.3 },
-    { id: "distance", icon: MapPin, value: "18.4 km", label: "Distance", accent: "primary", progress: 0.4 },
+    { id: "distance", icon: MapPin, value: "18.4 km", label: "Distance", accent: "brand", progress: 0.4 },
     { id: "time", icon: Clock, value: "1h 20m", label: "Time", accent: "orange", progress: 0.32 },
-    { id: "avg-speed", icon: TrendingUp, value: "20.1 km/h", label: "Avg Speed", accent: "primary", progress: 0.52 },
+    { id: "avg-speed", icon: TrendingUp, value: "20.1 km/h", label: "Avg Speed", accent: "brand", progress: 0.52 },
     { id: "longest", icon: Target, value: "12.3 km", label: "Longest", accent: "red", progress: 0.38 },
     { id: "elevation", icon: Mountain, value: "210 m", label: "Elevation", accent: "green", progress: 0.28 },
     { id: "max-speed", icon: TrendingUp, value: "38.2 km/h", label: "Max Speed", accent: "purple", progress: 0.45 },
@@ -80,9 +80,9 @@ const ACTIVITY_STATS: Record<ActivityPeriod, ActivityStat[]> = {
   week: [
     { id: "paths", icon: Route, value: "4", label: "Paths", accent: "green", progress: 0.38 },
     { id: "trip-count", icon: Route, value: "7", label: "Trips", accent: "purple", progress: 0.52 },
-    { id: "distance", icon: MapPin, value: "98.7 km", label: "Distance", accent: "primary", progress: 0.61 },
+    { id: "distance", icon: MapPin, value: "98.7 km", label: "Distance", accent: "brand", progress: 0.61 },
     { id: "time", icon: Clock, value: "6h 45m", label: "Time", accent: "orange", progress: 0.48 },
-    { id: "avg-speed", icon: TrendingUp, value: "19.2 km/h", label: "Avg Speed", accent: "primary", progress: 0.58 },
+    { id: "avg-speed", icon: TrendingUp, value: "19.2 km/h", label: "Avg Speed", accent: "brand", progress: 0.58 },
     { id: "longest", icon: Target, value: "21.6 km", label: "Longest", accent: "red", progress: 0.46 },
     { id: "elevation", icon: Mountain, value: "720 m", label: "Elevation", accent: "green", progress: 0.55 },
     { id: "max-speed", icon: TrendingUp, value: "41.3 km/h", label: "Max Speed", accent: "purple", progress: 0.57 },
@@ -91,9 +91,9 @@ const ACTIVITY_STATS: Record<ActivityPeriod, ActivityStat[]> = {
   month: [
     { id: "paths", icon: Route, value: "9", label: "Paths", accent: "green", progress: 0.6 },
     { id: "trip-count", icon: Route, value: "20", label: "Trips", accent: "purple", progress: 0.72 },
-    { id: "distance", icon: MapPin, value: "312.4 km", label: "Distance", accent: "primary", progress: 0.74 },
+    { id: "distance", icon: MapPin, value: "312.4 km", label: "Distance", accent: "brand", progress: 0.74 },
     { id: "time", icon: Clock, value: "18h 30m", label: "Time", accent: "orange", progress: 0.68 },
-    { id: "avg-speed", icon: TrendingUp, value: "18.5 km/h", label: "Avg Speed", accent: "primary", progress: 0.66 },
+    { id: "avg-speed", icon: TrendingUp, value: "18.5 km/h", label: "Avg Speed", accent: "brand", progress: 0.66 },
     { id: "longest", icon: Target, value: "24.8 km", label: "Longest", accent: "red", progress: 0.48 },
     { id: "elevation", icon: Mountain, value: "1247 m", label: "Elevation", accent: "green", progress: 0.78 },
     { id: "max-speed", icon: TrendingUp, value: "42.3 km/h", label: "Max Speed", accent: "purple", progress: 0.62 },
@@ -102,9 +102,9 @@ const ACTIVITY_STATS: Record<ActivityPeriod, ActivityStat[]> = {
   year: [
     { id: "paths", icon: Route, value: "42", label: "Paths", accent: "green", progress: 0.8 },
     { id: "trip-count", icon: Route, value: "118", label: "Trips", accent: "purple", progress: 0.83 },
-    { id: "distance", icon: MapPin, value: "2,812 km", label: "Distance", accent: "primary", progress: 0.9 },
+    { id: "distance", icon: MapPin, value: "2,812 km", label: "Distance", accent: "brand", progress: 0.9 },
     { id: "time", icon: Clock, value: "168h", label: "Time", accent: "orange", progress: 0.82 },
-    { id: "avg-speed", icon: TrendingUp, value: "19.1 km/h", label: "Avg Speed", accent: "primary", progress: 0.71 },
+    { id: "avg-speed", icon: TrendingUp, value: "19.1 km/h", label: "Avg Speed", accent: "brand", progress: 0.71 },
     { id: "longest", icon: Target, value: "55.3 km", label: "Longest", accent: "red", progress: 0.64 },
     { id: "elevation", icon: Mountain, value: "6,430 m", label: "Elevation", accent: "green", progress: 0.84 },
     { id: "max-speed", icon: TrendingUp, value: "48.7 km/h", label: "Max Speed", accent: "purple", progress: 0.74 },
@@ -113,9 +113,9 @@ const ACTIVITY_STATS: Record<ActivityPeriod, ActivityStat[]> = {
   overall: [
     { id: "paths", icon: Route, value: "128", label: "Paths", accent: "green", progress: 0.95 },
     { id: "trip-count", icon: Route, value: "420", label: "Trips", accent: "purple", progress: 0.96 },
-    { id: "distance", icon: MapPin, value: "6,957 km", label: "Distance", accent: "primary", progress: 0.98 },
+    { id: "distance", icon: MapPin, value: "6,957 km", label: "Distance", accent: "brand", progress: 0.98 },
     { id: "time", icon: Clock, value: "488h", label: "Time", accent: "orange", progress: 0.94 },
-    { id: "avg-speed", icon: TrendingUp, value: "19.4 km/h", label: "Avg Speed", accent: "primary", progress: 0.82 },
+    { id: "avg-speed", icon: TrendingUp, value: "19.4 km/h", label: "Avg Speed", accent: "brand", progress: 0.82 },
     { id: "longest", icon: Target, value: "78.4 km", label: "Longest", accent: "red", progress: 0.76 },
     { id: "elevation", icon: Mountain, value: "12,874 m", label: "Elevation", accent: "green", progress: 0.91 },
     { id: "max-speed", icon: TrendingUp, value: "52.9 km/h", label: "Max Speed", accent: "purple", progress: 0.8 },
@@ -130,6 +130,14 @@ const PERIOD_OPTIONS: { key: ActivityPeriod; label: string }[] = [
   { key: "year", label: "Year" },
   { key: "overall", label: "Overall" },
 ]
+
+function getAccentFill(palette: (typeof Colors)["light"], accent: AccentName) {
+  return accent === "brand" ? palette.brand.base : palette.accent[accent].base
+}
+
+function getAccentSurface(palette: (typeof Colors)["light"], accent: AccentName) {
+  return accent === "brand" ? palette.brand.surface : palette.accent[accent].surface
+}
 
 export default function ProfileScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -188,7 +196,7 @@ export default function ProfileScreen() {
   return (
     <>
       <ScrollView
-        style={{ flex: 1, backgroundColor: palette.bgSecondary }}
+        style={{ flex: 1, backgroundColor: palette.surface.screen }}
         contentContainerStyle={{ paddingBottom: NAV_H + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
@@ -201,14 +209,14 @@ export default function ProfileScreen() {
       />
 
       <View style={styles.content}>
-        <View style={[styles.card, { backgroundColor: palette.bgPrimary, shadowColor: palette.border }]}>
-          <Text style={[textStyles.cardTitle, styles.cardTitle, { color: palette.textAccent }]}>Overall Stats</Text>
+        <View style={[styles.card, { backgroundColor: palette.surface.card, shadowColor: palette.border.muted }]}>
+          <Text style={[textStyles.cardTitle, styles.cardTitle, { color: palette.text.link }]}>Overall Stats</Text>
 
           <View style={styles.overallRow}>
             {OVERALL_STATS.map((stat) => {
               const Icon = stat.icon
-              const accent = palette[stat.accent]
-              const background = palette[stat.background]
+              const accent = getAccentFill(palette, stat.accent)
+              const background = getAccentSurface(palette, stat.background)
               return (
                 <StatCard
                   key={stat.id}
@@ -223,9 +231,9 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View style={[styles.card, { backgroundColor: palette.bgPrimary, shadowColor: palette.border }]}>
+        <View style={[styles.card, { backgroundColor: palette.surface.card, shadowColor: palette.border.muted }]}>
           <View style={styles.sectionHeader}>
-            <Text style={[textStyles.cardTitle, { color: palette.textAccent }]}>Activity Stats</Text>
+            <Text style={[textStyles.cardTitle, { color: palette.text.link }]}>Activity Stats</Text>
 
             <Pressable
               ref={(node) => {
@@ -249,16 +257,16 @@ export default function ProfileScreen() {
               style={({ pressed }) => [
                 styles.fakeSelect,
                 {
-                  backgroundColor: palette.primary,
-                  borderColor: palette.primary,
-                  shadowColor: palette.border,
+                  backgroundColor: palette.brand.base,
+                  borderColor: palette.brand.base,
+                  shadowColor: palette.border.muted,
                 },
                 pressed && { opacity: 0.9 },
               ]}
             >
               <View style={styles.periodLabelWrap}>
                 <Text style={[textStyles.caption, styles.periodLabel]}>{periodLabel}</Text>
-                <ChevronDown size={iconSizes.xs} color={palette.textInverse} />
+                <ChevronDown size={iconSizes.xs} color={palette.text.onAccent} />
               </View>
             </Pressable>
           </View>
@@ -266,7 +274,7 @@ export default function ProfileScreen() {
           <View style={styles.metricsGrid}>
             {ACTIVITY_STATS[activityPeriod].map((stat) => {
               const Icon = stat.icon
-              const accent = palette[stat.accent]
+              const accent = getAccentFill(palette, stat.accent)
               return (
                 <MetricCircle
                   key={stat.id}
@@ -300,15 +308,15 @@ export default function ProfileScreen() {
         visible={errorPopup.visible}
         title={errorPopup.title}
         message={errorPopup.message || "An unexpected error occurred."}
-        icon={<AlertTriangle size={iconSizes.xl} color={palette.red} />}
-        iconBackgroundColor={`${palette.red}22`}
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
         onClose={closeProfileError}
         primaryButton={{
           label: "OK",
           variant: "primary",
           onPress: closeProfileError,
-          buttonColor: palette.red,
-          textColor: palette.textInverse,
+          buttonColor: palette.status.danger,
+          textColor: palette.text.onAccent,
         }}
       />
     </>
@@ -358,7 +366,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   periodLabel: {
-    color: Colors.light.textInverse,
+    color: Colors.light.text.onAccent,
   },
   periodLabelWrap: {
     flexDirection: "row",

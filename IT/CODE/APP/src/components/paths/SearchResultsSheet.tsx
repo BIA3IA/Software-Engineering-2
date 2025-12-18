@@ -6,7 +6,7 @@ import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { iconSizes, textStyles } from "@/theme/typography"
 import { radius, scale, verticalScale } from "@/theme/layout"
-import { PathResultCard, type PathResultTag } from "@/components/PathResultCard"
+import { PathResultCard, type PathResultTag } from "@/components/paths/PathResultCard"
 
 export type SearchResult = {
   id: string
@@ -56,18 +56,17 @@ export function SearchResultsSheet({
         styles.sheet,
         {
           top: topOffset,
-          backgroundColor: palette.bgPrimary,
-          borderColor: palette.border,
-          shadowColor: palette.border,
+          backgroundColor: palette.surface.card,
+          borderColor: palette.border.muted,
+          shadowColor: palette.border.muted,
         },
       ]}
     >
-      <View style={[styles.handle, { backgroundColor: palette.border }]} />
 
       <View style={styles.headerRow}>
         <View style={styles.headerTextGroup}>
-          <Text style={[textStyles.cardTitle, styles.headerTitle, { color: palette.textAccent }]}>{title}</Text>
-          <Text style={[textStyles.caption, styles.headerSubtitle, { color: palette.textSecondary }]}>
+          <Text style={[textStyles.cardTitle, styles.headerTitle, { color: palette.text.link }]}>{title}</Text>
+          <Text style={[textStyles.caption, styles.headerSubtitle, { color: palette.text.secondary }]}>
             {countLabel} found
           </Text>
         </View>
@@ -77,13 +76,13 @@ export function SearchResultsSheet({
           style={({ pressed }) => [
             styles.closeButton,
             {
-              backgroundColor: palette.primary,
-              shadowColor: palette.primaryDark,
+              backgroundColor: palette.brand.base,
+              shadowColor: palette.brand.dark,
             },
             pressed && { opacity: 0.85 },
           ]}
         >
-          <X size={iconSizes.sm} color={palette.textInverse} />
+          <X size={iconSizes.sm} color={palette.text.onAccent} />
         </Pressable>
       </View>
 
@@ -124,13 +123,6 @@ const styles = StyleSheet.create({
     shadowRadius: radius.xl,
     elevation: 10,
     zIndex: 12,
-  },
-  handle: {
-    alignSelf: "center",
-    width: scale(40),
-    height: verticalScale(4),
-    borderRadius: radius.full,
-    marginBottom: verticalScale(12),
   },
   headerRow: {
     flexDirection: "row",

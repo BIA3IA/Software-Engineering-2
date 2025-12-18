@@ -56,11 +56,11 @@ export function SelectionOverlay({
           style={[
             styles.card,
             {
-              backgroundColor: palette.bgPrimary,
+              backgroundColor: palette.surface.card,
               top: cardTop,
               right: rightOffset,
               width: width ?? scale(190),
-              shadowColor: palette.border,
+              shadowColor: palette.border.muted,
             },
           ]}
         >
@@ -75,7 +75,7 @@ export function SelectionOverlay({
                   styles.item,
                   {
                     backgroundColor: isActive
-                      ? palette.primarySoft
+                      ? palette.brand.surface
                       : "transparent",
                     borderRadius: radius.md,
                   },
@@ -86,7 +86,7 @@ export function SelectionOverlay({
                   style={[
                     textStyles.body,
                     styles.itemText,
-                    { color: isActive ? palette.primaryDark : palette.textPrimary },
+                    { color: isActive ? palette.brand.dark : palette.text.primary },
                   ]}
                 >
                   {option.label}

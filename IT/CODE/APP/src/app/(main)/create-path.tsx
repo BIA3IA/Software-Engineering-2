@@ -1,5 +1,5 @@
 import React from "react"
-import { View, StyleSheet, Text, Pressable } from "react-native"
+import { View, StyleSheet, Text } from "react-native"
 import MapView, { Marker, Polyline, Circle } from "react-native-maps"
 import * as Location from "expo-location"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -10,8 +10,9 @@ import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { radius, scale, verticalScale } from "@/theme/layout"
 import { textStyles, iconSizes } from "@/theme/typography"
-import { PRIVACY_OPTIONS, type PrivacyPreference } from "@/constants/privacy"
+import { PRIVACY_OPTIONS, type PrivacyPreference } from "@/constants/Privacy"
 import { AppPopup } from "@/components/ui/AppPopup"
+import { AppButton } from "@/components/ui/AppButton"
 import { CheckCircle } from "lucide-react-native"
 import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
 
@@ -155,21 +156,21 @@ export default function CreatePathScreen() {
         onPanDrag={handlePanDrag}
       >
         {drawnRoute.length > 1 && (
-          <Polyline coordinates={drawnRoute} strokeColor={palette.primary} strokeWidth={4} />
+          <Polyline coordinates={drawnRoute} strokeColor={palette.brand.base} strokeWidth={4} />
         )}
         {drawnRoute[0] && (
           <Circle
             center={drawnRoute[0]}
             radius={18}
-            strokeColor={palette.primary}
-            fillColor={`${palette.primary}33`}
+            strokeColor={palette.brand.base}
+            fillColor={`${palette.brand.base}33`}
           />
         )}
         {drawnRoute[drawnRoute.length - 1] && (
           <Marker
             coordinate={drawnRoute[drawnRoute.length - 1]}
             title="Current"
-            pinColor={palette.primaryDark}
+            pinColor={palette.brand.dark}
           />
         )}
       </MapView>
@@ -178,56 +179,52 @@ export default function CreatePathScreen() {
         style={[
           styles.infoBar,
           {
-            backgroundColor: palette.bgElevated,
+            backgroundColor: palette.surface.elevated,
             top: insets.top + verticalScale(16),
-            shadowColor: palette.border,
+            shadowColor: palette.border.muted,
           },
         ]}
       >
-        <Text style={[textStyles.cardTitle, styles.infoTitle, { color: palette.textPrimary }]}>
+        <Text style={[textStyles.cardTitle, styles.infoTitle, { color: palette.text.primary }]}>
           {searchParams.name ?? "New Path"}
         </Text>
         {searchParams.description ? (
-          <Text style={[textStyles.caption, styles.infoSubtitle, { color: palette.textSecondary }]} numberOfLines={2}>
+          <Text style={[textStyles.caption, styles.infoSubtitle, { color: palette.text.secondary }]} numberOfLines={2}>
             {searchParams.description}
           </Text>
         ) : null}
-        <Text style={[textStyles.caption, styles.infoBadge, { color: palette.textPrimary }]}>
+        <Text style={[textStyles.caption, styles.infoBadge, { color: palette.text.primary }]}>
           {visibilityLabel}
         </Text>
       </View>
 
-      <Pressable
+      <AppButton
+        title="Save Path"
         onPress={handleSavePath}
-        style={({ pressed }) => [
+        buttonColor={palette.brand.base}
+        disabled={!canSave}
+        style={[
           styles.saveButton,
           {
-            backgroundColor: palette.primary,
-            shadowColor: palette.border,
+            shadowColor: palette.border.muted,
             opacity: canSave ? 1 : 0.5,
             bottom: insets.bottom + verticalScale(24),
           },
-          pressed && canSave && { opacity: 0.85 },
         ]}
-        disabled={!canSave}
-      >
-        <Text style={[textStyles.bodyBold, styles.saveButtonText, { color: palette.textInverse }]}>
-          Save Path
-        </Text>
-      </Pressable>
+      />
       <AppPopup
         visible={isSuccessPopupVisible}
         title="Path Creates!"
         message="Your new path has been saved and is ready to be used!"
-        icon={<CheckCircle size={iconSizes.xl} color={palette.success} />}
-        iconBackgroundColor={`${palette.success}22`}
+        icon={<CheckCircle size={iconSizes.xl} color={palette.status.success} />}
+        iconBackgroundColor={`${palette.accent.green.surface}`}
         onClose={() => setSuccessPopupVisible(false)}
         primaryButton={{
           label: "Go To My Paths",
           onPress: handleSuccessPrimaryPress,
           variant: "primary",
-          buttonColor: palette.success,
-          textColor: palette.textInverse,
+          buttonColor: palette.status.success,
+          textColor: palette.text.onAccent,
         }}
       />
     </View>

@@ -3,7 +3,7 @@ import { View, StyleSheet, Animated } from "react-native"
 import { Slot, useRouter } from "expo-router"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
-import { BottomNav } from "@/components/BottomNav"
+import { BottomNav } from "@/components/navigation/BottomNav"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
@@ -57,7 +57,7 @@ export default function MainLayout() {
     <BottomNavVisibilityContext.Provider value={{ setHidden: setNavHidden }}>
       <LoginPromptProvider onRequireLogin={openLoginPopup}>
         <SafeAreaView
-          style={[layoutStyles.screen, { backgroundColor: palette.bgSecondary }]}
+          style={[layoutStyles.screen, { backgroundColor: palette.surface.screen }]}
           edges={[]}
         >
           <View style={styles.mainContent}>
@@ -80,8 +80,8 @@ export default function MainLayout() {
             visible={loginPopupVisible}
             title="Log In Required"
             message="Log in to unlock all features and save your progress."
-            icon={<Lock size={iconSizes.xl} color={palette.primary} strokeWidth={2.2} />}
-            iconBackgroundColor={palette.bgElevated}
+            icon={<Lock size={iconSizes.xl} color={palette.brand.base} strokeWidth={2.2} />}
+            iconBackgroundColor={palette.surface.elevated}
             onClose={closeLoginPopup}
             primaryButton={{
               label: "Log In",

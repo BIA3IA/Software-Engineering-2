@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import { PrivacyPreference, DEFAULT_PRIVACY } from "@/constants/privacy"
+import { PrivacyPreference, DEFAULT_PRIVACY } from "@/constants/Privacy"
 
 type PrivacyPreferenceState = {
   preference: PrivacyPreference

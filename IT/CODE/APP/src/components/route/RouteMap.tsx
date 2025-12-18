@@ -99,7 +99,7 @@ export function RouteMap({
 
   return (
     <View style={styles.section}>
-      <Text style={[textStyles.cardTitle, { color: palette.textAccent }]}>
+      <Text style={[textStyles.cardTitle, { color: palette.text.link }]}>
         {title}
       </Text>
 
@@ -122,7 +122,7 @@ export function RouteMap({
               <Polyline
                 coordinates={route}
                 strokeWidth={4}
-                strokeColor={palette.primaryDark}
+                strokeColor={palette.brand.dark}
               />
             )}
 
@@ -130,8 +130,8 @@ export function RouteMap({
               <Circle
                 center={start}
                 radius={18}
-                strokeColor={palette.primary}
-                fillColor={`${palette.primary}33`}
+                strokeColor={palette.brand.base}
+                fillColor={`${palette.brand.base}33`}
               />
             )}
 
@@ -139,7 +139,7 @@ export function RouteMap({
               <Marker
                 coordinate={end}
                 title="End"
-                pinColor={palette.primary}
+                pinColor={palette.brand.base}
               />
             )}
           </MapView>
@@ -154,12 +154,12 @@ export function RouteMap({
             onPress={toggleWeather}
             style={({ pressed }) => [
               styles.weatherBadge,
-              { backgroundColor: palette.bgPrimary, shadowColor: palette.border },
+              { backgroundColor: palette.surface.card, shadowColor: palette.border.muted },
               pressed && { opacity: 0.85 },
             ]}
           >
-            <Cloud size={badgeIconSize} color={palette.primaryDark} />
-            <Text style={[textStyles.bodySmall, styles.weatherText, { color: palette.textAccent }]}>
+            <Cloud size={badgeIconSize} color={palette.brand.dark} />
+            <Text style={[textStyles.bodySmall, styles.weatherText, { color: palette.text.link }]}>
               {temperatureLabel}
             </Text>
           </Pressable>
@@ -184,8 +184,8 @@ export function RouteMap({
               style={[
                 styles.overlayCard,
                 {
-                  backgroundColor: palette.bgPrimary,
-                  shadowColor: palette.border,
+                  backgroundColor: palette.surface.card,
+                  shadowColor: palette.border.muted,
                   top:
                     (overlayPosition?.top ??
                       (badgeHeight
@@ -197,10 +197,10 @@ export function RouteMap({
               ]}
             >
               <View style={styles.weatherHeaderRow}>
-                <Text style={[textStyles.cardTitle, { color: palette.textAccent }]}>
+                <Text style={[textStyles.cardTitle, { color: palette.text.link }]}>
                   Weather Details
                 </Text>
-                <Cloud size={overlayIconSize} color={palette.primaryDark} />
+                <Cloud size={overlayIconSize} color={palette.brand.dark} />
               </View>
 
               <WeatherRow label="Condition" value={weather.condition} />
@@ -221,11 +221,11 @@ function WeatherRow({ label, value }: { label: string; value: string }) {
   const palette = Colors[scheme]
 
   return (
-    <View style={[styles.row, { borderColor: palette.border }]}>
-      <Text style={[textStyles.bodySmall, { color: palette.textSecondary }]}>
+    <View style={[styles.row, { borderColor: palette.border.muted }]}>
+      <Text style={[textStyles.bodySmall, { color: palette.text.secondary }]}>
         {label}
       </Text>
-      <Text style={[textStyles.bodySmall, { color: palette.textAccent }]}>
+      <Text style={[textStyles.bodySmall, { color: palette.text.link }]}>
         {value}
       </Text>
     </View>

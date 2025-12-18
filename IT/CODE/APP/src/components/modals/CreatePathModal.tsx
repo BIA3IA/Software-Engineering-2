@@ -8,8 +8,9 @@ import { textStyles, iconSizes } from "@/theme/typography"
 import { AppTextInput } from "@/components/ui/AppTextInput"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { SelectField } from "@/components/ui/SelectField"
-import { PrivacyPreference, PRIVACY_OPTIONS } from "@/constants/privacy"
+import { PrivacyPreference, PRIVACY_OPTIONS } from "@/constants/Privacy"
 import { Plus } from "lucide-react-native"
+import { AppButton } from "@/components/ui/AppButton"
 
 type CreatePathModalProps = {
   visible: boolean
@@ -81,26 +82,25 @@ export function CreatePathModal({
             style={[
               styles.card,
               {
-                backgroundColor: palette.bgPrimary,
-                shadowColor: palette.border,
+                backgroundColor: palette.surface.card,
+                shadowColor: palette.border.muted,
               },
             ]}
           >
-            <View style={styles.handle} />
 
             <View
               style={[
                 styles.iconWrapper,
-                { backgroundColor: `${palette.primarySoft}` },
+                { backgroundColor: `${palette.brand.surface}` },
               ]}
             >
-              <Plus size={iconSizes.lg} color={palette.primary} strokeWidth={2} />
+              <Plus size={iconSizes.xl} color={palette.brand.base} strokeWidth={2} />
             </View>
 
-            <Text style={[textStyles.screenTitle, styles.title, { color: palette.textPrimary }]}>
+            <Text style={[textStyles.screenTitle, styles.title, { color: palette.text.primary }]}>
               Create a New Path
             </Text>
-            <Text style={[textStyles.body, styles.subtitle, { color: palette.textSecondary }]}>
+            <Text style={[textStyles.body, styles.subtitle, { color: palette.text.secondary }]}>
               Share a name, description, and visibility setting before you start drawing.
             </Text>
 
@@ -129,22 +129,20 @@ export function CreatePathModal({
               />
             </View>
 
-            <Pressable
+            <AppButton
+              title="Start Creating"
               onPress={handleSubmit}
-              style={({ pressed }) => [
+              buttonColor={palette.brand.base}
+              disabled={!canSubmit}
+              style={[
                 styles.submitButton,
                 {
-                  backgroundColor: palette.primary,
-                  shadowColor: palette.border,
+                  shadowColor: palette.border.muted,
                   opacity: canSubmit ? 1 : 0.5,
                 },
-                pressed && canSubmit && { opacity: 0.85 },
               ]}
-            >
-              <Text style={[textStyles.bodyBold, styles.submitText, { color: palette.textInverse }]}>
-                Start Creating
-              </Text>
-            </Pressable>
+              contentStyle={styles.submitButtonContent}
+            />
           </View>
         </View>
       </Pressable>
@@ -190,22 +188,14 @@ const styles = StyleSheet.create({
     elevation: 14,
     gap: verticalScale(14),
   },
-  handle: {
-    alignSelf: "center",
-    width: scale(50),
-    height: verticalScale(4),
-    borderRadius: radius.full,
-    marginBottom: verticalScale(8),
-    backgroundColor: "rgba(148,163,184,0.4)",
-  },
   iconWrapper: {
     alignSelf: "center",
-    width: scale(64),
-    height: scale(64),
+    width: scale(80),
+    height: scale(80),
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: verticalScale(4),
+    marginBottom: verticalScale(16),
   },
   title: {
     textAlign: "center",
@@ -220,15 +210,12 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: verticalScale(6),
     borderRadius: radius.full,
-    paddingVertical: verticalScale(12),
-    alignItems: "center",
-    justifyContent: "center",
     shadowOpacity: 0.16,
     shadowOffset: { width: 0, height: 10 },
     shadowRadius: radius.xl,
     elevation: 10,
   },
-  submitText: {
-    fontSize: 16,
+  submitButtonContent: {
+    height: verticalScale(48),
   },
 })

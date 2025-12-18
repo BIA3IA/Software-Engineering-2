@@ -2,8 +2,8 @@ import React, { useMemo, useState } from "react"
 import { View, StyleSheet, FlatList, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
-import { RouteCard, RouteItem } from "@/components/RouteCard"
-import { ScreenHeader } from "@/components/ScreenHeader"
+import { RouteCard, RouteItem } from "@/components/route/RouteCard"
+import { ScreenHeader } from "@/components/ui/ScreenHeader"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { scale, verticalScale } from "@/theme/layout"
@@ -185,7 +185,7 @@ export default function TripHistoryScreen() {
   }, [setNavHidden])
 
   return (
-    <View style={[styles.screen, { backgroundColor: palette.bgSecondary }]}>
+    <View style={[styles.screen, { backgroundColor: palette.surface.screen }]}>
       <FlatList
         style={styles.list}
         data={sortedTrips}
@@ -226,8 +226,8 @@ export default function TripHistoryScreen() {
         visible={Boolean(pendingDeleteTrip)}
         title="Delete Trip?"
         message="Are you sure you want to delete this trip? This action cannot be undone."
-        icon={<Trash2 size={deleteIconSize} color={palette.destructive} />}
-        iconBackgroundColor={`${palette.destructive}22`}
+        icon={<Trash2 size={deleteIconSize} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
         onClose={handleCancelDeleteTrip}
         primaryButton={{
           label: "Yes, Delete",

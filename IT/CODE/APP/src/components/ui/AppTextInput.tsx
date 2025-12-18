@@ -42,6 +42,10 @@ export function AppTextInput({
     const scheme = useColorScheme() ?? "light"
     const palette = Colors[scheme]
     const hasError = Boolean(errorMessage)
+    const inputProps = {
+        ...rest,
+        accessibilityLabel: rest.accessibilityLabel ?? label,
+    }
 
     return (
         <View style={styles.container}>
@@ -50,7 +54,7 @@ export function AppTextInput({
                     style={[
                         textStyles.formLabel,
                         styles.label,
-                        { color: palette.textPrimary },
+                        { color: palette.text.primary },
                     ]}
                 >
                     {label}
@@ -61,9 +65,9 @@ export function AppTextInput({
                 style={[
                     styles.inputWrapper,
                     {
-                        backgroundColor: palette.inputBg,
-                        borderColor: hasError ? palette.destructive : palette.inputBorder,
-                        shadowColor: palette.border,
+                        backgroundColor: palette.input.background,
+                        borderColor: hasError ? palette.status.danger : palette.input.border,
+                        shadowColor: palette.border.muted,
                     },
                 ]}
             >
@@ -73,7 +77,7 @@ export function AppTextInput({
                     value={value}
                     onChangeText={onChangeText}
                     placeholder={placeholder}
-                    placeholderTextColor={palette.inputPlaceholder}
+                    placeholderTextColor={palette.input.placeholder}
                     secureTextEntry={secureTextEntry}
                     keyboardType={keyboardType}
                     autoCapitalize={autoCapitalize}
@@ -81,14 +85,14 @@ export function AppTextInput({
                     style={[
                         styles.input,
                         icon ? { paddingLeft: scale(8) } : null,
-                        { color: palette.inputText },
+                        { color: palette.input.text },
                     ]}
-                    {...rest}
+                    {...inputProps}
                 />
             </View>
 
             {hasError && (
-                <Text style={[textStyles.caption, styles.errorMessage, { color: palette.destructive }]}>
+                <Text style={[textStyles.caption, styles.errorMessage, { color: palette.status.danger }]}>
                     {errorMessage}
                 </Text>
             )}

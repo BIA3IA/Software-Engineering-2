@@ -31,9 +31,10 @@ export function BottomNav({ onRequireLogin }: BottomNavProps) {
     }
 
     return (
-        <View style={[styles.container, { backgroundColor: palette.bgAccent, shadowColor: palette.border }]}>
+        <View style={[styles.container, { backgroundColor: palette.surface.accent, shadowColor: palette.border.muted }]}>
             <NavItem
                 icon={Map}
+                label="Home"
                 active={pathname === "/home"}
                 disabled={false}
                 onPress={() => go("/home", false)}
@@ -42,6 +43,7 @@ export function BottomNav({ onRequireLogin }: BottomNavProps) {
 
             <NavItem
                 icon={Bike}
+                label="Trips"
                 active={pathname === "/trips"}
                 disabled={isGuest}
                 onPress={() => go("/trips", true)}
@@ -50,6 +52,7 @@ export function BottomNav({ onRequireLogin }: BottomNavProps) {
 
             <NavItem
                 icon={Route}
+                label="Paths"
                 active={pathname === "/paths"}
                 disabled={isGuest}
                 onPress={() => go("/paths", true)}
@@ -58,6 +61,7 @@ export function BottomNav({ onRequireLogin }: BottomNavProps) {
 
             <NavItem
                 icon={User}
+                label="Profile"
                 active={pathname === "/profile"}
                 disabled={isGuest}
                 onPress={() => go("/profile", true)}
@@ -69,14 +73,15 @@ export function BottomNav({ onRequireLogin }: BottomNavProps) {
 
 type NavItemProps = {
     icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
+    label: string
     active?: boolean
     disabled?: boolean
     onPress: () => void
     palette: (typeof Colors)["light"]
 }
 
-function NavItem({ icon: Icon, active, disabled, onPress, palette }: NavItemProps) {
-    const baseColor = active ? palette.navItemColor : palette.disabledNavItemColor
+function NavItem({ icon: Icon, label, active, disabled, onPress, palette }: NavItemProps) {
+    const baseColor = active ? palette.text.onAccent : palette.text.onAccentMuted
     const isDimmed = disabled || !active
     const iconSize = iconSizes.lg
     const lockSize = iconSizes.xs
@@ -84,8 +89,12 @@ function NavItem({ icon: Icon, active, disabled, onPress, palette }: NavItemProp
     return (
         <TouchableOpacity
             onPress={onPress}
+            accessibilityRole="button"
+            accessibilityLabel={`${label} tab`}
+            accessibilityState={{ disabled: Boolean(disabled), selected: Boolean(active) }}
             style={[styles.item, isDimmed && styles.dimmed]}
             activeOpacity={0.8}
+            testID={`nav-${label.toLowerCase()}`}
         >
             <View
                 style={[
@@ -102,7 +111,7 @@ function NavItem({ icon: Icon, active, disabled, onPress, palette }: NavItemProp
                     >
                         <Lock
                             size={lockSize}
-                            color={palette.disabledNavItemColor}
+                            color={palette.text.onAccentMuted}
                             strokeWidth={2}
                         />
                     </View>

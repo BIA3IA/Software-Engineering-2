@@ -20,7 +20,7 @@ export default function LogInScreen() {
   const login = useAuthStore((s) => s.loginWithPassword)
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
-  const iconColor = palette.textSecondary
+  const iconColor = palette.text.secondary
   const fieldIconSize = iconSizes.md
   const [errorPopup, setErrorPopup] = React.useState({
     visible: false,
@@ -92,17 +92,17 @@ export default function LogInScreen() {
 
   return (
     <>
-      <View style={[layoutStyles.screen, { backgroundColor: palette.bgPrimary }]}>
-        <View style={[styles.header, layoutStyles.horizontalPadding, { backgroundColor: palette.bgAccent }]}>
-          <Text style={[textStyles.screenTitle, styles.headerTitle, { color: palette.titleColor }]}>
+      <View style={[layoutStyles.screen, { backgroundColor: palette.surface.screen }]}>
+        <View style={[styles.header, layoutStyles.horizontalPadding, { backgroundColor: palette.surface.accent }]}>
+          <Text style={[textStyles.screenTitle, styles.headerTitle, { color: palette.text.onAccent }]}>
             Welcome Back
           </Text>
-          <Text style={[textStyles.screenSubtitle, { color: palette.subtitleColor }]}>
+          <Text style={[textStyles.screenSubtitle, { color: palette.text.onAccentMuted }]}>
             Login to continue riding with BestBikePaths
           </Text>
         </View>
 
-        <View style={[styles.formContainer, layoutStyles.roundedTopXL, { backgroundColor: palette.bgPrimary }]}>
+        <View style={[styles.formContainer, layoutStyles.roundedTopXL, { backgroundColor: palette.surface.card }]}>
           <ScrollView contentContainerStyle={[styles.content, layoutStyles.horizontalPadding]} keyboardShouldPersistTaps="handled">
 
             <Controller
@@ -147,7 +147,7 @@ export default function LogInScreen() {
             <AppButton title={isSubmitting ? "Logging In..." : "Log In"} variant="primary" onPress={handleSubmit(onSubmit)} />
 
             <View style={styles.backWrapper}>
-              <Text style={[textStyles.bodyBold, styles.backText, { color: palette.textSecondary }]} onPress={handleBack}>
+              <Text style={[textStyles.bodyBold, styles.backText, { color: palette.text.secondary }]} onPress={handleBack}>
                 Back to Welcome
               </Text>
             </View>
@@ -158,15 +158,15 @@ export default function LogInScreen() {
         visible={errorPopup.visible}
         title={errorPopup.title || "Error"}
         message={errorPopup.message || "Unable to complete the request."}
-        icon={<AlertTriangle size={iconSizes.xl} color={palette.red} />}
-        iconBackgroundColor={`${palette.red}22`}
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
         onClose={handleClosePopup}
         primaryButton={{
           label: "OK",
           variant: "primary",
           onPress: handleClosePopup,
-          buttonColor: palette.red,
-          textColor: palette.textInverse,
+          buttonColor: palette.status.danger,
+          textColor: palette.text.onAccent,
         }}
       />
     </>

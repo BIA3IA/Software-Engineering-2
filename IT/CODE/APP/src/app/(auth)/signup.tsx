@@ -23,7 +23,7 @@ export default function SignUpScreen() {
   const appearancePreference = useThemePreference()
   const defaultPrivacyPreference = usePrivacyPreference()
   const palette = Colors[scheme]
-  const iconColor = palette.textSecondary
+  const iconColor = palette.text.secondary
   const fieldIconSize = iconSizes.md
   const [errorPopup, setErrorPopup] = React.useState({
     visible: false,
@@ -89,7 +89,7 @@ export default function SignUpScreen() {
 
       setErrorPopup({
         visible: true,
-        title: "Sign up failed",
+        title: "Signup failed",
         message,
       })
     }
@@ -109,17 +109,17 @@ export default function SignUpScreen() {
 
   return (
     <>
-      <View style={[layoutStyles.screen, { backgroundColor: palette.bgPrimary }]}>
-        <View style={[styles.header, layoutStyles.horizontalPadding, { backgroundColor: palette.bgAccent }]}>
-          <Text style={[textStyles.screenTitle, styles.headerTitle, { color: palette.titleColor }]}>
+      <View style={[layoutStyles.screen, { backgroundColor: palette.surface.screen }]}>
+        <View style={[styles.header, layoutStyles.horizontalPadding, { backgroundColor: palette.surface.accent }]}>
+          <Text style={[textStyles.screenTitle, styles.headerTitle, { color: palette.text.onAccent }]}>
             Create Account
           </Text>
-          <Text style={[textStyles.screenSubtitle, { color: palette.subtitleColor }]}>
+          <Text style={[textStyles.screenSubtitle, { color: palette.text.onAccentMuted }]}>
             Join BestBikePaths today
           </Text>
         </View>
 
-        <View style={[styles.formContainer, layoutStyles.roundedTopXL, { backgroundColor: palette.bgPrimary }]}>
+        <View style={[styles.formContainer, layoutStyles.roundedTopXL, { backgroundColor: palette.surface.card }]}>
           <ScrollView contentContainerStyle={[styles.content, layoutStyles.horizontalPadding]} keyboardShouldPersistTaps="handled">
             <Controller
               control={control}
@@ -201,7 +201,7 @@ export default function SignUpScreen() {
             <AppButton title={isSubmitting ? "Creating Account..." : "Sign Up"} variant="primary" onPress={handleSubmit(onSubmit)} />
 
             <View style={styles.backWrapper}>
-              <Text style={[textStyles.bodyBold, styles.backText, { color: palette.textSecondary }]} onPress={handleBack}>
+              <Text style={[textStyles.bodyBold, styles.backText, { color: palette.text.secondary }]} onPress={handleBack}>
                 Back to Welcome
               </Text>
             </View>
@@ -212,15 +212,15 @@ export default function SignUpScreen() {
         visible={errorPopup.visible}
         title={errorPopup.title || "Error"}
         message={errorPopup.message || "Unable to complete the registration."}
-        icon={<AlertTriangle size={iconSizes.xl} color={palette.red} />}
-        iconBackgroundColor={`${palette.red}22`}
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
         onClose={handleClosePopup}
         primaryButton={{
           label: "OK",
           variant: "primary",
           onPress: handleClosePopup,
-          buttonColor: palette.red,
-          textColor: palette.textInverse,
+          buttonColor: palette.status.danger,
+          textColor: palette.text.onAccent,
         }}
       />
     </>

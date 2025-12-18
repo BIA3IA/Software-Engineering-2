@@ -8,6 +8,7 @@ import { textStyles, iconSizes } from "@/theme/typography"
 import { AlertTriangle } from "lucide-react-native"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { SelectField } from "@/components/ui/SelectField"
+import { AppButton } from "@/components/ui/AppButton"
 
 export type ReportIssueOption = {
   key: string
@@ -97,27 +98,26 @@ export function ReportIssueModal({
             style={[
               styles.card,
               {
-                backgroundColor: palette.bgPrimary,
-                shadowColor: palette.border,
+                backgroundColor: palette.surface.card,
+                shadowColor: palette.border.muted,
               },
             ]}
           >
-            <View style={styles.handle} />
 
             <View
               style={[
                 styles.iconWrapper,
-                { backgroundColor: palette.destructive + "22" },
+                { backgroundColor: palette.accent.red.surface  },
               ]}
             >
-              <AlertTriangle size={iconSizes.lg} color={palette.destructive} strokeWidth={2.2} />
+              <AlertTriangle size={iconSizes.xl} color={palette.status.danger} strokeWidth={2.2} />
             </View>
 
-            <Text style={[textStyles.screenTitle, styles.title, { color: palette.destructive }]}>
+            <Text style={[textStyles.screenTitle, styles.title, { color: palette.status.danger }]}>
               Report an Issue
             </Text>
 
-            <Text style={[textStyles.body, styles.subtitle, { color: palette.textSecondary }]}>
+            <Text style={[textStyles.body, styles.subtitle, { color: palette.text.secondary }]}>
               Tell us what you found on the path so other riders stay safe.
             </Text>
 
@@ -135,18 +135,16 @@ export function ReportIssueModal({
               active={activeSelect === "obstacle"}
             />
 
-            <Pressable
+            <AppButton
+              title="Submit Report"
               onPress={handleSubmit}
-              style={({ pressed }) => [
+              buttonColor={palette.status.danger}
+              style={[
                 styles.submitButton,
-                { backgroundColor: palette.destructive, shadowColor: palette.border },
-                pressed && { opacity: 0.9 },
+                { shadowColor: palette.border.muted },
               ]}
-            >
-              <Text style={[textStyles.bodyBold, styles.submitText, { color: palette.textInverse }]}>
-                Submit Report
-              </Text>
-            </Pressable>
+              contentStyle={styles.submitButtonContent}
+            />
           </View>
         </View>
       </Pressable>
@@ -201,22 +199,14 @@ const styles = StyleSheet.create({
     elevation: 14,
     gap: verticalScale(14),
   },
-  handle: {
-    alignSelf: "center",
-    width: scale(50),
-    height: verticalScale(4),
-    borderRadius: radius.full,
-    marginBottom: verticalScale(8),
-    backgroundColor: "rgba(148,163,184,0.4)",
-  },
   iconWrapper: {
     alignSelf: "center",
-    width: scale(64),
-    height: scale(64),
+    width: scale(80),
+    height: scale(80),
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: verticalScale(4),
+    marginBottom: verticalScale(16),
   },
   title: {
     textAlign: "center",
@@ -228,15 +218,12 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: verticalScale(20),
     borderRadius: radius.full,
-    paddingVertical: verticalScale(12),
-    alignItems: "center",
-    justifyContent: "center",
     shadowOpacity: 0.12,
     shadowOffset: { width: 0, height: 12 },
     shadowRadius: radius.xl,
     elevation: 8,
   },
-  submitText: {
-    fontSize: 16,
+  submitButtonContent: {
+    height: verticalScale(48),
   },
 })
