@@ -2,7 +2,7 @@
 const config = {
   preset: "react-native",
   rootDir: ".",
-  testMatch: ["<rootDir>/tests/unit/**/*.test.ts?(x)"],
+  testMatch: ["<rootDir>/tests/{unit,integration}/**/*.test.ts?(x)"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   testPathIgnorePatterns: ["/node_modules/", "/android/", "/ios/"],
   transformIgnorePatterns: [

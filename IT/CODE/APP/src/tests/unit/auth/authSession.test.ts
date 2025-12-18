@@ -38,4 +38,16 @@ describe("authSession", () => {
         setSession({ accessToken: "a3", refreshToken: "r3" })
         expect(cb).not.toHaveBeenCalled()
     })
+
+    test("clearSession notifies listener with null", () => {
+        const cb = jest.fn()
+        onSessionChange(cb)
+
+        setSession({ accessToken: "a", refreshToken: "r" })
+        cb.mockClear()
+
+        clearSession()
+        expect(cb).toHaveBeenCalledWith(null)
+    })
+
 })
