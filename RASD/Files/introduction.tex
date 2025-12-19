@@ -82,7 +82,7 @@ This section focuses on non-shared world phenomena, that is, phenomena occurring
 
 \begin{itemize}
 	\item [\textbf{[W1]}] Availability and accuracy of external services used by the system, such as meteorological services and map visualization providers.
-	\item [\textbf{[W2]}] The user has an external device to measure additional statistics.
+	\item [\textbf{[W2]}] The user has a device capable of measuring additional statistics.
 	\item [\textbf{[W3]}] The road's physical condition can evolve.
 	\item [\textbf{[W4]}] The user may deviate from the suggested path.
 	\item [\textbf{[W5]}] The user may experience unexpected events during the ride (e.g., accidents, weather changes).
@@ -93,7 +93,7 @@ This section focuses on non-shared world phenomena, that is, phenomena occurring
 \label{subsec:shared_world_phenomena}
 
 \begin{itemize}
-	\item[\textbf{[SP1]}] A guest user registers to the system.
+	\item [\textbf{[SP1]}] A guest user registers to the system.
 	\item [\textbf{[SP2]}] A logged-in user logs into the system.
 	\item [\textbf{[SP3]}] A logged-in user logs out of the system.
 	\item [\textbf{[SP4]}] A logged-in user creates a new bike path.
@@ -104,7 +104,7 @@ This section focuses on non-shared world phenomena, that is, phenomena occurring
 	\item [\textbf{[SP9]}] A logged-in user sends reports about a bike path's condition or obstacles.
 	\item [\textbf{[SP10]}] A logged-in user confirms or rejects a bike path's condition report.
 	\item [\textbf{[SP11]}] A logged-in user updates personal information.
-	\item [\textbf{[SP12]}] A logged-in user starts or stops recording a bike trip.
+	\item [\textbf{[SP12]}] A user starts or stops recording a bike trip.
 	\item [\textbf{[SP13]}] A logged-in user browses a trip history or views statistics.
 	\item [\textbf{[SP14]}] External sensors transmit their data to the system.
 	\item [\textbf{[SP15]}] External meteorological services provide weather conditions.
@@ -114,7 +114,7 @@ This section focuses on non-shared world phenomena, that is, phenomena occurring
 \label{subsec:shared_machine_phenomena}
 
 \begin{itemize}
-	\item[\textbf{[SP16]}] The system recommends a bike path based on its ranking.
+	\item [\textbf{[SP16]}] The system recommends a bike path based on its ranking.
 	\item [\textbf{[SP17]}] The system merges reports about bike path's conditions.
 	\item [\textbf{[SP18]}] The system updates bike path rankings based on new feedback.
 	\item [\textbf{[SP19]}] The system presents detected information from sensors to the logged-in user for confirmation, generating a new report only if the user validates it.
@@ -139,11 +139,11 @@ This section focuses on non-shared world phenomena, that is, phenomena occurring
 \label{subsec:definitions}
 
 \begin{itemize}
-	\item \textbf{Bike Path:} A route defined either by data collected from users or by paths manually created within BBP. A Bike Path consists of one or more Path Segments.
-	\item \textbf{Path Segment:} A portion of a Bike Path defined between two consecutive waypoints. Each segment may have specific attributes.
+	\item \textbf{Path:} A route defined either by data collected from users or by paths manually created within BBP. A Bike Path consists of one or more Path Segments.
+	\item \textbf{Path Segment:} A portion of a Path defined between two consecutive waypoints. Each segment may have specific attributes.
 	\item \textbf{Path Status:} The overall condition of a Bike Path or Path Segment, as determined by the system's aggregation and merging process. Statuses include: \textit{Optimal}, \textit{Medium}, \textit{Sufficient}, \textit{Requires Maintenance}, and \textit{Closed}.
 	\item \textbf{Path Score:} The final numerical ranking value computed by the system, based on the path's aggregated status and effectiveness, used to recommend the best alternatives between an origin and a destination.
-	\item \textbf{Trip:} A cycling activity recorded by a logged-in user through the BBP application. Each trip includes temporal, spatial, and contextual data (e.g., duration, distance, speed).
+	\item \textbf{Trip:} A cycling activity tracked through the BBP application. If the user is logged-in, the trip is stored and becomes part of the user's trip history. Each trip includes temporal, spatial, and contextual data (e.g., duration, distance, speed).
 	\item \textbf{Report:} A submission of path information by a logged-in user. A report contains details on path status and obstacles and can be either Manually Entered or Automatically Detected (sensor-detected).
 	\item \textbf{Freshness:} A metric used when merging reports; newer reports carry more weight than older ones when determining Path Status.
 	\item \textbf{Obstacles:} Elements on a path that negatively impact cycling conditions, such as potholes or flooding, as identified by users or automatic sensors.
