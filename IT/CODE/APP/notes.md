@@ -33,7 +33,7 @@ This command creates a new Expo project using the **Tabs template**, which inclu
 
 ### app/
 
-This is the main routing folder — Expo Router turns its structure into navigation automatically.
+This is the main routing folder - Expo Router turns its structure into navigation automatically.
 
 #### Inside it:
 
