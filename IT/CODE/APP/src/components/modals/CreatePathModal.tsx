@@ -11,6 +11,7 @@ import { SelectField } from "@/components/ui/SelectField"
 import { PrivacyPreference, PRIVACY_OPTIONS } from "@/constants/Privacy"
 import { Plus } from "lucide-react-native"
 import { AppButton } from "@/components/ui/AppButton"
+import { createPathSchema } from "@/validation"
 
 type CreatePathModalProps = {
   visible: boolean
@@ -33,10 +34,13 @@ export function CreatePathModal({
 }: CreatePathModalProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
+  const iconBackground = scheme === "dark" ? palette.brand.base : palette.brand.surface
+  const iconColor = scheme === "dark" ? palette.overlay.iconOnDark : palette.brand.base
   const [name, setName] = React.useState("")
   const [description, setDescription] = React.useState("")
   const [visibility, setVisibility] = React.useState(initialVisibility)
   const [selectAnchor, setSelectAnchor] = React.useState<SelectAnchor | null>(null)
+  const [errors, setErrors] = React.useState<{ name?: string; description?: string; visibility?: string }>({})
 
   React.useEffect(() => {
     if (visible) {
@@ -44,22 +48,33 @@ export function CreatePathModal({
       setDescription("")
       setVisibility(initialVisibility)
       setSelectAnchor(null)
+      setErrors({})
     }
   }, [visible, initialVisibility])
 
-  const canSubmit = Boolean(name.trim())
-
   function handleSubmit() {
-    if (!canSubmit) return
-    onSubmit({
-      name: name.trim(),
-      description: description.trim(),
+    const result = createPathSchema.safeParse({
+      name,
+      description,
       visibility,
     })
-  }
 
-  function openVisibilitySelect(anchor: SelectAnchor) {
-    setSelectAnchor(anchor)
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors
+      setErrors({
+        name: fieldErrors.name?.[0],
+        description: fieldErrors.description?.[0],
+        visibility: fieldErrors.visibility?.[0],
+      })
+      return
+    }
+
+    setErrors({})
+    onSubmit({
+      name: result.data.name.trim(),
+      description: (result.data.description ?? "").trim(),
+      visibility: result.data.visibility as PrivacyPreference,
+    })
   }
 
   function closeVisibilitySelect() {
@@ -67,6 +82,27 @@ export function CreatePathModal({
   }
 
   const visibilityLabel = PRIVACY_OPTIONS.find((option) => option.key === visibility)?.label ?? "Select visibility"
+
+  function handleNameChange(text: string) {
+    setName(text)
+    if (errors.name) {
+      setErrors((prev) => ({ ...prev, name: undefined }))
+    }
+  }
+
+  function handleDescriptionChange(text: string) {
+    setDescription(text)
+    if (errors.description) {
+      setErrors((prev) => ({ ...prev, description: undefined }))
+    }
+  }
+
+  function handleSelectVisibility(anchor: SelectAnchor) {
+    setSelectAnchor(anchor)
+    if (errors.visibility) {
+      setErrors((prev) => ({ ...prev, visibility: undefined }))
+    }
+  }
 
   return (
     <Modal
@@ -76,7 +112,8 @@ export function CreatePathModal({
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
+      <View style={[styles.backdrop, { backgroundColor: palette.overlay.scrim }]}>
+        <Pressable style={styles.dismissArea} onPress={onClose} />
         <View style={styles.centerWrapper} pointerEvents="box-none">
           <View
             style={[
@@ -91,10 +128,10 @@ export function CreatePathModal({
             <View
               style={[
                 styles.iconWrapper,
-                { backgroundColor: `${palette.brand.surface}` },
+                { backgroundColor: iconBackground },
               ]}
             >
-              <Plus size={iconSizes.xl} color={palette.brand.base} strokeWidth={2} />
+              <Plus size={iconSizes.xl} color={iconColor} strokeWidth={2} />
             </View>
 
             <Text style={[textStyles.screenTitle, styles.title, { color: palette.text.primary }]}>
@@ -108,24 +145,27 @@ export function CreatePathModal({
               <AppTextInput
                 label="Name"
                 value={name}
-                onChangeText={setName}
+                onChangeText={handleNameChange}
                 placeholder="Path name"
                 autoCapitalize="words"
+                errorMessage={errors.name}
               />
               <AppTextInput
                 label="Description"
                 value={description}
-                onChangeText={setDescription}
+                onChangeText={handleDescriptionChange}
                 placeholder="Describe the path"
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
+                errorMessage={errors.description}
               />
               <SelectField
                 label="Visibility"
                 valueLabel={visibilityLabel}
-                onOpen={openVisibilitySelect}
+                onOpen={handleSelectVisibility}
                 active={Boolean(selectAnchor)}
+                errorMessage={errors.visibility}
               />
             </View>
 
@@ -133,19 +173,17 @@ export function CreatePathModal({
               title="Start Creating"
               onPress={handleSubmit}
               buttonColor={palette.brand.base}
-              disabled={!canSubmit}
               style={[
                 styles.submitButton,
                 {
                   shadowColor: palette.border.muted,
-                  opacity: canSubmit ? 1 : 0.5,
                 },
               ]}
               contentStyle={styles.submitButtonContent}
             />
           </View>
         </View>
-      </Pressable>
+      </View>
       {selectAnchor && (
         <SelectionOverlay
           visible
@@ -154,6 +192,7 @@ export function CreatePathModal({
           onClose={closeVisibilitySelect}
           onSelect={(key) => {
             setVisibility(key as PrivacyPreference)
+            setErrors((prev) => ({ ...prev, visibility: undefined }))
             closeVisibilitySelect()
           }}
           absoluteTop={selectAnchor.top}
@@ -169,6 +208,9 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: "rgba(15,23,42,0.45)",
+  },
+  dismissArea: {
+    ...StyleSheet.absoluteFillObject,
   },
   centerWrapper: {
     flex: 1,

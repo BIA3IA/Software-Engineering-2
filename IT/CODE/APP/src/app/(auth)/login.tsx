@@ -12,7 +12,7 @@ import Colors from "@/constants/Colors"
 import { layoutStyles, spacingStyles, verticalScale } from "@/theme/layout"
 import { textStyles, iconSizes } from "@/theme/typography"
 import { useAuthStore } from "@/auth/storage"
-import { loginSchema, type LoginFormValues } from "@/auth/validation"
+import { loginSchema, type LoginFormValues } from "@/validation"
 import { getApiErrorMessage } from "@/utils/apiError"
 
 export default function LogInScreen() {

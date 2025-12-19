@@ -56,7 +56,7 @@ export function ScreenHeader({
             onPress={onSortPress}
             style={({ pressed }) => [
               styles.sortButton,
-              { backgroundColor: palette.button.secondary.bg, shadowColor: palette.border.muted },
+              { backgroundColor: palette.text.onAccent, shadowColor: palette.border.muted },
               pressed && { opacity: 0.85 },
             ]}
           >

@@ -12,7 +12,7 @@ import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
 import Colors from "@/constants/Colors"
 import { layoutStyles, spacingStyles, verticalScale } from "@/theme/layout"
 import { textStyles, iconSizes } from "@/theme/typography"
-import { signupSchema, type SignupFormValues } from "@/auth/validation"
+import { signupSchema, type SignupFormValues } from "@/validation"
 import { useAuthStore } from "@/auth/storage"
 import { getApiErrorMessage } from "@/utils/apiError"
 

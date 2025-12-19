@@ -150,6 +150,11 @@ function createTheme(mode: "light" | "dark") {
     danger: feedback.danger,
   }
 
+  const overlay = {
+    scrim: isLight ? "rgba(15,23,42,0.45)" : "rgba(2,6,23,0.78)",
+    iconOnDark: white,
+  }
+
   return {
     text,
     surface,
@@ -161,6 +166,7 @@ function createTheme(mode: "light" | "dark") {
     button,
     status,
     focus: text.link,
+    overlay,
   }
 }
 

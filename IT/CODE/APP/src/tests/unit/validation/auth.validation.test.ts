@@ -1,4 +1,4 @@
-import { loginSchema, signupSchema, editProfileSchema } from "@/auth/validation"
+import { loginSchema, signupSchema, editProfileSchema } from "@/validation"
 
 describe("auth validation", () => {
     test("loginSchema accepts valid email and password", () => {

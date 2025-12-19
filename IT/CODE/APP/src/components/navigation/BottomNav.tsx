@@ -19,7 +19,7 @@ export function BottomNav({ onRequireLogin }: BottomNavProps) {
     const scheme = useColorScheme() ?? "light"
     const palette = Colors[scheme]
     const user = useAuthStore((s) => s.user)
-    const isGuest = user?.id === "guest"
+    const isGuest = !user || user.id === "guest"
 
     function go(to: string, needsAuth?: boolean) {
         if (needsAuth && isGuest) {
@@ -36,36 +36,36 @@ export function BottomNav({ onRequireLogin }: BottomNavProps) {
                 icon={Map}
                 label="Home"
                 active={pathname === "/home"}
-                disabled={false}
                 onPress={() => go("/home", false)}
                 palette={palette}
+                isGuest={false}
             />
 
             <NavItem
                 icon={Bike}
                 label="Trips"
                 active={pathname === "/trips"}
-                disabled={isGuest}
                 onPress={() => go("/trips", true)}
                 palette={palette}
+                isGuest={isGuest}
             />
 
             <NavItem
                 icon={Route}
                 label="Paths"
                 active={pathname === "/paths"}
-                disabled={isGuest}
                 onPress={() => go("/paths", true)}
                 palette={palette}
+                isGuest={isGuest}
             />
 
             <NavItem
                 icon={User}
                 label="Profile"
                 active={pathname === "/profile"}
-                disabled={isGuest}
                 onPress={() => go("/profile", true)}
                 palette={palette}
+                isGuest={isGuest}
             />
         </View>
     )
@@ -75,14 +75,14 @@ type NavItemProps = {
     icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
     label: string
     active?: boolean
-    disabled?: boolean
     onPress: () => void
     palette: (typeof Colors)["light"]
+    isGuest: boolean
 }
 
-function NavItem({ icon: Icon, label, active, disabled, onPress, palette }: NavItemProps) {
+function NavItem({ icon: Icon, label, active, onPress, palette, isGuest }: NavItemProps) {
     const baseColor = active ? palette.text.onAccent : palette.text.onAccentMuted
-    const isDimmed = disabled || !active
+    const isDimmed = isGuest || !active
     const iconSize = iconSizes.lg
     const lockSize = iconSizes.xs
 
@@ -91,7 +91,7 @@ function NavItem({ icon: Icon, label, active, disabled, onPress, palette }: NavI
             onPress={onPress}
             accessibilityRole="button"
             accessibilityLabel={`${label} tab`}
-            accessibilityState={{ disabled: Boolean(disabled), selected: Boolean(active) }}
+            accessibilityState={{ selected: Boolean(active) }}
             style={[styles.item, isDimmed && styles.dimmed]}
             activeOpacity={0.8}
             testID={`nav-${label.toLowerCase()}`}
@@ -103,7 +103,7 @@ function NavItem({ icon: Icon, label, active, disabled, onPress, palette }: NavI
             >
                 <Icon size={iconSize} color={baseColor} strokeWidth={2} />
 
-                {disabled && (
+                {isGuest && (
                     <View
                         style={[
                             styles.lockBadge,

@@ -106,7 +106,7 @@ export default function SettingsScreen() {
             onPress={() => router.back()}
             style={({ pressed }) => [
               styles.backButton,
-              { backgroundColor: palette.button.secondary.bg, shadowColor: palette.border.muted },
+              { backgroundColor: palette.button.secondary.bg },
               pressed && { opacity: 0.9 },
             ]}
           >
@@ -116,7 +116,7 @@ export default function SettingsScreen() {
       />
 
       <View style={styles.sectionsWrapper}>
-        <View style={[styles.card, { backgroundColor: palette.surface.card, shadowColor: palette.border.muted }]}>
+        <View style={[styles.card, { backgroundColor: palette.surface.card }]}>
           <View style={styles.cardRow}>
             <View style={[styles.iconBadge, { backgroundColor: `${palette.brand.surface}` }]}>
               <SunMedium size={iconSizes.md} color={palette.brand.dark} />
@@ -138,7 +138,7 @@ export default function SettingsScreen() {
               onPress={() => openPicker("appearance")}
               style={({ pressed }) => [
                 styles.selectButton,
-                { backgroundColor: palette.brand.base, borderColor: palette.brand.base, shadowColor: palette.border.muted },
+                { backgroundColor: palette.brand.base, borderColor: palette.brand.base },
                 pressed && { opacity: 0.9 },
               ]}
             >
@@ -148,7 +148,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <View style={[styles.card, { backgroundColor: palette.surface.card, shadowColor: palette.border.muted }]}>
+        <View style={[styles.card, { backgroundColor: palette.surface.card }]}>
           <View style={styles.cardRow}>
             <View style={[styles.iconBadge, { backgroundColor: `${palette.brand.surface}` }]}>
               <Eye size={iconSizes.md} color={palette.brand.dark} />
@@ -170,7 +170,7 @@ export default function SettingsScreen() {
               onPress={() => openPicker("privacy")}
               style={({ pressed }) => [
                 styles.selectButton,
-                { backgroundColor: palette.brand.base, borderColor: palette.brand.base, shadowColor: palette.border.muted },
+                { backgroundColor: palette.brand.base, borderColor: palette.brand.base },
                 pressed && { opacity: 0.9 },
               ]}
             >
@@ -180,7 +180,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <View style={[styles.card, { backgroundColor: palette.surface.card, shadowColor: palette.border.muted }]}>
+        <View style={[styles.card, { backgroundColor: palette.surface.card }]}>
           <Pressable onPress={() => { }} style={({ pressed }) => [styles.simpleRow, pressed && { opacity: 0.85 }]}>
             <View style={[styles.iconBadge, { backgroundColor: palette.brand.surface }]}>
               <Mail size={iconSizes.md} color={palette.brand.base} />
@@ -192,17 +192,17 @@ export default function SettingsScreen() {
           </Pressable>
         </View>
 
-        <View style={[styles.card, styles.signOutCard, { backgroundColor: `${palette.status.danger}15`, borderColor: `${palette.status.danger}55` }]}>
+        <View style={[styles.card, styles.signOutCard, { backgroundColor: `${palette.accent.red.surface}`, borderColor: `${palette.accent.red.surface}` }]}>
           <Pressable
             onPress={handleLogoutPress}
             style={({ pressed }) => [styles.simpleRow, pressed && { opacity: 0.85 }]}
           >
-            <View style={[styles.iconBadge, { backgroundColor: `${palette.status.danger}18`, borderColor: palette.status.danger, borderWidth: 1 }]}>
-              <LogOut size={iconSizes.md} color={palette.status.danger} />
+            <View style={[styles.iconBadge, { backgroundColor: `${palette.accent.red.base}`, borderColor: palette.accent.red.base, borderWidth: 1 }]}>
+              <LogOut size={iconSizes.md} color={palette.accent.red.surface} />
             </View>
             <View style={styles.cardTexts}>
-              <Text style={[textStyles.bodyBold, { color: palette.status.danger }]}>Log Out</Text>
-              <Text style={[textStyles.caption, { color: palette.status.danger }]}>Log out of your account</Text>
+              <Text style={[textStyles.bodyBold, { color: palette.accent.red.base }]}>Log Out</Text>
+              <Text style={[textStyles.caption, { color: palette.accent.red.base }]}>Log out of your account</Text>
             </View>
           </Pressable>
         </View>

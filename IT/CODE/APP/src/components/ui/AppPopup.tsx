@@ -48,7 +48,6 @@ export function AppPopup({
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
 
-  const iconBg = iconBackgroundColor ?? palette.surface.accent
   const primaryVariant = primaryButton.variant ?? "primary"
 
   function getVariantAccent(variant: PopupButtonConfig["variant"]) {
@@ -66,6 +65,15 @@ export function AppPopup({
   }
 
   const accentColor = primaryButton.buttonColor ?? getVariantAccent(primaryVariant)
+  const iconBgLight = iconBackgroundColor ?? palette.surface.accent
+  const iconBackground = scheme === "dark" ? (primaryButton.buttonColor ?? accentColor) : iconBgLight
+  const shouldOverrideIconColor = scheme === "dark"
+  const iconColor = shouldOverrideIconColor ? palette.overlay.iconOnDark : undefined
+
+  let renderedIcon = icon
+  if (shouldOverrideIconColor && icon && React.isValidElement(icon)) {
+    renderedIcon = React.cloneElement(icon, { color: iconColor })
+  }
 
   function handleBackdropPress() {
     onClose?.()
@@ -75,13 +83,9 @@ export function AppPopup({
   const hasDestructive = Boolean(destructiveButton)
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-    >
-      <Pressable style={styles.backdrop} onPress={handleBackdropPress}>
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
+      <View style={[styles.backdrop, { backgroundColor: palette.overlay.scrim }]}>
+        <Pressable style={styles.dismissArea} onPress={handleBackdropPress} />
         <View style={styles.centerWrapper} pointerEvents="box-none">
           <View
             style={[
@@ -90,14 +94,14 @@ export function AppPopup({
             ]}
           >
 
-            {icon && (
+            {renderedIcon && (
               <View
                 style={[
                   styles.iconWrapper,
-                  { backgroundColor: iconBg },
+                  { backgroundColor: iconBackground },
                 ]}
               >
-                {icon}
+                {renderedIcon}
               </View>
             )}
 
@@ -172,7 +176,7 @@ export function AppPopup({
             </View>
           </View>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   )
 }
@@ -181,6 +185,9 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: "rgba(15,23,42,0.45)",
+  },
+  dismissArea: {
+    ...StyleSheet.absoluteFillObject,
   },
   centerWrapper: {
     flex: 1,

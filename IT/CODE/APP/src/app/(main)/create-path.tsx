@@ -140,6 +140,11 @@ export default function CreatePathScreen() {
     router.replace("/paths")
   }
 
+  function handleSuccessDismiss() {
+    setSuccessPopupVisible(false)
+    router.replace("/(main)/home")
+  }
+
   return (
     <View style={styles.root}>
       <MapView
@@ -202,12 +207,11 @@ export default function CreatePathScreen() {
         title="Save Path"
         onPress={handleSavePath}
         buttonColor={palette.brand.base}
-        disabled={!canSave}
+        textColor={palette.text.inverse}
         style={[
           styles.saveButton,
           {
             shadowColor: palette.border.muted,
-            opacity: canSave ? 1 : 0.5,
             bottom: insets.bottom + verticalScale(24),
           },
         ]}
@@ -218,7 +222,7 @@ export default function CreatePathScreen() {
         message="Your new path has been saved and is ready to be used!"
         icon={<CheckCircle size={iconSizes.xl} color={palette.status.success} />}
         iconBackgroundColor={`${palette.accent.green.surface}`}
-        onClose={() => setSuccessPopupVisible(false)}
+        onClose={handleSuccessDismiss}
         primaryButton={{
           label: "Go To My Paths",
           onPress: handleSuccessPrimaryPress,

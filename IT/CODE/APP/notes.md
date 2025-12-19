@@ -60,7 +60,11 @@ The base template gave us the `(tabs)` routing which we adapted into the `(auth)
 ### auth/
 - `authSession.ts` - in-memory tokens + listener for session changes.
 - `storage.ts` - Zustand store connecting SecureStore, APIs, and UI (init, login, logout, fetch profile, update profile, guest mode).
-- `validation.ts` - Zod schemas for login/signup/edit profile forms.
+
+### validation/
+- `auth.ts` - Zod schemas + types for login, signup, and edit-profile flows.
+- `path.ts` - schema for create-path modal.
+- `index.ts` - barrel so consumers can `import { signupSchema } from "@/validation"`.
 
 ### api/
 - `client.ts` - Axios instance with `getAccessToken()` injection and 401 interceptor that hits `refreshAccessToken`.

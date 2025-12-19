@@ -118,7 +118,7 @@ export default function HomeScreen() {
           userLocation
         ),
         tags: [
-          { label: "5.2 km", color: palette.accent.blue.surface, textColor: palette.accent.blue.base }, 
+          { label: "5.2 km", color: palette.accent.blue.surface, textColor: palette.accent.blue.base },
           { label: "Optimal", color: palette.accent.green.surface, textColor: palette.accent.green.base },
         ],
       },
@@ -391,20 +391,21 @@ export default function HomeScreen() {
               />
             </View>
 
-            <Pressable
-              style={[
-                styles.fab,
-                {
-                  backgroundColor: isGuest ? palette.surface.muted : palette.brand.base,
-                  opacity: isGuest ? 0.7 : 1,
-                  shadowColor: palette.border.muted,
-                  bottom: verticalScale(90) + insets.bottom,
-                },
-              ]}
-              onPress={handleCreatePath}
-            >
-              <Plus size={iconSizes.lg} color={isGuest ? palette.border.default : palette.text.onAccent} strokeWidth={2} />
-            </Pressable>
+            {!isGuest && (
+              <Pressable
+                style={[
+                  styles.fab,
+                  {
+                    backgroundColor: palette.button.primary.bg,
+                    shadowColor: palette.border.muted,
+                    bottom: verticalScale(90) + insets.bottom,
+                  },
+                ]}
+                onPress={handleCreatePath}
+              >
+                <Plus size={iconSizes.lg} color={palette.text.onAccent} strokeWidth={2} />
+              </Pressable>
+            )}
 
             <SearchResultsSheet
               visible={resultsVisible}
@@ -483,7 +484,7 @@ export default function HomeScreen() {
         primaryButton={{
           label: isGuest ? "Log In" : "View Stats",
           variant: "primary",
-          onPress: () => {isGuest ? go("/(auth)/login") : go("/trips")},
+          onPress: () => { isGuest ? go("/(auth)/login") : go("/trips") },
           buttonColor: palette.status.success,
           textColor: palette.text.onAccent,
         }}

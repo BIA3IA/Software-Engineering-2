@@ -95,16 +95,16 @@ export function RouteCard({
             <View style={styles.metricsRow}>
                 <View style={styles.pillsRow}>
                     <MetricPill
-                        icon={<MapPin size={metricIconSize} color={palette.brand.dark} />}
+                        icon={<MapPin size={metricIconSize} color={palette.accent.blue.base} />}
                         value={`${trip.distanceKm.toFixed(1)} km`}
-                        backgroundColor={palette.brand.surface}
-                        textColor={palette.brand.dark}
+                        backgroundColor={palette.accent.blue.surface}
+                        textColor={palette.accent.blue.base}
                     />
                     <MetricPill
-                        icon={<Calendar size={metricIconSize} color={palette.accent.purple.bold} />}
+                        icon={<Calendar size={metricIconSize} color={palette.accent.purple.base} />}
                         value={trip.date}
                         backgroundColor={palette.accent.purple.surface}
-                        textColor={palette.accent.purple.bold}
+                        textColor={palette.accent.purple.base}
                     />
                 </View>
 

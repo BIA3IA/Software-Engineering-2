@@ -15,7 +15,6 @@ interface AppButtonProps {
   borderColor?: string
   buttonColor?: string
   style?: StyleProp<ViewStyle>
-  disabled?: boolean
   contentStyle?: StyleProp<ViewStyle>
 }
 
@@ -27,7 +26,6 @@ export function AppButton({
   borderColor,
   buttonColor,
   style,
-  disabled = false,
   contentStyle,
 }: AppButtonProps) {
   const scheme = useColorScheme() ?? "light"
@@ -75,14 +73,12 @@ export function AppButton({
     <Button
       mode={mode}
       onPress={onPress}
-      disabled={disabled}
       buttonColor={resolvedButtonColor as any}
       textColor={resolvedTextColor as any}
       style={[
         styles.button,
         style,
         { borderColor: resolvedBorderColor, borderWidth: resolvedBorderColor ? 1 : 0 },
-        disabled && { opacity: 0.6 },
       ]}
       labelStyle={styles.label}
       contentStyle={[styles.content, contentStyle]}

@@ -32,6 +32,9 @@ export function ReportIssueModal({
 }: ReportIssueModalProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
+  const iconBackground =
+    scheme === "dark" ? palette.status.danger : palette.accent.red.surface
+  const iconColor = scheme === "dark" ? palette.overlay.iconOnDark : palette.status.danger
 
   const [conditionKey, setConditionKey] = React.useState(conditionOptions[0]?.key ?? "")
   const [obstacleKey, setObstacleKey] = React.useState(obstacleOptions[0]?.key ?? "")
@@ -92,7 +95,8 @@ export function ReportIssueModal({
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
+      <View style={[styles.backdrop, { backgroundColor: palette.overlay.scrim }]}>
+        <Pressable style={styles.dismissArea} onPress={onClose} />
         <View style={styles.centerWrapper} pointerEvents="box-none">
           <View
             style={[
@@ -107,10 +111,10 @@ export function ReportIssueModal({
             <View
               style={[
                 styles.iconWrapper,
-                { backgroundColor: palette.accent.red.surface  },
+                { backgroundColor: iconBackground },
               ]}
             >
-              <AlertTriangle size={iconSizes.xl} color={palette.status.danger} strokeWidth={2.2} />
+              <AlertTriangle size={iconSizes.xl} color={iconColor} strokeWidth={2.2} />
             </View>
 
             <Text style={[textStyles.screenTitle, styles.title, { color: palette.status.danger }]}>
@@ -147,7 +151,7 @@ export function ReportIssueModal({
             />
           </View>
         </View>
-      </Pressable>
+      </View>
       {!!activeSelect && (
         <SelectionOverlay
           visible
@@ -180,6 +184,9 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: "rgba(15,23,42,0.45)",
+  },
+  dismissArea: {
+    ...StyleSheet.absoluteFillObject,
   },
   centerWrapper: {
     flex: 1,

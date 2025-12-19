@@ -17,12 +17,14 @@ type SelectFieldProps = {
   valueLabel: string
   onOpen: (anchor: Anchor) => void
   active: boolean
+  errorMessage?: string
 }
 
-export function SelectField({ label, valueLabel, onOpen, active }: SelectFieldProps) {
+export function SelectField({ label, valueLabel, onOpen, active, errorMessage }: SelectFieldProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
   const containerRef = React.useRef<View | null>(null)
+  const hasError = Boolean(errorMessage)
 
   function handlePress() {
     const windowWidth = Dimensions.get("window").width
@@ -49,7 +51,7 @@ export function SelectField({ label, valueLabel, onOpen, active }: SelectFieldPr
         style={({ pressed }) => [
           styles.input,
           {
-            borderColor: palette.border.muted,
+            borderColor: hasError ? palette.status.danger : palette.border.muted,
             backgroundColor: palette.surface.input,
           },
           active && { borderColor: palette.brand.base },
@@ -62,6 +64,11 @@ export function SelectField({ label, valueLabel, onOpen, active }: SelectFieldPr
         </Text>
         <ChevronDown size={iconSizes.sm} color={palette.text.secondary} />
       </Pressable>
+      {hasError && (
+        <Text style={[textStyles.caption, styles.errorMessage, { color: palette.status.danger }]}>
+          {errorMessage}
+        </Text>
+      )}
     </View>
   )
 }
@@ -81,5 +88,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  errorMessage: {
+    marginTop: verticalScale(6),
   },
 })
