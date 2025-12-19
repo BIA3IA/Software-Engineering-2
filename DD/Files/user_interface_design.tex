@@ -203,7 +203,7 @@ scrolling upward, ensuring fluid navigation without obstructing content.
 Guest users may freely interact with the map and perform path searches. However, features requiring
 authentication,such as path creation, viewing personal trip history, or accessing the profile, are
 greyed out. A lock icon visually indicates restricted access. Attempting to select a disabled icon
-triggers an authentication pop-up inviting the user to sign in. This design clearly communicates
+triggers an authentication pop-up inviting the user to log in. This design clearly communicates
 the distinction between publicly accessible features and those reserved for authenticated users.
 
 \subsection*{Authentication Pop-up for Guest Users}
@@ -211,12 +211,11 @@ the distinction between publicly accessible features and those reserved for auth
 
 When a guest user attempts to access a restricted capability, the system displays a modal pop-up
 explaining that the selected functionality is available only to logged-in users. The modal presents
-two actions: one to proceed to the Sign In flow, and one to continue as a guest without enabling
-the requested feature.
+one primary action, \textbf{Log In}, which redirects the user to the Login Flow.
 
 While the pop-up is visible, the underlying interface is dimmed and temporarily disabled to focus
 the user's attention on the modal and prevent accidental interaction with the map or navigation
-controls. The pop-up may be closed either by selecting one of the available actions or by tapping
+controls. The pop-up may be closed by tapping
 outside the modal area, returning the guest user to their current context and allowing them to
 continue exploring the application uninterrupted.
 

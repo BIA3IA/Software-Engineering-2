@@ -195,6 +195,9 @@ src/
 ├── prisma/                 # Prisma setup
 │   └── schema.prisma       # Prisma schema file
 │   └── migrations/         # Prisma migrations
+│   └── json.types.d.ts     # Prisma JSON type definitions with our custom types
+├── services/               # External service integrations
+│   └── openmeteo.service.ts # OpenMeteo API integration
 ├── managers/               # Business logic
 │   └── user/...            # User-related logic
 │   └── query/...           # Query-related logic
@@ -245,4 +248,473 @@ npm install --save-dev @types/jsonwebtoken
 - Indexing database fields at the end of the development phase for performance optimization, once we have all the queries defined
 - Custom error handling middleware implemented in order to catch and respond to errors consistently across the application
 - Logging middleware using Pino for low overhead and high performance logging, accompanied also by a custom http logger
-- TODO: Perform unit and integration testing using Jest
+- Perform unit and integration testing using Jest
+
+### Notes on Prisma
+
+Whenever the `schema.prisma` is modified, it is necessary to run `npx prisma generate` to regenerate the Prisma Client with the updated schema. This ensures that the generated client reflects the latest changes made to the database schema.
+
+If we want to see the converted schema in SQL, we can first perform a migration in `--create-only` mode by running:
+
+```bash
+npx prisma migrate dev --create-only --name
+```
+
+This command generates the SQL migration files without applying them to the database. The generated SQL files can be found in the `prisma/migrations` directory, allowing you to inspect the SQL statements that Prisma would execute to update the database schema.
+
+If everything is fine, we can then apply the migration by running:
+
+```bash
+npx prisma migrate dev --name
+```
+
+If you've already created the migration with `--create-only`, you don't need to specify `--name` again. Simply run:
+
+```bash
+npx prisma migrate dev
+```
+
+In order to reset the database and reapply all migrations from scratch, we can use:
+
+```bash
+npx prisma migrate reset
+```
+
+This command will drop the database, recreate it, and run all migrations. All data will be lost.
+
+### Notes on Prisma Studio
+
+Prisma Studio is a GUI for viewing and editing data in your database. To open it, run:
+
+```bash
+npx prisma studio
+```
+
+This is useful for quickly inspecting data during development without writing queries.
+
+### Notes on Prisma JSON Types
+
+Reasons to store data as JSON rather than representing data as related models include:
+
+- You need to store data that does not have a consistent structure
+- You are importing data from another system and do not want to map that data to Prisma models
+- You need to store flexible metadata or configuration objects
+
+When using JSON fields in Prisma with TypeScript, you may need to define custom types to ensure type safety. Without this, Prisma's generated types will treat JSON fields as `Prisma.JsonValue`, which is too generic and doesn't provide proper type checking.
+
+To add type safety to JSON fields, first install the generator:
+
+```bash
+npm install -D prisma-json-types-generator
+```
+
+Then add the generator to your `schema.prisma`:
+
+```prisma
+generator json {
+  provider = "prisma-json-types-generator"
+}
+```
+
+Next, link a field to a TypeScript type using an annotation comment:
+
+```prisma
+model Log {
+  id       Int  @id @default(autoincrement())
+  /// [Coordinates]
+  location Json
+}
+```
+
+Then define the `Coordinates` type in `prisma/json-types.d.ts`:
+
+```typescript
+export interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+```
+
+After running `npx prisma generate`, the Prisma Client will use your custom type, providing full TypeScript intellisense and type checking for the JSON field.
+
+### Notes on Custom TypeScript Types
+
+Defining custom types in TypeScript is useful for creating DTOs (Data Transfer Objects) that can be shared across different parts of the application, ensuring consistency and type safety. Or create custom types for complex nested JSON structures that don't map directly to database relations.
+Finally is useful also to avoid compilation errors when using complex types in various parts of the application.
+
+### Notes on Openmeteo service
+
+The Openmeteo service integration includes functions to fetch weather data for specific coordinates and aggregate that data over a route. The service uses the Open-Meteo API to retrieve weather information such as temperature and weather descriptions.
+For free use of the Open-Meteo API, no API key is required, making it easy to integrate into applications without additional authentication steps.
+In our case we implemented a way to sample coordinates along a route to limit the number of API calls, which is important to stay within free tier limits and avoid excessive requests but is also important to have a better precision of the weather data along the route.
+Furthermore, since we want fresh data, we used the "current" endpoint of the Open-Meteo API, which provides up-to-date weather information rather than historical or forecast data. In particular current conditions are based on 15-minutely weather model data.
+See more at: https://open-meteo.com/en/docs to see the structure of the API and available parameters.
+
+### Notes on Testing
+
+#### Unit Tests vs. Integration Tests
+
+Unit tests focus on testing individual functions or components in isolation. During these tests, we mock calls to external services and dependencies to isolate the functionality we're testing. This approach ensures that the tests are reliable and unaffected by external factors such as network issues, database status, or API changes. Furthermore, by mocking dependencies, the tests become much more performant as we avoid network latency and database operations. Another advantage is that we can easily simulate various scenarios and edge cases that might be difficult to reproduce with real service calls.
+
+Integration tests, on the other hand, verify the end-to-end functionality of the application, testing how the different components work together. In our project, we directly import the Express app instance and use Supertest to simulate real HTTP requests. This allows us to test the entire application stack, from API routes to controllers, services, and database interactions, without having to continuously start and stop the server during testing. Integration tests validate the complete flow of data and interactions between components, providing us with confidence that the system behaves correctly when all parts work together.
+
+#### Testing Tools
+
+For our project, we use Jest as a testing framework for both unit and integration tests. Jest provides a comprehensive set of features for writing, running, and organizing tests, including built-in support for mocking, assertions, and code coverage reporting. Its ease of use and powerful capabilities make it a popular choice for testing JavaScript and TypeScript applications.
+
+For integration tests, we use Supertest, a popular library for testing HTTP servers in Node.js. Supertest provides a high-level abstraction for making HTTP requests and assertions, making it easier to write and maintain integration tests for our API endpoints. A typical example of use is the following:
+
+```typescript
+import request from "supertest";
+import app from "../app";
+
+describe("POST /api/auth/register", () => {
+  it("should register a new user", async () => {
+    const response = await request(app)
+      .post("/api/auth/register")
+      .send({ email: "test@example.com", password: "password123" });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toHaveProperty("user");
+  });
+});
+```
+
+#### Running Tests
+
+To run all the tests in the project, we can use the command:
+
+```bash
+npm test
+```
+
+If we want to run the tests in watch mode, which is useful during development for continuous feedback, we can use:
+
+```bash
+npm run test:watch
+```
+
+To generate a code coverage report showing which parts of the codebase are covered by the tests and which are not, we can add the `--coverage` flag:
+
+```bash
+npm test -- --coverage
+```
+
+This report helps us identify areas that may require additional testing. The report shows the percentage of lines executed, conditional branches tested, functions called, and statements executed. Reports are typically saved in a `coverage/` directory and can be viewed as HTML reports in a browser.
+
+If we want to run a single test file, we can specify the path:
+
+```bash
+npm test path/to/test/file.test.ts
+```
+
+Or we can run tests that match a specific pattern:
+
+```bash
+npm test -- --testNamePattern="should register"
+```
+
+#### Test Configuration
+
+Jest is configurable via the `jest.config.mjs` file in the project root, where we can specify settings such as the test environment, file patterns, and coverage thresholds. In our case, we use the `ts-jest` preset for TypeScript support and set the environment to `node` since we are testing a backend API. We also define patterns to identify which files Jest should consider as tests, typically files ending in `.test.ts` or files in the `__tests__` directory.
+
+The `setupTest.ts` file is run before all tests and configures the environment variables needed for the test environment. In our case, we set `NODE_ENV` to `test` and define the JWT secrets for the tests:
+
+```typescript
+process.env.NODE_ENV = "test";
+
+process.env.JWT_SECRET = "test-access-secret";
+
+process.env.JWT_REFRESH_SECRET = "test-refresh-secret";
+```
+
+In the `package.json` file, we defined the scripts to run the tests in different modes. You'll notice that we use `NODE_OPTIONS` to configure Node.js runtime options for Jest, such as handling the
+
+
+# BBP Backend Deployment on Hetzner
+**Docker + Shared Nginx + Cloudflare**
+
+This document describes, step by step, the deployment of the BBP backend on a Hetzner VPS using Docker.
+The backend is deployed alongside an already existing website, without interfering with it.
+
+The API is exposed at:
+https://api.bia3ia.com
+
+## 1. Architecture Overview
+
+- Server: Hetzner VPS (Ubuntu)
+- Container runtime: Docker + Docker Compose
+- Reverse proxy: Shared Nginx container
+- TLS: Cloudflare Origin Certificates
+- Database: PostgreSQL via Prisma Accelerate
+- Backend: Node.js (Express) + Prisma
+- Main domain: bia3ia.com
+- API subdomain: api.bia3ia.com
+
+Key concepts:
+- Nginx is the only service exposing ports 80 and 443
+- The backend listens on port 3000 internally
+- Services communicate through a shared Docker network
+
+## 2. Server Directory Structure
+
+```bash
+/opt
+├── nginx
+│   ├── conf.d
+│   │   ├── site.conf
+│   │   └── api.conf
+│   ├── ssl
+│   │   ├── residenzaclasmarina-origin.crt
+│   │   ├── residenzaclasmarina-origin.key
+│   │   ├── bia3ia-origin.crt
+│   │   └── bia3ia-origin.key
+│   └── log
+│       ├── access.log
+│       └── error.log
+│
+├── residenza-clas-marina
+│   └── docker-compose.yml
+│
+├── bbp-backend
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── .env
+```
+
+## 3. Copying the Project to the Server
+
+From the local machine:
+
+```bash
+rsync -avz ./BACKEND/ bianca@<HETZNER_IP>:/opt/bbp-backend/
+```
+
+## 4. Environment Variables
+
+Create the .env file on the server:
+
+```bash
+cd /opt/bbp-backend
+nano .env
+```
+Example:
+
+```bash
+PORT=3000
+LOG_LEVEL=info
+JWT_SECRET= {{randomly_generated_secret}}
+JWT_REFRESH_SECRET= {{randomly_generated_refresh_secret}}
+DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key={{prisma_accelerate_api_key}}"
+```
+Secrets must never be committed to Git. 
+
+## 5. Docker Compose Configuration
+
+File: docker-compose.yml
+
+Notes:
+- expose makes port 3000 available only inside Docker
+- NODE_ENV=production avoids dev-only dependencies
+- proxy is a shared Docker network used by Nginx
+
+## 6. Dockerfile
+
+File: Dockerfile
+
+Notes:
+- Multi-stage build to keep the final image small.
+- Certificates are required for TLS connections to Prisma Accelerate.
+- Migrations are applied at container startup.
+
+## 7. Logger Configuration (Production-safe)
+
+File: src/utils/logger.ts
+
+Notes:
+- pino-pretty must not be used in production
+- NODE_ENV=production is enforced via Docker Compose
+
+## 8. Docker Network Setup
+
+Create the shared network once:
+
+```bash
+docker network create proxy || true
+```
+
+Connect Containers:
+
+```bash
+docker network connect proxy <nginx_container> || true
+```
+
+In our specific case:
+
+```bash
+docker network connect proxy bbp_api || true
+docker network connect proxy shared_nginx || true
+```
+
+Then verify:
+
+```bash
+docker network inspect proxy
+```
+
+## 9. Nginx Configuration for the API
+
+Reverse proxy from api.bia3ia.com to bbp_api:3000
+TLS via Cloudflare Origin Certificate.
+
+File: /opt/nginx/conf.d/api.conf
+
+```bash
+# HTTP -> HTTPS redirect
+server {
+    listen 80;
+    listen [::]:80;
+    server_name api.bia3ia.com;
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS reverse proxy
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+
+    server_name api.bia3ia.com;
+
+    ssl_certificate     /etc/nginx/ssl/bia3ia-origin.crt;
+    ssl_certificate_key /etc/nginx/ssl/bia3ia-origin.key;
+
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    location / {
+        proxy_pass http://bbp_api:3000;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 60s;
+        proxy_send_timeout 60s;
+
+        client_max_body_size 25m;
+    }
+}
+```
+
+Reload Nginx:
+
+```bash
+docker exec -it shared_nginx nginx -t
+docker exec -it shared_nginx nginx -s reload
+```
+
+## 10. Cloudflare Configuration
+
+I have already a Cloudflare account managing bia3ia.com. (Bianca)
+It is the domain of another site hosted on another server, but we can use the subdomain api.bia3ia.com for our apis.
+
+DNS
+
+| Type | Name | Content    | Proxy   |
+| ---- | ---- | ---------- | ------- |
+| A    | api  | Hetzner IP | Proxied |
+
+SSL/TLS
+Mode: Full (strict)
+Origin certificate:
+Covers bia3ia.com and *.bia3ia.com
+Installed inside the Nginx container
+If SSL is misconfigured, Cloudflare returns error 526.
+
+## 11. Starting the Backend
+
+From the server:
+
+```bash
+cd /opt/bbp-backend
+docker compose build --no-cache
+docker compose up -d
+```
+
+Check Status:
+
+```bash
+docker compose ps
+docker logs -f bbp_api --tail=50
+```
+
+## 12. Testing the Deployment
+
+From the server:
+
+```bash
+curl -i -k -H "Host: api.bia3ia.com" https://127.0.0.1/
+```
+
+From outside:
+
+```bash
+curl -i https://api.bia3ia.com/api/v1/users/profile
+```
+
+Should answer with ACCESS_TOKEN_MISSING because no token is provided
+
+## 13. Common Commands
+
+Restart backend:
+
+```bash
+docker compose restart api
+```
+
+View Logs:
+
+```bash
+docker logs -f bbp_api --tail=100
+```
+
+Reload Nginx after changes:
+
+```bash
+docker exec -it shared_nginx nginx -t
+docker exec -it shared_nginx nginx -s reload
+```
+
+## Note on Nginx usage
+
+In the Residenza Clas Marina project, Nginx is defined inside the docker-compose.yml file because the project is a complete web application.
+
+That application:
+- serves HTML content
+- handles HTTP to HTTPS redirection
+- terminates TLS
+- exposes ports 80 and 443 directly to the internet
+
+For these reasons, Nginx is considered part of the application stack and is deployed together with the frontend.
+
+In contrast, BBP Backend is a pure API service.
+
+The backend:
+- does not serve static or HTML content
+- does not manage TLS certificates
+- does not expose public ports directly
+- is meant to be consumed by a mobile application
+
+Because of this, Nginx is not included in the bbp-backend Docker Compose file.
+Instead, the backend is exposed through a shared Nginx reverse proxy, which acts as infrastructure and routes incoming requests to the correct internal service based on the requested domain.
+
+This separation keeps the backend lightweight, reusable, and independent from the HTTP/TLS layer.

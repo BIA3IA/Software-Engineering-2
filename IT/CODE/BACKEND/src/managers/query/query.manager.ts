@@ -1,16 +1,19 @@
-import prisma from "../../utils/prisma-client.js";
+import { sortSegmentsByChain, prisma } from "../../utils/index.js";
+import { TripSegments, WeatherData} from "../../types/index.js";
+
 
 export class QueryManager {
 
     // CRUD methods to create a new user
     
     // create user
-    async createUser(email: string, password: string, username: string) {
+    async createUser(email: string, password: string, username: string, systemPreferences: string[] ) {
         return await prisma.user.create({
             data: {
                 email,
                 password,
                 username,
+                systemPreferences,
             },
         });
     }
@@ -33,6 +36,24 @@ export class QueryManager {
     async getUserByUsername(username: string) {
         return await prisma.user.findUnique({
             where: { username },
+        });
+    }
+
+    // update user profile
+    async updateUserProfile(userId: string, data: {
+        username?: string;
+        email?: string;
+        password?: string;
+        systemPreferences?: string[];
+    }) {
+        return await prisma.user.update({
+            where: { userId },
+            data: {
+                ...(data.username && { username: data.username }), // avoid overwriting with undefined
+                ...(data.email && { email: data.email }),
+                ...(data.password && { password: data.password }),
+                ...(data.systemPreferences && { systemPreferences: data.systemPreferences }),
+            },
         });
     }
 
@@ -60,6 +81,39 @@ export class QueryManager {
     async deleteRefreshToken(token: string) {
         return await prisma.refreshToken.delete({
             where: { token },
+        });
+    }
+
+    // TRIP
+
+    // get trip by id with segments
+    async getTripById(tripId: string): Promise<TripSegments | null> {
+        const trip = await prisma.trip.findUnique({
+            where: { tripId },
+            include: {
+                tripSegments: {
+                    include: { segment: true },
+                },
+            },
+        });
+
+        if (!trip) {
+            return null;
+        }
+
+        return {
+            ...trip,
+            tripSegments: sortSegmentsByChain(trip.tripSegments),
+        };
+    }
+
+    // WEATHER
+
+    // update trip weather data
+    async updateTripWeather(tripId: string, weather: WeatherData) {
+        return await prisma.trip.update({
+            where: { tripId },
+            data: { weather },
         });
     }
 

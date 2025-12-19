@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ErrorResponse } from '../types/error.types.js';
+import { ErrorResponse } from '../types/index.js';
 import { HttpStatus, AppError } from '../errors/index.js';
 import logger from '../utils/logger.js';
 
@@ -76,7 +76,7 @@ export const notFoundHandler = (req: Request, res: Response): void => {
     const response: ErrorResponse = {
         success: false,
         error: {
-            message: `Route ${req.method} ${req.path} not found`,
+            message: `Route ${req.method} ${req.originalUrl} not found`,
             code: 'ROUTE_NOT_FOUND',
         },
     };

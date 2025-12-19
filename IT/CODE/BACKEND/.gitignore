@@ -6,3 +6,5 @@ node_modules
 
 # Jest local storage file
 jest-storage
+
+prova.ts
