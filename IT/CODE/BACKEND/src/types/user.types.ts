@@ -2,6 +2,7 @@
 export interface UpdateProfilePayload {
     username?: string;
     email?: string;
+    currentPassword?: string;
     password?: string;
     systemPreferences?: string[];
 }
