@@ -181,7 +181,7 @@ At this point, the user enters the Browsing state, where they can inspect all su
 The following diagram illustrates the states related to the manual creation of a new path by a logged-in user.
 A logged-in user can start the manual creation process by pressing the create path button. Once this action is triggered, the system leaves the idle state and enters the Editing Metadata state, where the user provides general information about the path, such as its name, description, visibility, and creation mode, where he should select manual creation.
 
-After the metadata are confirmed and saved, the process continues in the Adding Segments state. In this phase, the user manually draws or selects the path segments on the map to define the complete path. When all segments have been added, the user proceeds to the Validating Path state, where the system checks the consistency and continuity of the selected path.
+After the metadata are confirmed and saved, the process continues in the Adding Segments state. In this phase, the user manually draws segments on the map to define the complete path. When all segments have been added, the user proceeds to the Validating Path state, where the system checks the consistency and continuity of the selected path.
 If the validation succeeds, the process transitions to the Saving Path state, during which the system stores the new path in the database. In case of a validation failure or a save error, the system moves to an error path and returns to the idle state, allowing the user to retry or discard the creation.
 
 If the saving process completes successfully, the system reaches the final state, confirming that the new path has been correctly created and stored.
