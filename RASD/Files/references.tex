@@ -26,12 +26,12 @@ The preparation of this document was supported by the following reference materi
 The following software tools have been used during the development of this project:
 
 \begin{itemize}
-	\item \textbf{Visual Studio Code}: editing of source code and documentation (LaTeX), with project-wide search and formatting support.
-	\item \textbf{LaTeX}: typesetting system used to produce the final RASD document in a consistent format.
-	\item \textbf{Git}: version control used to track changes and support collaborative development.
-	\item \textbf{GitHub}: remote repository hosting and collaboration platform used for versioning, reviews, and issue tracking.
-	\item \textbf{Lucidchart}: creation of UML diagrams (use case diagrams, state diagrams, domain class diagram).
-	\item \textbf{Alloy TODO}: execution of the Alloy model, trace generation, and assertion checking.
+	\item \textbf{Visual Studio Code}: editing of source code and documentation (LaTeX), with project-wide search and formatting support \cite{vscode}.
+	\item \textbf{LaTeX}: typesetting system used to produce the final RASD document in a consistent format \cite{latex}.
+	\item \textbf{Git}: version control used to track changes and support collaborative development \cite{git}.
+	\item \textbf{GitHub}: remote repository hosting and collaboration platform used for versioning, reviews, and issue tracking \cite{github}.
+	\item \textbf{Lucidchart}: creation of UML diagrams (use case diagrams, state diagrams, domain class diagram) \cite{lucidchart}.
+	\item \textbf{Alloy }: execution of the Alloy model, trace generation, and assertion checking \cite{alloy6}.
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -68,6 +68,8 @@ AI tools were queried using prompts such as:
 	\item "Write the basic layout of a LaTeX table with a header row."
 	\item "Help debug formatting or build issues related to VS Code or LaTeX"
 	\item "Apply the Alloy LaTeX style to this code snippet."
+	\item "Given the predicate: predadd[b, bpost: Book, n: Name, a: Addr] \{ bpost.addr= b.addr+ n-> a \}. What is the meaning of "->"?"
+	\item "What is the difference between doing b.addr instead of addr[b]"
 \end{itemize}
 
 \subsection{Input Provided}
@@ -92,7 +94,7 @@ The interaction with AI tools resulted in:
 	\item Clearer or more concise formulations of existing statements.
 	\item Identification of potentially ambiguous sentences.
 	\item Terminology suggestions to improve internal coherence.
-	\item \LaTeX{} formatting assistance for tables and code snippets.
+	\item LaTeX formatting assistance for tables and code snippets.
 \end{itemize}
 
 \subsection{Refinement Process}
