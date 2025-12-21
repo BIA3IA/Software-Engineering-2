@@ -1,5 +1,5 @@
 import React from "react"
-import { StyleSheet } from "react-native"
+import { StyleSheet, type StyleProp, type ViewStyle } from "react-native"
 import { Button } from "react-native-paper"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
@@ -14,6 +14,8 @@ interface AppButtonProps {
   textColor?: string
   borderColor?: string
   buttonColor?: string
+  style?: StyleProp<ViewStyle>
+  contentStyle?: StyleProp<ViewStyle>
 }
 
 export function AppButton({
@@ -23,22 +25,24 @@ export function AppButton({
   textColor,
   borderColor,
   buttonColor,
+  style,
+  contentStyle,
 }: AppButtonProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
 
-  const primaryBg = palette.buttonPrimaryBg
-  const primaryText = palette.buttonPrimaryText
+  const primaryBg = palette.button.primary.bg
+  const primaryText = palette.button.primary.text
 
-  const secondaryBg = palette.buttonSecondaryBg
-  const secondaryText = palette.buttonSecondaryText
-  const secondaryBorder = palette.buttonSecondaryBorder
+  const secondaryBg = palette.button.secondary.bg
+  const secondaryText = palette.button.secondary.text
+  const secondaryBorder = palette.button.secondary.border
 
-  const outlineBorder = palette.buttonOutlineBorder
-  const outlineText = palette.buttonOutlineText
+  const outlineBorder = palette.button.outline.border
+  const outlineText = palette.button.outline.text
 
-  const destructiveBg = palette.buttonDestructiveBg
-  const destructiveText = palette.buttonDestructiveText
+  const destructiveBg = palette.button.danger.bg
+  const destructiveText = palette.button.danger.text
 
   const isPrimary = variant === "primary"
   const isSecondary = variant === "secondary"
@@ -73,10 +77,11 @@ export function AppButton({
       textColor={resolvedTextColor as any}
       style={[
         styles.button,
+        style,
         { borderColor: resolvedBorderColor, borderWidth: resolvedBorderColor ? 1 : 0 },
       ]}
       labelStyle={styles.label}
-      contentStyle={{ height: 50 }}
+      contentStyle={[styles.content, contentStyle]}
     >
       {title}
     </Button>
@@ -88,6 +93,9 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: radius.pill,
     justifyContent: "center",
+  },
+  content: {
+    height: 50,
   },
   label: {
     fontSize: 16,

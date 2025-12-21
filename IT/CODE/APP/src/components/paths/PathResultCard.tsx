@@ -5,6 +5,8 @@ import { radius, scale, verticalScale } from "@/theme/layout"
 import { textStyles } from "@/theme/typography"
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
+import { AppButton } from "@/components/ui/AppButton"
+import { MetricPill } from "@/components/ui/MetricPill"
 
 export type PathResultTag = {
   label: string
@@ -33,22 +35,21 @@ export function PathResultCard({
 }: PathResultCardProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
-  const cardBg = selected ? palette.bgElevated : palette.bgPrimary
-  const cardBorder = selected ? palette.primaryLight : palette.border
-  const titleColor = selected ? palette.primaryDark : palette.textAccent
-  const descriptionColor = selected ? palette.primaryDark : palette.textSecondary
+  const cardBg = selected ? palette.surface.elevated : palette.surface.card
+  const cardBorder = palette.border.muted
+  const titleColor = palette.text.link
+  const descriptionColor = palette.text.secondary
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
+      style={() => [
         styles.card,
         {
           borderColor: cardBorder,
           backgroundColor: cardBg,
-          shadowColor: palette.border,
+          shadowColor: palette.border.muted,
         },
-        pressed && { opacity: 0.9 },
       ]}
     >
       <Text style={[textStyles.bodyBold, styles.title, { color: titleColor }]}>{title}</Text>
@@ -57,31 +58,25 @@ export function PathResultCard({
       {tags.length > 0 && (
         <View style={styles.tagsRow}>
           {tags.map((tag, index) => (
-            <View
+            <MetricPill
               key={`${tag.label}-${index}`}
-              style={[styles.tag, { backgroundColor: `${tag.color}` }]}
-            >
-              <Text style={[textStyles.caption, styles.tagText, { color: tag.textColor }]}>
-                {tag.label}
-              </Text>
-            </View>
+              value={tag.label}
+              backgroundColor={tag.color}
+              textColor={tag.textColor}
+            />
           ))}
         </View>
       )}
 
       {selected && actionLabel && (
-        <Pressable
+        <AppButton
+          title={actionLabel}
           onPress={onActionPress}
-          style={({ pressed }) => [
-            styles.actionButton,
-            { backgroundColor: palette.primary },
-            pressed && { opacity: 0.85 },
-          ]}
-        >
-          <Text style={[textStyles.bodySmall, styles.actionText, { color: palette.textInverse }]}>
-            {actionLabel}
-          </Text>
-        </Pressable>
+          buttonColor={palette.brand.base}
+          textColor={palette.text.onAccent}
+          style={styles.actionButton}
+          contentStyle={styles.actionButtonContent}
+        />
       )}
     </Pressable>
   )
@@ -109,22 +104,12 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: scale(8),
   },
-  tag: {
-    borderRadius: radius.full,
-    paddingHorizontal: scale(10),
-    paddingVertical: verticalScale(4),
-  },
-  tagText: {
-    fontWeight: "600",
-  },
   actionButton: {
     marginTop: verticalScale(10),
     borderRadius: radius.full,
-    paddingVertical: verticalScale(8),
-    alignItems: "center",
-    justifyContent: "center",
+    height: verticalScale(42),
   },
-  actionText: {
-    fontWeight: "600",
+  actionButtonContent: {
+    height: verticalScale(42),
   },
 })

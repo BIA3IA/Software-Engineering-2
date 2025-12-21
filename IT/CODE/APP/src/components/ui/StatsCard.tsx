@@ -31,10 +31,10 @@ export function StatCard({
         {icon}
       </View>
 
-      <Text style={[textStyles.cardTitle, styles.value, { color: valueColor ?? palette.textAccent }]}>
+      <Text style={[textStyles.cardTitle, styles.value, { color: valueColor ?? palette.text.link }]}>
         {value}
       </Text>
-      <Text style={[textStyles.caption, { color: palette.textSecondary }]}>
+      <Text style={[textStyles.caption, { color: palette.text.secondary }]}>
         {label}
       </Text>
     </View>

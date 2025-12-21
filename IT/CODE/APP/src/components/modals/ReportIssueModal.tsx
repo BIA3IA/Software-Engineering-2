@@ -1,12 +1,14 @@
 import React from "react"
-import { Modal, View, Text, StyleSheet, Pressable, Dimensions } from "react-native"
+import { Modal, View, Text, StyleSheet, Pressable } from "react-native"
 
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { radius, scale, verticalScale } from "@/theme/layout"
 import { textStyles, iconSizes } from "@/theme/typography"
-import { AlertTriangle, ChevronDown } from "lucide-react-native"
+import { AlertTriangle } from "lucide-react-native"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
+import { SelectField } from "@/components/ui/SelectField"
+import { AppButton } from "@/components/ui/AppButton"
 
 export type ReportIssueOption = {
   key: string
@@ -30,6 +32,9 @@ export function ReportIssueModal({
 }: ReportIssueModalProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
+  const iconBackground =
+    scheme === "dark" ? palette.status.danger : palette.accent.red.surface
+  const iconColor = scheme === "dark" ? palette.overlay.iconOnDark : palette.status.danger
 
   const [conditionKey, setConditionKey] = React.useState(conditionOptions[0]?.key ?? "")
   const [obstacleKey, setObstacleKey] = React.useState(obstacleOptions[0]?.key ?? "")
@@ -90,33 +95,33 @@ export function ReportIssueModal({
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
+      <View style={[styles.backdrop, { backgroundColor: palette.overlay.scrim }]}>
+        <Pressable style={styles.dismissArea} onPress={onClose} />
         <View style={styles.centerWrapper} pointerEvents="box-none">
           <View
             style={[
               styles.card,
               {
-                backgroundColor: palette.bgPrimary,
-                shadowColor: palette.border,
+                backgroundColor: palette.surface.card,
+                shadowColor: palette.border.muted,
               },
             ]}
           >
-            <View style={styles.handle} />
 
             <View
               style={[
                 styles.iconWrapper,
-                { backgroundColor: palette.destructive + "22" },
+                { backgroundColor: iconBackground },
               ]}
             >
-              <AlertTriangle size={iconSizes.lg} color={palette.destructive} strokeWidth={2.2} />
+              <AlertTriangle size={iconSizes.xl} color={iconColor} strokeWidth={2.2} />
             </View>
 
-            <Text style={[textStyles.screenTitle, styles.title, { color: palette.destructive }]}>
+            <Text style={[textStyles.screenTitle, styles.title, { color: palette.status.danger }]}>
               Report an Issue
             </Text>
 
-            <Text style={[textStyles.body, styles.subtitle, { color: palette.textSecondary }]}>
+            <Text style={[textStyles.body, styles.subtitle, { color: palette.text.secondary }]}>
               Tell us what you found on the path so other riders stay safe.
             </Text>
 
@@ -134,21 +139,19 @@ export function ReportIssueModal({
               active={activeSelect === "obstacle"}
             />
 
-            <Pressable
+            <AppButton
+              title="Submit Report"
               onPress={handleSubmit}
-              style={({ pressed }) => [
+              buttonColor={palette.status.danger}
+              style={[
                 styles.submitButton,
-                { backgroundColor: palette.destructive, shadowColor: palette.border },
-                pressed && { opacity: 0.9 },
+                { shadowColor: palette.border.muted },
               ]}
-            >
-              <Text style={[textStyles.bodyBold, styles.submitText, { color: palette.textInverse }]}>
-                Submit Report
-              </Text>
-            </Pressable>
+              contentStyle={styles.submitButtonContent}
+            />
           </View>
         </View>
-      </Pressable>
+      </View>
       {!!activeSelect && (
         <SelectionOverlay
           visible
@@ -177,62 +180,13 @@ export function ReportIssueModal({
   )
 }
 
-type SelectFieldProps = {
-  label: string
-  valueLabel: string
-  onOpen: (anchor: { top: number; right: number; width: number }) => void
-  active: boolean
-}
-
-function SelectField({ label, valueLabel, onOpen, active }: SelectFieldProps) {
-  const scheme = useColorScheme() ?? "light"
-  const palette = Colors[scheme]
-  const containerRef = React.useRef<View | null>(null)
-
-  return (
-    <View
-      style={styles.selectField}
-      ref={(node) => {
-        containerRef.current = node
-      }}
-    >
-      <Text style={[textStyles.caption, styles.selectLabel, { color: palette.textSecondary }]}>
-        {label}
-      </Text>
-      <Pressable
-        style={({ pressed }) => [
-          styles.selectInput,
-          {
-            borderColor: palette.border,
-            backgroundColor: palette.inputBg,
-          },
-          pressed && { opacity: 0.9 },
-          active && { borderColor: palette.primary },
-        ]}
-        onPress={() => {
-          const windowWidth = Dimensions.get("window").width
-          containerRef.current?.measureInWindow((x, y, width, height) => {
-            onOpen({
-              top: y + height,
-              right: Math.max(0, windowWidth - (x + width)),
-              width,
-            })
-          })
-        }}
-      >
-        <Text style={[textStyles.body, { color: palette.textPrimary }]}>
-          {valueLabel}
-        </Text>
-        <ChevronDown size={iconSizes.sm} color={palette.textSecondary} />
-      </Pressable>
-    </View>
-  )
-}
-
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: "rgba(15,23,42,0.45)",
+  },
+  dismissArea: {
+    ...StyleSheet.absoluteFillObject,
   },
   centerWrapper: {
     flex: 1,
@@ -252,22 +206,14 @@ const styles = StyleSheet.create({
     elevation: 14,
     gap: verticalScale(14),
   },
-  handle: {
-    alignSelf: "center",
-    width: scale(50),
-    height: verticalScale(4),
-    borderRadius: radius.full,
-    marginBottom: verticalScale(8),
-    backgroundColor: "rgba(148,163,184,0.4)",
-  },
   iconWrapper: {
     alignSelf: "center",
-    width: scale(64),
-    height: scale(64),
+    width: scale(80),
+    height: scale(80),
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: verticalScale(4),
+    marginBottom: verticalScale(16),
   },
   title: {
     textAlign: "center",
@@ -276,33 +222,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: verticalScale(6),
   },
-  selectField: {
-    width: "100%",
-  },
-  selectLabel: {
-    marginBottom: verticalScale(6),
-  },
-  selectInput: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingHorizontal: scale(14),
-    paddingVertical: verticalScale(12),
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
   submitButton: {
     marginTop: verticalScale(20),
     borderRadius: radius.full,
-    paddingVertical: verticalScale(12),
-    alignItems: "center",
-    justifyContent: "center",
     shadowOpacity: 0.12,
     shadowOffset: { width: 0, height: 12 },
     shadowRadius: radius.xl,
     elevation: 8,
   },
-  submitText: {
-    fontSize: 16,
+  submitButtonContent: {
+    height: verticalScale(48),
   },
 })

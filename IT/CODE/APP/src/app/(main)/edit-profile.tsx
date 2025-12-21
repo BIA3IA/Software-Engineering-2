@@ -3,19 +3,20 @@ import { ScrollView, View, Text, StyleSheet, Pressable } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import { Controller, useForm } from "react-hook-form"
-import { UserRound, Mail, Lock, X, CheckCircle } from "lucide-react-native"
+import { UserRound, Mail, Lock, X, CheckCircle, AlertTriangle } from "lucide-react-native"
 
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { iconSizes } from "@/theme/typography"
 import { radius, scale, verticalScale } from "@/theme/layout"
-import { ScreenHeader } from "@/components/ScreenHeader"
+import { ScreenHeader } from "@/components/ui/ScreenHeader"
 import { AppTextInput } from "@/components/ui/AppTextInput"
 import { AppButton } from "@/components/ui/AppButton"
 import { useAuthStore } from "@/auth/storage"
-import { editProfileSchema } from "@/auth/validation"
+import { editProfileSchema } from "@/validation"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { BottomNavVisibilityContext } from "@/hooks/useBottomNavVisibility"
+import { getApiErrorMessage } from "@/utils/apiError"
 
 type EditProfileFormValues = {
   username: string
@@ -35,6 +36,10 @@ export default function EditProfileScreen() {
   const defaultUsername = user?.username ?? user?.email?.split("@")[0] ?? "Guest"
   const defaultEmail = user?.email ?? "guest@bestbikepaths.com"
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
+  const [isErrorPopupVisible, setErrorPopupVisible] = React.useState(false)
+  const [successMessage, setSuccessMessage] = React.useState("Your changes have been saved successfully.")
+  const [errorMessage, setErrorMessage] = React.useState("Unable to save your changes.")
+  const updateProfile = useAuthStore((s) => s.updateProfile)
 
   const {
     control,
@@ -86,20 +91,33 @@ export default function EditProfileScreen() {
       return
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 600))
-    reset({
-      username: result.data.username,
-      email: result.data.email,
-      currentPassword: "",
-      newPassword: "",
-      confirmNewPassword: "",
-    })
-    setSuccessPopupVisible(true)
+    try {
+      const serverMessage =
+        (await updateProfile({
+          username: result.data.username,
+          email: result.data.email,
+          password: result.data.newPassword,
+        })) ?? "Profile updated successfully"
+
+      reset({
+        username: result.data.username,
+        email: result.data.email,
+        currentPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
+      })
+      setSuccessMessage(serverMessage)
+      setSuccessPopupVisible(true)
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to update the profile.")
+      setErrorMessage(message)
+      setErrorPopupVisible(true)
+    }
   }
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: palette.bgSecondary }}
+      style={{ flex: 1, backgroundColor: palette.surface.screen }}
       contentContainerStyle={{ paddingBottom: verticalScale(32) + insets.bottom }}
       keyboardShouldPersistTaps="handled"
     >
@@ -112,17 +130,17 @@ export default function EditProfileScreen() {
             onPress={() => router.back()}
             style={({ pressed }) => [
               styles.backButton,
-              { backgroundColor: palette.buttonSecondaryBg, shadowColor: palette.border },
+              { backgroundColor: palette.button.secondary.bg, shadowColor: palette.border.muted },
               pressed && { opacity: 0.9 },
             ]}
           >
-            <X size={iconSizes.md} color={palette.buttonSecondaryText} />
+            <X size={iconSizes.md} color={palette.button.secondary.text} />
           </Pressable>
         }
       />
 
       <View style={styles.sectionsWrapper}>
-        <View style={[styles.card, { backgroundColor: palette.bgPrimary, shadowColor: palette.border }]}>
+        <View style={[styles.card, { backgroundColor: palette.surface.card, shadowColor: palette.border.muted }]}>
 
           <Controller
             control={control}
@@ -134,7 +152,7 @@ export default function EditProfileScreen() {
                 value={field.value}
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
-                icon={<UserRound size={iconSizes.md} color={palette.textSecondary} />}
+                icon={<UserRound size={iconSizes.md} color={palette.text.secondary} />}
                 errorMessage={errors.username?.message}
               />
             )}
@@ -154,14 +172,14 @@ export default function EditProfileScreen() {
                 value={field.value}
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
-                icon={<Mail size={iconSizes.md} color={palette.textSecondary} />}
+                icon={<Mail size={iconSizes.md} color={palette.text.secondary} />}
                 errorMessage={errors.email?.message}
               />
             )}
           />
         </View>
 
-        <View style={[styles.card, { backgroundColor: palette.bgPrimary, shadowColor: palette.border }]}>
+        <View style={[styles.card, { backgroundColor: palette.surface.card, shadowColor: palette.border.muted }]}>
 
           <Controller
             control={control}
@@ -174,7 +192,7 @@ export default function EditProfileScreen() {
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
                 secureTextEntry
-                icon={<Lock size={iconSizes.md} color={palette.textSecondary} />}
+                icon={<Lock size={iconSizes.md} color={palette.text.secondary} />}
                 errorMessage={errors.currentPassword?.message}
               />
             )}
@@ -193,7 +211,7 @@ export default function EditProfileScreen() {
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
                 secureTextEntry
-                icon={<Lock size={iconSizes.md} color={palette.textSecondary} />}
+                icon={<Lock size={iconSizes.md} color={palette.text.secondary} />}
                 errorMessage={errors.newPassword?.message}
               />
             )}
@@ -212,7 +230,7 @@ export default function EditProfileScreen() {
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
                 secureTextEntry
-                icon={<Lock size={iconSizes.md} color={palette.textSecondary} />}
+                icon={<Lock size={iconSizes.md} color={palette.text.secondary} />}
                 errorMessage={errors.confirmNewPassword?.message}
               />
             )}
@@ -235,16 +253,31 @@ export default function EditProfileScreen() {
         <AppPopup
           visible={isSuccessPopupVisible}
           title="Profile Updated"
-          message="Your changes have been saved successfully."
-          icon={<CheckCircle size={iconSizes.xl} color={palette.success} />}
-          iconBackgroundColor={`${palette.success}22`}
+          message={successMessage}
+          icon={<CheckCircle size={iconSizes.xl} color={palette.status.success} />}
+          iconBackgroundColor={`${palette.accent.green.surface}`}
           onClose={() => setSuccessPopupVisible(false)}
           primaryButton={{
             label: "Great!",
             variant: "primary",
             onPress: () => setSuccessPopupVisible(false),
-            buttonColor: palette.success,
-            textColor: palette.textInverse,
+            buttonColor: palette.status.success,
+            textColor: palette.text.onAccent,
+          }}
+        />
+        <AppPopup
+          visible={isErrorPopupVisible}
+          title="Update Failed"
+          message={errorMessage}
+          icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+          iconBackgroundColor={`${palette.accent.red.surface}`}
+          onClose={() => setErrorPopupVisible(false)}
+          primaryButton={{
+            label: "OK",
+            variant: "primary",
+            onPress: () => setErrorPopupVisible(false),
+            buttonColor: palette.status.danger,
+            textColor: palette.text.onAccent,
           }}
         />
       </View>

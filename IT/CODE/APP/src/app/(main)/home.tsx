@@ -1,5 +1,5 @@
 import React from "react"
-import { View, StyleSheet, Pressable, Text } from "react-native"
+import { View, StyleSheet, Pressable } from "react-native"
 import MapView, { Marker, Polyline, Circle } from "react-native-maps"
 import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle } from "lucide-react-native"
 import * as Location from "expo-location"
@@ -12,13 +12,16 @@ import { useAuthStore } from "@/auth/storage"
 import { useLoginPrompt } from "@/hooks/useLoginPrompt"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { AppTextInput } from "@/components/ui/AppTextInput"
-import { SearchResultsSheet, type SearchResult } from "@/components/SearchResultsSheet"
+import { SearchResultsSheet, type SearchResult } from "@/components/paths/SearchResultsSheet"
+import { CreatePathModal } from "@/components/modals/CreatePathModal"
 import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
-import { ReportIssueModal } from "@/components/ReportIssueModal"
+import { ReportIssueModal } from "@/components/modals/ReportIssueModal"
 import { AppPopup } from "@/components/ui/AppPopup"
-import { useRouter, usePathname } from "expo-router"
-import { set } from "zod"
+import { AppButton } from "@/components/ui/AppButton"
+import { useRouter } from "expo-router"
+import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
+import { type PrivacyPreference } from "@/constants/Privacy"
 
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -29,6 +32,7 @@ export default function HomeScreen() {
   const requireLogin = useLoginPrompt()
   const insets = useSafeAreaInsets()
   const { setHidden: setNavHidden } = useBottomNavVisibility()
+  const defaultVisibility = usePrivacyPreference()
   const [startPoint, setStartPoint] = React.useState("")
   const [destination, setDestination] = React.useState("")
   const [resultsVisible, setResultsVisible] = React.useState(false)
@@ -42,6 +46,7 @@ export default function HomeScreen() {
   const [reportVisible, setReportVisible] = React.useState(false)
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
   const [isCompletedPopupVisible, setCompletedPopupVisible] = React.useState(false)
+  const [isCreateModalVisible, setCreateModalVisible] = React.useState(false)
 
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -74,7 +79,13 @@ export default function HomeScreen() {
       requireLogin()
       return
     }
-    console.log("Create new path tapped")
+    setCreateModalVisible(true)
+  }
+
+  function handleStartCreating(values: { name: string; description: string; visibility: PrivacyPreference }) {
+    setCreateModalVisible(false)
+    const query = `?name=${encodeURIComponent(values.name)}&description=${encodeURIComponent(values.description)}&visibility=${values.visibility}`
+    router.push(`/create-path${query}` as any)
   }
 
   function handleReportIssue() {
@@ -107,8 +118,8 @@ export default function HomeScreen() {
           userLocation
         ),
         tags: [
-          { label: "5.2 km", color: palette.primarySoft, textColor: palette.primary },
-          { label: "Optimal", color: palette.greenSoft, textColor: palette.green },
+          { label: "5.2 km", color: palette.accent.blue.surface, textColor: palette.accent.blue.base },
+          { label: "Optimal", color: palette.accent.green.surface, textColor: palette.accent.green.base },
         ],
       },
       {
@@ -126,9 +137,9 @@ export default function HomeScreen() {
           userLocation
         ),
         tags: [
-          { label: "8.4 km", color: palette.primarySoft, textColor: palette.primary },
-          { label: "Maintenance", color: palette.orangeSoft, textColor: palette.orange },
-          { label: "3 reports", color: palette.redSoft, textColor: palette.red },
+          { label: "8.4 km", color: palette.accent.blue.surface, textColor: palette.accent.blue.base },
+          { label: "Maintenance", color: palette.accent.orange.surface, textColor: palette.accent.orange.base },
+          { label: "3 reports", color: palette.accent.red.surface, textColor: palette.accent.red.base },
         ],
       },
     ])
@@ -314,24 +325,24 @@ export default function HomeScreen() {
           showsMyLocationButton={false}
         >
           {hasActiveNavigation && traversedRoute.length > 1 && (
-            <Polyline coordinates={traversedRoute} strokeColor={palette.muted} strokeWidth={4} />
+            <Polyline coordinates={traversedRoute} strokeColor={palette.border.default} strokeWidth={4} />
           )}
           {upcomingRoute.length > 1 && (
-            <Polyline coordinates={upcomingRoute} strokeColor={palette.primaryDark} strokeWidth={4} />
+            <Polyline coordinates={upcomingRoute} strokeColor={palette.brand.dark} strokeWidth={4} />
           )}
           {startRoutePoint && (
             <Circle
               center={startRoutePoint}
               radius={18}
-              strokeColor={palette.primary}
-              fillColor={`${palette.primary}33`}
+              strokeColor={palette.brand.base}
+              fillColor={`${palette.brand.base}33`}
             />
           )}
           {destinationPoint && (
             <Marker
               coordinate={destinationPoint}
               title="Destination"
-              pinColor={palette.primary}
+              pinColor={palette.brand.base}
             />
           )}
         </MapView>
@@ -352,7 +363,7 @@ export default function HomeScreen() {
                   value={startPoint}
                   onChangeText={setStartPoint}
                   autoCapitalize="words"
-                  icon={<Navigation size={iconSizes.md} color={palette.textSecondary} />}
+                  icon={<Navigation size={iconSizes.md} color={palette.text.secondary} />}
                   returnKeyType="next"
                 />
               </View>
@@ -362,42 +373,39 @@ export default function HomeScreen() {
                   value={destination}
                   onChangeText={setDestination}
                   autoCapitalize="words"
-                  icon={<MapPin size={iconSizes.md} color={palette.textSecondary} />}
+                  icon={<MapPin size={iconSizes.md} color={palette.text.secondary} />}
                   returnKeyType="done"
                 />
               </View>
 
-              <Pressable
-                style={({ pressed }) => [
+              <AppButton
+                title="Find Paths"
+                onPress={handleFindPaths}
+                buttonColor={palette.brand.base}
+                style={[
                   styles.findButton,
                   {
-                    backgroundColor: palette.primary,
-                    shadowColor: palette.border,
+                    shadowColor: palette.border.muted,
                   },
-                  pressed && { opacity: 0.9 },
                 ]}
-                onPress={handleFindPaths}
-              >
-                <Text style={[styles.findButtonText, { color: palette.textInverse }]}>
-                  Find Paths
-                </Text>
-              </Pressable>
+              />
             </View>
 
-            <Pressable
-              style={[
-                styles.fab,
-                {
-                  backgroundColor: isGuest ? palette.mutedBg : palette.primary,
-                  opacity: isGuest ? 0.7 : 1,
-                  shadowColor: palette.border,
-                  bottom: verticalScale(90) + insets.bottom,
-                },
-              ]}
-              onPress={handleCreatePath}
-            >
-              <Plus size={iconSizes.lg} color={isGuest ? palette.muted : palette.textInverse} strokeWidth={2} />
-            </Pressable>
+            {!isGuest && (
+              <Pressable
+                style={[
+                  styles.fab,
+                  {
+                    backgroundColor: palette.button.primary.bg,
+                    shadowColor: palette.border.muted,
+                    bottom: verticalScale(90) + insets.bottom,
+                  },
+                ]}
+                onPress={handleCreatePath}
+              >
+                <Plus size={iconSizes.lg} color={palette.text.onAccent} strokeWidth={2} />
+              </Pressable>
+            )}
 
             <SearchResultsSheet
               visible={resultsVisible}
@@ -417,32 +425,28 @@ export default function HomeScreen() {
               style={[
                 styles.fab,
                 {
-                  backgroundColor: palette.destructive,
-                  shadowColor: palette.border,
+                  backgroundColor: palette.status.danger,
+                  shadowColor: palette.border.muted,
                   bottom: verticalScale(90) + insets.bottom,
                 },
               ]}
               onPress={handleReportIssue}
             >
-              <AlertTriangle size={iconSizes.lg} color={palette.textInverse} strokeWidth={2.2} />
+              <AlertTriangle size={iconSizes.lg} color={palette.text.onAccent} strokeWidth={2.2} />
             </Pressable>
 
-            <Pressable
-              style={({ pressed }) => [
+            <AppButton
+              title="Complete Trip"
+              onPress={handleCompleteTrip}
+              buttonColor={palette.brand.base}
+              style={[
                 styles.completeButton,
                 {
-                  backgroundColor: palette.primary,
                   bottom: insets.bottom + verticalScale(24),
-                  shadowColor: palette.border,
+                  shadowColor: palette.border.muted,
                 },
-                pressed && { opacity: 0.85 },
               ]}
-              onPress={handleCompleteTrip}
-            >
-              <Text style={[styles.completeButtonText, { color: palette.textInverse }]}>
-                Complete Trip
-              </Text>
-            </Pressable>
+            />
           </>
         )}
       </View>
@@ -458,15 +462,15 @@ export default function HomeScreen() {
         visible={isSuccessPopupVisible}
         title="Report Submitted"
         message="Thank you for helping keep our cycling community safe and informed."
-        icon={<CheckCircle size={iconSizes.xl} color={palette.success} />}
-        iconBackgroundColor={`${palette.success}22`}
+        icon={<CheckCircle size={iconSizes.xl} color={palette.status.success} />}
+        iconBackgroundColor={`${palette.accent.green.surface}`}
         onClose={() => setSuccessPopupVisible(false)}
         primaryButton={{
           label: "Great!",
           variant: "primary",
           onPress: () => setSuccessPopupVisible(false),
-          buttonColor: palette.success,
-          textColor: palette.textInverse,
+          buttonColor: palette.status.success,
+          textColor: palette.text.onAccent,
         }}
       />
 
@@ -474,16 +478,22 @@ export default function HomeScreen() {
         visible={isCompletedPopupVisible}
         title={isGuest ? "Trip Completed" : "Great Ride!"}
         message={isGuest ? "Log in to save your trip stats and track your progress." : "Your trip has been saved to your profile successfully."}
-        icon={<CheckCircle size={iconSizes.xl} color={palette.success} />}
-        iconBackgroundColor={`${palette.success}22`}
+        icon={<CheckCircle size={iconSizes.xl} color={palette.status.success} />}
+        iconBackgroundColor={`${palette.accent.green.surface}`}
         onClose={() => setCompletedPopupVisible(false)}
         primaryButton={{
           label: isGuest ? "Log In" : "View Stats",
           variant: "primary",
-          onPress: () => {isGuest ? go("/login") : go("/trips")},
-          buttonColor: palette.success,
-          textColor: palette.textInverse,
+          onPress: () => { isGuest ? go("/(auth)/login") : go("/trips") },
+          buttonColor: palette.status.success,
+          textColor: palette.text.onAccent,
         }}
+      />
+      <CreatePathModal
+        visible={isCreateModalVisible}
+        onClose={() => setCreateModalVisible(false)}
+        onSubmit={handleStartCreating}
+        initialVisibility={defaultVisibility}
       />
     </>
   )
@@ -609,17 +619,11 @@ const styles = StyleSheet.create({
   findButton: {
     marginTop: verticalScale(4),
     borderRadius: radius.full,
-    paddingVertical: verticalScale(12),
-    alignItems: "center",
-    justifyContent: "center",
+    width: "100%",
     shadowOpacity: 0.12,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: radius.lg,
     elevation: 6,
-  },
-  findButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
   },
   fab: {
     position: "absolute",
@@ -639,18 +643,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     alignSelf: "center",
     width: "80%",
-    paddingHorizontal: scale(24),
-    paddingVertical: verticalScale(12),
-    alignItems: "center",
-    justifyContent: "center",
     borderRadius: radius.full,
     shadowOpacity: 0.16,
     shadowOffset: { width: 0, height: 10 },
     shadowRadius: 20,
     elevation: 8,
-  },
-  completeButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
   },
 })

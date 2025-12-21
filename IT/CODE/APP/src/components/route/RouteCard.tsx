@@ -7,8 +7,8 @@ import { radius, scale, verticalScale } from "@/theme/layout"
 import { MetricPill } from "@/components/ui/MetricPill"
 import { MapPin, Calendar, Trash2, ChevronDown, Eye, EyeOff } from "lucide-react-native"
 
-import { RouteMap, type WeatherDetails } from "@/components/RouteMap"
-import { PerformanceMetric } from "@/components/PerformanceMetric"
+import { RouteMap, type WeatherDetails } from "@/components/route/RouteMap"
+import { PerformanceMetric } from "@/components/ui/PerformanceMetric"
 import { AppButton } from "@/components/ui/AppButton"
 
 export type LatLng = { latitude: number; longitude: number }
@@ -64,18 +64,18 @@ export function RouteCard({
     const isPrivate = visibilityStatus === "private"
     const showVisibilityStatus = isPublic || isPrivate
     const hasActions = showVisibilityStatus || showDeleteAction
-    const visibilityIconColor = isPrivate ? palette.textSecondary : palette.green
+    const visibilityIconColor = isPrivate ? palette.text.secondary : palette.accent.green.base
 
     return (
-        <View style={[styles.card, { backgroundColor: palette.bgPrimary, shadowColor: palette.border }]}>
+        <View style={[styles.card, { backgroundColor: palette.surface.card, shadowColor: palette.border.muted }]}>
             <View style={styles.topRow}>
                 <View style={styles.titleWrapper}>
-                    <Text style={[textStyles.cardTitle, styles.title, { color: palette.textAccent }]} numberOfLines={1}>
+                    <Text style={[textStyles.cardTitle, styles.title, { color: palette.text.link }]} numberOfLines={1}>
                         {trip.name}
                     </Text>
                     {trip.description && (
                         <Text
-                            style={[textStyles.bodySmall, styles.description, { color: palette.textSecondary }]}
+                            style={[textStyles.bodySmall, styles.description, { color: palette.text.secondary }]}
                             numberOfLines={2}
                         >
                             {trip.description}
@@ -86,7 +86,7 @@ export function RouteCard({
                 <Pressable onPress={onToggle} style={({ pressed }) => [styles.iconButton, pressed && { opacity: 0.7 }]}>
                     <ChevronDown
                         size={actionIconSize}
-                        color={palette.textSecondary}
+                        color={palette.text.secondary}
                         style={{ transform: [{ rotate: isExpanded ? "180deg" : "0deg" }] }}
                     />
                 </Pressable>
@@ -95,16 +95,16 @@ export function RouteCard({
             <View style={styles.metricsRow}>
                 <View style={styles.pillsRow}>
                     <MetricPill
-                        icon={<MapPin size={metricIconSize} color={palette.primaryDark} />}
+                        icon={<MapPin size={metricIconSize} color={palette.accent.blue.base} />}
                         value={`${trip.distanceKm.toFixed(1)} km`}
-                        backgroundColor={palette.primarySoft}
-                        textColor={palette.primaryDark}
+                        backgroundColor={palette.accent.blue.surface}
+                        textColor={palette.accent.blue.base}
                     />
                     <MetricPill
-                        icon={<Calendar size={metricIconSize} color={palette.purpleDark} />}
+                        icon={<Calendar size={metricIconSize} color={palette.accent.purple.base} />}
                         value={trip.date}
-                        backgroundColor={palette.purpleSoft}
-                        textColor={palette.purpleDark}
+                        backgroundColor={palette.accent.purple.surface}
+                        textColor={palette.accent.purple.base}
                     />
                 </View>
 
@@ -130,7 +130,7 @@ export function RouteCard({
 
                         {showDeleteAction && (
                             <Pressable onPress={onDeletePress} style={({ pressed }) => [styles.iconButton, pressed && { opacity: 0.7 }]}>
-                                <Trash2 size={actionIconSize} color={palette.destructive} />
+                                <Trash2 size={actionIconSize} color={palette.status.danger} />
                             </Pressable>
                         )}
                     </View>

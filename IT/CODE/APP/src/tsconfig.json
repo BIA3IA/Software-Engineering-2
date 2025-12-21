@@ -11,7 +11,8 @@
     "types": [
       "react",
       "react-native",
-      "expo"
+      "expo",
+      "jest"
     ],
     "paths": {
       "@/*": [
@@ -23,7 +24,9 @@
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    "jest.config.js",
+    "jest.setup.ts"
   ],
   "exclude": [
     "node_modules"

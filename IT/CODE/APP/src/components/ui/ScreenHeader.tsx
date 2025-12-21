@@ -27,13 +27,13 @@ export function ScreenHeader({
   const showDefaultSort = showSortButton && onSortPress && !trailingAccessory
 
   return (
-    <View style={[styles.header, { backgroundColor: palette.accent }]}>
+    <View style={[styles.header, { backgroundColor: palette.focus }]}>
       <View style={styles.textBlock}>
         <Text
           style={[
             textStyles.screenTitle,
             styles.headerTitle,
-            { color: palette.titleColor },
+            { color: palette.text.onAccent },
           ]}
         >
           {title}
@@ -42,7 +42,7 @@ export function ScreenHeader({
           style={[
             textStyles.heroSubtitle,
             styles.headerSubtitle,
-            { color: palette.subtitleColor },
+            { color: palette.text.onAccentMuted },
           ]}
         >
           {subtitle}
@@ -56,11 +56,11 @@ export function ScreenHeader({
             onPress={onSortPress}
             style={({ pressed }) => [
               styles.sortButton,
-              { backgroundColor: palette.buttonSecondaryBg, shadowColor: palette.border },
+              { backgroundColor: palette.text.onAccent, shadowColor: palette.border.muted },
               pressed && { opacity: 0.85 },
             ]}
           >
-            <ArrowUpDown size={iconSize} color={palette.buttonSecondaryText} />
+            <ArrowUpDown size={iconSize} color={palette.button.secondary.text} />
           </Pressable>
         )}
       </View>

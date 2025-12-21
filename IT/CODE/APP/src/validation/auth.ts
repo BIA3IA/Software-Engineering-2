@@ -8,7 +8,13 @@ const emailSchema = z
 
 const passwordSchema = z
   .string()
+  .trim()
   .min(8, "Password must be at least 8 characters.")
+
+const loginPasswordSchema = z
+  .string()
+  .trim()
+  .min(1, "Password is required.")
 
 const usernameSchema = z
   .string()
@@ -21,7 +27,7 @@ const confirmSchema = z
 
 export const loginSchema = z.object({
   email: emailSchema,
-  password: passwordSchema,
+  password: loginPasswordSchema,
 })
 
 export type LoginFormValues = z.infer<typeof loginSchema>

@@ -24,40 +24,40 @@ export function PerformanceMetric({
   const palette = Colors[scheme]
   return (
     <View style={styles.section}>
-      <Text style={[textStyles.cardTitle, { color: palette.textAccent }]}>
+      <Text style={[textStyles.cardTitle, { color: palette.text.link }]}>
         Performance Metrics
       </Text>
 
       <View
         style={[
           styles.card,
-          { backgroundColor: palette.bgPrimary },
+          { backgroundColor: palette.surface.card },
         ]}
       >
         <View style={styles.grid}>
           <MetricCircle
-            icon={<MapPin size={iconSizes.lg} color={palette.purple} />}
+            icon={<MapPin size={iconSizes.lg} color={palette.accent.purple.base} />}
             value={duration}
             label="Duration"
-            accentColor={palette.purple}
+            accentColor={palette.accent.purple.base}
           />
           <MetricCircle
-            icon={<TrendingUp size={iconSizes.lg} color={palette.primary} />}
+            icon={<TrendingUp size={iconSizes.lg} color={palette.brand.base} />}
             value={avgSpeed}
             label="Avg Speed"
-            accentColor={palette.primary}
+            accentColor={palette.brand.base}
           />
           <MetricCircle
-            icon={<TrendingUp size={iconSizes.lg} color={palette.orange} />}
+            icon={<TrendingUp size={iconSizes.lg} color={palette.accent.orange.base} />}
             value={maxSpeed}
             label="Max Speed"
-            accentColor={palette.orange}
+            accentColor={palette.accent.orange.base}
           />
           <MetricCircle
-            icon={<Mountain size={iconSizes.lg} color={palette.green} />}
+            icon={<Mountain size={iconSizes.lg} color={palette.accent.green.base} />}
             value={elevation}
             label="Elevation"
-            accentColor={palette.green}
+            accentColor={palette.accent.green.base}
           />
         </View>
       </View>

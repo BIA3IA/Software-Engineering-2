@@ -9,8 +9,8 @@ module.exports = function (api) {
     env: {
       production: {
         plugins: [
-          'react-native-reanimated/plugin',
           'react-native-paper/babel',
+          'react-native-reanimated/plugin',
         ],
       },
     },

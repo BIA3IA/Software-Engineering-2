@@ -17,9 +17,9 @@ export default function WelcomeScreen() {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
 
-  const titleColor = palette.titleColor
-  const subtitleColor = palette.subtitleColor
-  const guestTextColor = palette.subtitleColor
+  const titleColor = palette.text.onAccent
+  const subtitleColor = palette.text.onAccentMuted
+  const guestTextColor = palette.text.onAccentMuted
 
   function handleSignIn() {
     router.push("/(auth)/signup")
@@ -40,7 +40,7 @@ export default function WelcomeScreen() {
 
   return (
     <LinearGradient
-      colors={[palette.gradientStart, palette.gradientEnd]}
+      colors={[palette.gradient.from, palette.gradient.to]}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
       style={styles.gradient}
@@ -51,12 +51,12 @@ export default function WelcomeScreen() {
           <View
             style={[
               styles.card,
-              { backgroundColor: palette.bgPrimary, shadowColor: palette.border },
+              { backgroundColor: palette.surface.card, shadowColor: palette.border.muted },
             ]}
           >
             <Bike
               size={iconSizes.hero}
-              color={palette.primary}
+              color={palette.brand.base}
               strokeWidth={1.8}
             />
           </View>
