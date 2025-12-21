@@ -50,6 +50,33 @@ The base template gave us the `(tabs)` routing which we adapted into the `(auth)
 - `(main)/profile.tsx` - profile header, stats, privacy preferences, entry to edit-profile.
 - `(main)/edit-profile.tsx` - full edit form with Zod validation, updateProfile call, success/error popups.
 - `(main)/settings.tsx` - settings toggles, theme/preferences.
+## Folder Structure Explained
+
+### app/
+
+This is the main routing folder - Expo Router turns its structure into navigation automatically.
+
+#### Inside it:
+
+- **(tabs)/** -> Defines the bottom tab navigation (the bar with multiple pages).  
+  - `_layout.tsx` -> Defines the navigation bar and icons for each tab.  
+  - `index.tsx` -> Home screen.  
+  - `two.tsx` -> Example second screen.  
+  (Additional screens can be added here, e.g., `trip.tsx`, `paths.tsx`, etc.)
+
+- **_layout.tsx** -> Root layout for everything outside tabs (e.g., modals, login screens).  
+- **+html.tsx** -> Used internally when running on web to render HTML pages (can be ignored).  
+- **+not-found.tsx** -> The “404” page, shown if a user navigates to a non-existent route.  
+- **modal.tsx** -> A demo modal screen (can be removed or replaced later).
+
+### assets/
+
+Contains static files bundled with the app:
+
+- `images/` -> App icons, splash screens, etc.  
+- `fonts/` -> Custom fonts (the default project includes `SpaceMono-Regular.ttf`).
+
+Additional assets such as `logo.png` or `map-marker.png` can be added here and imported in the screens.
 
 ### components/
 - `ui/` - reusable primitives (`AppButton`, `AppTextInput`, `AppPopup`, `SelectField`, etc.).

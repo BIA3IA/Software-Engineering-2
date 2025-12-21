@@ -531,21 +531,35 @@ The LoggedInUser begins in Location0 with no selected route and no active or com
 In the first steps, the user selects the origin and destination of the trip.
 The origin is automatically assigned to the user's current location, while the destination must be distinct from it.
 
+% \begin{figure}[H]
+%     \centering
+%     \subfloat[Initial state\label{fig:alloy-step-0}]{%
+%         \includegraphics[width=0.7\linewidth]{../Images/Alloy/0.png}%
+%     }%
+%     \hfill
+%     \subfloat[Origin and destination selection\label{fig:alloy-step-1}]{%
+%         \includegraphics[width=0.7\linewidth]{../Images/Alloy/1.png}%
+%     }
+%     \caption{Initialization and beginning of the route selection process}
+% \end{figure}
+
+\vspace{1cm}
 \begin{figure}[H]
-    \centering
-    \subfloat[Initial state\label{fig:alloy-step-0}]{%
-        \includegraphics[width=0.7\linewidth]{../Images/Alloy/0.png}%
-    }%
-    \hfill
-    \subfloat[Origin and destination selection\label{fig:alloy-step-1}]{%
-        \includegraphics[width=0.7\linewidth]{../Images/Alloy/1.png}%
-    }
-    \caption{Initialization and beginning of the route selection process}
+	\centering
+	\includegraphics[width=0.9\textwidth]{../Images/Alloy/0.png}
+	\caption{Initialization of the route selection process}
+\end{figure}
+
+\vspace{1cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{../Images/Alloy/1.png}
+	\caption{Beginning of the route selection process}
 \end{figure}
 
 After selecting the origin and destination, the system suggests one of the available paths that satisfy the specified endpoints.
 
-\vspace{2cm}
+\vspace{1cm}
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\linewidth]{../Images/Alloy/2.png}
@@ -553,44 +567,43 @@ After selecting the origin and destination, the system suggests one of the avail
     \label{fig:alloy-step-2}
 \end{figure}
 
-\newpage
 The LoggedInUser chooses the suggested path and initiates the trip.
 Starting the trip creates a new ActiveTrip instance, sets its initial segment, and marks has\_started = True.
 
+
 \vspace{1cm}
 \begin{figure}[H]
-    \centering
-    \subfloat[User selects a suggested path\label{fig:alloy-step-3}]{%
-        \includegraphics[width=0.65\linewidth]{../Images/Alloy/3.png}%
-    }%
-    \hfill
-    \subfloat[User starting the trip\label{fig:alloy-step-4}]{%
-        \includegraphics[width=0.65\linewidth]{../Images/Alloy/4.png}%
-    }
-    \caption{User selection and trip initialization}
+	\centering
+	\includegraphics[width=0.9\textwidth]{../Images/Alloy/3.png}
+	\caption{User selects a suggested path\label{fig:alloy-step-3}}
 \end{figure}
 
-\newpage
+\vspace{1cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{../Images/Alloy/4.png}
+	\caption{User starting the trip\label{fig:alloy-step-4}}
+\end{figure}
+
 As shown in Figure~\ref{fig:alloy-step-5}, the LoggedInUser changes position from \texttt{Location0} to \texttt{Location2}, moving from PathSegment3 to PathSegment2, which is the next segment after PathSegment3. As can be seen in the figure, the current\_segment has also changed accordingly.
-
 As the trip progresses, the user moves from one segment to the next.
-
 Once the last segment is traversed and the destination is reached, the trip is marked as finished (has\_finished = True).
 
-\vspace{0.6cm}
+
+\vspace{1cm}
 \begin{figure}[H]
-    \centering
-    \subfloat[User moving to the next segment\label{fig:alloy-step-5}]{%
-        \includegraphics[width=0.57\linewidth]{../Images/Alloy/5.png}%
-    }%
-    \hfill
-    \subfloat[User arrives at destination\label{fig:alloy-step-6}]{%
-        \includegraphics[width=0.57\linewidth]{../Images/Alloy/6.png}%
-    }
-    \caption{Completion of the first trip}
+	\centering
+	\includegraphics[width=0.9\textwidth]{../Images/Alloy/5.png}
+	\caption{User moving to the next segment\label{fig:alloy-step-5}}
 \end{figure}
 
-\newpage
+\vspace{1cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{../Images/Alloy/6.png}
+	\caption{User arrives at destination\label{fig:alloy-step-6}}
+\end{figure}
+
 Then there is another extra step to show the transition of the trip from ActiveTrip to CompletedTrip, as depicted in Figure~\ref{fig:alloy-step-7}.
 This state is important to show that when the trip is finalized, it is no longer active and is recorded in the user's completed\_trips relation, that is his history of trips.
 
@@ -602,26 +615,27 @@ This state is important to show that when the trip is finalized, it is no longer
     \label{fig:alloy-step-7}
 \end{figure}
 
-\newpage
 The model then restarts the cycle: the user selects a new origin and destination, a new path is suggested and all the steps are repeated (they're not shown because they are similar to the previous ones)
 until the user has exactly two completed trips as shown in figure \ref{fig:alloy-step-10}.
 \vspace{0.5cm}
 
+
+\vspace{1cm}
 \begin{figure}[H]
-    \centering
-    \subfloat[Second origin/destination selection\label{fig:alloy-step-8}]{%
-        \includegraphics[width=0.55\linewidth]{../Images/Alloy/8.png}%
-    }%
-    \hfill
-    \subfloat[Second path suggestion\label{fig:alloy-step-9}]{%
-        \includegraphics[width=0.55\linewidth]{../Images/Alloy/9.png}%
-    }
-    \caption{Beginning of the second trip cycle}
+	\centering
+	\includegraphics[width=0.9\textwidth]{../Images/Alloy/8.png}
+	\caption{Second origin/destination selection\label{fig:alloy-step-8}}
 \end{figure}
 
-\newpage
+\vspace{1cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{../Images/Alloy/9.png}
+	\caption{Second path suggestion\label{fig:alloy-step-9}}
+\end{figure}
+
 The second trip concludes with a new entry in the user's completed\_trips relation.
-\vspace{0.5cm}
+\vspace{1cm}
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\linewidth]{../Images/Alloy/10.png}
@@ -629,10 +643,9 @@ The second trip concludes with a new entry in the user's completed\_trips relati
     \label{fig:alloy-step-10}
 \end{figure}
 
-\newpage
 Once the user has exactly two completed trips, the goal of the loggedCompleteCycle predicate is satisfied. At this point, Alloy stops generating additional transitions, resulting in a trace of 15 steps (0--14).
-\vspace{0.5cm}
 
+\vspace{1cm}
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\linewidth]{../Images/Alloy/11.png}
@@ -647,31 +660,37 @@ since Guest instances do not own the \texttt{completed\_trips} relation.
 For brevity, we do not repeat the screenshots related to origin and destination selection, path suggestion, and path selection for the Guest, as they are identical to those presented 
 for the LoggedInUser. Instead, we focus on the part of the execution that starts when the Guest initiates a trip and ends when that trip is finalized.
 
+\vspace{1cm}
 \begin{figure}[H]
     \centering
-    \subfloat[User starting the trip\label{fig:alloy-step-g1}]{%
-        \includegraphics[width=0.7\linewidth]{../Images/Alloy/g1.png}%
-    }%
-    \hfill
-    \subfloat[User moving to the next segment\label{fig:alloy-step-g2}]{%
-        \includegraphics[width=0.7\linewidth]{../Images/Alloy/g2.png}%
-    }
-    \caption{Guest user starting the trip and moving along the path}
+    \includegraphics[width=0.9\linewidth]{../Images/Alloy/g1.png}
+    \caption{User starting the trip}
+    \label{fig:alloy-step-g1}
 \end{figure}
 
-Figure~\ref{fig:alloy-step-g3} shows how the user position and the current segment evolve during the trip: the Guest moves from \texttt{Location1} to \texttt{Location3} 
+\vspace{1cm}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{../Images/Alloy/g2.png}
+    \caption{User moving to the next segment}
+    \label{fig:alloy-step-g2}
+\end{figure}
+
+Figure \ref{fig:alloy-step-g3} shows how the user position and the current segment evolve during the trip: the Guest moves from \texttt{Location1} to \texttt{Location3} 
 and from \texttt{PathSegment3} to \texttt{PathSegment2}.
 
 \begin{figure}[H]
     \centering
-    \subfloat[User arrives at destination\label{fig:alloy-step-g3}]{%
-        \includegraphics[width=0.7\linewidth]{../Images/Alloy/g3.png}%
-    }%
-    \hfill
-    \subfloat[State after trip finalization\label{fig:alloy-step-g4}]{%
-        \includegraphics[width=0.7\linewidth]{../Images/Alloy/g4.png}%
-    }
-    \caption{Completion and finalization of the Guest user's trip}
+    \includegraphics[width=0.9\linewidth]{../Images/Alloy/g3.png}
+    \caption{User arrives at destination}
+    \label{fig:alloy-step-g3}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{../Images/Alloy/g4.png}
+    \caption{State after trip finalization}
+    \label{fig:alloy-step-g4}
 \end{figure}
 
 In the final part of the trace (Figure~\ref{fig:alloy-step-15}), the Guest user does not start a new trip. At this point, the predicate used for this scenario is already satisfied,
@@ -687,7 +706,6 @@ To obtain an execution in which the Guest repeatedly selects and completes trips
     \label{fig:alloy-step-15}
 \end{figure}
 
-\newpage
 All assertions defined in the model were checked using scopes consistent with the scenario.
 No counterexamples were generated (figure \ref{fig:alloy-step-12}), confirming the internal consistency of the specification and the correctness of key properties such as:
 \begin{itemize}
@@ -700,7 +718,7 @@ No counterexamples were generated (figure \ref{fig:alloy-step-12}), confirming t
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\linewidth]{../Images/Alloy/12.png}
+    \includegraphics[width=1\linewidth]{../Images/Alloy/12.png}
     \caption{Verification of assertions}
     \label{fig:alloy-step-12}
 \end{figure}

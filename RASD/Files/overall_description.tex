@@ -146,7 +146,7 @@ At this point, the user enters the Browsing state, where they can inspect all su
 The following diagram illustrates the states related to the manual creation of a new path by a logged-in user.
 A logged-in user can start the manual creation process by pressing the create path button. Once this action is triggered, the system leaves the idle state and enters the Editing Metadata state, where the user provides general information about the path, such as its name, description, visibility, and creation mode, where he should select manual creation.
 
-After the metadata are confirmed and saved, the process continues in the Adding Segments state. In this phase, the user manually draws or selects the path segments on the map to define the complete path. When all segments have been added, the user proceeds to the Validating Path state, where the system checks the consistency and continuity of the selected path.
+After the metadata are confirmed and saved, the process continues in the Adding Segments state. In this phase, the user manually draws segments on the map to define the complete path. When all segments have been added, the user proceeds to the Validating Path state, where the system checks the consistency and continuity of the selected path.
 If the validation succeeds, the process transitions to the Saving Path state, during which the system stores the new path in the database. In case of a validation failure or a save error, the system moves to an error path and returns to the idle state, allowing the user to retry or discard the creation.
 
 If the saving process completes successfully, the system reaches the final state, confirming that the new path has been correctly created and stored.
@@ -281,7 +281,8 @@ The following points outline the main functionalities offered by the system from
 	\item \textbf{Automatic Trip Interruption on Path Deviation}:
 
 	      BBP continuously compares the user's real-time GPS position with the selected path.
-	      If the system detects a significant deviation from the planned route, it automatically stops the trip, saves recorded data, and displays a pop-up informing the user of the interruption.
+	      If the system detects a significant deviation from the planned route, it automatically stops the trip and displays a pop-up informing the user of the interruption.
+		  If the user is logged-in, the recorded data up to that point are safely stored in their trip history.
 	      The user can then start a new trip from the updated position by selecting a new destination.
 	      This mechanism ensures accurate tracking and prevents invalid trip recordings when the user leaves the chosen path.
 
@@ -349,7 +350,7 @@ Each group has distinct goals, permissions, and levels of interaction with the s
 
 	      Guest users interact with the system without performing any authentication.
 	      They may either be users who have not created an account, or users who have an existing account but are currently logged out.
-	      Guest users can explore existing bike paths, view global information such as distance, rankings, and general statistics, and consult public reports about obstacles or road conditions.
+	      Guest users can explore existing bike paths, view global information such as distance and rankings, and consult public reports about obstacles or road conditions.
 	      Guest users are also allowed to start a trip.
 	      However, they can't enable the Automatic Mode, can't submit obstacle reports, can't confirm reports submitted by others, and do not receive pop-ups related to anomaly detection or confirmation.
 	      At the end of the trip, no data is stored in the system: guest users have no trip history and do not have access to overall or per-trip statistics.
@@ -404,8 +405,8 @@ This subsection lists the assumptions about the real world that are taken as tru
 \begin{itemize}
 	\item[\textbf{[D1]}] The system has access to a geographic map service and geocoding capabilities to process origin/destination and render paths.
 	\item[\textbf{[D2]}] External meteorological services are reachable and operational with acceptable latency during normal operation.
-	\item[\textbf{[D3]}] Users' mobile devices are equipped with GPS and have granted the BBP app access to location and motion sensors.
-	\item[\textbf{[D4]}] Motion sensors (accelerometer, gyroscope) and GPS provide data of sufficient accuracy and reliability for obstacle detection.
+	\item[\textbf{[D3]}] Users' mobile devices are equipped with GPS and have granted the BBP app access to location services. Access to motion sensors is required only for sensor-based features.
+	\item[\textbf{[D4]}] When Automatic Mode is enabled, motion sensors (accelerometer, gyroscope) and GPS provide data of sufficient accuracy and reliability for obstacle detection.
 	\item[\textbf{[D5]}] Manual input provided by logged-in users is assumed to be truthful, accurate, and sufficiently complete for a path/report entry.
 	\item[\textbf{[D6]}] A bike path is either a dedicated bicycle track or a low-traffic road where motor-vehicle speed limits are compatible with average cycling speed.
 	\item[\textbf{[D7]}] GPS position updates are received with sufficient frequency (e.g., at least 1 update per second) to detect movement, deviations, and trip progress.
