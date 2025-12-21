@@ -37,8 +37,8 @@ type UpdateProfileResponse = {
 export type UpdateProfilePayload = {
   username?: string
   email?: string
+  currentPassword?: string
   password?: string
-  systemPreferences?: string[]
 }
 
 const AUTH_BASE = "/auth"

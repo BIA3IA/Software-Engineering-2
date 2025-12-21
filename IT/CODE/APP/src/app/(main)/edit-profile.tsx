@@ -96,6 +96,7 @@ export default function EditProfileScreen() {
         (await updateProfile({
           username: result.data.username,
           email: result.data.email,
+          currentPassword: result.data.currentPassword,
           password: result.data.newPassword,
         })) ?? "Profile updated successfully"
 
