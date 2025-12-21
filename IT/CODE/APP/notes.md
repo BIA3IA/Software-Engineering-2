@@ -1,34 +1,55 @@
-# Random App Notes
-_copy paste and thoughts_
+# BestBikePaths Internal Notes
+
+Quick reference for how the Expo app is structured, why specific choices were made, and how to run/tests things today. Everything below reflects the current repo layout (`IT/CODE/APP/src`).
 
 ## What is Expo?
 
-Expo is a framework and a platform for universal React applications.  
-It is an open-source toolchain built around React Native that provides a rich set of features out of the box, such as access to the camera, location services, and other native functionalities.
+Expo is a framework and tooling around React Native that lets us build cross-platform mobile apps (iOS, Android, Web) without diving into native code unless we need to. It ships with batteries included: camera/location, filesystem, SecureStore, etc. We rely on Expo Router for file-based navigation and on Expo modules such as LinearGradient, SecureStore, Location, and Maps.
 
-With Expo, developers can avoid the complexities of native code while still building powerful, feature-rich mobile apps.
+## Why Expo for this project?
 
-## Why Expo?
+- **Fast bootstrap** - `create-expo-app` delivered a ready-to-run React Native setup with sensible defaults.
+- **Cross-platform UI** - a single codebase runs on both Android and iOS (and web for previews).
+- **Native APIs without native build chains** - we get SecureStore, Location, LinearGradient, etc. without touching Xcode/Android Studio until deployment time.
+- **Deep community/tooling** - dev client, Expo Go, OTA updates, and a huge library ecosystem.
 
-- **Quick Setup:** Expo handles most of the configuration automatically.  
-- **Cross-Platform Development:** Write one codebase and run it on both Android and iOS.  
-- **No Native Setup Required:** The app can run on a device or simulator with the Expo Go app, without needing Android Studio or Xcode.  
-- **Pre-built Modules:** Expo includes a wide range of APIs to access native device functionalities.
-
-## Creating a New Project
+## Creating / maintaining the project
 
 ```bash
 npx create-expo-app@latest APP --template tabs
 
 npx expo install react-native-maps expo-location expo-secure-store \
-react-native-gesture-handler react-native-reanimated \
-react-native-safe-area-context react-native-screens \
-react-native-svg
-
+  react-native-gesture-handler react-native-reanimated \
+  react-native-safe-area-context react-native-screens \
+  react-native-svg
 ```
 
-This command creates a new Expo project using the **Tabs template**, which includes a bottom tab navigation and a basic folder setup.
+The base template gave us the `(tabs)` routing which we adapted into the `(auth)` and `(main)` stacks.
 
+## Directory Walkthrough (src)
+
+### Root files
+- `app.json` / `app.config.js` - Expo project name, icon, splash, extra env vars.
+- `package.json` - scripts + dependencies (Expo 54, React Native 0.81, Paper 5, Zustand, etc.).
+- `tsconfig.json` - aliases `@/` to `src`, JSX config.
+- `jest.config.js` - React Native preset extended to include `tests/unit` + `tests/integration`.
+- `jest.setup.ts` - global mocks for Expo Router, SecureStore, SafeArea, Paper UI, AppButton/TextInput/Popup shims, console suppression.
+- `tests/mocks/expoMock.ts` - empty stub returned when some modules import `expo`.
+
+### app/ (Expo Router)
+- `_layout.tsx` - wraps the entire navigation tree with `PaperProvider`, injects the Lucide icon set, calls `useAuthStore.initAuth()` and enforces redirects (unauth users forced to welcome, logged-in users prevented from staying in `(auth)`).
+- `+not-found.tsx` - generic 404 screen.
+- `(auth)/_layout.tsx` - minimal layout for welcome/login/signup flows.
+- `(auth)/welcome.tsx` - hero screen with CTA buttons and “Guest Mode”.
+- `(auth)/login.tsx` & `signup.tsx` - React Hook Form + Zod validation wiring, call `useAuthStore` actions.
+- `(main)/_layout.tsx` - houses `BottomNav`, `LoginPromptProvider`, and the login-required popup (guest flows).
+- `(main)/home.tsx` - central map/route experience: search inputs, result sheet, Create Path FAB, report modal, navigation progress, start/complete trip actions.
+- `(main)/trips.tsx` - trip history, metrics, stats cards, entry points to detail screens.
+- `(main)/paths.tsx` - curated path list with filters/tags.
+- `(main)/create-path.tsx` - wizard/modal for user-generated paths.
+- `(main)/profile.tsx` - profile header, stats, privacy preferences, entry to edit-profile.
+- `(main)/edit-profile.tsx` - full edit form with Zod validation, updateProfile call, success/error popups.
+- `(main)/settings.tsx` - settings toggles, theme/preferences.
 ## Folder Structure Explained
 
 ### app/
@@ -58,443 +79,117 @@ Contains static files bundled with the app:
 Additional assets such as `logo.png` or `map-marker.png` can be added here and imported in the screens.
 
 ### components/
+- `ui/` - reusable primitives (`AppButton`, `AppTextInput`, `AppPopup`, `SelectField`, etc.).
+- `BottomNav.tsx` - bottom navigation bar aware of auth/guest state.
+- `ScreenHeader`, `ProfileHeroHeader`, `PathResultCard`, `SearchResultsSheet`, `CreatePathModal`, `ReportIssueModal`, `RouteMap`, `RouteCard`, etc. These encapsulate domain UI/logic for routes, paths, profile.
+- `components/icons/` - `LucideIcon` wrapper to ensure consistent icon use inside Paper theme.
 
-Contains reusable UI elements and utilities.
+### auth/
+- `authSession.ts` - in-memory tokens + listener for session changes.
+- `storage.ts` - Zustand store connecting SecureStore, APIs, and UI (init, login, logout, fetch profile, update profile, guest mode).
 
-Included by default:
+### validation/
+- `auth.ts` - Zod schemas + types for login, signup, and edit-profile flows.
+- `path.ts` - schema for create-path modal.
+- `index.ts` - barrel so consumers can `import { signupSchema } from "@/validation"`.
 
-- `EditScreenInfo.tsx` -> Example info box.  
-- `ExternalLink.tsx` -> Helper for opening external URLs.  
-- `StyledText.tsx` -> A styled `<Text>` wrapper.  
-- `Themed.tsx` -> Applies theme colors (light/dark mode).  
-- `useColorScheme.ts` -> Reads device theme (light/dark).  
-- `useClientOnlyValue.ts` -> Avoids running client-only code on the server when rendering for web.  
+### api/
+- `client.ts` - Axios instance with `getAccessToken()` injection and 401 interceptor that hits `refreshAccessToken`.
+- `auth.ts` - login/signup/logout/profile/update API wrappers with type-safe mappers.
+- `tokenManager.ts` - manual axios client to refresh tokens, handles concurrency and session clearing on failure.
 
-Additional components such as `TripCard.tsx`, `PathItem.tsx`, and `MapView.tsx` can be created here.
+### hooks/
+- `useColorScheme`, `useThemePreference` - theme detection/persistence.
+- `useLoginPrompt` - context to trigger global login modal (guest restrictions).
+- `useBottomNavVisibility` - context provider to hide the nav for certain screens (e.g., edit profile).
+- `useTrips` - handles trip fetching/state (caching between navigations).
+- `usePrivacyPreference` - manages selected privacy option and persistence.
+- `useBottomNavVisibility` context consumed by modals/screens to hide nav on scroll-intensive views.
 
-### constants/
+### constants/ & theme/
+- `constants/Colors.ts` - light/dark palette, accent colors, guest colors, etc.
+- `constants/privacy.ts` - static privacy preference options.
+- `theme/layout.ts` / `theme/typography.ts` - spacing helpers, radius, font sizes.
+- `theme/mapStyles.ts`, `theme/paperTheme.ts` - map style JSON and Paper theme definitions.
 
-Contains global configuration constants used across the app.
+### assets/
+- `assets/images/` - icons, splash, adaptive icon.
+- `assets/fonts/` - custom typefaces (Space Mono).
 
-- `Colors.ts` -> Central place for the color palette (used by themes and styles).
+### utils/
+- `utils/apiError.ts` - normalizes Axios/JS errors into user-facing strings (used by Login/Signup/Edit Profile popups).
+- `utils/layout.ts` - responsive layout helpers (scale, verticalScale, moderateScale).
+- `tests/utils/render.tsx` (in `tests/utils`) - test helper that wraps React components with PaperProvider + theme icon settings.
 
-### Other Project Files
+### tests/
+- `tests/unit` - per-module jest files.
+- `tests/integration` - screen + navigation flow tests (auth, navigation).
+- `tests/utils/render.tsx` - helper to render components with PaperProvider wrapper in tests.
+- `tests/mocks` - Expo Router / Expo stub modules.
 
-| File / Folder | Description |
-|----------------|--------------|
-| `.expo/` | Internal metadata for Expo (should be gitignored). |
-| `.vscode/` | Editor settings (useful for consistent formatting). |
-| `node_modules/` | All dependencies installed via npm. |
-| `.gitignore` | Ignores `node_modules/`, build artifacts, etc. |
-| `app.json` | Expo app configuration (name, icon, permissions, etc.). |
-| `package.json` | Declares dependencies and scripts. |
-| `package-lock.json` | Locks dependency versions. |
-| `expo-env.d.ts` | Type definitions for Expo globals. |
-| `tsconfig.json` | TypeScript configuration. |
+## Key Flows
 
+- **Auth init** - `useAuthStore.initAuth()` loads user + tokens from SecureStore, hydrates `authSession`, and refreshes profile if needed.
+- **Login/signup** - call `api/auth`, persist tokens, update Zustand store, navigate to `/(main)/home`.
+- **Guest mode** - welcome screen triggers `loginAsGuest`, `MainLayout` shows the login popup when a guest tries to access restricted tabs/actions.
+- **Token refresh** - Axios response interceptor invokes `refreshAccessToken` on 401, coalescing concurrent refresh calls and updating `authSession`.
+- **Profile update** - `useAuthStore.updateProfile()` hits `/users/update-profile` and re-fetches profile to keep store + SecureStore in sync.
+- **Navigation** - `BottomNav` reads `usePathname` to know the active tab and, for guests, calls `onRequireLogin` instead of navigating.
 
-### Running the App
+## Running the App
 
-Run the app with:
+| Command             | Description                                                |
+|---------------------|------------------------------------------------------------|
+| `npm run start`     | Expo dev server + Metro bundler (press `w`/`a`/`i`/QR).    |
+| `npm run android`   | Build/run on Android device or emulator.                   |
+| `npm run ios`       | Build/run on iOS simulator (requires macOS).               |
+| `npm run test`      | Run Jest across unit + integration suites.                 |
+| `npm run test -- …` | Targeted suites, e.g. `npm run test -- tests/integration/auth`. |
 
+Expo CLI shortcuts inside Metro:
+- `w` - start web preview
+- `a` - Android
+- `i` - iOS
+- `r` - reload
+- `shift + r` - restart bundler/clear cache
+You can also scan the QR code with Expo Go to run on a physical device.
+## Testing Strategy
+
+All tests live under `src/tests`. Jest is configured in `src/jest.config.js` and `src/jest.setup.ts` provides global mocks (router, SecureStore, Paper UI, Safe Area, LinearGradient...).
+
+### Unit suites (`tests/unit`)
+- `auth/authSession.test.ts` - verifies `setSession`/`clearSession`, getters, listener registration/unsubscribe.
+- `auth/tokenManager.test.ts` - refresh request dispatch, session update, error handling, concurrency coalescing.
+- `auth/storage.test.ts` - covers `initAuth`, SecureStore edge cases, login/signup/logout actions, fetchProfile/updateProfile (success + failure paths).
+- `api/auth.api.test.ts` - ensures payloads/timeouts mapping to backend contract for login/signup/logout/profile/update.
+- `validation/auth.validation.test.ts` - Zod schema behaviour: password mismatch, optional edit profile fields, etc.
+
+### Integration suites (`tests/integration`)
+- `auth/login.integration.test.tsx` - login screen: validation, store call, navigation, popup on errors.
+- `auth/signup.integration.test.tsx` - sign up validation, store integration, navigation to home.
+- `auth/editProfile.integration.test.tsx` - edit profile form behaviour, update API call, success/error popups.
+- `navigation/redirects.integration.test.tsx` - root layout redirect logic for unauthenticated users, authenticated, guest edge cases.
+- `navigation/welcome.integration.test.tsx` - CTA flows (Sign Up, Log In, Guest Mode) ensure correct store actions + router calls.
+- `navigation/guestAccess.integration.test.tsx` - bottom nav + login popup guard user actions when guest.
+- `navigation/loggedinAccess.integration.test.tsx` - verifies tabs actually navigate when authenticated and ignore duplicate taps.
+
+> Each integration test uses the shared mocks from `jest.setup.ts` to avoid real navigation/SecureStore, while still exercising the React components end-to-end.
+
+Run a subset via e.g.:
 ```bash
-npm run start
+npm run test -- tests/integration/navigation
 ```
 
-Then press:
-
-- **w** -> open web preview  
-- **a** -> open Android simulator  
-- **i** -> open iOS simulator (on macOS)
-
-Alternatively, scan the QR code in the terminal with the **Expo Go app** to preview it directly on a phone.
-
-# React Native UI Libraries – Comparison
-
-## 1) Selection criteria
-
-- **Cross‑platform reach**: iOS, Android, and (optionally) web with one codebase.
-- **Design system**: tokens (colors, spacing, radii, typography), theming, dark mode.
-- **Performance**: runtime overhead vs. compile time, bundle size, responsiveness on low/mid devices.
-- **Component breadth**: buttons, inputs, cards, lists, dialogs, sheets, tabs.
-- **Customizability**: ability to implement a distinct brand (not locked to Material look).
-- **Ecosystem compatibility**: works well with Expo, React Navigation/Expo Router, react-native-maps, form libs.
-- **Learning curve & DX**: ergonomics, TypeScript support, community, documentation.
-- **Long‑term maintainability**: active maintenance, stability, flexibility for growth (e.g., web in the future).
-
-## 2) Contenders at a glance
-
-| Library | Platforms | Design approach | Theming/Design tokens | Components breadth | Performance | Web support | Maturity |
-|---|---|---|---|---|---|---|---|
-| **Tamagui** | iOS/Android/Web | Styled props + compiler | Strong tokens + themes | Solid base (Button, Card, Sheet, etc.) | Excellent (compile-time) | First‑class | High (fast‑growing) |
-| **React Native Paper** | iOS/Android | Material Design components | Theming (Material) | Very broad (MD spec) | Good | No (mobile only) | Very high, battle‑tested |
-| **NativeBase** | iOS/Android/Web | Styled props (Chakra‑like) | Tokens + themes | Broad | Good | Good | Mature |
-| **UI Kitten** | iOS/Android | Eva Design System | Tokens + themes | Broad | Good | No native web | Mature |
-| **React Native Elements** | iOS/Android | Configurable components | Basic theming | Medium | Good | No | Mature |
-| **Dripsy** | iOS/Android/Web | Styled props (theme‑ui style) | Tokens + themes | Light | Good | Good | Moderate |
-
-Notes:
-- Dripsy is lighter than Tamagui, but lacks a full component suite and compiler optimizations.
-
-## 3) Deep dive
-
-### 3.1 Tamagui
-- **What it is**: Cross‑platform design system with a compiler that transforms styled props into static styles (reduced runtime cost).
-- **Strengths**: Performance, first‑class web support, tokens/themes, coherent API, good base components (Stack, Text, Button, Card, Sheet).
-- **Weaknesses**: Slightly more setup, smaller ecosystem than Material-based libraries.
-- **Fit for BBP**: Excellent for a distinctive brand, dark/light themes, mobile now + optional web. Works well with Expo Router and react-native-maps.
-
-### 3.2 React Native Paper
-- **What it is**: Material Design implementation for React Native by Callstack.
-- **Strengths**: Broad, polished component set (Cards, Lists, FAB, Appbar, Dialogs, DataTable), strong accessibility.
-- **Weaknesses**: Opinionated Material look (customization beyond MD requires effort), no web target.
-- **Fit for BBP**: Very good if you want fast delivery with a Material look; less ideal if you want a custom non‑Material identity or future web alignment.
-
-### 3.3 NativeBase
-- **What it is**: Component library with styled‑props approach (inspired by Chakra).
-- **Strengths**: Broad components, tokens, themes, decent web story, good DX.
-- **Weaknesses**: Styling engine adds some runtime cost; design less opinionated than Paper but less performant than Tamagui.
-- **Fit for BBP**: Good middle ground if you want Chakra‑like ergonomics in RN with optional web.
-
-### 3.4 UI Kitten
-- **What it is**: Components on top of Eva Design System.
-- **Strengths**: Beautiful defaults, strong theming.
-- **Weaknesses**: No first‑class web, ecosystem smaller than Paper.
-- **Fit for BBP**: Good if you like the Eva visual language and stay mobile‑only.
-
-### 3.5 React Native Elements
-- **What it is**: Lightweight, modular components.
-- **Strengths**: Simple, flexible, unopinionated.
-- **Weaknesses**: Fewer high‑level components; you assemble more yourself.
-- **Fit for BBP**: Fine for simple UIs; for a full dashboard experience you will write more code.
-
-### 3.6 Dripsy
-- **What it is**: Theme‑UI‑style tokens for RN and web.
-- **Strengths**: Minimal, clean, web support.
-- **Weaknesses**: Small component set, fewer patterns out of the box.
-- **Fit for BBP**: Viable if you want to keep things very minimal, but you will craft many components.
-
-
-# Here is how I would structure the app
-
-## 1. Expo
-Expo is a framework on top of React Native that simplifies development:
-
-- Zero native setup required
-- Automatic updates
-- Easy access to native APIs (Camera, Location, Sensors)
-- Stable development workflow
-
-## 2. Tamagui
-Tamagui is a UI kit and styling system for React Native and Web:
-
-- Cross-platform styling engine
-- Prebuilt components (Button, Input, etc.)
-- Highly performant
-- Works with themes and tokens
-
-Icons use:
-
-- `@tamagui/lucide-icons`
-
-## 3. Navigation System
-
-The app uses **Expo Router**, which maps the file structure inside `/app` to navigation routes.
-
-Example:
-
-```
-app/
-  (tabs)/
-    index.tsx        <- Home
-    trips.tsx        <- Trip list
-    navigation.tsx   <- Nav Map
-    profile.tsx      <- User profile
-  (auth)/
-    login.tsx
-    register.tsx
-  (modals)/
-    report-modal.tsx
-```
-
-Expo Router automatically handles:
-
-- Stack navigation  
-- Tab navigation  
-- Modal screens  
-- Deep linking  
-
-## 4. State Management
-
-### **4.1 Server State -> TanStack Query (React Query)**
-
-_Non confonderti: 
-React Query mantiene i dati freschi, sincronizzati, cached e sempre aggiornati.
-Axios fa la chiamata.
-Il backend dà la risposta.
-React Query é tipo un gestore intelligente che usa Axios per prendere i dati e li conserva in cache, li aggiorna, li refetch-a quando serve, ecc._
-
-Used for:
-
-- Fetching trip list  
-- Fetching path info  
-- Fetching markers (reports, obstacles)  
-- Statistics  
-- User data  
-
-Advantages:
-
-- Automatic caching  
-- Refetch on focus  
-- Error/loading handling  
-- Pagination support  
-
-Example:
-
-```ts
-const { data, isLoading } = useQuery({
-  queryKey: ['trips'],
-  queryFn: () => api.get('/trips').then(r => r.data)
-})
-```
-
-### **4.2 Local State -> Zustand**
-
-Used for:
-
-- Active trip ID  
-- Current filters  
-- Map layer toggles  
-- UI booleans (modals, sheets)
-
-Example:
-
-```ts
-const useTripStore = create(set => ({
-  activeTripId: null,
-  setActiveTripId: id => set({ activeTripId: id })
-}));
-```
-
-## 5. Forms and Validation
-
-Forms appear in:
-
-- Login / Register  
-- Create Path  
-- Report Obstacle  
-- Filters  
-
-Recommended stack:
-
-- `react-hook-form`
-- `zod` (validation)
-
-Example:
-
-```ts
-const schema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8)
-});
-```
-
-## 6. Networking
-
-Networking is handled via **Axios**:
-
-```ts
-export const api = axios.create({
-  baseURL: 'https://bbp-backend.example.com/api',
-  timeout: 10000,
-});
-```
-
-React Query uses this client for all API calls.
-
-## 7. Maps & Navigation (react-native-maps)
-
-The mapping subsystem is built with:
-
-- `react-native-maps`
-- `expo-location`
-
-### **7.1 What react-native-maps does**
-
-Rendering:
-- Map tiles
-- Markers
-- Polylines (paths)
-- Polygons
-
-It *does not* compute routes.  
-Route generation comes from:
-- Backend  
-- External routing APIs (Google, OpenRouteService)  
-
-### **7.2 Rendering a Path (Polyline)**
-
-Given a route with coordinates:
-
-```tsx
-<Polyline
-  coordinates={routeCoords}
-  strokeColor="#7c3aed"
-  strokeWidth={5}
-/>
-```
-
-### **7.3 Rendering Reports / Obstacles (Markers)**
-
-```tsx
-<Marker
-  coordinate={{ latitude, longitude }}
-  title="Obstacle"
-  description="Pothole reported here"
-/>
-```
-
-### **7.4 Displaying User Position**
-
-```tsx
-<MapView showsUserLocation followsUserLocation />
-```
-
-## 8. Live GPS Tracking
-
-Trip tracking requires:
-
-- Getting continuous GPS updates  
-- Appending coordinates to an array  
-- Drawing a growing polyline  
-- Storing data locally until the trip ends  
-
-### **8.1 Enabling Permissions**
-
-```ts
-let { status } = await Location.requestForegroundPermissionsAsync();
-```
-
-### **8.2 Starting a Live Tracking**
-
-```tsx
-const [coords, setCoords] = useState([]);
-
-const startTracking = async () => {
-  await Location.watchPositionAsync(
-    {
-      accuracy: Location.Accuracy.Highest,
-      distanceInterval: 2, // meters
-    },
-    (location) => {
-      const { latitude, longitude } = location.coords;
-      setCoords(prev => [...prev, { latitude, longitude }]);
-    }
-  );
-};
-```
-
-### **8.3 Rendering Live Map Track**
-```tsx
-<MapView>
-  <Polyline
-    coordinates={coords}
-    strokeColor="#6d28d9"
-    strokeWidth={4}
-  />
-</MapView>
-```
-
-### **8.4 Uploading Trip Data**
-
-Once the user stops:
-
-```ts
-api.post('/trips', { coordinates: coords, ...stats });
-```
-
-## 9. Bottom Sheets & Overlays
-
-BBP uses overlays for:
-
-- Trip summary  
-- Report creation  
-- Filters  
-
-Tamagui includes a `Sheet` component that works well as a bottom sheet.
-
-Example:
-
-```tsx
-<Sheet open={open} onOpenChange={setOpen}>
-  <Sheet.Frame>
-    <Text>Report an Issue</Text>
-  </Sheet.Frame>
-</Sheet>
-```
-
-## 10. Charts for Statistics
-
-- `react-native-svg`
-- `victory-native`
-
-Example chart:
-
-```tsx
-<VictoryLine
-  data={speedOverTime}
-  x="timestamp"
-  y="speed"
-/>
-```
-
-## 11. Recommended Dependencies Summary
-
-```
-UI:
-  tamagui
-  @tamagui/lucide-icons
-
-Navigation:
-  expo-router
-
-State:
-  @tanstack/react-query
-  zustand
-
-Forms:
-  react-hook-form
-  zod
-
-Maps:
-  react-native-maps
-  expo-location
-
-Networking:
-  axios
-
-Charts:
-  react-native-svg
-  victory-native
-
-Storage:
-  expo-secure-store
-```
-
-## 12. Architecture Summary
-
-- **Presentation layer** -> Tamagui UI, screens  
-- **Navigation layer** -> Expo Router  
-- **State layer** -> React Query + Zustand  
-- **Map layer** -> react-native-maps  
-- **Tracking layer** -> expo-location  
-- **API layer** -> Axios client + backend services  
-- **Data layer** -> Cached server state + secure local storage  
-
-```bash
-npm install tamagui @tamagui/core @tamagui/lucide-icons @tamagui/themes @tamagui/config \
-@tanstack/react-query zustand \
-react-hook-form zod \
-axios \
-victory-native
-```
+## React Native UI Libraries - Selection Criteria (context recap)
+
+When choosing UI libraries/components we looked at:
+1. **Cross-platform support** - must behave identically on Android/iOS (Paper passes this).
+2. **Composable primitives** - Paper provides theming + base components, while we extend with custom UI in `components/ui`.
+3. **Theming support** - Paper integrates with our Colors/typography, accessible dark/light switches, etc.
+- `(main)/home.tsx` - central map/route experience: search inputs, result sheet, Create Path FAB, report modal, navigation progress, start/complete trip actions.
+- `(main)/trips.tsx` - trip history, metrics, stats cards, entry points to detail screens.
+- `(main)/paths.tsx` - curated path list with filters/tags.
+- `(main)/create-path.tsx` - wizard/modal for user-generated paths.
+- `(main)/profile.tsx` - profile header, stats, privacy preferences, entry to edit-profile.
+- `(main)/edit-profile.tsx` - full edit form with Zod validation, updateProfile call, success/error popups.
+- `(main)/settings.tsx` - settings toggles, theme/preferences.

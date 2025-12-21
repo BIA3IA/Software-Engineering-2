@@ -1,12 +1,12 @@
-import { green50, purple50, red50 } from "react-native-paper/lib/typescript/styles/themes/v2/colors"
-
 const brand = {
-  primary: "#0ea5e9",
-  primaryLight: "#38bdf8",
-  primaryDark: "#0284c7",
-  primaryDarker: "#0369a1",
-  primarySoft: "#e0f2fe",
-  primarySofter: "#f0f9ff",
+  base: "#0ea5e9",
+  light: "#38bdf8",
+  dark: "#0284c7",
+  darker: "#0369a1",
+  surface: "#e0f2fe",
+  surfaceDark: "#0b3550",
+  surfaceAlt: "#f0f9ff",
+  surfaceAltDark: "#1e3450ff",
 }
 
 const neutral = {
@@ -23,181 +23,162 @@ const neutral = {
   950: "#020617",
 }
 
+const accents = {
+  purple: {
+    soft: "#f5f3ff",
+    base: "#a78bfa",
+    bold: "#7c3aed",
+    dark: "#27204d",
+  },
+  green: {
+    soft: "#ecfdf5",
+    base: "#22c55e",
+    bold: "#0d943fff",
+    dark: "#0c3326",
+  },
+  orange: { 
+    soft: "#fff7ed",
+    base: "#f59e0b",
+    bold: "#ff6f00ff",
+    dark: "#3a2a12",
+  },
+  red: {
+    soft: "#fef2f2",
+    base: "#ef4444",
+    bold: "#ff0000ff",
+    dark: "#4201075e",
+  },
+  blue: {
+    soft: "#eff6ff",
+    base: "#3b82f6",
+    bold: "#0043fcff",
+    dark: "#10243c",
+  },
+}
+
 const white = "#ffffff"
 
 const feedback = {
-  success: "#22c55e",
-  warning: "#eab308",
-  destructive: "#ef4444",
-}
+  success: accents.green.bold,
+  warning: accents.orange.bold,
+  danger: accents.red.bold,
+} 
 
-const colors = {
+const accentKeys = ["purple", "green", "orange", "red", "blue"] as const
 
-  green50: "#ecfdf5",
-  green100: "#d1fae5",
-  green400: "#34d399",
-  green700: "#047857",
+function createTheme(mode: "light" | "dark") {
+  const isLight = mode === "light"
 
-  purple50: "#f5f3ff",
-  purple100: "#ede9fe",
-  purple400: "#a78bfa",
-  purple700: "#7c3aed",
+  const text = {
+    primary: isLight ? neutral[900] : neutral[50],
+    secondary: isLight ? neutral[500] : neutral[200],
+    muted: isLight ? neutral[400] : neutral[300],
+    onAccent: white,
+    onAccentMuted: isLight ? "#e5f1ff" : neutral[200],
+    link: isLight ? brand.base : brand.light,
+    disabled: isLight ? neutral[300] : neutral[500],
+  }
 
-  orange50: "#fff7ed",
-  orange100: "#ffedd5",
-  orange400: "#fbbf24",
-  orange700: "#b45309",
+  const surface = {
+    screen: isLight ? neutral[50] : "#0b1d35ff",
+    section: isLight ? white : "#1a3458ff",
+    card: isLight ? white : "#2b3d55",
+    elevated: isLight ? brand.surfaceAlt : brand.surfaceAltDark,
+    input: isLight ? neutral[50] : "#223246",
+    accent: isLight ? brand.base : brand.dark,
+    muted: isLight ? neutral[200] : "#223246",
+  }
 
-  red50: "#fef2f2",
-  red100: "#fee2e2",
-  red400: "#f87171",
-  red700: "#b91c1c",
-}
+  const border = {
+    default: isLight ? neutral[200] : neutral[400],
+    muted: isLight ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.16)",
+    strong: isLight ? neutral[400] : neutral[300],
+  }
 
-export default {
-  light: {
-    textPrimary: neutral[900],
-    textSecondary: neutral[500],
-    textTertiary: neutral[400],
-    textInverse: white,
-    textAccent: brand.primary,
+  const brandTokens = {
+    base: brand.base,
+    light: brand.light,
+    dark: brand.dark,
+    darker: brand.darker,
+    surface: isLight ? brand.surface : brand.surfaceDark,
+  }
 
-    titleColor: white,
-    subtitleColor: "#e5f1ff",
+  const accent = accentKeys.reduce((acc, key) => {
+    acc[key] = {
+      surface: isLight ? accents[key].soft :  accents[key].dark,
+      base: accents[key].base,
+      bold: accents[key].bold,
+    }
+    return acc
+  }, {} as Record<(typeof accentKeys)[number], { surface: string; base: string; bold: string }>)
 
-    navItemColor: white,
-    disabledNavItemColor: neutral[100],
+  const input = {
+    background: surface.input,
+    text: isLight ? neutral[900] : neutral[50],
+    placeholder: isLight ? neutral[400] : neutral[500],
+    border: isLight ? neutral[200] : "rgba(255,255,255,0.2)",
+  }
 
-    bgPrimary: white,
-    bgSecondary: neutral[50],
-    bgElevated: brand.primarySofter,
-    bgAccent: brand.primary,
+  const gradient = {
+    from: isLight ? brand.light : brand.dark,
+    to: isLight ? brand.darker : surface.screen,
+  }
 
-    primary: brand.primary,
-    primaryLight: brand.primaryLight,
-    primaryDark: brand.primaryDark,
-    primaryDarker: brand.primaryDarker,
-    primarySoft: brand.primarySoft,
+  const button = {
+    primary: {
+      bg: isLight ? brand.base : brand.dark,
+      text: white,
+    },
+    secondary: {
+      bg: isLight ? white : surface.screen,
+      text: isLight ? brand.base : brand.light,
+      border: isLight ? brand.base : brand.light,
+    },
+    outline: {
+      border: isLight ? white : "rgba(255,255,255,0.22)",
+      text: isLight ? white : neutral[50],
+    },
+    danger: {
+      bg: feedback.danger,
+      text: white,
+    },
+  }
 
-    purpleSoft: colors.purple50,
-    purple: colors.purple400,
-    purpleDark: colors.purple700,
-
-    greenSoft: colors.green50,
-    green: colors.green400,
-    greenDark: colors.green700,
-
-    orangeSoft: colors.orange50,
-    orange: colors.orange400,
-    orangeDark: colors.orange700,
-
-    redSoft: colors.red50,
-    red: colors.red400,
-    redDark: colors.red700,
-
-    gradientStart: brand.primaryLight,
-    gradientEnd: brand.primaryDarker,
-
-    cardBg: white,
-    cardBorder: neutral[200],
-    cardText: neutral[900],
-
-    border: "rgba(0,0,0,0.1)",
-
-    inputBg: neutral[50],
-    inputText: neutral[900],
-    inputPlaceholder: neutral[400],
-    inputBorder: neutral[200],
-
-    buttonPrimaryBg: brand.primary,
-    buttonPrimaryText: white,
-    buttonSecondaryBg: white,
-    buttonSecondaryBorder: brand.primary,
-    buttonSecondaryText: brand.primary,
-    buttonOutlineBorder: white,
-    buttonOutlineText: white,
-    buttonDestructiveBg: feedback.destructive,
-    buttonDestructiveText: white,
-
+  const status = {
     success: feedback.success,
     warning: feedback.warning,
-    destructive: feedback.destructive,
+    danger: feedback.danger,
+  }
 
-    muted: neutral[200],
-    mutedBg: neutral[400],
-    accent: brand.primary,
-  },
+  const overlay = {
+    scrim: isLight ? "rgba(15,23,42,0.45)" : "rgba(2,6,23,0.78)",
+    iconOnDark: white,
+  }
 
-  dark: {
-    textPrimary: white,
-    textSecondary: neutral[300],
-    textTertiary: neutral[500],
-    textInverse: neutral[900],
-    textAccent: brand.primaryLight,
-
-    titleColor: white,
-    subtitleColor: "#e5f1ff",
-
-    navItemColor: white,
-    disabledNavItemColor: neutral[100],
-
-    bgPrimary: neutral[800],
-    bgSecondary: neutral[700],
-    bgElevated: neutral[600],
-    bgAccent: brand.primaryDark,
-
-    primary: brand.primary,
-    primaryLight: brand.primaryLight,
-    primaryDark: brand.primaryDark,
-    primaryDarker: brand.primaryDarker,
-    primarySoft: brand.primarySoft,
-
-    purpleSoft: colors.purple50,
-    purple: colors.purple400,
-    purpleDark: colors.purple700,
-
-    greenSoft: colors.green50,
-    green: colors.green400,
-    greenDark: colors.green700,
-
-    orangeSoft: colors.orange50,
-    orange: colors.orange400,
-    orangeDark: colors.orange700,
-
-    redSoft: colors.red50,
-    red: colors.red400,
-    redDark: colors.red700,
-
-    gradientStart: brand.primaryDark,
-    gradientEnd: neutral[950],
-
-    cardBg: neutral[700],
-    cardBorder: neutral[600],
-    cardText: white,
-
-    border: "rgba(255,255,255,0.12)",
-
-    inputBg: neutral[800],
-    inputText: white,
-    inputPlaceholder: neutral[500],
-    inputBorder: neutral[700],
-
-    buttonPrimaryBg: brand.primary,
-    buttonPrimaryText: white,
-    buttonSecondaryBg: white,
-    buttonSecondaryBorder: brand.primary,
-    buttonSecondaryText: brand.primary,
-    buttonOutlineBorder: white,
-    buttonOutlineText: white,
-    buttonDestructiveBg: feedback.destructive,
-    buttonDestructiveText: white,
-
-    success: feedback.success,
-    warning: feedback.warning,
-    destructive: feedback.destructive,
-
-    muted: neutral[700],
-    mutedBg: neutral[800],
-    accent: brand.primaryLight,
-  },
+  return {
+    text,
+    surface,
+    border,
+    brand: brandTokens,
+    accent,
+    input,
+    gradient,
+    button,
+    status,
+    focus: text.link,
+    overlay,
+  }
 }
+
+const Colors = {
+  palette: {
+    neutral,
+    brand,
+    accents,
+    feedback,
+  },
+  light: createTheme("light"),
+  dark: createTheme("dark"),
+}
+
+export default Colors

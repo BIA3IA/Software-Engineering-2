@@ -80,7 +80,7 @@ export class UserManager {
     async updateProfile(req: Request, res: Response, next: NextFunction) {
         try {
             const userId = req.user?.userId;            
-            const { username, email, password, systemPreferences } = req.body as UpdateProfilePayload;
+            const { username, email, currentPassword, password, systemPreferences } = req.body as UpdateProfilePayload;
 
             if (!userId) {
                 throw new UnauthorizedError('Unauthorized', 'USER_NOT_AUTHENTICATED');
@@ -107,6 +107,14 @@ export class UserManager {
                 const existing = await queryManager.getUserByEmail(email);
                 if (existing && existing.userId !== userId) {
                     throw new ConflictError('Email already in use', 'EMAIL_ALREADY_IN_USE');
+                }
+            }
+
+
+            if (currentPassword !== undefined) {
+                const matches = await bcrypt.compare(currentPassword, user.password);
+                if (!matches) {
+                    throw new BadRequestError('Current password is incorrect', 'INCORRECT_PASSWORD');
                 }
             }
 

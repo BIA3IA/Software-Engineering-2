@@ -40,7 +40,7 @@ export function MetricCircle({
             cx={size / 2}
             cy={size / 2}
             r={r}
-            stroke={palette.border}
+            stroke={palette.border.muted}
             strokeWidth={stroke}
             fill="none"
             opacity={0.35}
@@ -67,7 +67,7 @@ export function MetricCircle({
       <Text style={[textStyles.bodySmall, styles.value, { color: accentColor }]}>
         {value}
       </Text>
-      <Text style={[textStyles.caption, { color: palette.textSecondary }]}>
+      <Text style={[textStyles.caption, { color: palette.text.secondary }]}>
         {label}
       </Text>
     </View>

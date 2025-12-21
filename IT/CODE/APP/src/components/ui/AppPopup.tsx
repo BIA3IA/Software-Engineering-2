@@ -48,24 +48,32 @@ export function AppPopup({
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
 
-  const iconBg = iconBackgroundColor ?? palette.bgAccent
   const primaryVariant = primaryButton.variant ?? "primary"
 
   function getVariantAccent(variant: PopupButtonConfig["variant"]) {
     switch (variant) {
       case "secondary":
-        return palette.buttonSecondaryText
+        return palette.button.secondary.text
       case "outline":
-        return palette.buttonOutlineText
+        return palette.button.outline.text
       case "destructive":
-        return palette.buttonDestructiveBg
+        return palette.button.danger.bg
       case "primary":
       default:
-        return palette.buttonPrimaryBg
+        return palette.button.primary.bg
     }
   }
 
   const accentColor = primaryButton.buttonColor ?? getVariantAccent(primaryVariant)
+  const iconBgLight = iconBackgroundColor ?? palette.surface.accent
+  const iconBackground = scheme === "dark" ? (primaryButton.buttonColor ?? accentColor) : iconBgLight
+  const shouldOverrideIconColor = scheme === "dark"
+  const iconColor = shouldOverrideIconColor ? palette.overlay.iconOnDark : undefined
+
+  let renderedIcon = icon
+  if (shouldOverrideIconColor && icon && React.isValidElement(icon)) {
+    renderedIcon = React.cloneElement(icon, { color: iconColor })
+  }
 
   function handleBackdropPress() {
     onClose?.()
@@ -75,30 +83,25 @@ export function AppPopup({
   const hasDestructive = Boolean(destructiveButton)
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-    >
-      <Pressable style={styles.backdrop} onPress={handleBackdropPress}>
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
+      <View style={[styles.backdrop, { backgroundColor: palette.overlay.scrim }]}>
+        <Pressable style={styles.dismissArea} onPress={handleBackdropPress} />
         <View style={styles.centerWrapper} pointerEvents="box-none">
           <View
             style={[
               styles.card,
-              { backgroundColor: palette.bgPrimary, shadowColor: palette.border },
+              { backgroundColor: palette.surface.card, shadowColor: palette.border.muted },
             ]}
           >
-            <View style={styles.handle} />
 
-            {icon && (
+            {renderedIcon && (
               <View
                 style={[
                   styles.iconWrapper,
-                  { backgroundColor: iconBg },
+                  { backgroundColor: iconBackground },
                 ]}
               >
-                {icon}
+                {renderedIcon}
               </View>
             )}
 
@@ -116,7 +119,7 @@ export function AppPopup({
               style={[
                 textStyles.heroSubtitle,
                 styles.message,
-                { color: palette.textSecondary },
+                { color: palette.text.secondary },
               ]}
             >
               {message}
@@ -173,7 +176,7 @@ export function AppPopup({
             </View>
           </View>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   )
 }
@@ -182,6 +185,9 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: "rgba(15,23,42,0.45)",
+  },
+  dismissArea: {
+    ...StyleSheet.absoluteFillObject,
   },
   centerWrapper: {
     flex: 1,
@@ -199,14 +205,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 16 },
     shadowRadius: 32,
     elevation: 10,
-  },
-  handle: {
-    alignSelf: "center",
-    width: scale(44),
-    height: verticalScale(4),
-    borderRadius: radius.full,
-    marginBottom: verticalScale(16),
-    backgroundColor: "rgba(148,163,184,0.6)",
   },
   iconWrapper: {
     alignSelf: "center",

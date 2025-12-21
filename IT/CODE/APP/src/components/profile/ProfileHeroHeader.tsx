@@ -29,11 +29,11 @@ export function ProfileHeroHeader({
   const palette = Colors[scheme]
 
   return (
-    <View style={[styles.hero, { backgroundColor: palette.accent }] }>
+    <View style={[styles.hero, { backgroundColor: palette.focus }] }>
       <View style={styles.titleRow}>
         <View style={styles.textBlock}>
-          <Text style={[textStyles.screenTitle, styles.heroTitle, { color: palette.titleColor }]}>{title}</Text>
-          <Text style={[textStyles.heroSubtitle, styles.heroSubtitleText, { color: palette.subtitleColor }]}>
+          <Text style={[textStyles.screenTitle, styles.heroTitle, { color: palette.text.onAccent }]}>{title}</Text>
+          <Text style={[textStyles.heroSubtitle, styles.heroSubtitleText, { color: palette.text.onAccentMuted }]}>
             {subtitle}
           </Text>
         </View>
@@ -42,11 +42,11 @@ export function ProfileHeroHeader({
           onPress={onSettingsPress}
           style={({ pressed }) => [
             styles.settingsBtn,
-            { backgroundColor: palette.buttonSecondaryBg, shadowColor: palette.border },
+            { backgroundColor: palette.button.secondary.bg, shadowColor: palette.border.muted },
             pressed && { opacity: 0.85 },
           ]}
         >
-          <Settings size={iconSizes.md} color={palette.buttonSecondaryText} />
+          <Settings size={iconSizes.md} color={palette.button.secondary.text} />
         </Pressable>
       </View>
 
@@ -55,28 +55,28 @@ export function ProfileHeroHeader({
           onPress={onEditPress}
           style={({ pressed }) => [
             styles.avatarOuter,
-            { backgroundColor: palette.primarySoft, borderColor: palette.primary },
+            { backgroundColor: palette.brand.surface, borderColor: palette.brand.base },
             pressed && { opacity: 0.9 },
           ]}
         >
-          <View style={[styles.avatar, { backgroundColor: palette.bgPrimary }] }>
-            <Text style={[textStyles.cardTitle, { color: palette.primaryDark }]}>{initial}</Text>
+          <View style={[styles.avatar, { backgroundColor: palette.surface.card }] }>
+            <Text style={[textStyles.cardTitle, { color: palette.brand.dark }]}>{initial}</Text>
           </View>
         </Pressable>
 
         <View style={styles.userInfo}>
           <View style={styles.nameRow}>
-            <Text style={[textStyles.cardTitle, { color: palette.titleColor }]}>{name}</Text>
+            <Text style={[textStyles.cardTitle, { color: palette.text.onAccent }]}>{name}</Text>
 
             <Pressable
               onPress={onEditPress}
               style={({ pressed }) => [styles.editBtn, pressed && { opacity: 0.85 }]}
             >
-              <Pencil size={iconSizes.sm} color={palette.titleColor} />
+              <Pencil size={iconSizes.sm} color={palette.text.onAccent} />
             </Pressable>
           </View>
 
-          <Text style={[textStyles.caption, { color: palette.subtitleColor }]}>{email}</Text>
+          <Text style={[textStyles.caption, { color: palette.text.onAccentMuted }]}>{email}</Text>
         </View>
       </View>
     </View>
