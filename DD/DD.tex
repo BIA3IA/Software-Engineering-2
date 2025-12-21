@@ -10,7 +10,6 @@
 %------------------------------------------------------------------------------
 
 % CONFIGURATIONS
-\usepackage{parskip} % For paragraph layout
 \usepackage{setspace} % For using single or double spacing
 \usepackage{emptypage} % To insert empty pages
 \usepackage{multicol} % To write in multiple columns (executive summary)
@@ -37,13 +36,14 @@
 \usepackage{transparent} % Enables transparent images
 \usepackage{eso-pic} % For the background picture on the title page
 \usepackage{subfig} % Numbered and caption subfigures using \subfloat.
-\usepackage{tikz} % A package for high-quality hand-made figures.
-\usetikzlibrary{}
+\usepackage{tikz}
+\usetikzlibrary{calc,fit,backgrounds}
 \graphicspath{{./Images/}} % Directory of the images
 \usepackage{caption} % Coloured captions
 \usepackage{xcolor} % Coloured captions
 \usepackage{amsthm,thmtools,xcolor} % Coloured "Theorem"
 \usepackage{float}
+\usepackage{wrapfig}
 
 % STANDARD MATH PACKAGES
 \usepackage{amsmath}
@@ -185,7 +185,7 @@
 %	BIBLIOGRAPHY
 %-------------------------------------------------------------------------
 
-\addtocontents{toc}{\vspace{2em}}
+\addtocontents{toc}{\vspace{2em}} % Add a gap in the Contents, for aesthetics
 \bibliography{bibliography} % The references information are stored in the file named "bibliography.bib"
 
 %-------------------------------------------------------------------------

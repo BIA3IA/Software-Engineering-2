@@ -1,0 +1,15 @@
+services:
+  api:
+    build: .
+    container_name: bbp_api
+    restart: unless-stopped
+    env_file:
+      - .env
+    expose:
+      - "3000"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
