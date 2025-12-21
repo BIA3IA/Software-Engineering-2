@@ -108,18 +108,17 @@ Representative scenarios illustrate how different types of users interact with B
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/Domain_Class_Diagram/diagram.png}
+	\includegraphics[width=\textwidth]{Images/DomainClassDiagram/diagram.png}
 	\caption{Domain Class Diagram}
 \end{figure}
 
 The Domain Class Diagram for the Best Bike Paths (BBP) system establishes a comprehensive framework for managing cycling infrastructure and user activity. At the foundation of the system is the User entity, which tracks a unique identifier and a current position via a GeoPoint. This entity branches into two distinct roles: the Guest and the LoggedInUser. \newline 
-A Guest user has the flexibility to search for existing paths, create new ones, and initiate trips, while also having the option to register for a permanent account. Once registered, the LoggedInUser is identified by a username, email, and password, allowing them to own specific trip records and maintain a long-term profile within the system.\newline 
+A Guest user has the flexibility to search for existing paths and initiate trips, while also having the option to register for a permanent account. Once registered, the LoggedInUser is identified by a username, email, and password, allowing them to own specific trip records and maintain a long-term profile within the system.\newline 
 The structural core of the application is the Path, which includes its description, public visibility, and a status enumeration that tracks the path's condition. A Path is built through a composition of one or more PathSegment entities. These segments link the origin and destination GeoPoints; each segment contains an array of specific coordinates and maintains a recursive reference to the next segment in the sequence, creating a traversable chain. These geographical structures are visualized through a MapService.\newline 
 Activity within the system is captured through the Trip entity, which records the temporal and physical details of a specific journey. A Trip stores attributes such as start and end times, total distance, and average speed. \newline 
 It is important to note that while the Trip contains its own specific performance data, it is also aggregated into the OverallStatistics entity owned by a LoggedInUser. This distinction ensures that individual trip metrics are preserved while contributing to the user's cumulative performance history, such as their lifetime average speed and total distance.\newline 
-Furthermore, trips are contextualized by WeatherInfo provided by a WeatherProvider which logs environmental factors like temperature and humidity at the time of the ride.\newline 
+Furthermore, trips may be contextualized by WeatherInfo provided by a WeatherProvider which logs environmental factors like temperature and humidity at the time of the ride.\newline 
 Crowd-sourced data and safety are managed through a robust reporting system. LoggedInUsers can generate Report entities to identify various obstacles, such as potholes or flooding, categorized by an ObstacleType. These reports can be created manually or triggered automatically via an AcquisitionMode. To facilitate automatic detection, the system integrates with hardware Sensors, including accelerometers and gyroscopes, which suggest potential reports based on physical movement. Each report undergoes a validation process reflected in its status, moving from creation to confirmation or rejection. All temporal data throughout these processes is standardized using the DateTime entity as an epoch-time integer, ensuring consistency across all system logs.
-
 
 \subsection{State Diagrams}
 \label{sec:state_diagrams}
