@@ -224,7 +224,7 @@ export default function CreatePathScreen() {
         iconBackgroundColor={`${palette.accent.green.surface}`}
         onClose={handleSuccessDismiss}
         primaryButton={{
-          label: "Go To My Paths",
+          label: "Go To Path Library",
           onPress: handleSuccessPrimaryPress,
           variant: "primary",
           buttonColor: palette.status.success,
