@@ -1,5 +1,5 @@
-import { sortSegmentsByChain, prisma } from "../../utils/index.js";
-import { TripSegments, WeatherData} from "../../types/index.js";
+import { sortTripSegmentsByChain, sortPathSegmentsByChain, prisma } from "../../utils/index.js";
+import { TripSegments, WeatherData, PathSegments, Coordinates} from "../../types/index.js";
 
 
 export class QueryManager {
@@ -103,7 +103,7 @@ export class QueryManager {
 
         return {
             ...trip,
-            tripSegments: sortSegmentsByChain(trip.tripSegments),
+            tripSegments: sortTripSegmentsByChain(trip.tripSegments),
         };
     }
 
@@ -114,6 +114,54 @@ export class QueryManager {
         return await prisma.trip.update({
             where: { tripId },
             data: { weather },
+        });
+    }
+
+    // PATH
+
+    // create path
+    async createPath(...){ origin: Coordinates, destination: Coordinates ...
+    }
+
+    // get path by id with segments
+    async getPathById(pathId: string): Promise<PathSegments | null> {
+        const path = await prisma.path.findUnique({
+            where: { pathId },
+            include: {
+                pathSegments: true,
+            },
+        });
+
+        if (!path) {
+            return null;
+        }
+
+        return {
+            ...path,
+            pathSegments: sortPathSegmentsByChain(path.pathSegments),
+        };
+    }
+
+    // update path score
+    async updatePathScore(pathId: string, score: number) {
+        return await prisma.path.update({
+            where: { pathId },
+            data: { score },
+        });
+    }
+
+    // delete path by id
+    async deletePathById(pathId: string) {
+        return await prisma.path.delete({
+            where: { pathId },
+        });
+    }
+
+    // change path visibility
+    async changePathVisibility(pathId: string, visibility: boolean) {
+        return await prisma.path.update({
+            where: { pathId },
+            data: { visibility },
         });
     }
 

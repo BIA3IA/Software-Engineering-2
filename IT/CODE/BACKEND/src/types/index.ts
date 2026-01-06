@@ -7,3 +7,4 @@ export * from './coordinate.types';
 export * from './segment.types';
 export * from './trip.types';
 export * from './error.types';
+export * from './path.types';
