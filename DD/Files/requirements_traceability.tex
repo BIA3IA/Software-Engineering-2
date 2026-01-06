@@ -41,7 +41,7 @@
 
  \textbf{R12} & The system shall allow logged-in users to start a cycling trip in manual or automatic mode. & TripManager \\ \hline
 
- \textbf{R13} & The system shall allow logged-in users to stop a currently active trip and save the recorded data. & TripManager, QueryManager \\ \hline
+ \textbf{R13} & The system shall allow logged-in users to stop a currently active trip and save the recorded data. & TripManager, QueryManager, WeatherManager\\ \hline
 
  \textbf{R14} & The system shall collect GPS data during trip recording. & TripManager \\ \hline
 
@@ -67,11 +67,11 @@
 
  \textbf{R25} & The system shall allow logged-in users to manually create a new bike path by drawing or specifying street segments. & PathManager, QueryManager \\ \hline
 
- \textbf{R26} & The system shall allow logged-in users to manually report obstacles or problems while performing an active trip. & Reports Manager, QueryManager \\ \hline
+ \textbf{R26} & The system shall allow logged-in users to manually report obstacles or problems while performing an active trip. & ReportManager, QueryManager \\ \hline
 
  \textbf{R27} & The system shall allow logged-in users to manually confirm or reject the presence of obstacles reported by other users. & ReportManager, QueryManager \\ \hline
 
- \textbf{R28} & The system shall allow logged-in users to create a new bike path in automatic mode using GPS tracking. & PathManager, TripManager, QueryManager \\ \hline
+ \textbf{R28} & The system shall allow logged-in users to create a new bike path in automatic mode using GPS tracking. & PathManager, QueryManager \\ \hline
 
  \textbf{R29} & The system shall allow logged-in users to delete or edit their previously created paths. & PathManager, QueryManager \\ \hline
 
@@ -81,9 +81,9 @@
 
  \textbf{R32} & The system shall evaluate the reliability of each path segment based on the number of confirmations and report freshness. & ReportManager, PathManager \\ \hline
 
- \textbf{R33} & The system shall determine the current status of a path (optimal, medium, sufficient, requires maintenance, closed). & Reports Manager, PathManager \\ \hline
+ \textbf{R33} & The system shall determine the current status of a path (optimal, medium, sufficient, requires maintenance, closed). & ReportManager, PathManager \\ \hline
 
- \textbf{R34} & The system shall allow any user (guest or logged-in) to view the detailed status and latest reports of a selected bike path. & PathManager, Reports Manager, QueryManager \\ \hline
+ \textbf{R34} & The system shall allow any user (guest or logged-in) to view the detailed status and latest reports of a selected bike path. & PathManager, ReportManager, QueryManager \\ \hline
 
  \textbf{R35} & The system shall allow any user (guest or logged-in) to browse available public bike paths on a map. & PathManager, QueryManager \\ \hline
 
@@ -95,7 +95,7 @@
 
  \textbf{R39} & The system shall display the user’s current GPS position during navigation along a selected path. & TripManager, PathManager \\ \hline
 
- \textbf{R40} & The system shall send in-app notifications or pop-ups to warn users about nearby obstacles or closed path segments during navigation. & TripManager, Reports Manager \\ \hline
+ \textbf{R40} & The system shall send in-app notifications or pop-ups to warn users about nearby obstacles or closed path segments during navigation. & TripManager, ReportManager \\ \hline
  
  \textbf{R41} & The system shall interface with map and geocoding services to translate addresses into coordinates and render paths. & PathManager, QueryManager \\ \hline
 
