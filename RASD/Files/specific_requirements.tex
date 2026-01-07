@@ -173,7 +173,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 
 \pagebreak
 
-\textbf{[UC1]} - User Registration
+\subsubsection*{[UC1] - User Registration}
 \begin{table}[H]
 	\centering
 	\label{tab:UC1}
@@ -203,7 +203,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC2]} - User Log In
+\subsubsection*{[UC2] - User Log In}
 \begin{table}[H]
 	\centering
 	\label{tab:UC2}
@@ -233,7 +233,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC3]} - User Log Out
+\subsubsection*{[UC3] - User Log Out}
 \begin{table}[H]
 	\centering
 	\label{tab:UC3}
@@ -259,10 +259,40 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC4]} - Search for a Path
+\subsubsection*{[UC4] - Edit Personal Profile}
 \begin{table}[H]
 	\centering
 	\label{tab:UC4}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                                 \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and is on the personal profile page.                                                                                                \\ \hline
+		\textbf{Event Flow}      & 1. The actor selects the “Edit Profile” action.                                                                                                                \\
+		                         & 2. The system displays the editable profile form (e.g., username, email).                                                                                      \\
+		                         & 3. The actor modifies one or more fields and submits the changes.                                                                                              \\
+		                         & 4. The system validates the provided data.                                                                                                                     \\
+		                         & 5. If validation succeeds, the system saves the changes and updates the profile view.                                                                          \\ \hline
+		\textbf{Exit Condition}  & The actor's profile information is updated successfully.                                                                                                       \\ \hline
+		\textbf{Exceptions}      & If data are invalid or incomplete, the system displays an error message and prevents saving until corrected.                                                   \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.                                                          \\ \hline
+		\textbf{Notes}           & Changing sensitive data (e.g., email or password) may require re-authentication and/or email verification. Avatar uploads must respect size and format limits. \\ \hline
+	\end{tabularx}
+	\caption{Edit Personal Profile Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/edit_profile.png}
+	\caption{Edit Personal Profile Sequence Diagram}
+	\label{fig:use_case_edit_profile}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC5] - Search for a Path}
+
+\begin{table}[H]
+	\centering
+	\label{tab:UC5}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Guest User, Logged-in User                                                                                         \\ \hline
@@ -287,10 +317,10 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC5]} - Select a Path
+\subsubsection*{[UC6] - Select a Path}
 \begin{table}[H]
 	\centering
-	\label{tab:UC5}
+	\label{tab:UC6}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Guest User, Logged-in User                                                                                                   \\ \hline
@@ -313,10 +343,10 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC6]} - Create a Path in Manual Mode
+\subsubsection*{[UC7] - Create a Path in Manual Mode}
 \begin{table}[H]
 	\centering
-	\label{tab:UC6}
+	\label{tab:UC7}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                   \\ \hline
@@ -344,10 +374,10 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC7]} - Create a Path in Automatic Mode
+\subsubsection*{[UC8] - Create a Path in Automatic Mode}
 \begin{table}[H]
 	\centering
-	\label{tab:UC7}
+	\label{tab:UC8}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                                                 \\ \hline
@@ -377,10 +407,44 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC8]} - Delete a Path
+\subsubsection*{[UC9] - View Path Library}
+
+\subsubsection*{[UC10] - Manage Path Visibility}
 \begin{table}[H]
 	\centering
-	\label{tab:UC8}
+	\label{tab:UC10}
+	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
+		\hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                                                                                                               \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and is viewing the details of one of their created paths, intending to change its visibility.                                                                                                                     \\ \hline
+		\textbf{Event Flow}      & 1. The actor taps on the visibility indicator of a specific path.                                                                                                                                                                            \\
+		                         & 2. The system displays a confirmation dialog to switch the path visibility (e.g., from Private to Public or vice versa).                                                                                                                     \\
+		                         & 3. The actor confirms the action and submits the changes.                                                                                                                                                                                    \\
+		                         & 4. The system validates the input and sends an update request.                                                                                                                                                                               \\
+		                         & 5. If the operation succeeds, the system confirms the update and refreshes the path details.                                                                                                                                                 \\ \hline
+		\textbf{Exit Condition}  & The path visibility is successfully updated according to the actor’s selection.                                                                                                                                                              \\ \hline
+		\textbf{Exceptions}      & If the path is not found, the system notifies the actor.                                                                                                                                                                                     \\
+		                         & If the actor is not the path owner, the system denies the operation and shows an appropriate error message.                                                                                                                                  \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.                                                                                                                                        \\
+		                         & If the input is invalid or incomplete, the system displays an error and asks for correction.                                                                                                                                                 \\ \hline
+		\textbf{Notes}           & This operation modifies only a metadata field (“visibility”) and does not affect the path geometry or statistics. Public paths are visible to other users according to platform rules, while private paths are accessible only to the owner. \\ \hline
+	\end{tabularx}
+	\caption{Manage Path Visibility Process Detail}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{Images/SequenceDiagrams/manage_visibility.png}
+	\caption{Manage Path Visibility Sequence Diagram}
+	\label{fig:use_case_manage_visibility}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC11] - Delete a Path}
+
+\begin{table}[H]
+	\centering
+	\label{tab:UC11}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                         \\ \hline
@@ -406,10 +470,11 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC9]} - Start a Trip as Guest User
+\subsubsection*{[UC12] - Start a Trip as Guest User}
+
 \begin{table}[H]
 	\centering
-	\label{tab:UC9}
+	\label{tab:UC12}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Guest User                                                                                                                  \\ \hline
@@ -432,10 +497,10 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC10]} - Start a Trip in Manual Mode as a Logged-in User
+\subsubsection*{[UC13] - Start a Trip in Manual Mode as a Logged-in User}
 \begin{table}[H]
 	\centering
-	\label{tab:UC10}
+	\label{tab:UC13}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                                                  \\ \hline
@@ -461,10 +526,10 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC11]} - Start a Trip in Automatic Mode as a Logged-in User
+\subsubsection*{[UC14] - Start a Trip in Automatic Mode as a Logged-in user}
 \begin{table}[H]
 	\centering
-	\label{tab:UC11}
+	\label{tab:UC14}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                                                                                                \\ \hline
@@ -493,10 +558,10 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC12]} - Stop a Trip as Guest User
+\subsubsection*{[UC15] - Stop a Trip as Guest User}
 \begin{table}[H]
 	\centering
-	\label{tab:UC12}
+	\label{tab:UC15}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Guest User                                                                               \\ \hline
@@ -518,10 +583,10 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC13]} - Stop a Trip as a Logged-in User
+\subsubsection*{[UC16] - Stop a Trip as a Logged-in User}
 \begin{table}[H]
 	\centering
-	\label{tab:UC13}
+	\label{tab:UC16}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                                                      \\ \hline
@@ -549,10 +614,10 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC14]} - Make a Report in Manual Mode
+\subsubsection*{[UC17] - Make a Report in Manual Mode}
 \begin{table}[H]
 	\centering
-	\label{tab:UC14}
+	\label{tab:UC17}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                       \\ \hline
@@ -581,10 +646,10 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC15]} - Make a Report in Automatic Mode
+\subsubsection*{[UC18] - Make a Report in Automatic Mode}
 \begin{table}[H]
 	\centering
-	\label{tab:UC15}
+	\label{tab:UC18}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                                     \\ \hline
@@ -613,11 +678,10 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-
-\textbf{[UC16]} - Confirm a Report
+\subsubsection*{[UC19] - Confirm a Report}
 \begin{table}[H]
 	\centering
-	\label{tab:UC16}
+	\label{tab:UC19}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                                                                                                 \\ \hline
@@ -644,41 +708,10 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-\textbf{[UC17]} - Manage Path Visibility
+\subsubsection*{[UC20] - View Trip History}
 \begin{table}[H]
 	\centering
-	\label{tab:UC17}
-	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
-		\hline
-		\textbf{Actor(s)}        & Logged-in User                                                                                                                                                                                                                               \\ \hline
-		\textbf{Entry Condition} & The actor is authenticated and is viewing the details of one of their created paths, intending to change its visibility.                                                                                                                     \\ \hline
-		\textbf{Event Flow}      & 1. The actor taps on the visibility indicator of a specific path.                                                                                                                                                                            \\
-		                         & 2. The system displays a confirmation dialog to switch the path visibility (e.g., from Private to Public or vice versa).                                                                                                                     \\
-		                         & 3. The actor confirms the action and submits the changes.                                                                                                                                                                                    \\
-		                         & 4. The system validates the input and sends an update request.                                                                                                                                                                               \\
-		                         & 5. If the operation succeeds, the system confirms the update and refreshes the path details.                                                                                                                                                 \\ \hline
-		\textbf{Exit Condition}  & The path visibility is successfully updated according to the actor’s selection.                                                                                                                                                              \\ \hline
-		\textbf{Exceptions}      & If the path is not found, the system notifies the actor.                                                                                                                                                                                     \\
-		                         & If the actor is not the path owner, the system denies the operation and shows an appropriate error message.                                                                                                                                  \\
-		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.                                                                                                                                        \\
-		                         & If the input is invalid or incomplete, the system displays an error and asks for correction.                                                                                                                                                 \\ \hline
-		\textbf{Notes}           & This operation modifies only a metadata field (“visibility”) and does not affect the path geometry or statistics. Public paths are visible to other users according to platform rules, while private paths are accessible only to the owner. \\ \hline
-	\end{tabularx}
-	\caption{Manage Path Visibility Process Detail}
-\end{table}
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.8\textwidth]{Images/SequenceDiagrams/manage_visibility.png}
-	\caption{Manage Path Visibility Sequence Diagram}
-	\label{fig:use_case_manage_visibility}
-\end{figure}
-\pagebreak
-
-\textbf{[UC18]} - View Trip History and Trip Details
-\begin{table}[H]
-	\centering
-	\label{tab:UC18}
+	\label{tab:UC20}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                            \\ \hline
@@ -699,42 +732,17 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.8\textwidth]{Images/SequenceDiagrams/trip_history.png}
-	\caption{View Trip History and Trip Details Sequence Diagram}
+	\caption{View Trip History Sequence Diagram}
 	\label{fig:use_case_view_trip_history}
 \end{figure}
 \pagebreak
 
-\textbf{[UC19]} - View Overall Statistics
+\subsubsection*{[UC21] - Delete a Trip}
+
+\subsubsection*{[UC22] - View Trip Statistics}
 \begin{table}[H]
 	\centering
-	\label{tab:UC19}
-	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
-		\hline
-		\textbf{Actor(s)}        & Logged-in User                                                                                                \\ \hline
-		\textbf{Entry Condition} & The actor is authenticated and has completed one or more trips.                                               \\ \hline
-		\textbf{Event Flow}      & 1. The actor accesses his statistics section.                                                                 \\
-		                         & 2. The system aggregates data from all completed trips (e.g., total distance, average speed, total duration). \\
-		                         & 3. The system displays overall metrics and summaries.                                                         \\ \hline
-		\textbf{Exit Condition}  & The actor visualizes overall statistics about their activity.                                                 \\ \hline
-		\textbf{Exceptions}      & If no trip data are available, the system displays “No statistics available”.                                 \\
-		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.         \\ \hline
-		\textbf{Notes}           & These statistics are private.                                                                                 \\ \hline
-	\end{tabularx}
-	\caption{View Overall Statistics Process Detail}
-\end{table}
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/stats_overall.png}
-	\caption{View Overall Statistics Sequence Diagram}
-	\label{fig:use_case_view_overall_statistics}
-\end{figure}
-\pagebreak
-
-\textbf{[UC20]} - View Trip Statistics
-\begin{table}[H]
-	\centering
-	\label{tab:UC20}
+	\label{tab:UC22}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                                    \\ \hline
@@ -758,33 +766,30 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 \end{figure}
 \pagebreak
 
-
-\textbf{[UC21]} - Edit Personal Profile
+\subsubsection*{[UC23] - View Overall Statistics}
 \begin{table}[H]
 	\centering
-	\label{tab:UC21}
+	\label{tab:UC23}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
-		\textbf{Actor(s)}        & Logged-in User                                                                                                                                                 \\ \hline
-		\textbf{Entry Condition} & The actor is authenticated and is on the personal profile page.                                                                                                \\ \hline
-		\textbf{Event Flow}      & 1. The actor selects the “Edit Profile” action.                                                                                                                \\
-		                         & 2. The system displays the editable profile form (e.g., username, email).                                                                                      \\
-		                         & 3. The actor modifies one or more fields and submits the changes.                                                                                              \\
-		                         & 4. The system validates the provided data.                                                                                                                     \\
-		                         & 5. If validation succeeds, the system saves the changes and updates the profile view.                                                                          \\ \hline
-		\textbf{Exit Condition}  & The actor's profile information is updated successfully.                                                                                                       \\ \hline
-		\textbf{Exceptions}      & If data are invalid or incomplete, the system displays an error message and prevents saving until corrected.                                                   \\
-		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.                                                          \\ \hline
-		\textbf{Notes}           & Changing sensitive data (e.g., email or password) may require re-authentication and/or email verification. Avatar uploads must respect size and format limits. \\ \hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and has completed one or more trips.                                               \\ \hline
+		\textbf{Event Flow}      & 1. The actor accesses his statistics section.                                                                 \\
+		                         & 2. The system aggregates data from all completed trips (e.g., total distance, average speed, total duration). \\
+		                         & 3. The system displays overall metrics and summaries.                                                         \\ \hline
+		\textbf{Exit Condition}  & The actor visualizes overall statistics about their activity.                                                 \\ \hline
+		\textbf{Exceptions}      & If no trip data are available, the system displays “No statistics available”.                                 \\
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.         \\ \hline
+		\textbf{Notes}           & These statistics are private.                                                                                 \\ \hline
 	\end{tabularx}
-	\caption{Edit Personal Profile Process Detail}
+	\caption{View Overall Statistics Process Detail}
 \end{table}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/edit_profile.png}
-	\caption{Edit Personal Profile Sequence Diagram}
-	\label{fig:use_case_edit_profile}
+	\includegraphics[width=\textwidth]{Images/SequenceDiagrams/stats_overall.png}
+	\caption{View Overall Statistics Sequence Diagram}
+	\label{fig:use_case_view_overall_statistics}
 \end{figure}
 \pagebreak
 
