@@ -21,13 +21,13 @@ export const generateTokens = (userId: string) => {
 // Next is used to pass control to the next middleware function in the stack. 
 // If invalid or missing, responds with appropriate HTTP status codes (401 Unauthorized or 403 Forbidden).
 // The verify method decodes and verifies the JWT token using the secret key.
+// Tokens are retrieved from Authorization header as Bearer tokens.
 export const verifyAccessToken = (req: Request, res: Response, next: NextFunction) => {
     const { accessTokenSecret } = getJwtSecrets();
-    const token = req.cookies.accessToken;
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
     if (!token) {
-        // Unauthorized
-        // Now we can use the custom UnauthorizedError class, but we need to use next() to pass it to the error handler
         return next(new UnauthorizedError('Access token required', 'ACCESS_TOKEN_MISSING'));
     }
 
@@ -36,7 +36,6 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
         req.user = decoded;
         next();
     } catch (error) {
-        // Forbidden
         return next(new ForbiddenError('Invalid or expired token', 'INVALID_ACCESS_TOKEN'));
     }
 };

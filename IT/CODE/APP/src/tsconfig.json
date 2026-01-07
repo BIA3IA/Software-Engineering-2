@@ -5,18 +5,16 @@
     "resolveJsonModule": true,
     "allowJs": true,
     "jsx": "react-native",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
     "noEmit": true,
     "types": [
-      "tamagui",
       "react",
       "react-native",
-      "expo"
+      "expo",
+      "jest"
     ],
     "paths": {
-      "tamagui.config": [
-        "./tamagui.config.ts"
-      ],
       "@/*": [
         "./*"
       ]
@@ -26,7 +24,9 @@
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    "jest.config.js",
+    "jest.setup.ts"
   ],
   "exclude": [
     "node_modules"
