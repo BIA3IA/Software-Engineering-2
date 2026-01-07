@@ -144,9 +144,9 @@ This component interacts with the \textbf{QueryManager} for persistence and with
 Routing \& Path Manager when updated conditions affect route evaluation.
 
 \subsubsection{Statistics Manager}
-The \textbf{Statistics Manager} computes
-and retrieves aggregated cycling statistics. It retrieves historical data through
-the \textbf{QueryManager}.
+The \textbf{Statistics Manager} optimizes system performance by using a state-aware recomputation strategy that minimizes redundant processing. For overall statistics, it compares the user’s current total trip count against the value stored from the last calculation; it only triggers a full aggregation of data if the \textbf{QueryManager} reports a change in the trip count, otherwise it simply retrieves the previously stored results.
+
+For individual trip statistics, the manager utilizes a lazy initialization pattern by asking the \textbf{QueryManager} if a processed record already exists for a specific trip ID. If the statistics are found, they are returned immediately; if not, the manager computes and persists them for the first time. This dual-layered approach ensures that data is only processed when necessary, effectively eliminating double computations by relying on the \textbf{QueryManager} to track the state of processed data.
 
 \subsubsection{Weather Manager}
 The \textbf{Weather Manager} interacts with the external weather API to obtain
