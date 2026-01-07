@@ -2,12 +2,23 @@
 % Introduction
 % --------------------------------------------------------------------------
 
+In recent years, cycling has gained increasing relevance as a sustainable, healthy, and efficient
+means of transportation. Despite its benefits, cyclists often face difficulties in identifying safe
+and reliable routes. The \textbf{Best Bike Paths (BBP)} system has been conceived to address these challenges by using
+community-contributed data and sensor information to help users choose safer and more reliable
+cycling routes.
+
 % --------------------------------------------------------------------------
 % Purpose 
 % --------------------------------------------------------------------------
 \section{Purpose}
 \label{sec:purpose}%
-	The purpose of this document is to provide a comprehensive design framework for the development, integration, and testing of the system. This document serves as a guide for developers and testers, offering a structured approach to building, integrating, and validating the system components while maintaining alignment with project goals and user needs.
+
+The purpose of this document is to translate the system requirements defined in the \textbf{Requirement Analysis
+	and Specification Document (RASD)} into architectural, component-level,
+and interaction design choices. This document provides guidance for developers and testers by
+defining a structured approach to the design, integration, and validation of system components,
+ensuring alignment with the project goals and user requirements.
 
 % --------------------------------------------------------------------------
 % Scope
@@ -15,8 +26,16 @@
 
 \section{Scope}
 \label{sec:scope}%
-	The scope of the Best Bike Paths (BBP) platform is to create and maintain a comprehensive inventory of bike paths by supporting users in recording, analyzing, and sharing cycling activities and path conditions. It allows logged-in users to record their trips, automatically collecting GPS and sensor data or manually inputting information, which is then analyzed to provide statistics and identify obstacles like potholes. Crucially, BBP incorporates a mechanism for validating and merging this user-reported data, ensuring the quality and freshness of path information before making it publishable. Finally, the system enables all users, logged in or not, to search for the best-scored path between any two points, leveraging the validated, community-contributed inventory to optimize their cycling routes. \newline
-	This document describes the architecture, components, their detailed functionalities, interactions, and interfaces, ensuring a clear understanding of the system’s structure and behavior. For a comprehensive overview of system features, refer to the RASD.
+
+The scope of the \textbf{Best Bike Paths (BBP)} platform is to create and maintain a comprehensive inventory of bike paths by supporting users in recording,
+analyzing, and sharing cycling activities and path conditions. It allows logged-in users to record their trips, automatically collecting GPS and sensor
+data or manually inputting information, which is then analyzed to provide statistics and identify obstacles. Crucially, BBP incorporates
+a mechanism for validating and merging this user-reported data, ensuring the quality and freshness of path information before making it publishable. Finally,
+the system enables all users, logged in or not, to search for the best-scored path between two points, leveraging the validated, community-contributed
+inventory to optimize their cycling routes.
+
+This document focuses on the architectural and component-level design of the system, describing how its elements interact and cooperate to satisfy the
+requirements defined for the platform. The complete and formal definition of system requirements is provided in the \textbf{RASD}.
 
 
 \section{Definitions, Acronyms, Abbreviations}
@@ -27,12 +46,8 @@
 
 \begin{itemize}
 	\item \textbf{HTTPS:} Secures all communication between the app and the server using encryption.
-	\item \textbf{HTTP/REST:} Defines the API structure, using simple request-response calls for all application actions (GET, POST).
-	\item \textbf{TCP/IP:} The fundamental protocols ensuring reliable and ordered delivery of data packets across the network.
-	\item \textbf{ORM/ODM:} Maps application classes directly to database tables or documents, simplifying data manipulation.
-	\item \textbf{DAO Pattern:} Isolates database access logic from the main business logic for modularity.
-	\item \textbf{MVC Pattern:} Separates the application into three interconnected components: Model (data), View (UI), and Controller (business logic).
-	\item 	\textbf{Connection Pooling:} Maintains a set of open database connections to improve performance and scalability by reducing connection overhead.
+	\item \textbf{REST API:} The set of HTTP-based interfaces exposed by the backend service, used by the mobile client to exchange data in JSON format.
+	\item \textbf{DAO Pattern:}  A design pattern that isolates data access logic from the core business logic, improving modularity and maintainability.
 \end{itemize}
 
 \subsection{Acronyms}
@@ -44,16 +59,14 @@
 	\item \textbf{CRUD:} Create, Read, Update, Delete.
 	\item \textbf{REST:} Representational State Transfer.
 	\item \textbf{HTTP:} HyperText Transfer Protocol.
+	\item \textbf{HTTPS:} HyperText Transfer Protocol Secure.
 	\item \textbf{JSON:} JavaScript Object Notation.
-	\item \textbf{DB:} Database.
+	\item \textbf{JWT:} JSON Web Token.
 	\item \textbf{DBMS:} DataBase Management System.
 	\item \textbf{RASD:} Requirement Analysis and Specification Document.
 	\item \textbf{GPS:} Global Positioning System.
 	\item \textbf{API:} Application Programming Interface.
 	\item \textbf{UI:} User Interface.
-	\item \textbf{ORM:} Object-Relational Mapping.
-	\item \textbf{ODM:} Object-Document Mapping.
-	\item \textbf{TCP/IP:} Transmission Control Protocol/Internet Protocol.
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -64,7 +77,7 @@
 \label{sec:revhistory}%
 
 \begin{itemize}
-	\item Version 1.0 (23 December 2025);
+	\item Version 1.0 (07 January 2026);
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -76,12 +89,11 @@
 
 Mainly the current document is divided into 7 chapters, which are:
 \begin{enumerate}
-	\item \textbf{Introduction:} Provides an overview of the document, outlining its purpose, scope, and relevance to the project.
-	\item \textbf{Architectural Design:} Explains the technical architecture of the system, including the components, layers, and their interactions.
-	\item \textbf{User Interface Design:} Details the visual and functional design of the user interfaces, emphasizing usability and user experience.
-	\item \textbf{Requirements Traceability:} Maps the requirements to their implementation.
-	\item \textbf{Implementation, Integration and Test Plan:} Describes the approach to system development, integration strategies, and the planned testing methods to ensure quality and reliability.
-	\item \textbf{Effort Spent:} Summarizes the distribution of time and effort invested by each team member in completing the document and its sections.
-	\item \textbf{References:} A list of all sources (including Software) and documents used in the preparation of this document.
-
+	\item \textbf{Introduction:} provides an overview of the document, outlining its purpose, scope, and relevance to the project.
+	\item \textbf{Architectural Design:} explains the technical architecture of the system, including the components, layers, and their interactions.
+	\item \textbf{User Interface Design:} details the visual and functional design of the user interfaces, emphasizing usability and user experience.
+	\item \textbf{Requirements Traceability:} maps the requirements defined in the RASD to the architectural components and design decisions presented in this document.
+	\item \textbf{Implementation, Integration and Test Plan:} describes the approach to system development, integration strategies, and the planned testing methods to ensure quality and reliability.
+	\item \textbf{References:} lists all sources (including Software) and documents used in the preparation of this document.
+	\item \textbf{Effort Spent:} summarizes the distribution of time and effort invested by each team member in completing the document and its sections.
 \end{enumerate}

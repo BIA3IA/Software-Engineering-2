@@ -66,7 +66,7 @@ RESTful sub-APIs and routes incoming requests to the appropriate Manager.
 \subsection*{Data Layer}
 
 The data layer consists of a \textbf{relational DBMS} storing all persistent
-information relevant to the system’s domain, including:
+information relevant to the system's domain, including:
 \begin{itemize}
 	\item user profiles and authentication credentials;
 	\item trip records and associated GPS data;
@@ -83,6 +83,7 @@ application logic and reduces duplication across components.
 % --------------------------------------------------------------------------
 % Component View
 % --------------------------------------------------------------------------
+
 \section{Component View}
 \label{sec:component_view}
 
@@ -91,12 +92,12 @@ and their responsibilities. As required by the three-tier architecture adopted b
 the backend is structured into a set of independent yet cooperating modules, each exposing
 well-defined interfaces and encapsulating a cohesive subset of the app logic.
 
-\figure[H]
-\centering
-\includegraphics[width=\textwidth]{Images/Architectural_Overview/component_view.png}
-\caption{Component View Diagram}
-\label{fig:component_view}
-\endfigure
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Architectural_Overview/component_view.png}
+	\caption{Component View Diagram}
+	\label{fig:component_view}
+\end{figure}
 
 \subsubsection{API Gateway}
 The \textbf{API Gateway} acts as the entry point for all interactions between the BBP mobile
@@ -106,8 +107,8 @@ and translating domain errors into HTTP responses.
 
 The API Gateway exposes the following logical sub-APIs:
 \begin{itemize}
-	\item \textbf{AuthAPI}: endpoints for token generation and validation.
-	\item \textbf{UserAPI}: endpoints for registration, login, token refresh, and profile retrieval.
+	\item \textbf{AuthAPI}: endpoints for login, token generation and validation.
+	\item \textbf{UserAPI}: endpoints for registration, token refresh, and profile retrieval.
 	\item \textbf{TripAPI}: endpoints for starting, updating, and stopping a trip.
 	\item \textbf{PathAPI}: endpoints for route computation and retrieval of path metadata.
 	\item \textbf{ReportAPI}: endpoints for creating and confirming obstacle reports.
@@ -126,7 +127,7 @@ Both Managers use the \textbf{QueryManager} for data retrieval and persistence.
 The \textbf{TripManager} coordinates the lifecycle of a cycling session.
 GPS samples and live tracking stay on the mobile app during the trip; the backend is contacted only at stop time.
 Upon trip completion, the app sends the final payload (trajectory, metrics) to the backend.
-The TripManager generates the summary, enriches it with environmental data retrieved from the Weather Manager,
+The TripManager generates the summary, enriches it with environmental data retrieved from the \textbf{WeatherManager},
 and persists it through the \textbf{QueryManager}.
 
 \subsubsection{Path Manager}
@@ -134,19 +135,24 @@ The \textbf{PathManager} is responsible for retrieving graph
 data from the database, computing optimal routes between two locations,
 and ranking alternative routes according to their quality and reported conditions.
 This service exposes the routing logic to the API Gateway and interacts with the
-\textbf{QueryManager} to retrieve pre-aggregated segment conditions (kept up to date by the ReportManager) alongside path data needed for route computation.
+\textbf{QueryManager} to retrieve pre-aggregated segment conditions alongside path data needed for route computation.
 
-\subsubsection{Reports Manager}
-The \textbf{Reports Manager} handles obstacle reports submitted
+\subsubsection{Report Manager}
+The \textbf{ReportManager} handles obstacle reports submitted
 by users or automatically detected during trips. It stores and aggregates reports, manages
 confirmation and rejection flows, updates path-quality indicators, and exposes relevant data to the mobile app.
 This component interacts with the \textbf{QueryManager} for persistence and with the
 Routing \& Path Manager when updated conditions affect route evaluation.
 
 \subsubsection{Statistics Manager}
-The \textbf{Statistics Manager} optimizes system performance by using a state-aware recomputation strategy that minimizes redundant processing. For overall statistics, it compares the user’s current total trip count against the value stored from the last calculation; it only triggers a full aggregation of data if the \textbf{QueryManager} reports a change in the trip count, otherwise it simply retrieves the previously stored results.
+The \textbf{Statistics Manager} optimizes system performance by using a state-aware recomputation strategy that minimizes redundant processing.
+For overall statistics, it compares the user's current total trip count against the value stored from the last calculation; it only triggers a full
+aggregation of data if the \textbf{QueryManager} reports a change in the trip count, otherwise it simply retrieves the previously stored results.
 
-For individual trip statistics, the manager utilizes a lazy initialization pattern by asking the \textbf{QueryManager} if a processed record already exists for a specific trip ID. If the statistics are found, they are returned immediately; if not, the manager computes and persists them for the first time. This dual-layered approach ensures that data is only processed when necessary, effectively eliminating double computations by relying on the \textbf{QueryManager} to track the state of processed data.
+For individual trip statistics, the manager utilizes a lazy initialization pattern by asking the \textbf{QueryManager} if a processed record already
+exists for a specific trip ID. If the statistics are found, they are returned immediately; if not, the manager computes and persists them for the first time.
+This dual-layered approach ensures that data is only processed when necessary, effectively eliminating double computations by relying on the \textbf{QueryManager}
+to track the state of processed data.
 
 \subsubsection{Weather Manager}
 The \textbf{Weather Manager} interacts with the external weather API to obtain
@@ -182,34 +188,33 @@ executed on dedicated hardware nodes and communicates with the others using secu
 	      this tier includes all devices through which end users interact with the BBP system.
 	      The primary clients are smartphones or tablets running iOS or Android, where the BBP mobile application is installed.
 	      These devices communicate with the backend exclusively via HTTPS, ensuring confidentiality and data integrity.
-	      Although the mobile app represents the main access point, any device equipped with a modern web browser and a stable
-	      internet connection could technically interact with the system,
-	      since the backend exposes standard RESTful endpoints.
-	      No application logic is executed at this level, the devices simply capture user input, display results, and forward
-	      authenticated HTTP requests toward the Application Tier.
+	      While the client executes local presentation logic, no security-critical or authoritative business logic is enforced at this level.
+	      The devices capture user input and location, display results, and forward authenticated or unauthenticated HTTPS requests
+	      toward the Application Tier.
 
 	\item \textbf{Application Tier:}
 	      this tier is responsible for handling incoming traffic, enforcing security, applying routing and load balancing policies, and
 	      executing the core business logic of the system.
-	      All external requests first pass through a Linux-based server configured as a Web Application Firewall using \textit{ModSecurity}.
+	      All external requests first pass through a Linux-based node configured as a Web Application Firewall using \textit{ModSecurity},
+	      enabling Layer-7 inspection and protection.
 	      ModSecurity blocks malicious traffic such as SQL injection attempts, cross-site scripting payloads, and abnormal request patterns,
 	      while supporting anomaly detection.
-	      Validated HTTPS traffic is then forwarded to the gateway node running \textit{Traefik}, which acts as the system’s
-	      reverse proxy and load balancer.
-	      Traefik terminates HTTPS connections, exposes a single public entrypoint for clients, and distributes incoming requests
-	      across multiple backend replicas using load balancing strategies.
+	      TLS termination is performed at the WAF to allow full request inspection; validated traffic is re-encrypted and forwarded to the internal
+	      internal \textit{NGINX} gateway over HTTPS.
+	      NGINX acts as the system's reverse proxy and load balancer, exposing a single controlled entrypoint and distributing incoming
+	      requests across multiple backend replicas using load balancing strategies.
 	      Additional middleware functionalities (request logging or rate limiting) can be applied as needed at this level.
 	      The backend application itself is executed on one or more stateless Application Servers, each running the BBP RESTful backend.
 	      Since authentication tokens are included in each request header, no server-side session state is maintained, enabling horizontal
 	      scaling and dynamic replica management.
-	      Communication between Traefik and the backend replicas is confined to a protected internal network, reducing the system’s
+	      Communication between the gateway and the backend replicas is confined to a protected internal network, reducing the system's
 	      exposure to external threats.
 
 	\item \textbf{Data Tier:}
 	      the Data Tier consists of a dedicated server running a PostgreSQL database instance, which stores all persistent system data
 	      such as user information, paths, trips, and analytics.
-	      Backend servers interact with the database using standard PostgreSQL drivers over TCP/IP within an isolated internal network
-	      segment.
+	      Backend servers interact with the database over TCP/IP within an isolated internal network segment, typically via standard
+	      PostgreSQL drivers and the \textit{Prisma} ORM running on the Application Servers.
 	      Centralizing the database simplifies backup strategies, consistency enforcement, and maintenance operations, while still
 	      allowing for potential future extensions such as replication or clustering without altering the upper tiers of the system.
 
@@ -241,18 +246,15 @@ are distributed at runtime.
 
 A new user wants to register into the BBP system.
 The process begins on the mobile app, where the guest user opens the registration page,
-and fills in the required details: email, password, and personal information.
+and fills in the required details: email and password.
 A first \textbf{local validation} step checks for malformed inputs before contacting the \textbf{backend}.
 
-If the data is valid, the mobile app sends a registration request to the \textbf{API Gateway},
-which forwards it to the \textbf{AuthManager}. This component checks that the email is not
-already in use by querying the database through the \textbf{QueryManager}.
-If the email already exists, the system returns an error and the mobile app notifies the user accordingly.
+If the data is valid, the mobile app sends a registration request to the \textbf{API Gateway}, which forwards it to the \textbf{UserManager}.
+The \textbf{UserManager} checks whether the email is already in use by querying the DBMS through the \textbf{QueryManager}.
+If the email already exists, the system returns an error and the mobile app notifies the user.
 
-If the email does not exist, the \textbf{AuthManager} inserts the new user into the database
-and generates an \textbf{authentication token}. The token is returned to the mobile app, which
-stores it securely using the device’s \textbf{secure storage} mechanism. The flow concludes with a
-success message being shown to the user.
+If the email is not already in use, the \textbf{UserManager} stores the new user in the database (with the password handled securely).
+The flow ends by showing a success message to the user.
 
 \begin{figure}[H]
 	\centering
@@ -274,11 +276,10 @@ the backend returns a \textbf{404 Not Found} error, which the mobile app display
 If the user exists, the \textbf{AuthManager} verifies the submitted password. Invalid credentials
 lead to a \textbf{401 Unauthorized} response and the corresponding error message on the client.
 
-When the credentials are correct, the \textbf{AuthManager} generates an \textbf{authentication token} and
-returns it to the mobile app, which stores it securely using the device's
+When the credentials are correct, the \textbf{AuthManager} generates an \textbf{authentication token} and a \textbf{refresh token},
+returns them to the mobile app, which stores them securely using the device's
 \textbf{secure storage} facility. The user is then successfully logged in and the app
 proceeds to show the appropriate authenticated UI.
-
 
 \begin{figure}[H]
 	\centering
@@ -290,17 +291,18 @@ proceeds to show the appropriate authenticated UI.
 
 \subsubsection*{[UC3] - User Log Out}
 
-When a logged-in user initiates the logout operation from the mobile app, the client first clears
-the locally stored authentication token from the \textbf{secure storage}.
-Afterward, the mobile app sends an HTTP request to the backend.
+When a logged-in user initiates the logout operation from the mobile app, the client first removes the locally
+stored tokens from the device's \textbf{secure storage}. This ensures the user is logged out on the client side
+even if the network request fails.
 
-The \textbf{API Gateway} forwards the request to the \textbf{AuthManager}, which handles the logout process by deleting
-the corresponding \textbf{refresh token} through the \textbf{QueryManager}. The QueryManager executes a \textbf{DELETE}
-operation on the database to invalidate the stored refresh token.
+After clearing local data, the mobile app sends an HTTP request to the logout endpoint exposed by the \textbf{API Gateway}.
+The \textbf{API Gateway} forwards the request to the \textbf{AuthManager}, which invalidates the current session by deleting
+the corresponding \textbf{refresh token} through the \textbf{QueryManager}. The \textbf{QueryManager} executes a
+\textbf{DELETE} operation on the database to remove the stored token.
 
-If the operation succeeds, the server returns a \textbf{204 NO\_CONTENT} response, and the app
-displays a success message to the user. If instead a network or server error occurs,
-the system interrupts the flow and the mobile app notifies the user with a “Network unavailable” error message.
+If the operation succeeds, the server returns a \textbf{204 NO\_CONTENT} response and the app shows a success message.
+If a network or server error occurs (timeout or \textbf{5xx}), the flow is interrupted and the mobile app shows a
+\textbf{“Network unavailable”} error message.
 
 \begin{figure}[H]
 	\centering
@@ -310,461 +312,12 @@ the system interrupts the flow and the mobile app notifies the user with a “Ne
 \end{figure}
 \pagebreak
 
-\subsubsection*{[UC4] - Search for a Path}
-
-A user can search for bike paths between two locations. He enters the start and end points
-and submits the request. The app performs a preliminary local validation
-and, if the data is valid, forwards the request to the backend through the \textbf{API Gateway}.
-
-The \textbf{API Gateway} forwards the request to the \textbf{PathManager}, which loads the relevant
-portion of the path graph, including segment condition indicators derived from reports, from the
-database using the \textbf{QueryManager}. Once the graph data is retrieved, the \textbf{PathManager}
-computes the optimal path(s) according to the requested constraints. If valid routes are found,
-the API Gateway returns them to the mobile app, which displays the corresponding suggestions.
-
-If no route satisfies the user’s constraints, the \textbf{PathManager} signals a \textbf{NO\_ROUTE}
-condition, which results in a 404 error. In the case of network or server issues,
-the app notifies the user with an appropriate error message.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/search_path.png}
-	\caption{Search for a Path Sequence Diagram}
-	\label{fig:use_case_search_path}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC5] - Select a Path}
-
-The Select a Path sequence diagram illustrates how the system retrieves the details of
-a path selected by a user. The interaction begins when the user chooses a specific path
-from the list of suggested routes displayed by the mobile app. The app sends a request
-to the backend through the \textbf{API Gateway}, which forwards it to the \textbf{PathManager}.
-The \textbf{PathManager} retrieves the corresponding path information by querying the database
-through the \textbf{QueryManager}. If a matching record is found, the PathManager returns the
-path details to the \textbf{API Gateway}, which sends them back to the mobile app for
-presentation to the user.
-If the database does not contain a path with the specified identifier, the \textbf{PathManager}
-signals a \textbf{NOT\_FOUND} condition, resulting in a \textbf{404} response. In that case, the mobile app
-notifies the user that the selected route is unavailable. As in other interactions,
-network or server errors trigger an appropriate error message on the client side.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.95\textwidth]{Images/Sequence_Diagrams/select_path.png}
-	\caption{Select a Path Sequence Diagram}
-	\label{fig:use_case_select_path}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC6] - Create a Path in Manual mode}
-
-When a logged-in user wants to create a new path, he will be presented with a form to fill
-in the required metadata and choose between manual and automatic creation modes. If he opts
-for creating the path in \textbf{manual mode}, an interactive map is displayed on the mobile app,
-allowing the user to define the path by drawing it. The user will be able to
-save the path, sending the saving request to the backend.
-
-Before sending the request, the app performs local validation to ensure that all
-mandatory fields and segments are correctly specified.
-
-If the input is valid, the mobile app submits the creation request to the
-backend through the \textbf{API Gateway}. The gateway forwards the request to the \textbf{PathManager},
-which is responsible for handling the creation workflow. The PathManager stores the new
-path by delegating the persistence task to the \textbf{QueryManager}, which executes the
-corresponding \textbf{INSERT} operation on the \textbf{DBMS}.
-
-Once the database confirms the insertion,
-the \textbf{PathManager} sends the result back to the \textbf{API Gateway}.
-The gateway responds with a \textbf{201 Created} status and the new pathId. The mobile app then
-displays a confirmation message to the user. In the event of network failures or
-server-side errors, the app notifies the user accordingly.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/create_manual.png}
-	\caption{Create a Path in Manual Mode Sequence Diagram}
-	\label{fig:use_case_create_path_manual}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC7] - Create a Path in Automatic Mode}
-
-When a logged-in user chooses to create a new bike path, he first selects the
-creation mode from the mobile app. The app displays a form for entering
-the required metadata, such as the path name, description, and other relevant details, and
-choosing the desired mode. If the user chooses automatic mode, 
-the app proceeds to performs a first local validation. If the fields are invalid, the user is immediately notified.
-
-Once the input is valid, the app attempts to activate \textbf{GPS tracking}. If activation fails
-(e.g., permissions or hardware issues), an error is shown. If tracking succeeds, the \textbf{GPS
-	module} begins providing continuous location samples (latitude, longitude, speed, timestamp).
-The app collects these values during the entire movement loop.
-
-If the GPS signal temporarily fails while moving, the app detects the error and
-interrupts the procedure, informing the user. When the user completes the movement
-session, GPS tracking is deactivated and the collected samples undergo a final \textbf{local
-	validation}; if invalid, the user is notified. When both metadata and sensor samples are
-valid, the app sends a \textbf{POST request} to the backend. If a network timeout or server error
-occurs, an appropriate message is shown to the user.
-
-The \textbf{API} forwards the request to the \textbf{PathManager}, which calls the \textbf{QueryManager} to store
-the path in the \textbf{DBMS}. The system inserts metadata and user association into the database,
-and upon successful insertion returns a \textbf{201 Created} response containing the new pathId.
-The mobile app receives the response and displays a success message,
-indicating that the new automatically generated path has been saved.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/create_automatic.png}
-	\caption{Create a Path in Automatic Mode Sequence Diagram}
-	\label{fig:use_case_create_path_automatic}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC8] - Delete a Path}
-
-When a logged-in user wants to delete one of his paths, he firstly navigates to the list of
-his created paths in the mobile app. The app sends a request to the backend to retrieve
-all paths associated with the user. The \textbf{API} forwards this request to the \textbf{PathManager},
-which retrieves the corresponding records through the \textbf{QueryManager} and the \textbf{DBMS}.
-Once the user selects a specific path to delete, the app sends a \textbf{DELETE request} to the backend.
-
-The \textbf{PathManager} first verifies that the path exists and that the requesting user is its
-owner. If the ownership check fails, the backend returns a \textbf{403 FORBIDDEN} error.
-If the path does not exist, a \textbf{404 NOT\_FOUND} response is generated.
-
-When the user is authorised and the path exists, the \textbf{PathManager} performs the deletion
-through the \textbf{QueryManager}, which issues the appropriate \textbf{SQL DELETE} operation to the \textbf{DBMS}.
-Successful deletion results in a \textbf{204} response, upon which the mobile app
-confirms the removal to the user. Network or server-side failures prompt the mobile app
-to display a generic error message.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/delete_path.png}
-	\caption{Delete a Path Sequence Diagram}
-	\label{fig:use_case_delete_path}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC9] - Start a Trip as Guest User}
-
-When a guest user wants to start a trip using the BBP mobile app, he first selects a path
-from the available options. The app then attempts to activate \textbf{GPS tracking} to monitor
-the user's movement along the selected path.
-
-If GPS activation fails, the mobile app immediately notifies the user with an error
-message. Otherwise, once tracking is active, the app continuously receives location
-updates while the user is moving and refreshes the map accordingly.
-
-If at any point the \textbf{GPS module} reports a loss of signal, the app displays an appropriate
-error message to the user. No backend interaction occurs in this use case, as guest
-trips are not recorded or stored.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/start_guest.png}
-	\caption{Start a Trip as Guest User Sequence Diagram}
-	\label{fig:use_case_start_trip_guest}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC10] - Start a Trip in Manual Mode as a Logged-in User}
-
-In this scenario, a logged-in user starts a trip by selecting a path.
-The interaction begins when the user initiates the trip from the mobile app, which
-displays the chosen path on the map. The user chooses not to enable automatic mode,
-and then the app activates the \textbf{GPS module}.
-If the GPS fails to activate, the mobile app immediately notifies the user with an error
-message. Otherwise, GPS tracking begins, and the device periodically emits position
-updates containing latitude, longitude, speed, and time.
-The mobile app stores these samples locally and updates the on-screen map in real time.
-The trip identifier is generated and maintained locally by the app during tracking and will be sent to the backend only when the trip is finalised.
-During the trip, if the GPS signal is lost at any point, the GPS module reports an error
-and the mobile app displays a corresponding warning to the user, interrupting the normal
-flow of position updates.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/start_manual.png}
-	\caption{Start a Trip in Manual Mode as a Logged-in User Sequence Diagram}
-	\label{fig:use_case_start_trip_manual_logged}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC11] - Start a Trip in Automatic Mode as a Logged-in user}
-
-When a logged-in user selects a path and chooses to enable \textbf{automatic mode},
-the mobile app first displays the map and then attempts to establish a connection with
-the \textbf{external sensors} required for automatic detection.
-
-If sensor activation fails, the app immediately informs the user with an error message.
-Otherwise, sensors respond successfully and the app proceeds by enabling GPS tracking.
-Once tracking is active, the \textbf{GPS Module} periodically sends position updates which the app
-stores locally and reflects on the UI map.
-The trip identifier remains local to the app during tracking and is forwarded to the backend only when the trip is stopped and finalised.
-
-During the trip, if the GPS signal is lost, the system interrupts the loop and displays
-an appropriate error message. If instead the connection to the external sensors drops
-during the session, the app stops the automatic process and notifies the user of the
-failure.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/start_automatic.png}
-	\caption{Start a Trip in Automatic Mode as a Logged-in User Sequence Diagram}
-	\label{fig:use_case_start_trip_automatic_logged}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC12] - Stop a Trip as Guest User}
-
-This sequence diagram describes how a guest user stops an ongoing trip.
-The interaction is entirely local, as guest users do not store trip data on the backend.
-
-The process begins when the user selects the \textbf{Stop Trip} action.
-The mobile app then requests the \textbf{GPS module} to deactivate tracking.
-Once the GPS confirms that tracking has been successfully stopped,
-the app terminates the trip visualisation and returns the user to the map or home screen.
-
-No network communication is involved, and no data is persisted,
-making this use case lightweight and fully handled on the device.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.7\textwidth]{Images/Sequence_Diagrams/stop_guest.png}
-	\caption{Stop a Trip as a Guest User Sequence Diagram}
-	\label{fig:use_case_stop_trip_guest}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC13] - Stop a Trip as a Logged-in User}
-
-When the user wants to stop an ongoing trip, he selects the Stop Trip action
-from the mobile app. Upon this action, the mobile app terminates any
-active data acquisition (GPS tracking and, if the selected mode is Automatic,
-external sensor streams) and sends a stop-trip request to the backend, including the
-locally maintained trip identifier.
-The \textbf{TripManager} validates the request and retrieves the corresponding trip
-record through the \textbf{QueryManager}. If the request is invalid, for example, if
-the trip does not exist or is already closed, the system returns an appropriate error.
-
-If validation succeeds, the \textbf{TripManager} contacts the \textbf{WeatherManager}
-to obtain a contextual weather snapshot. It then composes the final trip summary using
-distance, duration, speed metrics, sensor-derived data (when available), and the weather snapshot.
-The summary is then saved through the \textbf{QueryManager}.
-
-The backend responds with a \textbf{201 Created} status and the complete summary.
-The mobile app then displays the result to the user.
-Network failures, invalid identifiers, or missing trip records trigger the
-corresponding alternative flows.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/stop_loggedin.png}
-	\caption{Stop a Trip as a Logged-in User Sequence Diagram}
-	\label{fig:use_case_stop_trip_loggedin}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC14] - Make a Report in Manual Mode}
-
-The logged-in user selects a path segment on the map and opens the report-creation form.
-The mobile app retrieves the user's current GPS position. If the position cannot be
-retrieved, the app immediately shows an error.
-
-After the user submits the form containing the report description and selected
-options, the mobile app performs local validation. Invalid inputs cause the app
-to show an error without contacting the backend.
-
-If validation succeeds, the app sends the report payload to the backend through
-the \textbf{API Gateway}. Network or server-side failures lead to a timeout and an error
-message shown to the user.
-
-Once the request is received, the \textbf{API Gateway} forwards the data to the
-\textbf{ReportManager}, which creates a report record by storing the user ID,
-position, and payload in the database through the \textbf{QueryManager}.
-If the insertion succeeds, the \textbf{DBMS} returns the generated report identifier.
-
-Finally, the backend responds with \textbf{201 Created}, and the mobile app displays
-a confirmation message to the user.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/report_manual.png}
-	\caption{Make a Report in Manual Mode Sequence Diagram}
-	\label{fig:use_case_report_problem_manual}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC15] - Make a Report in Automatic Mode}
-
-When an obstacle is detected by the external sensors during a trip, the mobile app
-retrieves the current GPS position from the device. If the retrieval fails, the app
-displays an appropriate error message and the flow terminates.
-
-Once the position is available, the app displays a pre-filled report form containing
-the detected issue. The user can review and modify the report details before submission.
-After the user confirms the report, the app performs local validation on the
-generated data. Invalid or incomplete payloads trigger a local error message and no
-request is sent to the backend.
-
-If validation succeeds, the mobile app sends the report payload to the backend
-via the \textbf{API Gateway}. Network or server errors result in a timeout, causing the app to show a
-network-unavailable message.
-
-Upon receiving a valid request, the \textbf{ReportManager} creates a new report
-record, storing it through the \textbf{QueryManager}, which inserts the new record
-into the database.
-
-After successful insertion, the backend returns a \textbf{201 Created} response.
-The mobile app then informs the user that the report has been submitted successfully.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/report_automatic.png}
-	\caption{Make a Report in Automatic Mode Sequence Diagram}
-	\label{fig:use_case_report_problem_automatic}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC16] - Confirm a Report}
-
-A logged-in user is on a trip, and a pop-up notification informs him of the presence of
-an existing report nearby. The user can choose to confirm or reject it.
-After the user submits the decision, the mobile app validates the input
-locally and, if valid, sends a request to the \textbf{backend API}.
-
-The API forwards the request to the \textbf{ReportManager}, which
-creates a new confirmation entry associated with the selected report
-and the current user. The \textbf{ReportManager} delegates the
-persistence of this confirmation to the \textbf{QueryManager}, which
-inserts the corresponding record into the database.
-
-If the operation succeeds, the API responds with a \textbf{201
-	Created} status and returns the confirmation identifier. The mobile
-app notifies the user that the confirmation has been
-submitted successfully.
-The user may also dismiss the form without submitting any confirmation.
-
-In case of client-side validation errors, network failures, or server-side issues,
-the mobile app displays the appropriate error message.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/report_confirm.png}
-	\caption{Confirm a Report Sequence Diagram}
-	\label{fig:use_case_confirm_other_reports}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC17] - Manage Path Visibility}
-
-The user selects the desired path from the list of previously created paths.
-Then, the mobile application sends a request to the backend to retrieve the current
-visibility settings of the selected path. The \textbf{PathManager}, through the \textbf{QueryManager},
-loads the corresponding path record from the database.
-
-If the path is successfully found, the app displays the existing visibility configuration
-and waits for the user to submit the desired changes. Once the user confirms the update,
-the mobile application sends a request containing the updated visibility value.
-Upon receiving it, the \textbf{PathManager} verifies that the requesting user is indeed the owner
-of the path. If the ownership constraint is satisfied, the visibility
-attribute is updated in the database. A successful update triggers a confirmation
-response, and the mobile application communicates the result to the user.
-
-If the initial fetch request fails due to network or server issues,
-an error message is displayed. If the selected path does not exist or no record is returned from the database,
-the application notifies the user accordingly. If the user attempts to modify a path they do not own,
-the backend returns a \textbf{403 FORBIDDEN} response, and the app signals that the operation is not permitted.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/manage_visibility.png}
-	\caption{Manage Path Visibility Sequence Diagram}
-	\label{fig:use_case_manage_visibility}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC18] - View Trip History and Trip Details}
-
-A logged-in user requests to view their trip history from the mobile app.
-The mobile app sends a request to the \textbf{API Gateway}.
-If the request succeeds, the \textbf{API} delegates the operation to the \textbf{TripManager},
-which retrieves the list of the user’s trips through the \textbf{QueryManager}.
-The \textbf{DBMS} returns the corresponding records, and the App displays the resulting history.
-
-When the user selects a specific trip, the app issues a request.
-If the trip is missing or does not belong to the user, the \textbf{TripManager}
-returns a \textbf{404 Not Found}, which the client displays accordingly.
-
-If the trip exists, the \textbf{TripManager} loads full details from the \textbf{DBMS},
-including timestamps, distance, speed metrics, the associated path, and any stored weather snapshots.
-The details are returned to the App, which presents a complete summary of the selected trip.
-
-In case of any network or server failures, the app notifies the user with an appropriate error message.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/trip_history.png}
-	\caption{View Trip History and Trip Details Sequence Diagram}
-	\label{fig:use_case_view_trip_history}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC19] - View Overall Statistics}
-
-Upon opening the statistics section, the mobile app requests
-the user's overall metrics from the backend. If the request cannot be completed
-due to network or server issues, an error message is shown.
-Otherwise, the \textbf{API} forwards the request to the \textbf{StatsManager},
-which loads the user's trip history via the \textbf{QueryManager}. The latter
-retrieves all relevant rows from the \textbf{DBMS}.
-
-If trip data exists, the \textbf{StatsManager} computes all required aggregates
-(e.g., total distance, duration, average speed) and returns the final statistics
-to the mobile app, which then displays them.
-
-If no trip records are found, the system returns a \textbf{404 NOT\_FOUND}
-response and the app informs the user accordingly.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/stats_overall.png}
-	\caption{View Overall Statistics Sequence Diagram}
-	\label{fig:use_case_view_overall_statistics}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC20] - View Trip Statistics}
-
-When the Logged-in user selects a trip, the mobile app sends a request for detailed metrics.
-Network or server failures are handled locally by showing an appropriate error.
-
-If the request reaches the backend, the \textbf{API} delegates it to the
-\textbf{StatsManager}, which loads the associated trip data through the \textbf{QueryManager}
-by querying the \textbf{DBMS}. If the requested trip is found, the \textbf{StatsManager}
-computes the aggregated statistics and returns them to the mobile app,
-which presents them to the user.
-
-If the trip does not exist or does not belong to the user, the backend replies with
-a \textbf{404 NOT\_FOUND} response and the app notifies the user.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/stats_trip.png}
-	\caption{View Trip Statistics Sequence Diagram}
-	\label{fig:use_case_view_trip_statistics}
-\end{figure}
-\pagebreak
-
-\subsubsection*{[UC21] - Edit Personal Profile}
+\subsubsection*{[UC4] - Edit Personal Profile}
 
 After the logged-in user opens the edit form, the mobile app
 locally validates the submitted fields. If the data is incomplete or invalid,
 the app immediately notifies the user. If the input is valid, the updated
-payload is sent to the \textbf{API}, which delegates the request to the \textbf{UserManager}.
+payload is sent to the \textbf{API Gateway}, which delegates the request to the \textbf{UserManager}.
 
 The update is forwarded to the \textbf{QueryManager}, which issues the corresponding \textbf{UPDATE} operation on the database.
 If the update succeeds, the modified user profile is returned to the app and displayed to the user.
@@ -776,6 +329,556 @@ In case of network or server errors during the request, the mobile app shows an 
 	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/edit_profile.png}
 	\caption{Edit Personal Profile Sequence Diagram}
 	\label{fig:use_case_edit_profile}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC5] - Search for a Path}
+
+A user searches for bike paths between two locations by providing a starting point and a destination
+through the mobile app. Before contacting the backend, the app performs a \textbf{local validation}
+to ensure that the input data is complete and well-formed. If the validation fails, the user is
+immediately notified.
+
+When the input is valid, the mobile app sends a search request to the backend through the
+\textbf{API Gateway}. The API Gateway forwards the request to the \textbf{PathManager}, which is
+responsible for path computation.
+The \textbf{PathManager} retrieves the relevant path segments and related information from the
+database by interacting with the \textbf{QueryManager}. Once the data is available, it computes
+the best path or set of paths according to the system criteria and user constraints.
+
+If one or more valid routes are found, the \textbf{PathManager} returns the results to the
+\textbf{API Gateway}, which responds to the mobile app with a \textbf{200 OK} message containing
+the suggested paths. The app then displays the available routes to the user.
+If no suitable route can be computed, the \textbf{PathManager} signals a \textbf{NO\_ROUTE}
+condition, resulting in a \textbf{404} response that is propagated back to the mobile app,
+which notifies the user accordingly.
+
+In the event of network failures or server-side errors, the interaction is interrupted and
+the mobile app shows a generic “Network unavailable” error message.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/search_path.png}
+	\caption{Search for a Path Sequence Diagram}
+	\label{fig:use_case_search_path}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC6] - Select a Path}
+
+After receiving a list of suggested routes, the user can select a specific path to
+inspect its details. When the user selects a path, the mobile app sends a request
+containing the selected path identifier to the backend through the \textbf{API Gateway}.
+
+The \textbf{API Gateway} forwards the request to the \textbf{PathManager}, which retrieves
+the corresponding path information by querying the database through the
+\textbf{QueryManager}.
+
+If the path exists, the PathManager returns the path details to the API Gateway,
+which responds with a \textbf{200 OK} status and forwards the information to the mobile app.
+The app then displays the path details to the user.
+
+If the path identifier does not correspond to any stored record, the PathManager
+returns a \textbf{NOT\_FOUND} condition, resulting in a \textbf{404 Not Found} response.
+The mobile app informs the user that the selected path is unavailable. Network or
+server failures are handled consistently with other interactions.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.95\textwidth]{Images/Sequence_Diagrams/select_path.png}
+	\caption{Select a Path Sequence Diagram}
+	\label{fig:use_case_select_path}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC7] - Create a Path in Manual Mode}
+
+When a logged-in user decides to create a new path, the interaction starts by opening
+the path creation page in the mobile app. The user is first asked to provide the required
+metadata and to select the \textbf{manual creation mode}. Once the metadata is submitted,
+the mobile app performs an initial \textbf{local validation}.
+
+If the metadata is invalid or incomplete, the app immediately notifies the user.
+Otherwise, the app displays an interactive map that allows the user to manually draw
+the path by defining its segments.
+After the drawing phase, the user submits the generated segments.
+Then, the mobile app sends a \textbf{POST} request to the backend through the \textbf{API Gateway}.
+The gateway forwards the request to the \textbf{PathManager}, which handles the creation logic.
+
+The PathManager delegates the persistence of the new path to the \textbf{QueryManager},
+which executes the corresponding \textbf{INSERT} operation on the \textbf{DBMS}, associating
+the path with the authenticated user.
+Upon successful insertion, the PathManager returns the generated path identifier to the
+API Gateway, which responds with a \textbf{201 Created} status. The mobile app receives
+the response and displays a confirmation message indicating that the path has been
+successfully created. In case of network or server errors, the app notifies the user
+accordingly.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/create_manual.png}
+	\caption{Create a Path in Manual Mode Sequence Diagram}
+	\label{fig:use_case_create_path_manual}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC8] - Create a Path in Automatic Mode}
+
+When a logged-in user chooses to create a new path in \textbf{automatic mode}, the
+mobile app first displays a form to collect the required metadata and performs a
+preliminary \textbf{local validation}. If the validation fails, the user is immediately
+notified.
+
+Once the input is valid, the app attempts to activate \textbf{GPS tracking}. If GPS
+activation fails due to permission or hardware issues, the app displays an error
+message and the procedure is interrupted.
+If GPS tracking is successfully activated, the \textbf{GPS module} continuously provides
+location samples (latitude, longitude, speed, timestamp) while the user is moving.
+The mobile app locally stores these samples throughout the tracking session.
+
+If a GPS signal error occurs during movement, the app detects the issue, interrupts
+the process, and informs the user. When the user completes the recording session,
+GPS tracking is deactivated and the collected samples undergo a final \textbf{local
+	validation}. If the data is invalid, the user is notified.
+
+If both metadata and recorded samples are valid, the mobile app sends a \textbf{POST}
+request to the backend through the \textbf{API Gateway}. The gateway forwards the request
+to the \textbf{PathManager}, which stores the new path by delegating persistence to the
+\textbf{QueryManager}.
+After the path is successfully inserted into the \textbf{DBMS}, the PathManager returns
+the generated path identifier to the API Gateway, which responds with a
+\textbf{201 Created} status. The mobile app then displays a success message confirming
+that the automatically generated path has been saved.
+
+Network or server failures are handled consistently with other interactions.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/create_automatic.png}
+	\caption{Create a Path in Automatic Mode Sequence Diagram}
+	\label{fig:use_case_create_path_automatic}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC9] - View Path Library}
+
+A logged-in user wants to view the list of paths previously created.
+The interaction starts when the user opens the personal path library section
+in the mobile application. The app sends a request to the backend through the
+\textbf{API Gateway} to retrieve all paths associated with the authenticated user.
+The \textbf{API Gateway} forwards the request to the \textbf{PathManager},
+which retrieves the list of paths owned by the user by querying the database
+through the \textbf{QueryManager}. The QueryManager executes the corresponding
+\textbf{SELECT} operation on the \textbf{DBMS}.
+
+If one or more paths are found, the list is returned to the mobile app and
+displayed to the user. If no paths exist for the given user, the backend returns
+a \textbf{404 NOT\_FOUND} response, and the mobile app notifies the user that
+no paths are available.
+In case of network or server errors, the request is interrupted and the
+mobile app displays an appropriate error message.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/path_library.png}
+	\caption{View Path Library Sequence Diagram}
+	\label{fig:use_case_view_path_library}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC10] - Manage Path Visibility}
+
+A logged-in user wants to change the visibility of one of his previously created paths.
+The interaction begins when the user selects a path and requests a visibility update
+from the mobile application. The app sends a \textbf{PUT} request to the backend
+through the \textbf{API Gateway}, specifying the desired visibility value.
+
+The \textbf{API Gateway} forwards the request to the \textbf{PathManager},
+which first verifies that the requesting user is the owner of the selected path.
+This ownership check is performed by querying the database through the
+\textbf{QueryManager}. If the path does not exist, the backend returns a
+\textbf{404 NOT\_FOUND} response. If the user is not the owner, a
+\textbf{403 FORBIDDEN} response is generated.
+
+If the ownership verification succeeds, the \textbf{PathManager} updates the
+visibility attribute of the path by issuing an \textbf{UPDATE} operation
+through the \textbf{QueryManager}. Upon successful completion, the backend
+returns a \textbf{200 OK} response, and the mobile app confirms the update to the user.
+Network or server-side errors result in the interruption of the flow and the
+display of an appropriate error message on the client.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/manage_visibility.png}
+	\caption{Manage Path Visibility Sequence Diagram}
+	\label{fig:use_case_manage_visibility}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC11] - Delete a Path}
+
+When a logged-in user wants to permanently delete one of his paths,
+he first selects a path to delete from the mobile
+application. The app sends a \textbf{DELETE} request to the backend through the
+\textbf{API Gateway}.
+
+The \textbf{API Gateway} forwards the request to the \textbf{PathManager},
+which first verifies that the path exists and that the requesting user is its owner.
+This verification is performed by querying the database through the
+\textbf{QueryManager}. If the path does not exist, a \textbf{404 NOT\_FOUND} response
+is generated. If the user is not authorised to delete the path, the backend returns
+a \textbf{403 FORBIDDEN} response.
+
+If the ownership check succeeds, the \textbf{PathManager} performs the deletion
+by issuing a cascade delete operation through the \textbf{QueryManager},
+which removes the path from the \textbf{DBMS}. Upon successful deletion,
+the backend returns a \textbf{204 NO\_CONTENT} response.
+The mobile app then confirms the successful removal of the path to the user.
+If a network or server error occurs during the process, the app displays
+a corresponding error message.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/delete_path.png}
+	\caption{Delete a Path Sequence Diagram}
+	\label{fig:use_case_delete_path}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC12] - Start a Trip as Guest User}
+
+When a guest user starts a trip using the BBP mobile app, he first selects a path
+from the available options. The mobile app displays the selected path on the map
+and attempts to activate \textbf{GPS tracking} to monitor the user's movement.
+If GPS activation fails, the mobile app immediately notifies the user with an
+appropriate error message. If activation succeeds, the app continuously receives
+position updates from the \textbf{GPS module} while the user is moving and updates
+the map accordingly.
+
+If at any point the GPS signal is lost, the GPS module reports the error and the
+mobile app displays a corresponding warning to the user, interrupting the normal
+tracking flow.
+No interaction with the backend occurs in this use case. Guest trips are not
+associated with a persistent trip identifier and are not stored by the system.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/start_guest.png}
+	\caption{Start a Trip as Guest User Sequence Diagram}
+	\label{fig:use_case_start_trip_guest}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC13] - Start a Trip in Manual Mode as a Logged-in User}
+
+In this scenario, a logged-in user starts a trip by selecting a path from the mobile app.
+The selected path is displayed on the map, and the user is prompted to enable
+\textbf{automatic mode}. The user explicitly declines this option, choosing to
+proceed in manual mode.
+The mobile app then attempts to activate the \textbf{GPS module}. If GPS activation
+fails, the app immediately notifies the user with an error message. Otherwise, GPS
+tracking starts and the device periodically provides position updates, including
+latitude, longitude, speed, and timestamp.
+
+During the trip, the mobile app stores the collected samples locally and updates the
+map in real time. A trip identifier is generated and maintained locally by the app
+during tracking and is not sent to the backend at this stage.
+If the GPS signal is lost at any point, the GPS module reports the error and the mobile
+app displays a corresponding warning to the user, interrupting the tracking process.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/start_manual.png}
+	\caption{Start a Trip in Manual Mode as a Logged-in User Sequence Diagram}
+	\label{fig:use_case_start_trip_manual_logged}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC14] - Start a Trip in Automatic Mode as a Logged-in user}
+
+When a logged-in user selects a path and chooses to enable \textbf{automatic mode},
+the mobile app displays the selected path and attempts to establish a connection with
+the required \textbf{external sensors}.
+If the connection to the external sensors fails, the mobile app immediately notifies
+the user with an error message and the trip does not start. If the connection succeeds,
+the app proceeds by activating the \textbf{GPS module}.
+
+Once GPS tracking is active, the GPS module periodically sends position updates,
+which the mobile app stores locally and reflects on the map in real time. The trip
+identifier is generated and maintained locally during tracking and is sent to the
+backend only when the trip is stopped and finalised.
+During the trip, if the GPS signal is lost, the tracking loop is interrupted and the
+user is notified. If instead the connection to the external sensors drops while the
+trip is ongoing, the app stops the automatic mode and displays a corresponding error
+message.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/start_automatic.png}
+	\caption{Start a Trip in Automatic Mode as a Logged-in User Sequence Diagram}
+	\label{fig:use_case_start_trip_automatic_logged}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC15] - Stop a Trip as Guest User}
+
+This use case describes how a guest user stops an ongoing trip.
+Since guest trips are not stored on the backend, the entire interaction
+is handled locally by the mobile application.
+
+The process starts when the user selects the \textbf{Stop Trip} action.
+The mobile app requests the \textbf{GPS module} to deactivate tracking.
+Once the GPS module confirms that tracking has been successfully stopped,
+the app ends the trip visualisation and updates the user interface accordingly.
+No network communication is performed and no data is persisted,
+as guest trips are not associated with a backend record.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/Sequence_Diagrams/stop_guest.png}
+	\caption{Stop a Trip as a Guest User Sequence Diagram}
+	\label{fig:use_case_stop_trip_guest}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC16] - Stop a Trip as a Logged-in User}
+
+A logged-in user wants to stop an ongoing trip.
+The interaction begins when the user selects the \textbf{Stop Trip} action
+from the mobile app. The app first terminates any active data acquisition,
+including GPS tracking and, if the trip was started in automatic mode,
+external sensor connections. The collected data and the locally maintained
+trip identifier are then validated.
+If the validation succeeds, the mobile app sends a finalisation request to
+the backend through the \textbf{API Gateway}. The \textbf{TripManager} processes the
+request and verifies the trip state. If the trip identifier is invalid or the
+trip has already been finalised, an error is returned.
+
+When the trip is valid and the external service is reachable,
+the \textbf{TripManager} retrieves a weather
+snapshot from the \textbf{WeatherManager} based on the trip time and location.
+It then computes the final trip summary, including duration, distance, speed
+metrics, sensor data (when available), and weather information.
+The summary is stored in the database through the \textbf{QueryManager}.
+
+Upon successful completion, the backend responds with a \textbf{201 Created}
+status containing the trip summary. The mobile app displays the final result
+to the user. Network failures or server-side errors trigger the corresponding
+alternative flows.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/stop_loggedin.png}
+	\caption{Stop a Trip as a Logged-in User Sequence Diagram}
+	\label{fig:use_case_stop_trip_loggedin}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC17] - Make a Report in Manual Mode}
+
+When a logged-in user wants to manually report an issue encountered on a path,
+the user opens the report creation form on  the mobile application.
+The app retrieves the current position from the \textbf{GPS module}.
+If the position cannot be retrieved, the app immediately displays an error message
+and the reporting process is interrupted.
+
+The user fills in the report form by providing report details,
+then submits the report. Before contacting the backend, the mobile app performs
+a \textbf{local validation} to ensure that all mandatory fields are correctly filled.
+If validation fails, the app shows an error message and no request is sent.
+When the input is valid, the mobile app sends a \textbf{POST request} containing the
+report payload to the backend through the \textbf{API Gateway}. In case of network
+timeouts or server-side failures, the app notifies the user accordingly.
+
+The \textbf{API Gateway} forwards the request to the \textbf{ReportManager}, which
+creates the report by storing the user identifier, the associated path, the position,
+and the report data through the \textbf{QueryManager}. The \textbf{DBMS} generates a
+new report identifier and confirms the insertion.
+Upon success, the backend returns a \textbf{201 Created} response with the report identifier,
+and the mobile app displays a confirmation message to the user.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/report_manual.png}
+	\caption{Make a Report in Manual Mode Sequence Diagram}
+	\label{fig:use_case_report_problem_manual}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC18] - Make a Report in Automatic Mode}
+
+During an ongoing trip with automatic mode enabled, external sensors may automatically detect an obstacle or issue
+on the path. When such a detection occurs, the mobile app retrieves the current position
+from the \textbf{GPS module}. If the GPS position cannot be obtained, the app displays an
+error message and the reporting flow terminates.
+
+If the position retrieval succeeds, the app displays a pre-filled report form containing
+the detected issue information. The user can review, modify, or complete the report details
+before submission.
+After confirmation, the mobile app performs a \textbf{local validation} of the generated
+report data. If the payload is invalid or incomplete, an error is shown and the backend
+is not contacted.
+
+When validation succeeds, the app sends the report payload to the backend via the
+\textbf{API Gateway}. Network or server errors result in a timeout and an appropriate
+error message is displayed to the user.
+The \textbf{ReportManager} receives the request and creates a new report by delegating
+its persistence to the \textbf{QueryManager}, which inserts the record into the
+\textbf{DBMS}. After successful insertion, the backend responds with a
+\textbf{201 Created} status.
+Finally, the mobile app informs the user that the report has been submitted successfully.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/report_automatic.png}
+	\caption{Make a Report in Automatic Mode Sequence Diagram}
+	\label{fig:use_case_report_problem_automatic}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC19] - Confirm a Report}
+
+While a logged-in user is travelling, the system may notify him of an existing report
+located nearby. The mobile app displays a confirmation form, allowing the user to either
+confirm, reject, or dismiss the reported issue.
+If the user ignores the notification, the form is dismissed after a short period of time
+and no further action is taken. If the user submits a decision, the mobile
+app performs a \textbf{local validation} to ensure that the input is valid.
+
+When validation succeeds, the app sends the confirmation (or rejection) request to the backend through
+the \textbf{API Gateway}. In case of network or server errors, an appropriate error
+message is shown to the user.
+The \textbf{API Gateway} forwards the request to the \textbf{ReportManager}, which creates
+a report entry. The confirmation is persisted through the \textbf{QueryManager} by inserting the record
+into the \textbf{DBMS}.
+
+If the operation completes successfully, the backend responds with a
+\textbf{201 Created} status and returns the confirmation identifier.
+The mobile app then notifies the user that the confirmation has been submitted successfully.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/report_confirm.png}
+	\caption{Confirm a Report Sequence Diagram}
+	\label{fig:use_case_confirm_other_reports}
+\end{figure}
+\pagebreak
+
+
+\subsubsection*{[UC20] - View Trip History}
+
+When a logged-in user opens the trip history section from the mobile application,
+the mobile app sends a request to the backend through the \textbf{API Gateway}
+to retrieve the list of trips associated with the user.
+The \textbf{API} forwards the request to the \textbf{TripManager}, which
+retrieves the user identifier and queries the database through the
+\textbf{QueryManager}. The \textbf{DBMS} returns the list of trips linked
+to the user account.
+
+If one or more trips are found, the backend responds with a \textbf{200 OK}
+status containing the trip list, and the mobile app displays the history
+to the user.
+If no trips are found, the \textbf{TripManager} returns a
+\textbf{404 NOT\_FOUND} response, which is propagated to the mobile app
+and shown as a corresponding error message.
+
+In case of network or server failures, the request times out and the
+mobile app notifies the user that the service is unavailable.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/trip_history.png}
+	\caption{View Trip History and Trip Details Sequence Diagram}
+	\label{fig:use_case_view_trip_history}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC21] - Delete a Trip}
+
+A logged-in user wants to permanently delete one of his recorded trips.
+He selects a trip to delete from the mobile application. The app sends a \textbf{DELETE}
+request to the backend through the \textbf{API Gateway}.
+
+The \textbf{API Gateway} forwards the request to the \textbf{TripManager},
+which first verifies that the trip exists and that the requesting user is its owner.
+This verification is performed by querying the database through the
+\textbf{QueryManager}. If the trip does not exist, the backend answers with a
+\textbf{404 NOT\_FOUND} response. If the user is not the owner of the trip,
+a \textbf{403 FORBIDDEN} response is generated.
+
+If the ownership check succeeds, the \textbf{TripManager} performs the deletion
+by issuing a cascade delete operation through the \textbf{QueryManager},
+which removes the trip from the \textbf{DBMS}. Upon successful deletion,
+the backend returns a \textbf{204 NO\_CONTENT} response.
+The mobile app then confirms the successful removal of the trip to the user.
+If a network or server error occurs during the process, the app displays
+a corresponding error message.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/delete_trip.png}
+	\caption{Delete a Trip Sequence Diagram}
+	\label{fig:use_case_delete_trip}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC22] - View Trip Statistics}
+
+When a logged-in user selects a specific trip from the trip history,
+the mobile app sends a request to retrieve detailed statistics for that trip
+through the \textbf{API Gateway}.
+The \textbf{API} forwards the request to the \textbf{StatsManager}, which
+attempts to load precomputed statistics for the selected trip via the
+\textbf{QueryManager}. If statistics already exist in the database,
+they are retrieved and returned directly.
+
+If no statistics are found, the \textbf{StatsManager} retrieves the raw trip
+data from the \textbf{DBMS}, computes the required metrics
+(e.g., distance, duration, average speed), stores the newly computed
+statistics, and then returns them to the API.
+
+If the trip does not exist or does not belong to the requesting user,
+the backend returns a \textbf{404 NOT\_FOUND} response, which is displayed
+by the mobile app.
+Network or server errors result in a timeout, and the mobile app shows
+an appropriate error message to the user.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/stats_trip.png}
+	\caption{View Trip Statistics Sequence Diagram}
+	\label{fig:use_case_view_trip_statistics}
+\end{figure}
+\pagebreak
+
+\subsubsection*{[UC23] - View Overall Statistics}
+
+A logged-in user opens the overall statistics section from the mobile app.
+The application sends a request to the backend through the \textbf{API Gateway}
+to retrieve aggregated statistics across all user trips.
+
+The \textbf{API} delegates the request to the \textbf{StatsManager}, which
+first checks whether previously computed overall statistics are still valid
+by comparing the stored trip count with the current number of trips retrieved
+through the \textbf{QueryManager}.
+
+If valid statistics already exist, they are loaded from the database and
+returned to the mobile app with a \textbf{200 OK} response.
+If the stored data is missing or outdated, the \textbf{StatsManager} retrieves
+all trip records from the \textbf{DBMS}, computes the aggregated metrics
+(e.g., total distance, total duration, average speed), stores the updated
+statistics, and returns the results to the client.
+
+If no trips exist for the user, the backend responds with a
+\textbf{404 NOT\_FOUND} status, which is propagated to the mobile app.
+Any network or server-side failure results in a timeout and an error message
+displayed on the client.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Sequence_Diagrams/stats_overall.png}
+	\caption{View Overall Statistics Sequence Diagram}
+	\label{fig:use_case_view_overall_statistics}
 \end{figure}
 \pagebreak
 
@@ -825,22 +928,6 @@ It uses the \textbf{QueryManager} for persistence and exposes:
 	\item \textbf{updateProfile(userId, profilePayload)}: validates editable fields, prevents duplicate emails, applies the update to the stored profile, and returns the updated information.
 \end{itemize}
 
-\subsection*{TripManager}
-
-The \textbf{TripManager} coordinates the lifecycle of a cycling session.
-It receives GPS samples from the mobile app, stores trip metadata, and, upon trip
-completion, composes the final summary enriched with weather data supplied by the client after it retrieved a snapshot
-from the \textbf{WeatherManager}. All persistent data is saved through the \textbf{QueryManager}.
-
-The component exposes the following methods:
-
-\begin{itemize}
-	\item \textbf{finalizeTrip(tripId, tripPayload)}: receives the final trip payload from the API (including the locally
-	      generated trip identifier), obtains a weather snapshot from the \textbf{WeatherManager}, composes the completed trip summary and stores it.
-	\item \textbf{getTripsByUser(userId)}: returns the complete list of trips owned by the authenticated user, ordered by time.
-	\item \textbf{getTripDetails(tripId, userId)}: verifies ownership of the requested trip and returns its full stored details.
-\end{itemize}
-
 \subsection*{PathManager}
 
 The \textbf{PathManager} implements all functionality related to bike paths:
@@ -853,14 +940,31 @@ The public operations are:
 
 \begin{itemize}
 	\item \textbf{findPath(start, end, constraints)}: retrieves the required portion of the graph, including report-derived condition indicators
-	      for each segmen, and computes candidate routes satisfying the given constraints.
+	      for each segment, and computes candidate routes satisfying the given constraints.
 	      % \item \textbf{computeBestPath(paths)}: internal method that selects and ranks the best route among the candidates returned by \textbf{findPath}.
 	\item \textbf{getPathDetails(pathId)}: returns metadata, geometry, condition indicators, and aggregated reports for the selected path and its segments.
-	\item \textbf{createPath(pathPayload)}: validates metadata and segment lists (manual mode) or GPS-derived samples (automatic mode), persists
+	\item \textbf{createPath(pathPayload, userId)}: validates metadata and segment lists (manual mode) or GPS-derived samples (automatic mode), persists
 	      the new path, and associates it with the creator.
 	\item \textbf{getPathsByUser(userId)}: retrieves all paths created by the authenticated user.
 	\item \textbf{deletePath(pathId, userId)}: verifies ownership and removes the specified path, triggering cascade deletion of dependent records.
 	\item \textbf{updateVisibility(pathId, visibility, userId)}: enforces ownership and updates the stored visibility field.
+\end{itemize}
+
+\subsection*{TripManager}
+
+The \textbf{TripManager} coordinates the lifecycle of a cycling session.
+It receives GPS samples from the mobile app, stores trip metadata, and, upon trip
+completion, composes the final summary enriched with weather data retrieved as a snapshot
+from the \textbf{WeatherManager}. All persistent data is saved through the \textbf{QueryManager}.
+
+The component exposes the following methods:
+
+\begin{itemize}
+	\item \textbf{finalizeTrip(tripPayload, userId)}: receives the final trip payload from the API (including the locally
+	      generated trip identifier), obtains a weather snapshot from the \textbf{WeatherManager}, composes the completed trip summary and stores it.
+	\item \textbf{getTripsByUser(userId)}: returns the complete list of trips owned by the authenticated user, ordered by time.
+	\item \textbf{deleteTrip(tripId, userId)}: deletes the specified trip after verifying ownership.
+
 \end{itemize}
 
 \subsection*{ReportManager}
@@ -871,7 +975,7 @@ It centralises validation, association to a path, and persistence.
 It also updates path-segment condition indicators in the DBMS that are consumed by the \textbf{PathManager} when computing rankings, without requiring additional calls to the ReportManager at query time.
 
 \begin{itemize}
-	\item \textbf{createReport(reportPayload)}: processes manual reports, automatic sensor-based reports, and confirmations of existing reports.
+	\item \textbf{createReport(position, payload)}: processes manual reports, automatic sensor-based reports, and confirmations of existing reports.
 	      It validates payload and location data, inserts the report, and returns the newly created report identifier.
 \end{itemize}
 
@@ -882,11 +986,8 @@ derives detailed metrics for individual trips.
 Raw and processed data are retrieved via the \textbf{QueryManager}.
 
 \begin{itemize}
-	\item \textbf{computeOverallStats(userId)}: retrieves all trips owned by the user and computes cumulative indicators
-	      such as total distance, total duration, and average speed.
-	      % \item \textbf{aggregate(tripData)}: internal utility method used to consolidate raw trip rows into aggregated metrics, as shown in the Runtime View.
-	\item \textbf{computeTripStats(userId, tripId)}: verifies ownership and computes per-trip statistics including average
-	      pace, speed, and time splits.
+	\item \textbf{computeOverallStats(userId)}: computes the user-level aggregated statistics (e.g., total distance, total duration, average speed), using cached values when available and recomputing them when the stored trip count differs from the current one.
+	\item \textbf{computeTripStats(userId, tripId)}: computes the detailed statistics for a specific trip, returning previously stored values when available or deriving them from the trip summary data and then persisting the result for subsequent requests.
 \end{itemize}
 
 \subsection*{WeatherManager}
@@ -909,22 +1010,28 @@ It exposes:
 
 \begin{itemize}
 	\item \textbf{checkDuplicateEmail(email)}: verifies whether an email is already associated with an existing user.
-	\item \textbf{insertUser(userData)}: inserts a new user record with hashed credentials and stores a refresh token issued for the user.
+	\item \textbf{insertUser(hashedData)}: inserts a new user record with hashed credentials and stores a refresh token issued for the user.
 	\item \textbf{checkEmail(email)}: retrieves credential metadata for login attempts.
 	\item \textbf{deleteRefreshToken(refreshToken)}: removes the refresh token associated with the terminated session.
+	\item \textbf{updateUser(userId, profilePayload)}: stores changes to user profile fields.
 	\item \textbf{fetchPaths(areaBounds)}: retrieves the relevant segments for route computation, including condition indicators already updated from reports.
 	\item \textbf{fetchPathById(pathId)}: returns the full record of the specified path, including aggregated report data for its segments.
-	\item \textbf{fetchReportsByPath(pathId)}: retrieves reports associated with the path segments to support condition scoring.
-	\item \textbf{insertPath(pathPayload)}: stores new path metadata and geometry.
+	\item \textbf{insertPath(pathPayload, userId)}: stores new path metadata and geometry.
 	\item \textbf{fetchUserPaths(userId)}: retrieves all paths created by the given user.
-	\item \textbf{verifyOwnership(pathId, userId)}: checks whether the specified path belongs to the requesting user.
+	\item \textbf{fetchReportsByPath(pathId)}: retrieves reports associated with the path segments to support condition scoring.
+	\item \textbf{verifyPathOwnership(pathId, userId)}: checks whether the specified path belongs to the requesting user.
 	\item \textbf{deletePathCascade(pathId)}: deletes a path and its dependent records.
 	\item \textbf{updateVisibility(pathId, visibility)}: updates the visibility field of the selected path.
-	\item \textbf{insertReport(reportPayload)}: persists manual or automatic reports and confirmations.
-	\item \textbf{insertTripSummary(tripSummary)}: inserts a completed trip summary with its associated weather snapshot.
-	\item \textbf{fetchTrips(userId)}: retrieves all trips belonging to the user, ordered by date.
-	\item \textbf{fetchTrip(tripId, userId)}: retrieves detailed trip data, enforcing ownership.
-	\item \textbf{updateUser(userId, profilePayload)}: stores changes to user profile fields.
+	\item \textbf{insertTripSummary(tripSummary, userId)}: inserts a completed trip summary with its associated weather snapshot, if present.
+	\item \textbf{fetchUserTrips(userId)}: retrieves all trips belonging to the user, ordered by date.
+	\item \textbf{deleteTripCascade(tripId)}: removes the specified trip and all related records.
+	\item \textbf{verifyTripOwnership(tripId, userId)}: checks whether the specified trip belongs to the requesting user.
+	\item \textbf{insertReport(position, payload)}: persists manual or automatic reports and confirmations.
+	\item \textbf{fetchTripStats(tripId, userId)}: retrieves the precomputed statistics associated with the given trip and user, if already stored.
+	\item \textbf{saveTripStats(stats, tripId, userId)}: persists the computed per-trip statistics for the given trip and user.
+	\item \textbf{fetchTripCount(userId)}: returns the number of completed trips associated with the given user, used to validate whether cached overall statistics are still up to date.
+	\item \textbf{fetchStats(userId)}: retrieves the cached overall statistics previously stored for the given user, if available.
+	\item \textbf{saveStats(stats, userId)}: stores or updates the overall statistics for the given user, together with the current trip count used as a validity reference.
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -947,6 +1054,7 @@ and supports the mobile-first design goals described in the system overview.
 	      a coherent vertical slice of functionality (paths, reports, trips, users).
 	      This separation reduces coupling, facilitates parallel development, and keeps
 	      inter-component interactions lightweight.
+
 	\item \textbf{RESTful, stateless communication}.
 	      The mobile app interacts with the backend exclusively through resource-based HTTPS
 	      endpoints.
@@ -957,8 +1065,7 @@ and supports the mobile-first design goals described in the system overview.
 
 	\item \textbf{Service Layer pattern}.
 	      Each Manager acts as a well-defined service boundary that hides internal logic,
-	      aggregates operations into meaningful methods,
-	      and exposes a stable API to the Gateway.
+	      aggregates operations into meaningful methods, and exposes a stable API to the Gateway.
 	      This pattern avoids exposing domain details to the controller layer and fosters
 	      maintainability and testability.
 
@@ -983,7 +1090,7 @@ and supports the mobile-first design goals described in the system overview.
 \section{Other Design Decisions}
 \label{sec:other_design_decisions}%
 
-Beyond the architectural style, the following design choices strengthen the BBP system’s
+Beyond the architectural style, the following design choices strengthen the BBP system's
 quality attributes and align with the mobile-first scope:
 
 \begin{itemize}
@@ -1004,6 +1111,8 @@ quality attributes and align with the mobile-first scope:
 	      Errors are normalised into structured HTTP responses so the mobile client can present
 	      consistent messages. Domain-specific errors (e.g., \texttt{NOT\_FOUND}) are explicitly
 	      mapped and surfaced through the Gateway.
+	      Empty collections are treated as \texttt{NOT\_FOUND} conditions to explicitly signal the absence
+	      of domain entities rather than returning empty datasets.
 
 	\item \textbf{Fault tolerance}.
 	      Calls to external services (e.g., weather provider) are wrapped with timeouts,

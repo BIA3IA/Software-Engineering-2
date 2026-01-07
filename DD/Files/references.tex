@@ -10,8 +10,8 @@ The preparation of this document was supported by the following reference materi
 	\item IEEE Standard for Software Requirement Specifications \cite{ieee};
 	\item Assignment specification for the RASD and DD of the Software Engineering II course,
 	      held by professors Matteo Rossi, Elisabetta Di Nitto, and Matteo Camilli at the
-	      Politecnico di Milano, A.Y. 2025/2026 \cite{dd};
-	\item Slides of the Software Engineering 2 course available on WeBeep \cite{slides};
+	      Politecnico di Milano, Academic Year 2025/2026 \cite{dd};
+	\item Slides of the Software Engineering II course available on WeBeep \cite{slides}.
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -21,14 +21,14 @@ The preparation of this document was supported by the following reference materi
 \section{Software Used}
 \label{sec:software}
 
-The following software tools have been used during the development of this project:
+The following software tools have been used to support the development of this project:
 
 \begin{itemize}
-	\item \textbf{Visual Studio Code} : main IDE
-	\item \textbf{LaTeX} : typesetting system for documentation
-	\item \textbf{Git} : version control system
-	\item \textbf{GitHub} : remote repository hosting service
-	\item \textbf{Lucidchart} : diagram creation tool
+	\item \textbf{Visual Studio Code}: editing of source code and documentation (LaTeX), with project-wide search and formatting support \cite{vscode}.
+	\item \textbf{LaTeX}: typesetting system used to produce the final RASD document in a consistent format \cite{latex}.
+	\item \textbf{Git}: version control used to track changes and support collaborative development \cite{git}.
+	\item \textbf{GitHub}: remote repository hosting and collaboration platform used for versioning, reviews, and issue tracking \cite{github}.
+	\item \textbf{Lucidchart}: creation of UML diagrams (use case diagrams, state diagrams, domain class diagram) \cite{lucidchart}.
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -38,66 +38,63 @@ The following software tools have been used during the development of this proje
 \section{Use of AI Tools}
 \label{sec:ai}
 
-AI tools were part of our workflow in a way similar to other software we used during the
-project. Rather than producing content autonomously, they helped us reason about how to
-present certain sections, reorganize ideas, and make the document more coherent.
+AI tools were used during the project in the same way as other supporting software tools.
+Their role was not to autonomously generate content, but to assist in
+improving the presentation of the document, supporting the organisation of ideas and enhancing
+overall textual coherence.
 
-We used AI mainly while drafting the text, for example to compare alternative ways of
-explaining scenarios, reorganize long paragraphs, or check whether the wording of some
-requirements could lead to misinterpretations. In several cases, discussing a passage
-with an AI assistant helped us clarify our own understanding of the underlying concept
-before writing the final version.
+Their use was mainly limited to the drafting phase, where they helped compare different ways
+of explaining scenarios, simplify long paragraphs, and check whether certain sentences could
+be misunderstood. In several cases, interacting with an AI assistant helped clarify the
+underlying concepts before writing the final version of the text.
 
-\begin{longtable}{|p{0.32\textwidth}|p{0.63\textwidth}|}
-	\hline
-	\textbf{Tools Used}          &
-	Gemini, ChatGPT
-	\\ \hline
+\subsection{Tools Used}
+The AI tools employed during the project were:
+\begin{itemize}
+	\item Gemini
+	\item ChatGPT
+\end{itemize}
 
-	\textbf{Examples of Prompts} &
-	\begin{itemize}
-		\item “Suggest a clearer way to express this requirement without changing its meaning.”
-		\item “Can this sentence be misinterpreted? If yes, propose an alternative phrasing.”
-		\item “Provide a more concise version of this paragraph while keeping the content intact.”
-		\item “Format the following text in LaTeX.”
-		\item “Write the basic layout of a LaTeX table with three columns and a header row.”
-		\item “Assist with debugging or formatting issues related to VS Code or LaTeX.”
-		\item “Apply the Alloy LaTeX style to this code snippet.”
-	\end{itemize}
+\subsection{Typical Prompts}
+AI tools were queried using prompts such as:
+\begin{itemize}
+	\item "Rephrase this design description to make the interaction flow clearer."
+	\item "Does this explanation of the component interaction sound ambiguous?"
+	\item "Help restructure this paragraph describing a UI flow to improve readability."
+	\item "Format this design description or table using LaTeX"
+	\item "Help debug formatting or build issues related to VS Code or LaTeX"
+\end{itemize}
 
-	\\ \hline
+\subsection{Input Provided}
+The input given to AI tools consisted mainly of:
+\begin{itemize}
+	\item Early drafts of paragraphs.
+	\item Short text fragments requiring clarity checks.
+	\item Sections with repeated structure where consistent wording was needed.
+\end{itemize}
 
-	\textbf{Input Provided}      &
-	\begin{itemize}
-		\item Early drafts of paragraphs.
-		\item Short text fragments requiring clarity checks.
-		\item Sections with repeated structure where consistent wording was needed.
-	\end{itemize}
-	\\ \hline
+\subsection{Constraints Applied}
+When using AI tools, the following constraints were strictly enforced:
+\begin{itemize}
+	\item Preserve the intended meaning of the original text.
+	\item Avoid introducing new design decisions or assumptions.
+	\item Maintain terminology aligned with the definitions provided in this document.
+\end{itemize}
 
-	\textbf{Constraints Applied} &
-	\begin{itemize}
-		\item Preserve the intended meaning of the original text.
-		\item Avoid introducing new requirements or assumptions.
-		\item Maintain terminology aligned with the definitions in Section 1.
-	\end{itemize}
-	\\ \hline
+\subsection{Outputs Obtained}
+The interaction with AI tools resulted in:
+\begin{itemize}
+	\item Clearer or more concise formulations of existing statements.
+	\item Identification of potentially ambiguous sentences.
+	\item Terminology suggestions to improve internal coherence.
+	\item LaTeX formatting assistance for tables and code snippets.
+\end{itemize}
 
-	\textbf{Outputs Obtained}    &
-	\begin{itemize}
-		\item Clearer or more concise formulations of existing statements.
-		\item Identification of potentially ambiguous sentences.
-		\item Terminology suggestions to maintain coherence.
-		\item LaTeX formatting assistance for tables and code excerpts.
-	\end{itemize}
-	\\ \hline
-
-	\textbf{Refinement Process}  &
-	\begin{itemize}
-		\item Critical review of all AI-generated suggestions.
-		\item Verification against the original intent to avoid unintended changes.
-		\item Manual integration to ensure consistency with our writing style.
-		\item Alignment check with established terminology and definitions.
-	\end{itemize}
-	\\ \hline
-\end{longtable}
+\subsection{Refinement Process}
+All AI-generated outputs were subject to a manual refinement process that included:
+\begin{itemize}
+	\item Critical review of all suggestions.
+	\item Verification against the original intent to avoid unintended changes.
+	\item Manual integration to ensure consistency with the overall writing style.
+	\item Alignment checks with established terminology and definitions.
+\end{itemize}
