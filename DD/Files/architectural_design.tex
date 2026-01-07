@@ -92,12 +92,12 @@ and their responsibilities. As required by the three-tier architecture adopted b
 the backend is structured into a set of independent yet cooperating modules, each exposing
 well-defined interfaces and encapsulating a cohesive subset of the app logic.
 
-\figure[H]
-\centering
-\includegraphics[width=\textwidth]{Images/Architectural_Overview/component_view.png}
-\caption{Component View Diagram}
-\label{fig:component_view}
-\endfigure
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{Images/Architectural_Overview/component_view.png}
+	\caption{Component View Diagram}
+	\label{fig:component_view}
+\end{figure}
 
 \subsubsection{API Gateway}
 The \textbf{API Gateway} acts as the entry point for all interactions between the BBP mobile
@@ -127,7 +127,7 @@ Both Managers use the \textbf{QueryManager} for data retrieval and persistence.
 The \textbf{TripManager} coordinates the lifecycle of a cycling session.
 GPS samples and live tracking stay on the mobile app during the trip; the backend is contacted only at stop time.
 Upon trip completion, the app sends the final payload (trajectory, metrics) to the backend.
-The TripManager generates the summary, enriches it with environmental data retrieved from the Weather Manager,
+The TripManager generates the summary, enriches it with environmental data retrieved from the \textbf{WeatherManager},
 and persists it through the \textbf{QueryManager}.
 
 \subsubsection{Path Manager}
@@ -135,10 +135,10 @@ The \textbf{PathManager} is responsible for retrieving graph
 data from the database, computing optimal routes between two locations,
 and ranking alternative routes according to their quality and reported conditions.
 This service exposes the routing logic to the API Gateway and interacts with the
-\textbf{QueryManager} to retrieve pre-aggregated segment conditions (kept up to date by the ReportManager) alongside path data needed for route computation.
+\textbf{QueryManager} to retrieve pre-aggregated segment conditions alongside path data needed for route computation.
 
-\subsubsection{Reports Manager}
-The \textbf{Reports Manager} handles obstacle reports submitted
+\subsubsection{Report Manager}
+The \textbf{ReportManager} handles obstacle reports submitted
 by users or automatically detected during trips. It stores and aggregates reports, manages
 confirmation and rejection flows, updates path-quality indicators, and exposes relevant data to the mobile app.
 This component interacts with the \textbf{QueryManager} for persistence and with the
