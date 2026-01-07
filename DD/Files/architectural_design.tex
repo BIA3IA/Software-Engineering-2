@@ -66,7 +66,7 @@ RESTful sub-APIs and routes incoming requests to the appropriate Manager.
 \subsection*{Data Layer}
 
 The data layer consists of a \textbf{relational DBMS} storing all persistent
-information relevant to the system’s domain, including:
+information relevant to the system's domain, including:
 \begin{itemize}
 	\item user profiles and authentication credentials;
 	\item trip records and associated GPS data;
@@ -107,8 +107,8 @@ and translating domain errors into HTTP responses.
 
 The API Gateway exposes the following logical sub-APIs:
 \begin{itemize}
-	\item \textbf{AuthAPI}: endpoints for token generation and validation.
-	\item \textbf{UserAPI}: endpoints for registration, login, token refresh, and profile retrieval.
+	\item \textbf{AuthAPI}: endpoints for login, token generation and validation.
+	\item \textbf{UserAPI}: endpoints for registration, token refresh, and profile retrieval.
 	\item \textbf{TripAPI}: endpoints for starting, updating, and stopping a trip.
 	\item \textbf{PathAPI}: endpoints for route computation and retrieval of path metadata.
 	\item \textbf{ReportAPI}: endpoints for creating and confirming obstacle reports.
@@ -146,7 +146,7 @@ Routing \& Path Manager when updated conditions affect route evaluation.
 
 \subsubsection{Statistics Manager}
 The \textbf{Statistics Manager} optimizes system performance by using a state-aware recomputation strategy that minimizes redundant processing.
-For overall statistics, it compares the user’s current total trip count against the value stored from the last calculation; it only triggers a full 
+For overall statistics, it compares the user's current total trip count against the value stored from the last calculation; it only triggers a full
 aggregation of data if the \textbf{QueryManager} reports a change in the trip count, otherwise it simply retrieves the previously stored results.
 
 For individual trip statistics, the manager utilizes a lazy initialization pattern by asking the \textbf{QueryManager} if a processed record already
@@ -199,15 +199,15 @@ executed on dedicated hardware nodes and communicates with the others using secu
 	      enabling Layer-7 inspection and protection.
 	      ModSecurity blocks malicious traffic such as SQL injection attempts, cross-site scripting payloads, and abnormal request patterns,
 	      while supporting anomaly detection.
-	      TLS termination is performed at the WAF to allow full request inspection; validated traffic is then forwarded to the internal
-	      gateway node running \textit{NGINX} over HTTPS.
-	      NGINX acts as the system’s reverse proxy and load balancer, exposing a single controlled entrypoint and distributing incoming
+	      TLS termination is performed at the WAF to allow full request inspection; validated traffic is re-encrypted and forwarded to the internal
+	      internal \textit{NGINX} gateway over HTTPS.
+	      NGINX acts as the system's reverse proxy and load balancer, exposing a single controlled entrypoint and distributing incoming
 	      requests across multiple backend replicas using load balancing strategies.
 	      Additional middleware functionalities (request logging or rate limiting) can be applied as needed at this level.
 	      The backend application itself is executed on one or more stateless Application Servers, each running the BBP RESTful backend.
 	      Since authentication tokens are included in each request header, no server-side session state is maintained, enabling horizontal
 	      scaling and dynamic replica management.
-	      Communication between the gateway and the backend replicas is confined to a protected internal network, reducing the system’s
+	      Communication between the gateway and the backend replicas is confined to a protected internal network, reducing the system's
 	      exposure to external threats.
 
 	\item \textbf{Data Tier:}
@@ -249,14 +249,12 @@ The process begins on the mobile app, where the guest user opens the registratio
 and fills in the required details: email and password.
 A first \textbf{local validation} step checks for malformed inputs before contacting the \textbf{backend}.
 
-If the data is valid, the mobile app sends a registration request to the \textbf{API Gateway}, which forwards it to the \textbf{AuthManager}.
-The \textbf{AuthManager} checks whether the email is already in use by querying the DBMS through the \textbf{QueryManager}.
+If the data is valid, the mobile app sends a registration request to the \textbf{API Gateway}, which forwards it to the \textbf{UserManager}.
+The \textbf{UserManager} checks whether the email is already in use by querying the DBMS through the \textbf{QueryManager}.
 If the email already exists, the system returns an error and the mobile app notifies the user.
 
-If the email is not already in use, the \textbf{AuthManager} stores the new user in the database (with the password handled securely) and generates an \textbf{authentication token}.
-The token is returned to the mobile app, which stores it using the device \textbf{secure storage}.
+If the email is not already in use, the \textbf{UserManager} stores the new user in the database (with the password handled securely).
 The flow ends by showing a success message to the user.
-
 
 \begin{figure}[H]
 	\centering
@@ -278,11 +276,10 @@ the backend returns a \textbf{404 Not Found} error, which the mobile app display
 If the user exists, the \textbf{AuthManager} verifies the submitted password. Invalid credentials
 lead to a \textbf{401 Unauthorized} response and the corresponding error message on the client.
 
-When the credentials are correct, the \textbf{AuthManager} generates an \textbf{authentication token} and
-returns it to the mobile app, which stores it securely using the device's
+When the credentials are correct, the \textbf{AuthManager} generates an \textbf{authentication token} and a \textbf{refresh token},
+returns them to the mobile app, which stores them securely using the device's
 \textbf{secure storage} facility. The user is then successfully logged in and the app
 proceeds to show the appropriate authenticated UI.
-
 
 \begin{figure}[H]
 	\centering
@@ -657,7 +654,8 @@ the backend through the \textbf{API Gateway}. The \textbf{TripManager} processes
 request and verifies the trip state. If the trip identifier is invalid or the
 trip has already been finalised, an error is returned.
 
-When the trip is valid, the \textbf{TripManager} optionally retrieves a weather
+When the trip is valid and the external service is reachable,
+the \textbf{TripManager} retrieves a weather
 snapshot from the \textbf{WeatherManager} based on the trip time and location.
 It then computes the final trip summary, including duration, distance, speed
 metrics, sensor data (when available), and weather information.
@@ -742,17 +740,16 @@ Finally, the mobile app informs the user that the report has been submitted succ
 
 While a logged-in user is travelling, the system may notify him of an existing report
 located nearby. The mobile app displays a confirmation form, allowing the user to either
-confirm or dismiss the reported issue.
-If the user ignores the notification, the form is closed after a short period of time
+confirm, reject, or dismiss the reported issue.
+If the user ignores the notification, the form is dismissed after a short period of time
 and no further action is taken. If the user submits a decision, the mobile
 app performs a \textbf{local validation} to ensure that the input is valid.
 
-When validation succeeds, the app sends the confirmation request to the backend through
+When validation succeeds, the app sends the confirmation (or rejection) request to the backend through
 the \textbf{API Gateway}. In case of network or server errors, an appropriate error
 message is shown to the user.
 The \textbf{API Gateway} forwards the request to the \textbf{ReportManager}, which creates
-a confirmation entry associated with the selected report and the current user.
-The confirmation is persisted through the \textbf{QueryManager} by inserting the record
+a report entry. The confirmation is persisted through the \textbf{QueryManager} by inserting the record
 into the \textbf{DBMS}.
 
 If the operation completes successfully, the backend responds with a
@@ -957,7 +954,7 @@ The public operations are:
 
 The \textbf{TripManager} coordinates the lifecycle of a cycling session.
 It receives GPS samples from the mobile app, stores trip metadata, and, upon trip
-completion, composes the final summary enriched with weather data supplied by the client after it retrieved a snapshot
+completion, composes the final summary enriched with weather data retrieved as a snapshot
 from the \textbf{WeatherManager}. All persistent data is saved through the \textbf{QueryManager}.
 
 The component exposes the following methods:
@@ -1093,7 +1090,7 @@ and supports the mobile-first design goals described in the system overview.
 \section{Other Design Decisions}
 \label{sec:other_design_decisions}%
 
-Beyond the architectural style, the following design choices strengthen the BBP system’s
+Beyond the architectural style, the following design choices strengthen the BBP system's
 quality attributes and align with the mobile-first scope:
 
 \begin{itemize}
@@ -1114,6 +1111,8 @@ quality attributes and align with the mobile-first scope:
 	      Errors are normalised into structured HTTP responses so the mobile client can present
 	      consistent messages. Domain-specific errors (e.g., \texttt{NOT\_FOUND}) are explicitly
 	      mapped and surfaced through the Gateway.
+	      Empty collections are treated as \texttt{NOT\_FOUND} conditions to explicitly signal the absence
+	      of domain entities rather than returning empty datasets.
 
 	\item \textbf{Fault tolerance}.
 	      Calls to external services (e.g., weather provider) are wrapped with timeouts,

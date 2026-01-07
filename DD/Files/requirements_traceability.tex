@@ -23,9 +23,9 @@
 
 	\textbf{R5}  & The system shall allow logged-in users to log out of the application, ending their current session.                                             & AuthManager, QueryManager                             \\ \hline
 
-	\textbf{R6}  & The system shall allow guest users to start a cycling trip.                                                                                     & TripManager                                           \\ \hline
+	\textbf{R6}  & The system shall allow guest users to start a cycling trip.                                                                                     & (*)                                                   \\ \hline
 
-	\textbf{R7}  & The system shall allow guest users to stop a currently active trip, but shall not store any trip data after the trip ends.                      & TripManager                                           \\ \hline
+	\textbf{R7}  & The system shall allow guest users to stop a currently active trip, but shall not store any trip data after the trip ends.                      & (*)                                                   \\ \hline
 
 	\textbf{R8}  & The system shall allow the user to start a trip only when their GPS position matches the path origin.                                           & TripManager                                           \\ \hline
 
@@ -33,7 +33,7 @@
 
 	\textbf{R10} & The system shall set the current GPS position as trip origin when starting from auto-detection.                                                 & TripManager                                           \\ \hline
 
-	\textbf{R11} & The system shall automatically stop the active trip when the user’s GPS position deviates from the selected path within a certain threshold.    & TripManager                                           \\ \hline
+	\textbf{R11} & The system shall automatically stop the active trip when the user's GPS position deviates from the selected path within a certain threshold.    & TripManager                                           \\ \hline
 
 	\textbf{R12} & The system shall allow logged-in users to start a cycling trip in manual or automatic mode.                                                     & TripManager                                           \\ \hline
 
@@ -89,7 +89,7 @@
 
 	\textbf{R38} & The system shall rank suggested routes according to their safety and quality.                                                                   & PathManager                                           \\ \hline
 
-	\textbf{R39} & The system shall display the user’s current GPS position during navigation along a selected path.                                               & TripManager, PathManager                              \\ \hline
+	\textbf{R39} & The system shall display the user's current GPS position during navigation along a selected path.                                               & TripManager, PathManager                              \\ \hline
 
 	\textbf{R40} & The system shall send pop-ups to warn users about nearby obstacles or closed path segments during an active trip.                               & TripManager, ReportManager                            \\ \hline
 
@@ -97,6 +97,8 @@
 
 	\textbf{R42} & The system shall ensure that communication with all external services (map, weather) handles temporary unavailability gracefully.               & PathManager, WeatherManager                           \\ \hline
 
-	\caption{Mapping between BBP Requirements and System Components}
+	\caption{Mapping between BBP Requirements and Backend Components}
 	\label{tab:R_MAP}
 \end{longtable}
+
+(*) The trip management functionality for guest users is limited to starting and stopping trips without data persistence. No communication with backend components occurs in this mode.
