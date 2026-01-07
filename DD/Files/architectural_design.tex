@@ -651,19 +651,17 @@ external sensor connections. The collected data and the locally maintained
 trip identifier are then validated.
 If the validation succeeds, the mobile app sends a finalisation request to
 the backend through the \textbf{API Gateway}. The \textbf{TripManager} processes the
-request and verifies the trip state. If the trip identifier is invalid or the
-trip has already been finalised, an error is returned.
+request.
 
 When the trip is valid and the external service is reachable,
 the \textbf{TripManager} retrieves a weather
 snapshot from the \textbf{WeatherManager} based on the trip time and location.
-It then computes the final trip summary, including duration, distance, speed
-metrics, sensor data (when available), and weather information.
+It then saves the complete trip data, including weather information if available.
 The summary is stored in the database through the \textbf{QueryManager}.
 
 Upon successful completion, the backend responds with a \textbf{201 Created}
-status containing the trip summary. The mobile app displays the final result
-to the user. Network failures or server-side errors trigger the corresponding
+status. The mobile app displays a success message to the user. 
+Network failures or server-side errors trigger the corresponding
 alternative flows.
 
 \begin{figure}[H]
