@@ -1,0 +1,182 @@
+
+\section{Code Organization}
+\label{sec:code_organization}
+
+\subsection{Frontend}
+\label{sec:frontend_structure}
+
+Here it is a walkthrough from the notes, should be written bette, but this is the content to include:
+
+ Directory Walkthrough (src)
+
+ Root files
+ app.json / app.config.js  Expo project name, icon, splash, extra env vars.
+ package.json  scripts + dependencies (Expo 54, React Native 0.81, Paper 5, Zustand, etc.).
+ tsconfig.json  aliases @/ to src, JSX config.
+ jest.config.js  React Native preset extended to include tests/unit + tests/integration.
+ jest.setup.ts  global mocks for Expo Router, SecureStore, SafeArea, Paper UI, AppButton/TextInput/Popup shims, console suppression.
+ tests/mocks/expoMock.ts  empty stub returned when some modules import expo.
+
+ app/ (Expo Router)
+ \_layout.tsx  wraps the entire navigation tree with PaperProvider, injects the Lucide icon set, calls useAuthStore.initAuth() and enforces redirects (unauth users forced to welcome, loggedin users prevented from staying in (auth)).
+ +notfound.tsx  generic 404 screen.
+ (auth)/\_layout.tsx  minimal layout for welcome/login/signup flows.
+ (auth)/welcome.tsx  hero screen with CTA buttons and “Guest Mode”.
+ (auth)/login.tsx and signup.tsx  React Hook Form + Zod validation wiring, call useAuthStore actions.
+ (main)/\_layout.tsx  houses BottomNav, LoginPromptProvider, and the loginrequired popup (guest flows).
+ (main)/home.tsx  central map/route experience: search inputs, result sheet, Create Path FAB, report modal, navigation progress, start/complete trip actions.
+ (main)/trips.tsx  trip history, metrics, stats cards, entry points to detail screens.
+ (main)/paths.tsx  curated path list with filters/tags.
+ (main)/createpath.tsx  wizard/modal for usergenerated paths.
+ (main)/profile.tsx  profile header, stats, privacy preferences, entry to editprofile.
+ (main)/editprofile.tsx  full edit form with Zod validation, updateProfile call, success/error popups.
+ (main)/settings.tsx  settings toggles, theme/preferences.
+ Folder Structure Explained
+
+ app/
+
+This is the main routing folder  Expo Router turns its structure into navigation automatically.
+
+ Inside it:
+
+ **(tabs)/** > Defines the bottom tab navigation (the bar with multiple pages).  
+   \_layout.tsx > Defines the navigation bar and icons for each tab.  
+   index.tsx > Home screen.  
+   two.tsx > Example second screen.  
+  (Additional screens can be added here, e.g., trip.tsx, paths.tsx, etc.)
+
+ **\_layout.tsx** > Root layout for everything outside tabs (e.g., modals, login screens).  
+ **+html.tsx** > Used internally when running on web to render HTML pages (can be ignored).  
+ **+notfound.tsx** > The “404” page, shown if a user navigates to a nonexistent route.  
+ **modal.tsx** > A demo modal screen (can be removed or replaced later).
+
+ assets/
+
+Contains static files bundled with the app:
+
+ images/ > App icons, splash screens, etc.  
+ fonts/ > Custom fonts (the default project includes SpaceMonoRegular.ttf).
+
+Additional assets such as logo.png or mapmarker.png can be added here and imported in the screens.
+
+ components/
+ ui/  reusable primitives (AppButton, AppTextInput, AppPopup, SelectField, etc.).
+ BottomNav.tsx  bottom navigation bar aware of auth/guest state.
+ ScreenHeader, ProfileHeroHeader, PathResultCard, SearchResultsSheet, CreatePathModal, ReportIssueModal, RouteMap, RouteCard, etc. These encapsulate domain UI/logic for routes, paths, profile.
+ components/icons/  LucideIcon wrapper to ensure consistent icon use inside Paper theme.
+
+ auth/
+ authSession.ts  inmemory tokens + listener for session changes.
+ storage.ts  Zustand store connecting SecureStore, APIs, and UI (init, login, logout, fetch profile, update profile, guest mode).
+
+ validation/
+ auth.ts  Zod schemas + types for login, signup, and editprofile flows.
+ path.ts  schema for createpath modal.
+ index.ts  barrel so consumers can import { signupSchema } from "@/validation".
+
+ api/
+ client.ts  Axios instance with getAccessToken() injection and 401 interceptor that hits refreshAccessToken.
+ auth.ts  login/signup/logout/profile/update API wrappers with typesafe mappers.
+ tokenManager.ts  manual axios client to refresh tokens, handles concurrency and session clearing on failure.
+
+ hooks/
+ useColorScheme, useThemePreference  theme detection/persistence.
+ useLoginPrompt  context to trigger global login modal (guest restrictions).
+ useBottomNavVisibility  context provider to hide the nav for certain screens (e.g., edit profile).
+ useTrips  handles trip fetching/state (caching between navigations).
+ usePrivacyPreference  manages selected privacy option and persistence.
+ useBottomNavVisibility context consumed by modals/screens to hide nav on scrollintensive views.
+
+ constants/ and theme/
+ constants/Colors.ts  light/dark palette, accent colors, guest colors, etc.
+ constants/privacy.ts  static privacy preference options.
+ theme/layout.ts / theme/typography.ts  spacing helpers, radius, font sizes.
+ theme/mapStyles.ts, theme/paperTheme.ts  map style JSON and Paper theme definitions.
+
+ assets/
+ assets/images/  icons, splash, adaptive icon.
+ assets/fonts/  custom typefaces (Space Mono).
+
+ utils/
+ utils/apiError.ts  normalizes Axios/JS errors into userfacing strings (used by Login/Signup/Edit Profile popups).
+ utils/layout.ts  responsive layout helpers (scale, verticalScale, moderateScale).
+ tests/utils/render.tsx (in tests/utils)  test helper that wraps React components with PaperProvider + theme icon settings.
+
+ tests/
+ tests/unit  permodule jest files.
+ tests/integration  screen + navigation flow tests (auth, navigation).
+ tests/utils/render.tsx  helper to render components with PaperProvider wrapper in tests.
+ tests/mocks  Expo Router / Expo stub modules.
+
+\subsection{Backend}
+\label{sec:backend_structure}
+
+
+bash
+src/
+-- middleware              - Middlewares
+|   -jwt.auth.ts         - JWT authentication middleware
+|   -http.logger.ts      - HTTP request logging middleware
+|   -...                 - Other middlewares
+-- errors/                 - Custom error classes
+|   -app.errors.ts       - Applicationspecific errors
+-- prisma/                 - Prisma setup
+|   -schema.prisma       - Prisma schema file
+|   -migrations/         - Prisma migrations
+|   -json.types.d.ts     - Prisma JSON type definitions with our custom types
+-- services/               - External service integrations
+|   -openmeteo.service.ts - OpenMeteo API integration
+-- managers/               - Business logic
+|   -user/...            - Userrelated logic
+|   -query/...           - Queryrelated logic
+|   -.../...             - Other related logic
+-- routes/                 - API route definitions
+|   -v1/                 - Version 1 of the API
+|       -auth.routes.ts  - Authentication routes
+|       -user.routes.ts  - User routes
+|       -...             - Other routes
+|       -index.ts        - Central router for v1
+-- types/                  - TypeScript type definitions
+|   -error.types.ts      - error types/interfaces
+|   -...                 - Other type definitions
+-- utils/                  - Utility functions
+|   -prismaclient.ts    - Prisma client instance
+|   -...                 - Other utility functions
+-- tests/                  - Test files
+|   -auth.test.ts        - Authentication tests
+|   -user.test.ts        - User tests
+|   -...                 - Other tests
+-- .env                    - Environment variables
+-- tsconfig.json           - TypeScript configuration
+-- jest.config.mjs         - Jest configuration
+-- prisma.config.ts        - Prisma configuration
+-- package.json            - Package configuration
+-- package.lock.json       - Package lock file
+-server.ts               - Server entry point
+
+
+\subsection{Server}
+\label{sec:server_structure}
+
+bash
+/opt
+-- nginx
+|   -- conf.d
+|   |   -- site.conf
+|   |   -api.conf
+|   -- ssl
+|   |   -- residenzaclasmarinaorigin.crt
+|   |   -- residenzaclasmarinaorigin.key
+|   |   -- bia3iaorigin.crt
+|   |   -bia3iaorigin.key
+|   -log
+|       -- access.log
+|       -error.log
+|
+-- residenzaclasmarina
+|   -dockercompose.yml
+|
+-- bbpbackend
+|   -- Dockerfile
+|   -- dockercompose.yml
+|   -.env
