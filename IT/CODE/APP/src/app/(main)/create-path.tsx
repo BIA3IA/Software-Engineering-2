@@ -13,8 +13,10 @@ import { textStyles, iconSizes } from "@/theme/typography"
 import { PRIVACY_OPTIONS, type PrivacyPreference } from "@/constants/Privacy"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { AppButton } from "@/components/ui/AppButton"
-import { CheckCircle } from "lucide-react-native"
+import { AlertTriangle, CheckCircle } from "lucide-react-native"
 import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
+import { createPathApi, type PathSegment } from "@/api/paths"
+import { getApiErrorMessage } from "@/utils/apiError"
 
 type LatLng = {
   latitude: number
@@ -34,14 +36,20 @@ export default function CreatePathScreen() {
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const searchParams = useLocalSearchParams()
-  const visibilityLabel =
-    PRIVACY_OPTIONS.find((option) => option.key === (searchParams.visibility as PrivacyPreference | undefined))
-      ?.label ?? "Visibility"
+  const visibilityPreference =
+    (searchParams.visibility as PrivacyPreference | undefined) ?? PRIVACY_OPTIONS[0]?.key ?? "public"
+  const visibilityLabel = PRIVACY_OPTIONS.find((option) => option.key === visibilityPreference)?.label ?? "Visibility"
   const { setHidden: setNavHidden } = useBottomNavVisibility()
   const mapRef = React.useRef<MapView | null>(null)
   const [drawnRoute, setDrawnRoute] = React.useState<LatLng[]>([])
   const [userLocation, setUserLocation] = React.useState<LatLng | null>(null)
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
+  const [isSaving, setIsSaving] = React.useState(false)
+  const [errorPopup, setErrorPopup] = React.useState({
+    visible: false,
+    title: "",
+    message: "",
+  })
   const mapKey = userLocation
     ? `user-${userLocation.latitude.toFixed(5)}-${userLocation.longitude.toFixed(5)}`
     : "default"
@@ -107,13 +115,15 @@ export default function CreatePathScreen() {
   }, [userLocation])
 
   function handleMapPress(event: any) {
-    const { coordinate } = event.nativeEvent
+    const coordinate = event?.nativeEvent?.coordinate
+    if (!coordinate) return
     setDrawnRoute((prev) => [...prev, coordinate])
   }
 
   function handlePanDrag(event: any) {
+    const coordinate = event?.nativeEvent?.coordinate
+    if (!coordinate) return
     setDrawnRoute((prev) => {
-      const { coordinate } = event.nativeEvent
       const last = prev[prev.length - 1]
       if (last && last.latitude === coordinate.latitude && last.longitude === coordinate.longitude) {
         return prev
@@ -124,15 +134,34 @@ export default function CreatePathScreen() {
 
   const canSave = drawnRoute.length > 1
 
-  function handleSavePath() {
-    if (!canSave) return
-    console.log("Save new path", {
-      name: searchParams.name,
-      description: searchParams.description,
-      visibility: searchParams.visibility,
-      route: drawnRoute,
-    })
-    setSuccessPopupVisible(true)
+  async function handleSavePath() {
+    if (!canSave || isSaving) return
+    const title = typeof searchParams.name === "string" ? searchParams.name : "New Path"
+    const description = typeof searchParams.description === "string" ? searchParams.description : undefined
+    const pathSegments = buildPathSegments(drawnRoute)
+    if (!pathSegments.length) return
+
+    setIsSaving(true)
+    try {
+      await createPathApi({
+        visibility: visibilityPreference === "public",
+        creationMode: "manual", // only manual for now
+        title,
+        description,
+        pathSegments,
+      })
+      console.log("Path saved successfully")
+      setSuccessPopupVisible(true)
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to save the path. Please try again.")
+      setErrorPopup({
+        visible: true,
+        title: "Save failed",
+        message,
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   function handleSuccessPrimaryPress() {
@@ -143,6 +172,13 @@ export default function CreatePathScreen() {
   function handleSuccessDismiss() {
     setSuccessPopupVisible(false)
     router.replace("/(main)/home")
+  }
+
+  function handleErrorClose() {
+    setErrorPopup((prev) => ({
+      ...prev,
+      visible: false,
+    }))
   }
 
   return (
@@ -204,10 +240,10 @@ export default function CreatePathScreen() {
       </View>
 
       <AppButton
-        title="Save Path"
+        title={isSaving ? "Saving Path..." : "Save Path"}
         onPress={handleSavePath}
         buttonColor={palette.brand.base}
-        textColor={palette.text.inverse}
+        textColor={palette.text.onAccent}
         style={[
           styles.saveButton,
           {
@@ -231,6 +267,21 @@ export default function CreatePathScreen() {
           textColor: palette.text.onAccent,
         }}
       />
+      <AppPopup
+        visible={errorPopup.visible}
+        title={errorPopup.title || "Error"}
+        message={errorPopup.message || "Unable to complete the request."}
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
+        onClose={handleErrorClose}
+        primaryButton={{
+          label: "OK",
+          variant: "primary",
+          onPress: handleErrorClose,
+          buttonColor: palette.status.danger,
+          textColor: palette.text.onAccent,
+        }}
+      />
     </View>
   )
 }
@@ -242,6 +293,16 @@ function regionAroundPoint(point: LatLng, delta = 0.01) {
     latitudeDelta: delta,
     longitudeDelta: delta,
   }
+}
+
+function buildPathSegments(points: LatLng[]): PathSegment[] {
+  return points.slice(0, -1).map((point, index) => {
+    const next = points[index + 1]
+    return {
+      start: { lat: point.latitude, lng: point.longitude },
+      end: { lat: next.latitude, lng: next.longitude },
+    }
+  })
 }
 
 const styles = StyleSheet.create({
