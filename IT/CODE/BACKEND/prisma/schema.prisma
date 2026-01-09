@@ -82,10 +82,10 @@ model TripSegment {
 model Path {
   pathId       String        @id @default(cuid())
   userId       String
-  user         User          @relation(fields: [userId], references: [userId]) // should we add onDelete: Cascade here?
+  user         User          @relation(fields: [userId], references: [userId], onDelete: Cascade)
   createdAt    DateTime      @default(now())
   pathSegments PathSegment[]
-  status       String        @default("ACTIVE")
+  status       String        @default("OPTIMAL")
   /// [Coordinates]
   origin       Json
   /// [Coordinates]
@@ -102,8 +102,9 @@ model PathSegment {
   pathId        String
   segmentId     String
   nextSegmentId String?
-  path          Path    @relation(fields: [pathId], references: [pathId]) // should we add onDelete: Cascade here?
-  segment       Segment @relation(fields: [segmentId], references: [segmentId]) // should we add onDelete: Cascade here?
+  status        String  @default("OPTIMAL")
+  path          Path    @relation(fields: [pathId], references: [pathId], onDelete: Cascade)
+  segment       Segment @relation(fields: [segmentId], references: [segmentId]) // No onDelete: Cascade here otherwise deleting a path would delete also the trip segments
 
   @@unique([pathId, segmentId])
 }

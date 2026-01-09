@@ -120,15 +120,47 @@ export class QueryManager {
     // PATH
 
     // create path
-    async createPath(...){ origin: Coordinates, destination: Coordinates ...
+    async createPath(userId: string, origin: Coordinates, destination: Coordinates, 
+                        pathSegments: Array<{ segmentId: string; nextSegmentId: string | null }>,
+                        visibility: boolean, creationMode: string, title?: string | null, description?: string | null) {
+        return await prisma.path.create({
+            data: {
+                userId,
+                origin,
+                destination,
+                visibility,
+                creationMode,
+                title,
+                description,
+                pathSegments: {
+                    create: pathSegments.map(seg => ({
+                        segmentId: seg.segmentId,
+                        nextSegmentId: seg.nextSegmentId,
+                    })),
+                },
+            },
+            include: {
+                pathSegments: {
+                    include: {
+                        segment: true,
+                    },
+                },
+            },
+        });
     }
+
+    // get path by id with segments
 
     // get path by id with segments
     async getPathById(pathId: string): Promise<PathSegments | null> {
         const path = await prisma.path.findUnique({
             where: { pathId },
             include: {
-                pathSegments: true,
+                pathSegments: {
+                    include: {
+                        segment: true,
+                    },
+                },
             },
         });
 
@@ -142,11 +174,88 @@ export class QueryManager {
         };
     }
 
+    // get paths by user id
+    async getPathsByUserId(userId: string): Promise<PathSegments[]> {
+        const paths = await prisma.path.findMany({
+            where: { userId },
+            include: {
+                pathSegments: {
+                    include: {
+                        segment: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+
+        return paths.map(path => ({
+            ...path,
+            pathSegments: sortPathSegmentsByChain(path.pathSegments),
+        }));
+    }
+
+    async searchPathsByOriginDestination(origin: Coordinates, destination: Coordinates, userId?: string): Promise<PathSegments[]> {
+        // Tolerance radius in degrees (approximately 20m)
+        const tolerance = 0.0002;
+
+        const paths = await prisma.path.findMany({
+            where: {
+                OR: [
+                    { visibility: true },
+                    ...(userId ? [{ userId, visibility: false }] : []),
+                ],
+            },
+            include: {
+                pathSegments: {
+                    include: {
+                        segment: true,
+                    },
+                },
+            },
+            orderBy: [
+                { score: { sort: 'desc', nulls: 'last' } },
+                { createdAt: 'desc' },
+            ],
+        });
+
+        // Filter paths that match origin and destination within tolerance
+        const matchingPaths = paths.filter(path => {
+            const pathOrigin = path.origin;
+            const pathDestination = path.destination;
+
+            // Check if origin and destination are within tolerance
+            const originMatch = 
+                Math.abs(pathOrigin.lat - origin.lat) <= tolerance &&
+                Math.abs(pathOrigin.lng - origin.lng) <= tolerance;
+
+            const destinationMatch =
+                Math.abs(pathDestination.lat - destination.lat) <= tolerance &&
+                Math.abs(pathDestination.lng - destination.lng) <= tolerance;
+
+            return originMatch && destinationMatch;
+        });
+
+        return matchingPaths.map(path => ({
+            ...path,
+            pathSegments: sortPathSegmentsByChain(path.pathSegments),
+        }));
+    }
+
     // update path score
     async updatePathScore(pathId: string, score: number) {
         return await prisma.path.update({
             where: { pathId },
             data: { score },
+        });
+    }
+
+    // update path status
+    async updatePathStatus(pathId: string, status: string) {
+        return await prisma.path.update({
+            where: { pathId },
+            data: { status },
         });
     }
 
@@ -162,6 +271,32 @@ export class QueryManager {
         return await prisma.path.update({
             where: { pathId },
             data: { visibility },
+        });
+    }
+
+    // create segment
+    async createSegment(status: string, polylineCoordinates: Coordinates[]) {
+        return await prisma.segment.create({
+            data: {
+                status,
+                polylineCoordinates,
+            },
+        });
+    }
+
+    // get segment statistics for path status calculation
+    async getSegmentStatistics(segmentIds: string[]) {
+        return await prisma.segment.findMany({
+            where: {
+                segmentId: {
+                    in: segmentIds,
+                },
+            },
+            select: {
+                segmentId: true,
+                status: true,
+                createdAt: true,
+            },
         });
     }
 
