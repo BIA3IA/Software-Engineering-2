@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react"
 import { View, FlatList, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
+import { useFocusEffect } from "expo-router"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { RouteCard, RouteItem } from "@/components/route/RouteCard"
@@ -8,71 +9,10 @@ import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { scale, verticalScale } from "@/theme/layout"
 import { iconSizes } from "@/theme/typography"
-import { Trash2, Eye, EyeOff } from "lucide-react-native"
+import { AlertTriangle, Trash2, Eye, EyeOff } from "lucide-react-native"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
-
-const MOCK_PATHS: RouteItem[] = [
-  {
-    id: "p1",
-    name: "Sunset Coastal Route",
-    description: "A scenic path along the coast with gentle turns and sea breeze.",
-    distanceKm: 12.3,
-    durationMin: 55,
-    date: "05/05/25",
-    avgSpeed: 14.1,
-    maxSpeed: 26.4,
-    elevation: 120,
-    visibility: "public",
-    actionLabel: "Start Trip",
-    showWeatherBadge: false,
-    showPerformanceMetrics: false,
-    route: [
-      { latitude: 45.421, longitude: 9.18 },
-      { latitude: 45.425, longitude: 9.185 },
-      { latitude: 45.428, longitude: 9.192 },
-    ],
-  },
-  {
-    id: "p2",
-    name: "Forest Discovery",
-    description: "Immersive ride through dense woods with moderate climbs.",
-    distanceKm: 18.7,
-    durationMin: 82,
-    date: "02/05/25",
-    avgSpeed: 13.5,
-    maxSpeed: 28.1,
-    elevation: 210,
-    visibility: "private",
-    actionLabel: "Resume Planning",
-    showWeatherBadge: false,
-    showPerformanceMetrics: false,
-    route: [
-      { latitude: 45.36, longitude: 9.12 },
-      { latitude: 45.365, longitude: 9.13 },
-      { latitude: 45.37, longitude: 9.125 },
-    ],
-  },
-  {
-    id: "p3",
-    name: "City Highlights Loop",
-    description: "Urban exploration touching major landmarks and cafes.",
-    distanceKm: 9.5,
-    durationMin: 42,
-    date: "30/04/25",
-    avgSpeed: 15.2,
-    maxSpeed: 29.8,
-    elevation: 60,
-    visibility: "public",
-    actionLabel: "Preview Route",
-    showWeatherBadge: false,
-    showPerformanceMetrics: false,
-    route: [
-      { latitude: 45.48, longitude: 9.20 },
-      { latitude: 45.482, longitude: 9.206 },
-      { latitude: 45.485, longitude: 9.198 },
-    ],
-  },
-]
+import { getMyPathsApi, type UserPathSummary } from "@/api/paths"
+import { getApiErrorMessage } from "@/utils/apiError"
 
 type SortOption = "date" | "distance" | "duration" | "alphabetical"
 
@@ -90,7 +30,7 @@ export default function PathsScreen() {
   const deleteIconSize = iconSizes.xl
   const visibilityIconSize = iconSizes.xl
 
-  const [paths, setPaths] = useState<RouteItem[]>(MOCK_PATHS)
+  const [paths, setPaths] = useState<RouteItem[]>([])
   const [expandedPathId, setExpandedPathId] = useState<string | null>(null)
   const [isSortMenuVisible, setSortMenuVisible] = useState(false)
   const [sortOption, setSortOption] = useState<SortOption>("date")
@@ -99,7 +39,38 @@ export default function PathsScreen() {
     path: RouteItem
     target: "public" | "private"
   } | null>(null)
+  const [errorPopup, setErrorPopup] = useState({
+    visible: false,
+    title: "",
+    message: "",
+  })
   const lastScrollOffset = React.useRef(0)
+
+  const loadPaths = React.useCallback(() => {
+    let isActive = true
+
+    async function fetchPaths() {
+      try {
+        const response = await getMyPathsApi()
+        console.log(response)
+        if (!isActive) return
+        setPaths(response.map(mapPathSummaryToRouteItem))
+      } catch (error) {
+        const message = getApiErrorMessage(error, "Unable to load your paths. Please try again.")
+        setErrorPopup({
+          visible: true,
+          title: "Loading failed",
+          message,
+        })
+      }
+    }
+
+    fetchPaths()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   const sortedPaths = useMemo(() => {
     const parseDate = (value: string) => {
@@ -178,6 +149,13 @@ export default function PathsScreen() {
     setPendingVisibilityChange(null)
   }
 
+  function handleCloseErrorPopup() {
+    setErrorPopup((prev) => ({
+      ...prev,
+      visible: false,
+    }))
+  }
+
   function handleListScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const offsetY = event.nativeEvent.contentOffset.y
     const diff = offsetY - lastScrollOffset.current
@@ -196,6 +174,8 @@ export default function PathsScreen() {
       setNavHidden(false)
     }
   }, [setNavHidden])
+
+  useFocusEffect(loadPaths)
 
   const visibilityChangeMessage = pendingVisibilityChange
     ? pendingVisibilityChange.target === "private"
@@ -305,8 +285,55 @@ export default function PathsScreen() {
           borderColor: visibilityIconColor,
         }}
       />
+      <AppPopup
+        visible={errorPopup.visible}
+        title={errorPopup.title || "Error"}
+        message={errorPopup.message || "Unable to complete the request."}
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
+        onClose={handleCloseErrorPopup}
+        primaryButton={{
+          label: "OK",
+          variant: "primary",
+          onPress: handleCloseErrorPopup,
+          buttonColor: palette.status.danger,
+          textColor: palette.text.onAccent,
+        }}
+      />
     </View>
   )
+}
+
+function mapPathSummaryToRouteItem(path: UserPathSummary): RouteItem {
+  return {
+    id: path.pathId,
+    name: path.title || "Untitled Path",
+    description: path.description ?? undefined,
+    distanceKm: 0,
+    durationMin: 0,
+    date: formatDate(path.createdAt),
+    avgSpeed: 0,
+    maxSpeed: 0,
+    elevation: 0,
+    visibility: path.visibility ? "public" : "private",
+    showWeatherBadge: false,
+    showPerformanceMetrics: false,
+    route: [
+      { latitude: path.origin.lat, longitude: path.origin.lng },
+      { latitude: path.destination.lat, longitude: path.destination.lng },
+    ],
+  }
+}
+
+function formatDate(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return "00/00/00"
+  }
+  const day = String(date.getDate()).padStart(2, "0")
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const year = String(date.getFullYear()).slice(-2)
+  return `${day}/${month}/${year}`
 }
 
 const styles = StyleSheet.create({
