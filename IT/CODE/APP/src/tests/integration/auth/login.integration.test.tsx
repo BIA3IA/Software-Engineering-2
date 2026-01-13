@@ -23,10 +23,10 @@ describe("login integration", () => {
             sel({ loginWithPassword })
         )
 
-        const { getByLabelText, getByText, findByText } = render(<LogInScreen />)
+    const { getByPlaceholderText, getByText, findByText } = render(<LogInScreen />)
 
-        fireEvent.changeText(getByLabelText("Email Address"), "not-an-email")
-        fireEvent.changeText(getByLabelText("Password"), "")
+    fireEvent.changeText(getByPlaceholderText("Enter your email"), "not-an-email")
+    fireEvent.changeText(getByPlaceholderText("Enter your password"), "")
         fireEvent.press(getByText("Log In"))
 
         expect(await findByText("Please enter a valid email address.")).toBeTruthy()
@@ -43,10 +43,10 @@ describe("login integration", () => {
             sel({ loginWithPassword })
         )
 
-        const { getByLabelText, getByText } = render(<LogInScreen />)
+    const { getByPlaceholderText, getByText } = render(<LogInScreen />)
 
-        fireEvent.changeText(getByLabelText("Email Address"), "a@b.com")
-        fireEvent.changeText(getByLabelText("Password"), "12345678")
+    fireEvent.changeText(getByPlaceholderText("Enter your email"), "a@b.com")
+    fireEvent.changeText(getByPlaceholderText("Enter your password"), "12345678")
         fireEvent.press(getByText("Log In"))
 
         await waitFor(() => {
@@ -62,10 +62,10 @@ describe("login integration", () => {
             sel({ loginWithPassword })
         )
 
-        const { getByLabelText, getByText, findByText } = render(<LogInScreen />)
+    const { getByPlaceholderText, getByText, findByText } = render(<LogInScreen />)
 
-        fireEvent.changeText(getByLabelText("Email Address"), "a@b.com")
-        fireEvent.changeText(getByLabelText("Password"), "12345678")
+    fireEvent.changeText(getByPlaceholderText("Enter your email"), "a@b.com")
+    fireEvent.changeText(getByPlaceholderText("Enter your password"), "12345678")
         fireEvent.press(getByText("Log In"))
 
         expect(await findByText("Login failed")).toBeTruthy()

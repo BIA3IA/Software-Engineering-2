@@ -44,7 +44,6 @@ export function AppTextInput({
     const hasError = Boolean(errorMessage)
     const inputProps = {
         ...rest,
-        accessibilityLabel: rest.accessibilityLabel ?? label,
     }
 
     return (
