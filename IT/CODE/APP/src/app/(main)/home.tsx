@@ -22,6 +22,9 @@ import { AppButton } from "@/components/ui/AppButton"
 import { useRouter } from "expo-router"
 import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
 import { type PrivacyPreference } from "@/constants/Privacy"
+import { geocodeAddress } from "@/api/geocoding"
+import { searchPathsApi, type UserPathSummary } from "@/api/paths"
+import { getApiErrorMessage } from "@/utils/apiError"
 
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -47,6 +50,12 @@ export default function HomeScreen() {
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
   const [isCompletedPopupVisible, setCompletedPopupVisible] = React.useState(false)
   const [isCreateModalVisible, setCreateModalVisible] = React.useState(false)
+  const [isSearching, setIsSearching] = React.useState(false)
+  const [errorPopup, setErrorPopup] = React.useState({
+    visible: false,
+    title: "",
+    message: "",
+  })
 
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -96,53 +105,52 @@ export default function HomeScreen() {
     setReportVisible(true)
   }
 
-  function handleFindPaths() {
-    if (!startPoint.trim() || !destination.trim()) {
+  async function handleFindPaths() {
+    if (!startPoint.trim() || !destination.trim() || isSearching) {
       return
     }
-    setResultsVisible(true)
+    setIsSearching(true)
+    setResultsVisible(false)
     setSelectedResult(null)
     setActiveTrip(null)
-    setResults([
-      {
-        id: "central-loop",
-        title: "Central Park Loop",
-        description: "Scenic path through the park",
-        route: alignRouteToOrigin(
-          [
-            { latitude: 45.4778, longitude: 9.2264 },
-            { latitude: 45.4786, longitude: 9.2289 },
-            { latitude: 45.4799, longitude: 9.2311 },
-            { latitude: 45.4812, longitude: 9.2332 },
-          ],
-          userLocation
-        ),
-        tags: [
-          { label: "5.2 km", color: palette.accent.blue.surface, textColor: palette.accent.blue.base },
-          { label: "Optimal", color: palette.accent.green.surface, textColor: palette.accent.green.base },
-        ],
-      },
-      {
-        id: "river-trail",
-        title: "River Trail",
-        description: "Riverside bike path with great views",
-        route: alignRouteToOrigin(
-          [
-            { latitude: 45.4764, longitude: 9.2232 },
-            { latitude: 45.4772, longitude: 9.2259 },
-            { latitude: 45.4784, longitude: 9.2283 },
-            { latitude: 45.4791, longitude: 9.2308 },
-            { latitude: 45.4803, longitude: 9.2335 },
-          ],
-          userLocation
-        ),
-        tags: [
-          { label: "8.4 km", color: palette.accent.blue.surface, textColor: palette.accent.blue.base },
-          { label: "Maintenance", color: palette.accent.orange.surface, textColor: palette.accent.orange.base },
-          { label: "3 reports", color: palette.accent.red.surface, textColor: palette.accent.red.base },
-        ],
-      },
-    ])
+
+    try {
+      const [origin, dest] = await Promise.all([
+        geocodeAddress(startPoint),
+        geocodeAddress(destination),
+      ])
+
+      if (!origin || !dest) {
+        setErrorPopup({
+          visible: true,
+          title: "Location not found",
+          message: "Please check the address and try again.",
+        })
+        setResults([])
+        setResultsVisible(false)
+        return
+      }
+
+      const response = await searchPathsApi({
+        originLat: origin.lat,
+        originLng: origin.lng,
+        destLat: dest.lat,
+        destLng: dest.lng,
+      })
+      setResults(response.map((path) => mapSearchPathToResult(path, palette)))
+      setResultsVisible(true)
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to search paths. Please try again.")
+      setErrorPopup({
+        visible: true,
+        title: "Search Error",
+        message,
+      })
+      setResults([])
+      setResultsVisible(false)
+    } finally {
+      setIsSearching(false)
+    }
   }
 
   function handleSelectResult(result: SearchResult) {
@@ -183,6 +191,13 @@ export default function HomeScreen() {
     successTimerRef.current = setTimeout(() => {
       setSuccessPopupVisible(false)
     }, 2500)
+  }
+
+  function handleCloseErrorPopup() {
+    setErrorPopup((prev) => ({
+      ...prev,
+      visible: false,
+    }))
   }
 
   React.useEffect(() => {
@@ -379,7 +394,7 @@ export default function HomeScreen() {
               </View>
 
               <AppButton
-                title="Find Paths"
+                title={isSearching ? "Searching..." : "Find Paths"}
                 onPress={handleFindPaths}
                 buttonColor={palette.brand.base}
                 style={[
@@ -489,6 +504,21 @@ export default function HomeScreen() {
           textColor: palette.text.onAccent,
         }}
       />
+      <AppPopup
+        visible={errorPopup.visible}
+        title={errorPopup.title || "Error"}
+        message={errorPopup.message || "Unable to complete the request."}
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
+        onClose={handleCloseErrorPopup}
+        primaryButton={{
+          label: "OK",
+          variant: "primary",
+          onPress: handleCloseErrorPopup,
+          buttonColor: palette.status.danger,
+          textColor: palette.text.onAccent,
+        }}
+      />
       <CreatePathModal
         visible={isCreateModalVisible}
         onClose={() => setCreateModalVisible(false)}
@@ -534,6 +564,7 @@ function regionCenteredOnDestination(route: LatLng[]) {
 }
 
 type LatLng = { latitude: number; longitude: number }
+type ThemePalette = typeof Colors.light
 
 function regionAroundPoint(point: LatLng, delta = 0.01) {
   return {
@@ -542,20 +573,6 @@ function regionAroundPoint(point: LatLng, delta = 0.01) {
     latitudeDelta: delta,
     longitudeDelta: delta,
   }
-}
-
-function alignRouteToOrigin(template: LatLng[], origin?: LatLng | null) {
-  if (!origin || !template.length) {
-    return template
-  }
-
-  const deltaLat = origin.latitude - template[0].latitude
-  const deltaLng = origin.longitude - template[0].longitude
-
-  return template.map((point) => ({
-    latitude: point.latitude + deltaLat,
-    longitude: point.longitude + deltaLng,
-  }))
 }
 
 function formatAddress(address?: Location.LocationGeocodedAddress) {
@@ -567,6 +584,48 @@ function formatAddress(address?: Location.LocationGeocodedAddress) {
   const locality = address.city ?? address.subregion ?? address.region ?? ""
   const components = [streetLine, locality].filter((part) => part && part.trim().length)
   return components.join(", ")
+}
+
+function mapSearchPathToResult(path: UserPathSummary, palette: ThemePalette): SearchResult {
+  const tags: SearchResult["tags"] = []
+  const statusTag = buildStatusTag(path.status, palette)
+  if (statusTag) {
+    tags.push(statusTag)
+  }
+
+  return {
+    id: path.pathId,
+    title: path.title || "Untitled Path",
+    description: path.description?.trim() ? path.description : "No description available.",
+    tags,
+    route: [
+      { latitude: path.origin.lat, longitude: path.origin.lng },
+      { latitude: path.destination.lat, longitude: path.destination.lng },
+    ],
+  }
+}
+
+function buildStatusTag(
+  status: string | null | undefined,
+  palette: ThemePalette
+): SearchResult["tags"][number] | null {
+  if (!status) return null
+  const normalized = status.toUpperCase()
+
+  if (normalized === "OPTIMAL") {
+    return { label: "Optimal", color: palette.accent.green.surface, textColor: palette.accent.green.base }
+  }
+  if (normalized === "MEDIUM") {
+    return { label: "Medium", color: palette.accent.blue.surface, textColor: palette.accent.blue.base }
+  }
+  if (normalized === "SUFFICIENT") {
+    return { label: "Sufficient", color: palette.accent.orange.surface, textColor: palette.accent.orange.base }
+  }
+  if (normalized === "REQUIRES_MAINTENANCE") {
+    return { label: "Maintenance", color: palette.accent.red.surface, textColor: palette.accent.red.base }
+  }
+
+  return null
 }
 
 function findClosestPointIndex(route: LatLng[], position: LatLng) {
