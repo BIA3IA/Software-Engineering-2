@@ -1,5 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
-import { getJwtSecrets, sortSegmentsByChain } from "../../utils/index";
+import { getJwtSecrets, sortTripSegmentsByChain, sortPathSegmentsByChain } from "../../utils/index";
 
 describe("Testing getJwtSecrets function", () => {
 
@@ -43,7 +43,7 @@ describe("Testing getJwtSecrets function", () => {
 
 });
 
-describe("Testing sortSegmentsByChain function", () => {
+describe("Testing sortTripSegmentsByChain function", () => {
 
     test("Should return a single segment if there is only one segment", () => {
         const segments = [
@@ -54,16 +54,18 @@ describe("Testing sortSegmentsByChain function", () => {
                     segmentId: "seg1",
                     status: "active",
                     polylineCoordinates: [],
+                    createdAt: new Date(),
                 }
             }
         ];
 
-        const result = sortSegmentsByChain(segments);
+        const result = sortTripSegmentsByChain(segments);
         expect(result).toEqual(segments);
         expect(result.length).toBe(1);
     });
 
     test("Should return a sorted array of segments based on their nextSegmentId", () => {
+        const baseDate = new Date();
         const segments = [
             {
                 segmentId: "seg3",
@@ -72,6 +74,7 @@ describe("Testing sortSegmentsByChain function", () => {
                     segmentId: "seg3",
                     status: "active",
                     polylineCoordinates: [],
+                    createdAt: baseDate,
                 }
             },
             {
@@ -81,6 +84,7 @@ describe("Testing sortSegmentsByChain function", () => {
                     segmentId: "seg1",
                     status: "active",
                     polylineCoordinates: [],
+                    createdAt: baseDate,
                 }
             },
             {
@@ -90,11 +94,58 @@ describe("Testing sortSegmentsByChain function", () => {
                     segmentId: "seg2",
                     status: "active",
                     polylineCoordinates: [],
+                    createdAt: baseDate,
                 }
             }
         ];
 
-        const result = sortSegmentsByChain(segments);
+        const result = sortTripSegmentsByChain(segments);
+        
+        expect(result.length).toBe(3);
+        expect(result[0].segmentId).toBe("seg2");
+        expect(result[1].segmentId).toBe("seg3");
+        expect(result[2].segmentId).toBe("seg1");
+        expect(result[2].nextSegmentId).toBeNull();
+    });
+
+});
+
+describe("Testing sortPathSegmentsByChain function", () => {
+
+    test("Should return a single segment if there is only one segment", () => {
+        const segments = [
+            {
+                segmentId: "seg1",
+                nextSegmentId: null,
+                pathId: "path1",
+            }
+        ];
+
+        const result = sortPathSegmentsByChain(segments);
+        expect(result).toEqual(segments);
+        expect(result.length).toBe(1);
+    });
+
+    test("Should return a sorted array of segments based on their nextSegmentId", () => {
+        const segments = [
+            {
+                segmentId: "seg3",
+                nextSegmentId: "seg1",
+                pathId: "path1",
+            },
+            {
+                segmentId: "seg1",
+                nextSegmentId: null,
+                pathId: "path1",
+            },
+            {
+                segmentId: "seg2",
+                nextSegmentId: "seg3",
+                pathId: "path1",
+            }
+        ];
+
+        const result = sortPathSegmentsByChain(segments);
         
         expect(result.length).toBe(3);
         expect(result[0].segmentId).toBe("seg2");

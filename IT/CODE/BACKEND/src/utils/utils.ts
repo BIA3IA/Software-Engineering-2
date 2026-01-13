@@ -1,4 +1,4 @@
-import { TripSegments } from '../types/index';
+import { PathSegments, TripSegments } from '../types/index';
 
 // Utility function to get JWT secrets from environment variables
 export const getJwtSecrets = () => {
@@ -17,7 +17,7 @@ export const getJwtSecrets = () => {
 type TripSegmentItem = TripSegments['tripSegments'][number];
 
 // Sort tripSegments by following the nextSegmentId chain
-export function sortSegmentsByChain(segments: TripSegmentItem[]): TripSegmentItem[] {
+export function sortTripSegmentsByChain(segments: TripSegmentItem[]): TripSegmentItem[] {
     if (segments.length <= 1) {
         return segments;
     }
@@ -38,6 +38,42 @@ export function sortSegmentsByChain(segments: TripSegmentItem[]): TripSegmentIte
 
     // Follow the chain to push sorted segments
     const sortedSegments: TripSegmentItem[] = [];
+    while (currentSegment) {
+        sortedSegments.push(currentSegment);
+        if (currentSegment.nextSegmentId) {
+            currentSegment = segmentMap.get(currentSegment.nextSegmentId);
+        } else {
+            currentSegment = undefined;
+        }
+    }
+
+    return sortedSegments;
+}
+
+type PathSegmentItem = PathSegments['pathSegments'][number];
+
+// Sort pathSegments by following the nextSegmentId chain
+export function sortPathSegmentsByChain(segments: PathSegmentItem[]): PathSegmentItem[] {
+    if (segments.length <= 1) {
+        return segments;
+    }
+
+    const segmentMap = new Map(segments.map(seg => [seg.segmentId, seg]));
+
+    // Find the first segment (not referenced by any nextSegmentId)
+    const referencedSegmentIds = new Set(
+        segments.map(seg => seg.nextSegmentId)
+                .filter((id): id is string => id !== null)
+    );
+
+    let currentSegment = segments.find(seg => !referencedSegmentIds.has(seg.segmentId));
+
+    if (!currentSegment) {
+        return segments;
+    }
+
+    // Follow the chain to push sorted segments
+    const sortedSegments: PathSegmentItem[] = [];
     while (currentSegment) {
         sortedSegments.push(currentSegment);
         if (currentSegment.nextSegmentId) {

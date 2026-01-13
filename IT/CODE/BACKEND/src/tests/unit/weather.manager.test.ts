@@ -60,7 +60,8 @@ describe("Testing WeatherManager business logic", () => {
                             polylineCoordinates: [
                                 { lat: 45.4645, lng: 9.1880 },
                                 { lat: 45.4650, lng: 9.1870 }
-                            ]
+                            ],
+                            createdAt: new Date()
                         }
                     }
                 ]
@@ -142,7 +143,8 @@ describe("Testing WeatherManager business logic", () => {
                         segment: {
                             segmentId: "seg1",
                             status: "active",
-                            polylineCoordinates: [{ lat: 45.4645, lng: 9.1880 }]
+                            polylineCoordinates: [{ lat: 45.4645, lng: 9.1880 }],
+                            createdAt: new Date()
                         }
                     }
                 ]

@@ -4,4 +4,5 @@ export interface Segment {
     segmentId: string;
     status: string;
     polylineCoordinates: Coordinates[];
+    createdAt: Date;
 }
