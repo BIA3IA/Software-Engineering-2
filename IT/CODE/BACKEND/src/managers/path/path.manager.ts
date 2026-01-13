@@ -3,6 +3,7 @@ import { queryManager } from '../query/index.js';
 import { Coordinates, PathSegments } from '../../types/index.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import logger from '../../utils/logger';
+import { snapToRoad } from '../../services/osrm.service.js';
 
 const STATUS_SCORE_MAP = {
     OPTIMAL: 5,
@@ -378,6 +379,28 @@ export class PathManager {
                         createdAt: path.createdAt,
                         segmentCount: path.pathSegments.length,
                     })),
+                },
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Snap user drawn coordinates to nearest road using OSRM
+    async snapPath(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { coordinates } = req.body;
+
+            if (!coordinates || !Array.isArray(coordinates) || coordinates.length < 2) {
+                throw new BadRequestError('At least two coordinates are required', 'MISSING_COORDINATES');
+            }
+
+            const snapped = await snapToRoad(coordinates);
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    coordinates: snapped,
                 },
             });
         } catch (error) {

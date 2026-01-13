@@ -7,7 +7,17 @@ export type PathPoint = {
 
 export type PathSegment = {
   start: PathPoint
-  end: PathPoint 
+  end: PathPoint
+}
+
+export type SnapPathPayload = {
+  coordinates: PathPoint[]
+}
+
+type SnapPathResponse = {
+  data: {
+    coordinates: PathPoint[]
+  }
 }
 
 export type CreatePathPayload = {
@@ -59,6 +69,11 @@ export async function getMyPathsApi(): Promise<UserPathSummary[]> {
 export async function searchPathsApi(params: SearchPathsParams): Promise<UserPathSummary[]> {
   const res = await api.get<UserPathsResponse>(`${PATHS_BASE}/search`, { params })
   return res.data.data.paths
+}
+
+export async function snapPathApi(payload: SnapPathPayload): Promise<PathPoint[]> {
+  const res = await api.post<SnapPathResponse>(`${PATHS_BASE}/snap`, payload)
+  return res.data.data.coordinates
 }
 
 export async function deletePathApi(pathId: string): Promise<void> {

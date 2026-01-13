@@ -15,7 +15,7 @@ import { AppPopup } from "@/components/ui/AppPopup"
 import { AppButton } from "@/components/ui/AppButton"
 import { AlertTriangle, CheckCircle } from "lucide-react-native"
 import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
-import { createPathApi, type PathSegment } from "@/api/paths"
+import { createPathApi, snapPathApi, type PathPoint, type PathSegment } from "@/api/paths"
 import { getApiErrorMessage } from "@/utils/apiError"
 
 type LatLng = {
@@ -42,14 +42,21 @@ export default function CreatePathScreen() {
   const { setHidden: setNavHidden } = useBottomNavVisibility()
   const mapRef = React.useRef<MapView | null>(null)
   const [drawnRoute, setDrawnRoute] = React.useState<LatLng[]>([])
+  const [snappedRoute, setSnappedRoute] = React.useState<LatLng[]>([])
   const [userLocation, setUserLocation] = React.useState<LatLng | null>(null)
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
   const [isSaving, setIsSaving] = React.useState(false)
+  const [isSnapping, setIsSnapping] = React.useState(false)
   const [errorPopup, setErrorPopup] = React.useState({
     visible: false,
     title: "",
     message: "",
   })
+  const snapInFlightRef = React.useRef(false)
+  const pendingSnapRef = React.useRef<[LatLng, LatLng] | null>(null)
+  const lastSnapAtRef = React.useRef(0)
+  const lastSnappedIndexRef = React.useRef(0)
+  const snapTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const mapKey = userLocation
     ? `user-${userLocation.latitude.toFixed(5)}-${userLocation.longitude.toFixed(5)}`
     : "default"
@@ -132,13 +139,14 @@ export default function CreatePathScreen() {
     })
   }
 
-  const canSave = drawnRoute.length > 1
+  const activeRoute = snappedRoute.length > 1 ? snappedRoute : drawnRoute
+  const canSave = activeRoute.length > 1
 
   async function handleSavePath() {
-    if (!canSave || isSaving) return
+    if (!canSave || isSaving || isSnapping) return
     const title = typeof searchParams.name === "string" ? searchParams.name : "New Path"
     const description = typeof searchParams.description === "string" ? searchParams.description : undefined
-    const pathSegments = buildPathSegments(drawnRoute)
+    const pathSegments = buildPathSegments(activeRoute)
     if (!pathSegments.length) return
 
     setIsSaving(true)
@@ -174,6 +182,80 @@ export default function CreatePathScreen() {
     router.replace("/(main)/home")
   }
 
+  function queueSnapSegment(start: LatLng, end: LatLng) {
+    const now = Date.now()
+    const delay = Math.max(0, 350 - (now - lastSnapAtRef.current))
+
+    if (snapInFlightRef.current || delay > 0) {
+      pendingSnapRef.current = [start, end]
+      setIsSnapping(true)
+      if (delay > 0 && !snapTimerRef.current) {
+        snapTimerRef.current = setTimeout(() => {
+          snapTimerRef.current = null
+          const pending = pendingSnapRef.current
+          if (pending) {
+            pendingSnapRef.current = null
+            queueSnapSegment(pending[0], pending[1])
+          }
+        }, delay)
+      }
+      return
+    }
+    void snapSegment(start, end)
+  }
+
+  async function snapSegment(start: LatLng, end: LatLng) {
+    snapInFlightRef.current = true
+    lastSnapAtRef.current = Date.now()
+    setIsSnapping(true)
+
+    try {
+      const snapped = await snapPathApi({
+        coordinates: [toPathPoint(start), toPathPoint(end)],
+      })
+      const snappedLatLng = snapped.map(toLatLng)
+      if (!snappedLatLng.length) return
+
+      setSnappedRoute((prev) => mergeSnappedSegments(prev, snappedLatLng))
+    } catch (error) {
+      console.warn("Failed to snap segment", error)
+      setSnappedRoute((prev) => (prev.length ? prev : drawnRoute))
+    } finally {
+      snapInFlightRef.current = false
+      const pending = pendingSnapRef.current
+      pendingSnapRef.current = null
+      if (pending) {
+        queueSnapSegment(pending[0], pending[1])
+      } else {
+        setIsSnapping(false)
+      }
+    }
+  }
+
+  React.useEffect(() => {
+    if (drawnRoute.length <= 1) {
+      setSnappedRoute(drawnRoute)
+      lastSnappedIndexRef.current = drawnRoute.length
+      return
+    }
+
+    if (drawnRoute.length <= lastSnappedIndexRef.current) return
+
+    const start = drawnRoute[drawnRoute.length - 2]
+    const end = drawnRoute[drawnRoute.length - 1]
+    lastSnappedIndexRef.current = drawnRoute.length
+
+    queueSnapSegment(start, end)
+  }, [drawnRoute])
+
+  React.useEffect(() => {
+    return () => {
+      if (snapTimerRef.current) {
+        clearTimeout(snapTimerRef.current)
+      }
+    }
+  }, [])
+
   function handleErrorClose() {
     setErrorPopup((prev) => ({
       ...prev,
@@ -196,20 +278,20 @@ export default function CreatePathScreen() {
         onPress={handleMapPress}
         onPanDrag={handlePanDrag}
       >
-        {drawnRoute.length > 1 && (
-          <Polyline coordinates={drawnRoute} strokeColor={palette.brand.base} strokeWidth={4} />
+        {activeRoute.length > 1 && (
+          <Polyline coordinates={activeRoute} strokeColor={palette.brand.base} strokeWidth={4} />
         )}
-        {drawnRoute[0] && (
+        {activeRoute[0] && (
           <Circle
-            center={drawnRoute[0]}
+            center={activeRoute[0]}
             radius={18}
             strokeColor={palette.brand.base}
             fillColor={`${palette.brand.base}33`}
           />
         )}
-        {drawnRoute[drawnRoute.length - 1] && (
+        {activeRoute[activeRoute.length - 1] && (
           <Marker
-            coordinate={drawnRoute[drawnRoute.length - 1]}
+            coordinate={activeRoute[activeRoute.length - 1]}
             title="Current"
             pinColor={palette.brand.dark}
           />
@@ -240,7 +322,7 @@ export default function CreatePathScreen() {
       </View>
 
       <AppButton
-        title={isSaving ? "Saving Path..." : "Save Path"}
+        title={isSaving ? "Saving Path..." : isSnapping ? "Snapping..." : "Save Path"}
         onPress={handleSavePath}
         buttonColor={palette.brand.base}
         textColor={palette.text.onAccent}
@@ -303,6 +385,30 @@ function buildPathSegments(points: LatLng[]): PathSegment[] {
       end: { lat: next.latitude, lng: next.longitude },
     }
   })
+}
+
+function toPathPoint(point: LatLng): PathPoint {
+  return { lat: point.latitude, lng: point.longitude }
+}
+
+function toLatLng(point: PathPoint): LatLng {
+  return { latitude: point.lat, longitude: point.lng }
+}
+
+function mergeSnappedSegments(existing: LatLng[], segment: LatLng[]): LatLng[] {
+  if (!existing.length) return segment
+  if (!segment.length) return existing
+
+  const last = existing[existing.length - 1]
+  const first = segment[0]
+  if (isSamePoint(last, first)) {
+    return [...existing, ...segment.slice(1)]
+  }
+  return [...existing, ...segment]
+}
+
+function isSamePoint(a: LatLng, b: LatLng) {
+  return Math.abs(a.latitude - b.latitude) < 1e-6 && Math.abs(a.longitude - b.longitude) < 1e-6
 }
 
 const styles = StyleSheet.create({

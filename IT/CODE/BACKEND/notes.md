@@ -718,3 +718,109 @@ Because of this, Nginx is not included in the bbp-backend Docker Compose file.
 Instead, the backend is exposed through a shared Nginx reverse proxy, which acts as infrastructure and routes incoming requests to the correct internal service based on the requested domain.
 
 This separation keeps the backend lightweight, reusable, and independent from the HTTP/TLS layer.
+
+## OSRM Configuration & Deployment
+
+We use OSRM to snap user-drawn polylines to real roads (cycling profile). OSRM is a separate service from the
+backend API and must run on the server. The backend calls OSRM via HTTP using `OSRM_BASE_URL` and exposes
+`POST /api/v1/paths/snap`.
+
+### What OSRM does and why we chose it
+
+OSRM (Open Source Routing Machine) is an open-source routing engine built on OpenStreetMap data.
+In our app it is used to "snap" a freehand polyline to the nearest road network, so the path follows
+real streets instead of raw finger points.
+
+How it works in our flow:
+- the app collects raw points while the user draws
+- the backend sends those points to OSRM `/route` (cycling profile)
+- OSRM returns a road-following polyline
+- the backend returns snapped `{lat,lng}` points to the app
+- the app shows and saves the snapped path
+
+Why OSRM:
+- open-source and self-hostable
+- fast and reliable for routing/snapping at scale
+- uses OSM data and supports the cycling profile we need
+
+### 1) Server setup (OSRM service)
+
+Create a folder for OSRM data:
+
+```bash
+mkdir -p /opt/osrm
+cd /opt/osrm
+```
+
+Download the map data (example: Italy):
+
+```bash
+wget https://download.geofabrik.de/europe/italy-latest.osm.pbf
+```
+
+Create `/opt/osrm/docker-compose.yml`:
+
+```yaml
+version: "3.9"
+
+services:
+  osrm:
+    image: osrm/osrm-backend
+    container_name: osrm
+    volumes:
+      - /opt/osrm:/data
+    command: >
+      bash -c "
+      osrm-extract -p /opt/bicycle.lua /data/italy-latest.osm.pbf &&
+      osrm-partition /data/italy-latest.osrm &&
+      osrm-customize /data/italy-latest.osrm &&
+      osrm-routed --algorithm mld /data/italy-latest.osrm
+      "
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+```
+
+Start OSRM:
+
+```bash
+cd /opt/osrm
+docker compose up -d
+```
+
+Wait until extraction finishes (large datasets can take time). OSRM is ready when `.osrm` files are present:
+
+```bash
+ls -lh /opt/osrm | grep ".osrm"
+```
+
+Test OSRM directly:
+
+```bash
+curl "http://localhost:5000/route/v1/cycling/9.19,45.4642;9.21,45.466?overview=full&geometries=geojson"
+```
+
+### 2) Backend configuration
+
+Add to `/opt/bbp-backend/.env`:
+
+```bash
+OSRM_BASE_URL=http://localhost:5000
+```
+
+Rebuild backend:
+
+```bash
+cd /opt/bbp-backend
+docker compose build --no-cache
+docker compose up -d
+```
+
+### 3) Endpoint test (backend)
+
+```bash
+curl -X POST https://api.bia3ia.com/api/v1/paths/snap \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"coordinates":[{"lat":45.4642,"lng":9.19},{"lat":45.466,"lng":9.21}]}'
+```
