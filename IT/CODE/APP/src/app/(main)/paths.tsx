@@ -14,12 +14,11 @@ import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
 import { changePathVisibilityApi, deletePathApi, getMyPathsApi, type UserPathSummary } from "@/api/paths"
 import { getApiErrorMessage } from "@/utils/apiError"
 
-type SortOption = "date" | "distance" | "duration" | "alphabetical"
+type SortOption = "date" | "distance" | "alphabetical"
 
 const SORT_OPTIONS: { key: SortOption; label: string }[] = [
   { key: "date", label: "Date" },
   { key: "distance", label: "Distance" },
-  { key: "duration", label: "Duration" },
   { key: "alphabetical", label: "Alphabetical" },
 ]
 
@@ -84,8 +83,6 @@ export default function PathsScreen() {
       switch (sortOption) {
         case "distance":
           return b.distanceKm - a.distanceKm
-        case "duration":
-          return b.durationMin - a.durationMin
         case "alphabetical":
           return a.name.localeCompare(b.name)
         case "date":
