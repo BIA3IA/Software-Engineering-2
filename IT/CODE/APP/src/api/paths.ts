@@ -7,7 +7,7 @@ export type PathPoint = {
 
 export type PathSegment = {
   start: PathPoint
-  end: PathPoint
+  end: PathPoint 
 }
 
 export type CreatePathPayload = {
@@ -47,4 +47,12 @@ export async function createPathApi(payload: CreatePathPayload): Promise<void> {
 export async function getMyPathsApi(): Promise<UserPathSummary[]> {
   const res = await api.get<UserPathsResponse>(`${PATHS_BASE}/my-paths`)
   return res.data.data.paths
+}
+
+export async function deletePathApi(pathId: string): Promise<void> {
+  await api.delete(`${PATHS_BASE}/${pathId}`)
+}
+
+export async function changePathVisibilityApi(pathId: string, visibility: boolean): Promise<void> {
+  await api.patch(`${PATHS_BASE}/${pathId}/visibility`, { visibility })
 }

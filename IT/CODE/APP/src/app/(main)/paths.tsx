@@ -11,7 +11,7 @@ import { scale, verticalScale } from "@/theme/layout"
 import { iconSizes } from "@/theme/typography"
 import { AlertTriangle, Trash2, Eye, EyeOff } from "lucide-react-native"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
-import { getMyPathsApi, type UserPathSummary } from "@/api/paths"
+import { changePathVisibilityApi, deletePathApi, getMyPathsApi, type UserPathSummary } from "@/api/paths"
 import { getApiErrorMessage } from "@/utils/apiError"
 
 type SortOption = "date" | "distance" | "duration" | "alphabetical"
@@ -35,6 +35,8 @@ export default function PathsScreen() {
   const [isSortMenuVisible, setSortMenuVisible] = useState(false)
   const [sortOption, setSortOption] = useState<SortOption>("date")
   const [pendingDeletePath, setPendingDeletePath] = useState<RouteItem | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false)
   const [pendingVisibilityChange, setPendingVisibilityChange] = useState<{
     path: RouteItem
     target: "public" | "private"
@@ -114,16 +116,29 @@ export default function PathsScreen() {
     setPendingDeletePath(path)
   }
 
-  function handleConfirmDeletePath() {
-    if (!pendingDeletePath) return
-    setPaths((current) => current.filter((path) => path.id !== pendingDeletePath.id))
-    setExpandedPathId((current) =>
-      current === pendingDeletePath.id ? null : current
-    )
-    setPendingDeletePath(null)
+  async function handleConfirmDeletePath() {
+    if (!pendingDeletePath || isDeleting) return
+    const pathId = pendingDeletePath.id
+    setIsDeleting(true)
+    try {
+      await deletePathApi(pathId)
+      setPaths((current) => current.filter((path) => path.id !== pathId))
+      setExpandedPathId((current) => (current === pathId ? null : current))
+      setPendingDeletePath(null)
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to delete the path. Please try again.")
+      setErrorPopup({
+        visible: true,
+        title: "Delete failed",
+        message,
+      })
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   function handleCancelDeletePath() {
+    if (isDeleting) return
     setPendingDeletePath(null)
   }
 
@@ -132,20 +147,33 @@ export default function PathsScreen() {
     setPendingVisibilityChange({ path, target })
   }
 
-  function handleConfirmVisibilityChange() {
-    if (!pendingVisibilityChange) return
-
-    setPaths((current) =>
-      current.map((path) =>
-        path.id === pendingVisibilityChange.path.id
-          ? { ...path, visibility: pendingVisibilityChange.target }
-          : path
+  async function handleConfirmVisibilityChange() {
+    if (!pendingVisibilityChange || isUpdatingVisibility) return
+    const pathId = pendingVisibilityChange.path.id
+    const nextVisibility = pendingVisibilityChange.target === "public"
+    setIsUpdatingVisibility(true)
+    try {
+      await changePathVisibilityApi(pathId, nextVisibility)
+      setPaths((current) =>
+        current.map((path) =>
+          path.id === pathId ? { ...path, visibility: pendingVisibilityChange.target } : path
+        )
       )
-    )
-    setPendingVisibilityChange(null)
+      setPendingVisibilityChange(null)
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to change visibility. Please try again.")
+      setErrorPopup({
+        visible: true,
+        title: "Visibility update failed",
+        message,
+      })
+    } finally {
+      setIsUpdatingVisibility(false)
+    }
   }
 
   function handleCancelVisibilityChange() {
+    if (isUpdatingVisibility) return
     setPendingVisibilityChange(null)
   }
 
@@ -246,7 +274,7 @@ export default function PathsScreen() {
         iconBackgroundColor={`${palette.accent.red.surface}`}
         onClose={handleCancelDeletePath}
         primaryButton={{
-          label: "Yes, Delete",
+          label: isDeleting ? "Deleting..." : "Yes, Delete",
           variant: "destructive",
           onPress: handleConfirmDeletePath,
         }}
@@ -271,7 +299,7 @@ export default function PathsScreen() {
         iconBackgroundColor={visibilityIconBackground}
         onClose={handleCancelVisibilityChange}
         primaryButton={{
-          label: "Yes, Change",
+          label: isUpdatingVisibility ? "Updating..." : "Yes, Change",
           variant: "primary",
           onPress: handleConfirmVisibilityChange,
           buttonColor: visibilityPrimaryButtonColor,
