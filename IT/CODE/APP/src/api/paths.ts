@@ -49,10 +49,8 @@ type UserPathsResponse = {
 }
 
 export type SearchPathsParams = {
-  originLat: number
-  originLng: number
-  destLat: number
-  destLng: number
+  origin: string
+  destination: string
 }
 
 const PATHS_BASE = "/paths"

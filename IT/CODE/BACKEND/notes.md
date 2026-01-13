@@ -824,3 +824,18 @@ curl -X POST https://api.bia3ia.com/api/v1/paths/snap \
   -H "Content-Type: application/json" \
   -d '{"coordinates":[{"lat":45.4642,"lng":9.19},{"lat":45.466,"lng":9.21}]}'
 ```
+
+## Geocoding Service (Backend)
+
+Geocoding is handled on the server so the mobile app only sends plain-text addresses and remains simple.
+The backend resolves the addresses and then performs the search.
+
+How it works:
+- the app calls `GET /api/v1/paths/search?origin=...&destination=...`
+- the backend uses Nominatim to geocode both strings into `{lat,lng}`
+- the backend searches paths using the resolved coordinates and returns results
+
+Why server-side geocoding:
+- keeps the app "dumb" (no provider logic in the client)
+- easier to swap geocoding provider later
+- allows future caching and rate limiting in one place

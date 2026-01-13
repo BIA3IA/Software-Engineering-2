@@ -22,7 +22,6 @@ import { AppButton } from "@/components/ui/AppButton"
 import { useRouter } from "expo-router"
 import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
 import { type PrivacyPreference } from "@/constants/Privacy"
-import { geocodeAddress } from "@/api/geocoding"
 import { searchPathsApi, type UserPathSummary } from "@/api/paths"
 import { getApiErrorMessage } from "@/utils/apiError"
 
@@ -115,27 +114,9 @@ export default function HomeScreen() {
     setActiveTrip(null)
 
     try {
-      const [origin, dest] = await Promise.all([
-        geocodeAddress(startPoint),
-        geocodeAddress(destination),
-      ])
-
-      if (!origin || !dest) {
-        setErrorPopup({
-          visible: true,
-          title: "Location not found",
-          message: "Please check the address and try again.",
-        })
-        setResults([])
-        setResultsVisible(false)
-        return
-      }
-
       const response = await searchPathsApi({
-        originLat: origin.lat,
-        originLng: origin.lng,
-        destLat: dest.lat,
-        destLng: dest.lng,
+        origin: startPoint,
+        destination,
       })
       setResults(response.map((path) => mapSearchPathToResult(path, palette)))
       setResultsVisible(true)
