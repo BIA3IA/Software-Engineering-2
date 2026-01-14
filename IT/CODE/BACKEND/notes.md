@@ -817,7 +817,7 @@ If you change the dataset file name, you must also update the `osrm-routed` comm
 Add to `/opt/bbp-backend/.env`:
 
 ```bash
-OSRM_BASE_URL=http://localhost:5000
+OSRM_BASE_URL=http://osrm:5000
 ```
 
 Rebuild backend:
@@ -836,6 +836,21 @@ curl -X POST https://api.bia3ia.com/api/v1/paths/snap \
   -H "Content-Type: application/json" \
   -d '{"coordinates":[{"lat":45.4642,"lng":9.19},{"lat":45.466,"lng":9.21}]}'
 ```
+
+## Haversine Distance (Utilities)
+
+We use the Haversine formula to measure real distance between two coordinates on Earth.
+The utility lives in `src/utils/geo.ts` and exposes:
+- `haversineDistanceKm(from, to)` for kilometers
+- `haversineDistanceMeters(from, to)` for meters
+
+Where it is used:
+- Weather sampling (`src/services/openmeteo.service.ts`): the route is sampled by distance in km, so we can
+  decide how many weather points to fetch without overloading the API.
+- Path search (`src/managers/query/query.manager.ts`): we compute the distance between the search origin/destination
+  and each stored path, then filter out far results even if they are within the coarse tolerance box.
+
+This keeps the behavior consistent and avoids returning unrelated paths just because they are in the same neighborhood.
 
 ## Geocoding Service (Backend)
 
