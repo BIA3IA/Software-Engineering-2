@@ -1,0 +1,1 @@
+export { tripManager } from './trip.manager.js';

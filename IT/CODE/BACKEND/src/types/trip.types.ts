@@ -15,7 +15,7 @@ export interface Trip {
     finishedAt: Date;
     origin: Coordinates;
     destination: Coordinates;
-    statistics: TripStatistics;
+    statistics: TripStatistics | null;
     weather: WeatherData | null;
 }
 

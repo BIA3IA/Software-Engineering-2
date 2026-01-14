@@ -1,5 +1,6 @@
+import { Prisma } from "@prisma/client";
 import { sortTripSegmentsByChain, sortPathSegmentsByChain, prisma } from "../../utils/index.js";
-import { TripSegments, WeatherData, PathSegments, Coordinates} from "../../types/index.js";
+import { TripSegments, TripStatistics, WeatherData, PathSegments, Coordinates } from "../../types/index.js";
 import { haversineDistanceMeters } from "../../utils/geo.js";
 
 
@@ -106,6 +107,66 @@ export class QueryManager {
             ...trip,
             tripSegments: sortTripSegmentsByChain(trip.tripSegments),
         };
+    }
+
+    // create trip
+    async createTrip(
+        userId: string,
+        origin: Coordinates,
+        destination: Coordinates,
+        startedAt: Date,
+        finishedAt: Date,
+        statistics: TripStatistics | null,
+        tripSegments: Array<{ segmentId: string; nextSegmentId: string | null }>
+    ) {
+        return await prisma.trip.create({
+            data: {
+                userId,
+                origin,
+                destination,
+                startedAt,
+                finishedAt,
+                statistics: statistics ?? Prisma.JsonNull,
+                tripSegments: {
+                    create: tripSegments.map(seg => ({
+                        segmentId: seg.segmentId,
+                        nextSegmentId: seg.nextSegmentId,
+                    })),
+                },
+            },
+            include: {
+                tripSegments: {
+                    include: { segment: true },
+                },
+            },
+        });
+    }
+
+    // get trips by user id
+    async getTripsByUserId(userId: string): Promise<TripSegments[]> {
+        const trips = await prisma.trip.findMany({
+            where: { userId },
+            include: {
+                tripSegments: {
+                    include: { segment: true },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+
+        return trips.map(trip => ({
+            ...trip,
+            tripSegments: sortTripSegmentsByChain(trip.tripSegments),
+        }));
+    }
+
+    // delete trip by id
+    async deleteTripById(tripId: string) {
+        return await prisma.trip.delete({
+            where: { tripId },
+        });
     }
 
     // WEATHER
@@ -307,6 +368,31 @@ export class QueryManager {
             data: {
                 status,
                 polylineCoordinates,
+            },
+        });
+    }
+
+    // create segment with provided id
+    async createSegmentWithId(segmentId: string, status: string, polylineCoordinates: Coordinates[]) {
+        return await prisma.segment.create({
+            data: {
+                segmentId,
+                status,
+                polylineCoordinates,
+            },
+        });
+    }
+
+    // get segments by ids
+    async getSegmentsByIds(segmentIds: string[]) {
+        return await prisma.segment.findMany({
+            where: {
+                segmentId: {
+                    in: segmentIds,
+                },
+            },
+            select: {
+                segmentId: true,
             },
         });
     }
