@@ -26,7 +26,7 @@ jest.mock("@/components/ui/SelectField", () => {
 })
 
 describe("create path modal integration", () => {
-    test("validation blocks submit and shows error on short name", async () => {
+    test("validation blocks submit and shows field errors", async () => {
         const onSubmit = jest.fn()
 
         const { getByPlaceholderText, getByText, findByText } = render(
@@ -39,9 +39,12 @@ describe("create path modal integration", () => {
         )
 
         fireEvent.changeText(getByPlaceholderText("Path name"), "ab")
+        fireEvent.changeText(getByPlaceholderText("Describe the path"), "a".repeat(281))
         fireEvent.press(getByText("Start Creating"))
 
         expect(await findByText("Path name must be at least 3 characters.")).toBeTruthy()
+        expect(await findByText("Description must be 280 characters or less.")).toBeTruthy()
+
         expect(onSubmit).not.toHaveBeenCalled()
     })
 

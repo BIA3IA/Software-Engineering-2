@@ -34,6 +34,7 @@ export type UserPathSummary = {
   description?: string | null
   status: string
   score: number | null
+  distanceKm?: number
   visibility: boolean
   origin: PathPoint
   destination: PathPoint

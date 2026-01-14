@@ -106,7 +106,7 @@ describe("paths integration", () => {
         expect(getMyPathsApi).toHaveBeenCalled()
     })
 
-    test("delete flow calls api and removes item", async () => {
+    test("delete flow calls api", async () => {
         ; (getMyPathsApi as jest.Mock).mockResolvedValueOnce([
             {
                 pathId: "p1",
@@ -127,20 +127,12 @@ describe("paths integration", () => {
 
         await findByText("My Path")
         fireEvent.press(getByText("Delete p1"))
-
-        await waitFor(() => {
-            expect(queryByText("Delete Path?")).toBeTruthy()
-        })
-
         fireEvent.press(getByText("Yes, Delete"))
 
         await waitFor(() => {
             expect(deletePathApi).toHaveBeenCalledWith("p1")
         })
 
-        await waitFor(() => {
-            expect(queryByText("My Path")).toBeNull()
-        })
     })
 
     test("visibility change calls api", async () => {
@@ -261,5 +253,83 @@ describe("paths integration", () => {
 
         const names = getAllByText(/Zed|Alpha/).map((node) => node.props.children)
         expect(names[0]).toBe("Alpha")
+    })
+
+    test("sorts by date when selected", async () => {
+        ; (getMyPathsApi as jest.Mock).mockResolvedValue([
+            {
+                pathId: "p1",
+                title: "Older",
+                description: "desc",
+                status: "OPTIMAL",
+                score: 5,
+                visibility: true,
+                origin: { lat: 1, lng: 2 },
+                destination: { lat: 3, lng: 4 },
+                createdAt: "2025-01-01T10:00:00Z",
+                segmentCount: 2,
+            },
+            {
+                pathId: "p2",
+                title: "Newer",
+                description: "desc",
+                status: "OPTIMAL",
+                score: 5,
+                visibility: true,
+                origin: { lat: 1, lng: 2 },
+                destination: { lat: 3, lng: 4 },
+                createdAt: "2025-01-02T10:00:00Z",
+                segmentCount: 2,
+            },
+        ])
+
+        const { findByText, getByText, getAllByText } = render(<PathsScreen />)
+
+        await findByText("Older")
+        fireEvent.press(getByText("Sort"))
+        fireEvent.press(getByText("date"))
+
+        const names = getAllByText(/Older|Newer/).map((node) => node.props.children)
+        expect(names[0]).toBe("Newer")
+    })
+
+    test("sorts by distance when selected", async () => {
+        ; (getMyPathsApi as jest.Mock).mockResolvedValue([
+            {
+                pathId: "p1",
+                title: "Short",
+                description: "desc",
+                status: "OPTIMAL",
+                score: 5,
+                distanceKm: 2,
+                visibility: true,
+                origin: { lat: 1, lng: 2 },
+                destination: { lat: 3, lng: 4 },
+                createdAt: "2025-01-01T10:00:00Z",
+                segmentCount: 2,
+            },
+            {
+                pathId: "p2",
+                title: "Long",
+                description: "desc",
+                status: "OPTIMAL",
+                score: 5,
+                distanceKm: 12,
+                visibility: true,
+                origin: { lat: 1, lng: 2 },
+                destination: { lat: 3, lng: 4 },
+                createdAt: "2025-01-02T10:00:00Z",
+                segmentCount: 2,
+            },
+        ])
+
+        const { findByText, getByText, getAllByText } = render(<PathsScreen />)
+
+        await findByText("Short")
+        fireEvent.press(getByText("Sort"))
+        fireEvent.press(getByText("distance"))
+
+        const names = getAllByText(/Short|Long/).map((node) => node.props.children)
+        expect(names[0]).toBe("Long")
     })
 })

@@ -334,7 +334,7 @@ function mapPathSummaryToRouteItem(path: UserPathSummary): RouteItem {
     id: path.pathId,
     name: path.title || "Untitled Path",
     description: path.description ?? undefined,
-    distanceKm: 0,
+    distanceKm: path.distanceKm ?? 0,
     durationMin: 0,
     date: formatDate(path.createdAt),
     avgSpeed: 0,
