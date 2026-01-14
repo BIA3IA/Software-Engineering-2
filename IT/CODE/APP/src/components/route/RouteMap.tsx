@@ -123,7 +123,7 @@ export function RouteMap({
             {route.length > 1 && (
               <Polyline
                 coordinates={route}
-                strokeWidth={4}
+                strokeWidth={10}
                 strokeColor={palette.brand.dark}
               />
             )}

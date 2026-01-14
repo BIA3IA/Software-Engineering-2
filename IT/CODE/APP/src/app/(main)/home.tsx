@@ -108,6 +108,8 @@ export default function HomeScreen() {
     if (!startPoint.trim() || !destination.trim() || isSearching) {
       return
     }
+    const originQuery = startPoint.trim()
+    const destinationQuery = destination.trim()
     setIsSearching(true)
     setResultsVisible(false)
     setSelectedResult(null)
@@ -115,8 +117,8 @@ export default function HomeScreen() {
 
     try {
       const response = await searchPathsApi({
-        origin: startPoint,
-        destination,
+        origin: originQuery,
+        destination: destinationQuery,
       })
       setResults(response.map((path) => mapSearchPathToResult(path, palette)))
       setResultsVisible(true)
@@ -144,6 +146,12 @@ export default function HomeScreen() {
     setActiveTrip(result)
     setResultsVisible(false)
     console.log("Start trip for", result.id)
+  }
+
+  function handleCloseResults() {
+    setResultsVisible(false)
+    setSelectedResult(null)
+    setActiveTrip(null)
   }
 
   function handleCompleteTrip() {
@@ -321,10 +329,10 @@ export default function HomeScreen() {
           showsMyLocationButton={false}
         >
           {hasActiveNavigation && traversedRoute.length > 1 && (
-            <Polyline coordinates={traversedRoute} strokeColor={palette.border.default} strokeWidth={4} />
+            <Polyline coordinates={traversedRoute} strokeColor={palette.border.default} strokeWidth={10} />
           )}
           {upcomingRoute.length > 1 && (
-            <Polyline coordinates={upcomingRoute} strokeColor={palette.brand.dark} strokeWidth={4} />
+            <Polyline coordinates={upcomingRoute} strokeColor={palette.brand.dark} strokeWidth={10} />
           )}
           {startRoutePoint && (
             <Circle
@@ -407,7 +415,7 @@ export default function HomeScreen() {
               visible={resultsVisible}
               results={results}
               topOffset={insets.top + verticalScale(16)}
-              onClose={() => setResultsVisible(false)}
+              onClose={handleCloseResults}
               selectedResultId={selectedResult?.id ?? null}
               onSelectResult={handleSelectResult}
               onActionPress={handleStartTrip}
