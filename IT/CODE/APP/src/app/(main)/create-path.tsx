@@ -41,6 +41,7 @@ export default function CreatePathScreen() {
   const { setHidden: setNavHidden } = useBottomNavVisibility()
   const mapRef = React.useRef<MapView | null>(null)
   const [drawnRoute, setDrawnRoute] = React.useState<LatLng[]>([])
+  const drawnRouteRef = React.useRef<LatLng[]>([])
   const [snappedSegments, setSnappedSegments] = React.useState<LatLng[][]>([])
   const [userLocation, setUserLocation] = React.useState<LatLng | null>(null)
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
@@ -58,6 +59,8 @@ export default function CreatePathScreen() {
   const lastSnappedIndexRef = React.useRef(0)
   const snapTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const snapVersionRef = React.useRef(0)
+  const strokeStartRef = React.useRef<number | null>(null)
+  const strokeBreaksRef = React.useRef<number[]>([])
   const mapKey = userLocation
     ? `user-${userLocation.latitude.toFixed(5)}-${userLocation.longitude.toFixed(5)}`
     : "default"
@@ -68,6 +71,10 @@ export default function CreatePathScreen() {
       setNavHidden(false)
     }
   }, [setNavHidden])
+
+  React.useEffect(() => {
+    drawnRouteRef.current = drawnRoute
+  }, [drawnRoute])
 
   React.useEffect(() => {
     let cancelled = false
@@ -126,7 +133,11 @@ export default function CreatePathScreen() {
     if (!isDrawMode) return
     const coordinate = event?.nativeEvent?.coordinate
     if (!coordinate) return
-    setDrawnRoute((prev) => [...prev, coordinate])
+    setDrawnRoute((prev) => {
+      const next = [...prev, coordinate]
+      drawnRouteRef.current = next
+      return next
+    })
   }
 
   function handlePanDrag(event: any) {
@@ -138,7 +149,9 @@ export default function CreatePathScreen() {
       if (last && last.latitude === coordinate.latitude && last.longitude === coordinate.longitude) {
         return prev
       }
-      return [...prev, coordinate]
+      const next = [...prev, coordinate]
+      drawnRouteRef.current = next
+      return next
     })
   }
 
@@ -185,16 +198,39 @@ export default function CreatePathScreen() {
     router.replace("/(main)/home")
   }
 
+  function beginStroke() {
+    if (!isDrawMode) return
+    if (strokeStartRef.current === null) {
+      strokeStartRef.current = drawnRouteRef.current.length
+    }
+  }
+
+  function endStroke() {
+    if (!isDrawMode) return
+    if (strokeStartRef.current === null) return
+    const startIndex = strokeStartRef.current
+    strokeStartRef.current = null
+    if (drawnRouteRef.current.length > startIndex) {
+      strokeBreaksRef.current.push(startIndex)
+    }
+  }
+
   function handleUndo() {
     snapVersionRef.current += 1
     pendingSnapRef.current = null
+    const breaks = strokeBreaksRef.current
+    const targetLength = breaks.length ? (breaks.pop() as number) : Math.max(0, drawnRouteRef.current.length - 1)
     setDrawnRoute((prev) => {
       if (!prev.length) return prev
-      const next = prev.slice(0, -1)
+      const next = prev.slice(0, targetLength)
+      drawnRouteRef.current = next
       lastSnappedIndexRef.current = next.length
       return next
     })
-    setSnappedSegments((prev) => (prev.length ? prev.slice(0, -1) : prev))
+    setSnappedSegments((prev) => {
+      const keepCount = Math.max(0, Math.min(prev.length, targetLength - 1))
+      return prev.slice(0, keepCount)
+    })
   }
 
   function queueSnapSegment(start: LatLng, end: LatLng) {
@@ -294,13 +330,16 @@ export default function CreatePathScreen() {
         showsMyLocationButton={false}
         onPress={handleMapPress}
         onPanDrag={handlePanDrag}
+        onTouchStart={beginStroke}
+        onTouchEnd={endStroke}
+        onTouchCancel={endStroke}
         scrollEnabled={!isDrawMode}
         zoomEnabled={!isDrawMode}
         rotateEnabled={!isDrawMode}
         pitchEnabled={!isDrawMode}
       >
         {activeRoute.length > 1 && (
-          <Polyline coordinates={activeRoute} strokeColor={palette.brand.base} strokeWidth={4} />
+          <Polyline coordinates={activeRoute} strokeColor={palette.brand.base} strokeWidth={10} />
         )}
         {activeRoute[0] && (
           <Circle

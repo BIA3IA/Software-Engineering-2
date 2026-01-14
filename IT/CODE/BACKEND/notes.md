@@ -745,6 +745,9 @@ Why OSRM:
 
 ### 1) Server setup (OSRM service)
 
+We host OSRM as a separate container and keep the dataset as small as possible. For Pavia + Milano we use a
+custom extract from the "nord-ovest" region.
+
 Create a folder for OSRM data:
 
 ```bash
@@ -752,13 +755,25 @@ mkdir -p /opt/osrm
 cd /opt/osrm
 ```
 
-Download the map data (example: Italy):
+Download the regional map and create a small extract (bbox around Milano + Pavia):
 
 ```bash
-wget https://download.geofabrik.de/europe/italy-latest.osm.pbf
+sudo apt-get update && sudo apt-get install -y osmium-tool
+
+curl -L -o nord-ovest-latest.osm.pbf https://download.geofabrik.de/europe/italy/nord-ovest-latest.osm.pbf
+osmium extract -b 8.85,45.05,9.55,45.75 -o pavia-milano.osm.pbf nord-ovest-latest.osm.pbf
+rm -f nord-ovest-latest.osm.pbf
 ```
 
-Create `/opt/osrm/docker-compose.yml`:
+Preprocess the extract (this generates the `.osrm` files):
+
+```bash
+docker compose run --rm osrm osrm-extract -p /opt/bicycle.lua /data/pavia-milano.osm.pbf
+docker compose run --rm osrm osrm-partition /data/pavia-milano.osrm
+docker compose run --rm osrm osrm-customize /data/pavia-milano.osrm
+```
+
+Create `/opt/osrm/docker-compose.yml` (note the dataset name):
 
 ```yaml
 version: "3.9"
@@ -770,12 +785,7 @@ services:
     volumes:
       - /opt/osrm:/data
     command: >
-      bash -c "
-      osrm-extract -p /opt/bicycle.lua /data/italy-latest.osm.pbf &&
-      osrm-partition /data/italy-latest.osrm &&
-      osrm-customize /data/italy-latest.osrm &&
-      osrm-routed --algorithm mld /data/italy-latest.osrm
-      "
+      osrm-routed --algorithm mld /data/pavia-milano.osrm
     ports:
       - "5000:5000"
     restart: unless-stopped
@@ -785,13 +795,13 @@ Start OSRM:
 
 ```bash
 cd /opt/osrm
-docker compose up -d
+docker compose up -d osrm
 ```
 
-Wait until extraction finishes (large datasets can take time). OSRM is ready when `.osrm` files are present:
+OSRM is ready when `.osrm` files exist for the dataset you configured:
 
 ```bash
-ls -lh /opt/osrm | grep ".osrm"
+ls -lh /opt/osrm | grep "pavia-milano.osrm"
 ```
 
 Test OSRM directly:
@@ -799,6 +809,8 @@ Test OSRM directly:
 ```bash
 curl "http://localhost:5000/route/v1/cycling/9.19,45.4642;9.21,45.466?overview=full&geometries=geojson"
 ```
+
+If you change the dataset file name, you must also update the `osrm-routed` command in the compose file.
 
 ### 2) Backend configuration
 
