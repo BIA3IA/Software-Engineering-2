@@ -23,6 +23,7 @@ const usernameSchema = z
 
 const confirmSchema = z
   .string()
+  .trim()
   .min(8, "Please confirm your password.")
 
 export const loginSchema = z.object({
@@ -50,9 +51,24 @@ export const editProfileSchema = z
   .object({
     username: usernameSchema,
     email: emailSchema,
-    currentPassword: z.string().optional(),
-    newPassword: z.string().optional(),
-    confirmNewPassword: z.string().optional(),
+    currentPassword: z
+      .string()
+      .refine((value) => value === "" || value.trim().length > 0, {
+        message: "Current password cannot be only whitespace.",
+      })
+      .optional(),
+    newPassword: z
+      .string()
+      .refine((value) => value === "" || value.trim().length > 0, {
+        message: "New password cannot be only whitespace.",
+      })
+      .optional(),
+    confirmNewPassword: z
+      .string()
+      .refine((value) => value === "" || value.trim().length > 0, {
+        message: "Confirm password cannot be only whitespace.",
+      })
+      .optional(),
   })
   .superRefine((data, ctx) => {
     const wantsChange =
