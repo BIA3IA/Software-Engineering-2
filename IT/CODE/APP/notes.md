@@ -88,6 +88,15 @@ Additional assets such as `logo.png` or `map-marker.png` can be added here and i
 - `authSession.ts` - in-memory tokens + listener for session changes.
 - `storage.ts` - Zustand store connecting SecureStore, APIs, and UI (init, login, logout, fetch profile, update profile, guest mode).
 
+## Zustand usage
+
+Zustand is a lightweight global state container for React. We use it to store app-wide state (auth/session, user data, and cross-screen UI selections) and expose it through hooks like `useAuthStore`.
+
+In BBP:
+- `IT/CODE/APP/src/auth/storage.ts` is the main store: handles login/logout, session init, user profile, and bridges SecureStore with the UI.
+- `IT/CODE/APP/src/hooks/useTripLaunchSelection.ts` shares the selected path between Path Library and Home.
+- `IT/CODE/APP/src/hooks/usePrivacyPreference.ts` persists the user's default visibility preference.
+
 ### validation/
 - `auth.ts` - Zod schemas + types for login, signup, and edit-profile flows.
 - `path.ts` - schema for create-path modal.
