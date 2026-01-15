@@ -52,7 +52,6 @@ export default function TripHistoryScreen() {
       try {
         const response = await getMyTripsApi()
         if (!isActive) return
-        console.log("trips api response", JSON.stringify(response, null, 2))
         setTrips(response.map(mapTripSummaryToRouteItem))
         if (response.length === 0) {
           setEmptyMessage("Your Trip History is empty.\nStart recording trips to see them here.")

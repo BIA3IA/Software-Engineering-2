@@ -26,12 +26,14 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RequestConfigWithRetry | undefined
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if ((error.response?.status === 401 || error.response?.status === 403) && originalRequest && !originalRequest._retry) {
+      console.warn("api: attempting refresh")
       originalRequest._retry = true
       originalRequest.headers = originalRequest.headers ?? {}
 
       const newToken = await refreshAccessToken()
       if (newToken) {
+        console.log("api: refresh succeeded, retrying request")
         originalRequest.headers.Authorization = `Bearer ${newToken}`
         return api(originalRequest)
       }

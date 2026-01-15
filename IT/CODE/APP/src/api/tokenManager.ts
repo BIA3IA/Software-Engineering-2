@@ -24,7 +24,10 @@ function getRefreshClient() {
 
 export async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = getRefreshToken()
-  if (!refreshToken) return null
+  if (!refreshToken) {
+    console.warn("refreshAccessToken: missing refresh token")
+    return null
+  }
 
   if (!refreshPromise) {
     const client = getRefreshClient()
@@ -33,7 +36,8 @@ export async function refreshAccessToken(): Promise<string | null> {
       setSession(res.data.tokens)
       return res.data.tokens.accessToken
     })()
-      .catch(() => {
+      .catch((error) => {
+        console.warn("refreshAccessToken: failed, clearing session", error)
         clearSession()
         return null
       })
