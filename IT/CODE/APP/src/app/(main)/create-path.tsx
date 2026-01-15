@@ -175,7 +175,6 @@ export default function CreatePathScreen() {
         description,
         pathSegments,
       })
-      console.log("Path saved successfully")
       setSuccessPopupVisible(true)
     } catch (error) {
       const message = getApiErrorMessage(error, "Unable to save the path. Please try again.")

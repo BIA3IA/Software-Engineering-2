@@ -42,7 +42,7 @@ export function SearchResultsSheet({
   maxHeight = verticalScale(260),
   selectedResultId = null,
   onSelectResult,
-  actionLabel = "Start Trip",
+  actionLabel,
   onActionPress,
 }: SearchResultsSheetProps) {
   const scheme = useColorScheme() ?? "light"

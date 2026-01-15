@@ -67,7 +67,6 @@ export async function signupApi(
   systemPreferences: string[] = []
 ): Promise<{ user: User; tokens: AuthTokens }> {
   await api.post(`${USERS_BASE}/register`, { username, email, password, systemPreferences })
-  console.log("User registered successfully")
   return loginApi(email, password)
 }
 

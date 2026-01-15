@@ -22,9 +22,14 @@ import { AppButton } from "@/components/ui/AppButton"
 import { useRouter } from "expo-router"
 import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
 import { type PrivacyPreference } from "@/constants/Privacy"
-import { searchPathsApi, type UserPathSummary } from "@/api/paths"
+import { searchPathsApi } from "@/api/paths"
 import { createTripApi } from "@/api/trips"
 import { getApiErrorMessage } from "@/utils/apiError"
+import { useTripLaunchSelection, useSetTripLaunchSelection } from "@/hooks/useTripLaunchSelection"
+import { buildRouteFromLatLngSegments } from "@/utils/routes"
+import { mapUserPathSummaryToSearchResult } from "@/utils/pathMappers"
+import { findClosestPointIndex, normalizeSearchResult, regionAroundPoint, regionCenteredOnDestination } from "@/utils/map"
+import { isNearOrigin } from "@/utils/geo"
 
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -36,6 +41,8 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const { setHidden: setNavHidden } = useBottomNavVisibility()
   const defaultVisibility = usePrivacyPreference()
+  const tripLaunchSelection = useTripLaunchSelection()
+  const setTripLaunchSelection = useSetTripLaunchSelection()
   const [startPoint, setStartPoint] = React.useState("")
   const [destination, setDestination] = React.useState("")
   const [resultsVisible, setResultsVisible] = React.useState(false)
@@ -59,12 +66,26 @@ export default function HomeScreen() {
     message: "",
   })
 
+  const START_TRIP_DISTANCE_METERS = 100
+
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const displayRoute = (activeTrip?.route ?? selectedResult?.route) ?? []
   const destinationPoint = displayRoute[displayRoute.length - 1]
   const startRoutePoint = displayRoute[0]
   const hasActiveNavigation = Boolean(activeTrip && activeTrip.route.length > 0)
+  const canStartSelectedTrip =
+    !activeTrip &&
+    Boolean(
+      selectedResult &&
+        userLocation &&
+        startRoutePoint &&
+        isNearOrigin(
+          { lat: startRoutePoint.latitude, lng: startRoutePoint.longitude },
+          userLocation,
+          START_TRIP_DISTANCE_METERS
+        )
+    )
 
   const routeProgressIndex = React.useMemo(() => {
     if (!activeTrip || !userLocation) return null
@@ -123,7 +144,7 @@ export default function HomeScreen() {
         origin: originQuery,
         destination: destinationQuery,
       })
-      setResults(response.map((path) => mapSearchPathToResult(path, palette)))
+      setResults(response.map((path) => mapUserPathSummaryToSearchResult(path, palette)))
       setResultsVisible(true)
     } catch (error) {
       const message = getApiErrorMessage(error, "Unable to search paths. Please try again.")
@@ -140,14 +161,16 @@ export default function HomeScreen() {
   }
 
   function handleSelectResult(result: SearchResult) {
-    setSelectedResult(result)
+    const normalized = normalizeSearchResult(result, buildRouteFromLatLngSegments)
+    setSelectedResult(normalized)
     setActiveTrip(null)
     setActiveTripStartedAt(null)
   }
 
   async function handleStartTrip(result: SearchResult) {
-    setSelectedResult(result)
-    setActiveTrip(result)
+    const normalized = normalizeSearchResult(result, buildRouteFromLatLngSegments)
+    setSelectedResult(normalized)
+    setActiveTrip(normalized)
     setActiveTripStartedAt(new Date())
     setResultsVisible(false)
     if (isGuest) {
@@ -246,7 +269,6 @@ export default function HomeScreen() {
   }
 
   function handleSubmitReport(values: { condition: string; obstacle: string }) {
-    console.log("Report issue", values)
     setReportVisible(false)
     setSuccessPopupVisible(true)
 
@@ -274,6 +296,15 @@ export default function HomeScreen() {
     }
   }, [])
 
+
+  React.useEffect(() => {
+    if (!tripLaunchSelection) return
+    setSelectedResult(tripLaunchSelection)
+    setActiveTrip(tripLaunchSelection)
+    setActiveTripStartedAt(new Date())
+    setResultsVisible(false)
+    setTripLaunchSelection(null)
+  }, [tripLaunchSelection, setTripLaunchSelection])
 
   React.useEffect(() => {
     let cancelled = false
@@ -495,7 +526,8 @@ export default function HomeScreen() {
               onClose={handleCloseResults}
               selectedResultId={selectedResult?.id ?? null}
               onSelectResult={handleSelectResult}
-              onActionPress={handleStartTrip}
+              actionLabel={canStartSelectedTrip ? "Start Trip" : undefined}
+              onActionPress={canStartSelectedTrip ? handleStartTrip : undefined}
             />
           </>
         )}
@@ -626,50 +658,7 @@ export default function HomeScreen() {
   )
 }
 
-function regionCenteredOnDestination(route: LatLng[]) {
-  if (!route.length) {
-    return {
-      latitude: 45.478,
-      longitude: 9.227,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    }
-  }
-
-  const destination = route[route.length - 1]
-  let minLat = route[0].latitude
-  let maxLat = route[0].latitude
-  let minLng = route[0].longitude
-  let maxLng = route[0].longitude
-
-  for (const point of route) {
-    minLat = Math.min(minLat, point.latitude)
-    maxLat = Math.max(maxLat, point.latitude)
-    minLng = Math.min(minLng, point.longitude)
-    maxLng = Math.max(maxLng, point.longitude)
-  }
-
-  const latDelta = Math.max(0.01, (maxLat - minLat) * 2.4)
-  const lngDelta = Math.max(0.01, (maxLng - minLng) * 2.4)
-
-  return {
-    latitude: destination.latitude,
-    longitude: destination.longitude,
-    latitudeDelta: latDelta,
-    longitudeDelta: lngDelta,
-  }
-}
-
 type LatLng = { latitude: number; longitude: number }
-type ThemePalette = typeof Colors.light
-function regionAroundPoint(point: LatLng, delta = 0.01) {
-  return {
-    latitude: point.latitude,
-    longitude: point.longitude,
-    latitudeDelta: delta,
-    longitudeDelta: delta,
-  }
-}
 
 function formatAddress(address?: Location.LocationGeocodedAddress) {
   if (!address) return ""
@@ -682,74 +671,6 @@ function formatAddress(address?: Location.LocationGeocodedAddress) {
   return components.join(", ")
 }
 
-function mapSearchPathToResult(path: UserPathSummary, palette: ThemePalette): SearchResult {
-  const tags: SearchResult["tags"] = []
-  const statusTag = buildStatusTag(path.status, palette)
-  if (statusTag) {
-    tags.push(statusTag)
-  }
-
-  const pathSegments = path.pathSegments?.map((segment) => ({
-    segmentId: segment.segmentId,
-    polylineCoordinates:
-      segment.segment?.polylineCoordinates.map((point) => ({
-        latitude: point.lat,
-        longitude: point.lng,
-      })) ?? [],
-  }))
-
-  return {
-    id: path.pathId,
-    title: path.title || "Untitled Path",
-    description: path.description?.trim() ? path.description : "No description available.",
-    tags,
-    route: [
-      { latitude: path.origin.lat, longitude: path.origin.lng },
-      { latitude: path.destination.lat, longitude: path.destination.lng },
-    ],
-    pathSegments,
-  }
-}
-
-function buildStatusTag(
-  status: string | null | undefined,
-  palette: ThemePalette
-): SearchResult["tags"][number] | null {
-  if (!status) return null
-  const normalized = status.toUpperCase()
-
-  if (normalized === "OPTIMAL") {
-    return { label: "Optimal", color: palette.accent.green.surface, textColor: palette.accent.green.base }
-  }
-  if (normalized === "MEDIUM") {
-    return { label: "Medium", color: palette.accent.blue.surface, textColor: palette.accent.blue.base }
-  }
-  if (normalized === "SUFFICIENT") {
-    return { label: "Sufficient", color: palette.accent.orange.surface, textColor: palette.accent.orange.base }
-  }
-  if (normalized === "REQUIRES_MAINTENANCE") {
-    return { label: "Maintenance", color: palette.accent.red.surface, textColor: palette.accent.red.base }
-  }
-
-  return null
-}
-
-function findClosestPointIndex(route: LatLng[], position: LatLng) {
-  if (!route.length) return 0
-  let minIndex = 0
-  let minDistance = Number.POSITIVE_INFINITY
-
-  for (let i = 0; i < route.length; i++) {
-    const point = route[i]
-    const distance = Math.hypot(point.latitude - position.latitude, point.longitude - position.longitude)
-    if (distance < minDistance) {
-      minDistance = distance
-      minIndex = i
-    }
-  }
-
-  return minIndex
-}
 
 const ISSUE_CONDITION_OPTIONS = [
   // { key: "OPTIMAL", label: "Optimal" },

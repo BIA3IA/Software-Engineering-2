@@ -18,11 +18,16 @@ export type TripSummary = {
   createdAt: string
   startedAt: string
   finishedAt: string
+  title?: string | null
   origin: PathPoint
   destination: PathPoint
   statistics: TripStatistics | null
   weather: unknown | null
   segmentCount: number
+  tripSegments?: Array<{
+    segmentId: string
+    polylineCoordinates: PathPoint[]
+  }>
 }
 
 type TripsResponse = {
@@ -44,7 +49,6 @@ export type CreateTripPayload = {
 const TRIPS_BASE = "/trips"
 
 export async function createTripApi(payload: CreateTripPayload): Promise<void> {
-  console.log("createTrip payload", payload)
   await api.post(`${TRIPS_BASE}/create`, payload)
 }
 

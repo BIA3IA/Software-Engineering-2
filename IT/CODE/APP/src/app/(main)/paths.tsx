@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react"
-import { View, FlatList, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
-import { useFocusEffect } from "expo-router"
+import { View, Text, FlatList, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
+import * as Location from "expo-location"
+import { useFocusEffect, useRouter } from "expo-router"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { RouteCard, RouteItem } from "@/components/route/RouteCard"
@@ -11,10 +12,17 @@ import { scale, verticalScale } from "@/theme/layout"
 import { iconSizes } from "@/theme/typography"
 import { AlertTriangle, Trash2, Eye, EyeOff } from "lucide-react-native"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
-import { changePathVisibilityApi, deletePathApi, getMyPathsApi, type UserPathSummary } from "@/api/paths"
+import { changePathVisibilityApi, deletePathApi, getMyPathsApi, type PathPoint, type UserPathSummary } from "@/api/paths"
 import { getApiErrorMessage } from "@/utils/apiError"
+import { isNearOrigin as isNearOriginMeters } from "@/utils/geo"
+import { mapUserPathSummaryToRouteItem, mapUserPathSummaryToSearchResult } from "@/utils/pathMappers"
+import { useSetTripLaunchSelection } from "@/hooks/useTripLaunchSelection"
+import type { SearchResult } from "@/components/paths/SearchResultsSheet"
 
 type SortOption = "date" | "distance" | "alphabetical"
+type LatLng = { latitude: number; longitude: number }
+
+const ORIGIN_PROXIMITY_METERS = 100
 
 const SORT_OPTIONS: { key: SortOption; label: string }[] = [
   { key: "date", label: "Date" },
@@ -25,17 +33,22 @@ const SORT_OPTIONS: { key: SortOption; label: string }[] = [
 export default function PathsScreen() {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
+  const router = useRouter()
   const { setHidden: setNavHidden } = useBottomNavVisibility()
   const deleteIconSize = iconSizes.xl
   const visibilityIconSize = iconSizes.xl
+  const setTripLaunchSelection = useSetTripLaunchSelection()
 
   const [paths, setPaths] = useState<RouteItem[]>([])
+  const [pathSummaries, setPathSummaries] = useState<UserPathSummary[]>([])
+  const [userLocation, setUserLocation] = useState<LatLng | null>(null)
   const [expandedPathId, setExpandedPathId] = useState<string | null>(null)
   const [isSortMenuVisible, setSortMenuVisible] = useState(false)
   const [sortOption, setSortOption] = useState<SortOption>("date")
   const [pendingDeletePath, setPendingDeletePath] = useState<RouteItem | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false)
+  const [emptyMessage, setEmptyMessage] = useState<string | null>(null)
   const [pendingVisibilityChange, setPendingVisibilityChange] = useState<{
     path: RouteItem
     target: "public" | "private"
@@ -46,6 +59,7 @@ export default function PathsScreen() {
     message: "",
   })
   const lastScrollOffset = React.useRef(0)
+  const locationWatcherRef = React.useRef<Location.LocationSubscription | null>(null)
 
   const loadPaths = React.useCallback(() => {
     let isActive = true
@@ -53,11 +67,24 @@ export default function PathsScreen() {
     async function fetchPaths() {
       try {
         const response = await getMyPathsApi()
-        console.log(response)
         if (!isActive) return
-        setPaths(response.map(mapPathSummaryToRouteItem))
+        setPathSummaries(response)
+        setPaths(response.map(mapUserPathSummaryToRouteItem))
+        if (response.length === 0) {
+          setEmptyMessage("Your path library is empty.\nStart creating paths to see them here.")
+        } else {
+          setEmptyMessage(null)
+        }
       } catch (error) {
+        const status = (error as { response?: { status?: number } })?.response?.status
+        if (status === 404) {
+          setPaths([])
+          setPathSummaries([])
+          setEmptyMessage("Your path library is empty.\nStart creating paths to see them here.")
+          return
+        }
         const message = getApiErrorMessage(error, "Unable to load your paths. Please try again.")
+        setEmptyMessage(null)
         setErrorPopup({
           visible: true,
           title: "Loading failed",
@@ -111,6 +138,21 @@ export default function PathsScreen() {
 
   function handleRequestDeletePath(path: RouteItem) {
     setPendingDeletePath(path)
+  }
+
+  function handleStartTrip(pathId: string) {
+    const summary = pathSummaries.find((path) => path.pathId === pathId)
+    if (!summary) {
+      setErrorPopup({
+        visible: true,
+        title: "Trip Error",
+        message: "Path details are missing. Please try again.",
+      })
+      return
+    }
+    const selection = mapUserPathSummaryToSearchResult(summary, palette)
+    setTripLaunchSelection(selection)
+    router.replace("/(main)/home")
   }
 
   async function handleConfirmDeletePath() {
@@ -202,6 +244,52 @@ export default function PathsScreen() {
 
   useFocusEffect(loadPaths)
 
+  React.useEffect(() => {
+    let cancelled = false
+    async function initLocation() {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync()
+        if (status !== "granted") {
+          return
+        }
+        const current = await Location.getCurrentPositionAsync({
+          accuracy: Location.LocationAccuracy.Balanced,
+        })
+        if (cancelled) return
+        setUserLocation({
+          latitude: current.coords.latitude,
+          longitude: current.coords.longitude,
+        })
+
+        const watcher = await Location.watchPositionAsync(
+          {
+            accuracy: Location.LocationAccuracy.Balanced,
+            distanceInterval: 5,
+          },
+          (location) => {
+            if (cancelled) return
+            setUserLocation({
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            })
+          }
+        )
+        locationWatcherRef.current = watcher
+      } catch (error) {
+      }
+    }
+
+    initLocation()
+
+    return () => {
+      cancelled = true
+      if (locationWatcherRef.current) {
+        locationWatcherRef.current.remove()
+        locationWatcherRef.current = null
+      }
+    }
+  }, [])
+
   const visibilityChangeMessage = pendingVisibilityChange
     ? pendingVisibilityChange.target === "private"
       ? "Do you want to make this path private? Only you will be able to see it."
@@ -231,14 +319,26 @@ export default function PathsScreen() {
         ]}
         renderItem={({ item, index }) => (
           <View style={index === 0 ? styles.firstCardWrapper : undefined}>
+            {(() => {
+              const summary = pathSummaries.find((path) => path.pathId === item.id)
+              const canStartTrip = summary && userLocation
+                ? isNearOriginMeters(summary.origin, userLocation, ORIGIN_PROXIMITY_METERS)
+                : false
+              return (
             <RouteCard
-              trip={item}
+              trip={{
+                ...item,
+                actionLabel: canStartTrip ? "Start Trip" : undefined,
+                onActionPress: canStartTrip ? () => handleStartTrip(item.id) : undefined,
+              }}
               isExpanded={expandedPathId === item.id}
               onToggle={() => handleTogglePath(item.id)}
               onDeletePress={() => handleRequestDeletePath(item)}
               onVisibilityPress={() => handleVisibilityPress(item)}
               mapTitle="Path Map"
             />
+              )
+            })()}
           </View>
         )}
         ListHeaderComponent={
@@ -250,6 +350,15 @@ export default function PathsScreen() {
             />
             <View style={styles.headerSpacer} />
           </View>
+        }
+        ListEmptyComponent={
+          emptyMessage ? (
+            <View style={styles.emptyState}>
+              <Text style={[styles.emptyText, { color: palette.text.secondary }]}>
+                {emptyMessage}
+              </Text>
+            </View>
+          ) : null
         }
         onScroll={handleListScroll}
         scrollEventThrottle={16}
@@ -329,37 +438,6 @@ export default function PathsScreen() {
   )
 }
 
-function mapPathSummaryToRouteItem(path: UserPathSummary): RouteItem {
-  return {
-    id: path.pathId,
-    name: path.title || "Untitled Path",
-    description: path.description ?? undefined,
-    distanceKm: path.distanceKm ?? 0,
-    durationMin: 0,
-    date: formatDate(path.createdAt),
-    avgSpeed: 0,
-    maxSpeed: 0,
-    elevation: 0,
-    visibility: path.visibility ? "public" : "private",
-    showWeatherBadge: false,
-    showPerformanceMetrics: false,
-    route: [
-      { latitude: path.origin.lat, longitude: path.origin.lng },
-      { latitude: path.destination.lat, longitude: path.destination.lng },
-    ],
-  }
-}
-
-function formatDate(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return "00/00/00"
-  }
-  const day = String(date.getDate()).padStart(2, "0")
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const year = String(date.getFullYear()).slice(-2)
-  return `${day}/${month}/${year}`
-}
 
 const styles = StyleSheet.create({
   screen: {
@@ -380,5 +458,13 @@ const styles = StyleSheet.create({
   },
   firstCardWrapper: {
     marginTop: -verticalScale(48),
+  },
+  emptyState: {
+    paddingVertical: verticalScale(32),
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: "center",
   },
 })

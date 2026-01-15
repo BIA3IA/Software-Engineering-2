@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react"
-import { View, StyleSheet, FlatList, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
+import { View, Text, StyleSheet, FlatList, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
 import { useFocusEffect } from "expo-router"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
@@ -13,6 +13,8 @@ import { Trash2 } from "lucide-react-native"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
 import { deleteTripApi, getMyTripsApi, type TripSummary } from "@/api/trips"
 import { getApiErrorMessage } from "@/utils/apiError"
+import { formatDate } from "@/utils/date"
+import { buildRouteFromPathPointSegments } from "@/utils/routes"
 
 type SortOption = "date" | "distance" | "duration" | "alphabetical"
 
@@ -35,6 +37,7 @@ export default function TripHistoryScreen() {
   const [sortOption, setSortOption] = useState<SortOption>("date")
   const [pendingDeleteTrip, setPendingDeleteTrip] = useState<RouteItem | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [emptyMessage, setEmptyMessage] = useState<string | null>(null)
   const [errorPopup, setErrorPopup] = useState({
     visible: false,
     title: "",
@@ -49,9 +52,22 @@ export default function TripHistoryScreen() {
       try {
         const response = await getMyTripsApi()
         if (!isActive) return
+        console.log("trips api response", JSON.stringify(response, null, 2))
         setTrips(response.map(mapTripSummaryToRouteItem))
+        if (response.length === 0) {
+          setEmptyMessage("Your Trip History is empty.\nStart recording trips to see them here.")
+        } else {
+          setEmptyMessage(null)
+        }
       } catch (error) {
+        const status = (error as { response?: { status?: number } })?.response?.status
+        if (status === 404) {
+          setTrips([])
+          setEmptyMessage("Your Trip History is empty.\nStart recording trips to see them here.")
+          return
+        }
         const message = getApiErrorMessage(error, "Unable to load your trips. Please try again.")
+        setEmptyMessage(null)
         setErrorPopup({
           visible: true,
           title: "Loading failed",
@@ -181,6 +197,15 @@ export default function TripHistoryScreen() {
             <View style={styles.headerSpacer} />
           </View>
         }
+        ListEmptyComponent={
+          emptyMessage ? (
+            <View style={styles.emptyState}>
+              <Text style={[styles.emptyText, { color: palette.text.secondary }]}>
+                {emptyMessage}
+              </Text>
+            </View>
+          ) : null
+        }
         onScroll={handleListScroll}
         scrollEventThrottle={16}
       />
@@ -232,16 +257,28 @@ export default function TripHistoryScreen() {
 }
 
 function mapTripSummaryToRouteItem(trip: TripSummary): RouteItem {
-  const route = [
+  const route = buildRouteFromPathPointSegments(trip.tripSegments ?? [])
+  const fallbackRoute = [
     { latitude: trip.origin.lat, longitude: trip.origin.lng },
     { latitude: trip.destination.lat, longitude: trip.destination.lng },
   ]
 
   const statistics = trip.statistics
+  const weather = trip.weather as
+    | {
+        dominantWeatherDescription?: string
+        averageWindSpeed?: number
+        averageHumidity?: number
+        averagePressure?: number
+        averageTemperature?: number
+        averageApparentTemperature?: number
+        totalPrecipitation?: number
+      }
+    | null
 
   return {
     id: trip.tripId,
-    name: "Trip",
+    name: trip.title ?? "Trip",
     description: undefined,
     distanceKm: statistics?.distance ?? 0,
     durationMin: statistics?.time ?? 0,
@@ -249,21 +286,33 @@ function mapTripSummaryToRouteItem(trip: TripSummary): RouteItem {
     avgSpeed: statistics?.speed ?? 0,
     maxSpeed: statistics?.maxSpeed ?? 0,
     elevation: 0,
-    showWeatherBadge: false,
+    showWeatherBadge: Boolean(weather),
+    temperatureLabel:
+      weather?.averageTemperature !== undefined ? `${weather.averageTemperature.toFixed(1)}°` : undefined,
+    weather: weather
+      ? {
+          condition: weather.dominantWeatherDescription ?? "Unknown",
+          windSpeed:
+            weather.averageWindSpeed !== undefined
+              ? `${weather.averageWindSpeed.toFixed(1)} km/h`
+              : "N/A",
+          humidity: weather.averageHumidity !== undefined ? `${weather.averageHumidity}%` : "N/A",
+          visibility: "N/A",
+          feelsLike:
+            weather.averageApparentTemperature !== undefined
+              ? `${weather.averageApparentTemperature.toFixed(1)}°`
+              : "N/A",
+          precipitation:
+            weather.totalPrecipitation !== undefined
+              ? `${weather.totalPrecipitation.toFixed(1)} mm`
+              : "N/A",
+          pressure:
+            weather.averagePressure !== undefined ? `${weather.averagePressure.toFixed(1)} hPa` : "N/A",
+        }
+      : undefined,
     showPerformanceMetrics: Boolean(statistics),
-    route,
+    route: route.length ? route : fallbackRoute,
   }
-}
-
-function formatDate(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return "00/00/00"
-  }
-  const day = String(date.getDate()).padStart(2, "0")
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const year = String(date.getFullYear()).slice(-2)
-  return `${day}/${month}/${year}`
 }
 
 const styles = StyleSheet.create({
@@ -285,5 +334,13 @@ const styles = StyleSheet.create({
   },
   firstCardWrapper: {
     marginTop: -verticalScale(48),
+  },
+  emptyState: {
+    paddingVertical: verticalScale(32),
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: "center",
   },
 })

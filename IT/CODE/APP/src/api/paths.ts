@@ -43,6 +43,7 @@ export type UserPathSummary = {
   pathSegments?: Array<{
     segmentId: string
     nextSegmentId: string | null
+    polylineCoordinates?: PathPoint[]
     segment?: {
       polylineCoordinates: PathPoint[]
     }
