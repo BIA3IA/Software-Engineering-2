@@ -718,3 +718,151 @@ Because of this, Nginx is not included in the bbp-backend Docker Compose file.
 Instead, the backend is exposed through a shared Nginx reverse proxy, which acts as infrastructure and routes incoming requests to the correct internal service based on the requested domain.
 
 This separation keeps the backend lightweight, reusable, and independent from the HTTP/TLS layer.
+
+## OSRM Configuration & Deployment
+
+We use OSRM to snap user-drawn polylines to real roads (cycling profile). OSRM is a separate service from the
+backend API and must run on the server. The backend calls OSRM via HTTP using `OSRM_BASE_URL` and exposes
+`POST /api/v1/paths/snap`.
+
+### What OSRM does and why we chose it
+
+OSRM (Open Source Routing Machine) is an open-source routing engine built on OpenStreetMap data.
+In our app it is used to "snap" a freehand polyline to the nearest road network, so the path follows
+real streets instead of raw finger points.
+
+How it works in our flow:
+- the app collects raw points while the user draws
+- the backend sends those points to OSRM `/route` (cycling profile)
+- OSRM returns a road-following polyline
+- the backend returns snapped `{lat,lng}` points to the app
+- the app shows and saves the snapped path
+
+Why OSRM:
+- open-source and self-hostable
+- fast and reliable for routing/snapping at scale
+- uses OSM data and supports the cycling profile we need
+
+### 1) Server setup (OSRM service)
+
+We host OSRM as a separate container and keep the dataset as small as possible. For Pavia + Milano we use a
+custom extract from the "nord-ovest" region.
+
+Create a folder for OSRM data:
+
+```bash
+mkdir -p /opt/osrm
+cd /opt/osrm
+```
+
+Download the regional map and create a small extract (bbox around Milano + Pavia):
+
+```bash
+sudo apt-get update && sudo apt-get install -y osmium-tool
+
+curl -L -o nord-ovest-latest.osm.pbf https://download.geofabrik.de/europe/italy/nord-ovest-latest.osm.pbf
+osmium extract -b 8.85,45.05,9.55,45.75 -o pavia-milano.osm.pbf nord-ovest-latest.osm.pbf
+rm -f nord-ovest-latest.osm.pbf
+```
+
+Preprocess the extract (this generates the `.osrm` files):
+
+```bash
+docker compose run --rm osrm osrm-extract -p /opt/bicycle.lua /data/pavia-milano.osm.pbf
+docker compose run --rm osrm osrm-partition /data/pavia-milano.osrm
+docker compose run --rm osrm osrm-customize /data/pavia-milano.osrm
+```
+
+Create `/opt/osrm/docker-compose.yml` (note the dataset name):
+
+```yaml
+version: "3.9"
+
+services:
+  osrm:
+    image: osrm/osrm-backend
+    container_name: osrm
+    volumes:
+      - /opt/osrm:/data
+    command: >
+      osrm-routed --algorithm mld /data/pavia-milano.osrm
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+```
+
+Start OSRM:
+
+```bash
+cd /opt/osrm
+docker compose up -d osrm
+```
+
+OSRM is ready when `.osrm` files exist for the dataset you configured:
+
+```bash
+ls -lh /opt/osrm | grep "pavia-milano.osrm"
+```
+
+Test OSRM directly:
+
+```bash
+curl "http://localhost:5000/route/v1/cycling/9.19,45.4642;9.21,45.466?overview=full&geometries=geojson"
+```
+
+If you change the dataset file name, you must also update the `osrm-routed` command in the compose file.
+
+### 2) Backend configuration
+
+Add to `/opt/bbp-backend/.env`:
+
+```bash
+OSRM_BASE_URL=http://osrm:5000
+```
+
+Rebuild backend:
+
+```bash
+cd /opt/bbp-backend
+docker compose build --no-cache
+docker compose up -d
+```
+
+### 3) Endpoint test (backend)
+
+```bash
+curl -X POST https://api.bia3ia.com/api/v1/paths/snap \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"coordinates":[{"lat":45.4642,"lng":9.19},{"lat":45.466,"lng":9.21}]}'
+```
+
+## Haversine Distance (Utilities)
+
+We use the Haversine formula to measure real distance between two coordinates on Earth.
+The utility lives in `src/utils/geo.ts` and exposes:
+- `haversineDistanceKm(from, to)` for kilometers
+- `haversineDistanceMeters(from, to)` for meters
+
+Where it is used:
+- Weather sampling (`src/services/openmeteo.service.ts`): the route is sampled by distance in km, so we can
+  decide how many weather points to fetch without overloading the API.
+- Path search (`src/managers/query/query.manager.ts`): we compute the distance between the search origin/destination
+  and each stored path, then filter out far results even if they are within the coarse tolerance box.
+
+This keeps the behavior consistent and avoids returning unrelated paths just because they are in the same neighborhood.
+
+## Geocoding Service (Backend)
+
+Geocoding is handled on the server so the mobile app only sends plain-text addresses and remains simple.
+The backend resolves the addresses and then performs the search.
+
+How it works:
+- the app calls `GET /api/v1/paths/search?origin=...&destination=...`
+- the backend uses Nominatim to geocode both strings into `{lat,lng}`
+- the backend searches paths using the resolved coordinates and returns results
+
+Why server-side geocoding:
+- keeps the app "dumb" (no provider logic in the client)
+- easier to swap geocoding provider later
+- allows future caching and rate limiting in one place

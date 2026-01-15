@@ -117,11 +117,13 @@ export function RouteMap({
             toolbarEnabled={false}
             customMapStyle={scheme === "dark" ? darkMapStyle : lightMapStyle}
             showsCompass={false}
+            showsUserLocation={false}
+            showsMyLocationButton={false}
           >
             {route.length > 1 && (
               <Polyline
                 coordinates={route}
-                strokeWidth={4}
+                strokeWidth={10}
                 strokeColor={palette.brand.dark}
               />
             )}
@@ -129,9 +131,9 @@ export function RouteMap({
             {start && (
               <Circle
                 center={start}
-                radius={18}
+                radius={2}
                 strokeColor={palette.brand.base}
-                fillColor={`${palette.brand.base}33`}
+                fillColor={`${palette.brand.base}22`}
               />
             )}
 

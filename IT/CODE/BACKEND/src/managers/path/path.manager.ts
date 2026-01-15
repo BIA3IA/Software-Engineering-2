@@ -3,6 +3,7 @@ import { queryManager } from '../query/index.js';
 import { Coordinates, PathSegments } from '../../types/index.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import logger from '../../utils/logger';
+import { snapToRoad, geocodeAddress } from '../../services/index.js';
 
 const STATUS_SCORE_MAP = {
     OPTIMAL: 5,
@@ -202,44 +203,21 @@ export class PathManager {
 
     async searchPath(req: Request, res: Response, next: NextFunction) {
         try {
-            const { originLat, originLng, destLat, destLng } = req.query;
+            const { origin, destination } = req.query;
             const userId = req.user?.userId;
 
-            if (!originLat || !originLng) {
-                throw new BadRequestError('Origin coordinates are required', 'MISSING_ORIGIN');
+            if (typeof origin !== 'string' || !origin.trim()) {
+                throw new BadRequestError('Origin address is required', 'MISSING_ORIGIN');
             }
 
-            if (!destLat || !destLng) {
-                throw new BadRequestError('Destination coordinates are required', 'MISSING_DESTINATION');
+            if (typeof destination !== 'string' || !destination.trim()) {
+                throw new BadRequestError('Destination address is required', 'MISSING_DESTINATION');
             }
 
-            const origin: Coordinates = {
-                lat: parseFloat(originLat as string),
-                lng: parseFloat(originLng as string),
-            };
+            const originCoords = await geocodeAddress(origin);
+            const destinationCoords = await geocodeAddress(destination);
 
-            const destination: Coordinates = {
-                lat: parseFloat(destLat as string),
-                lng: parseFloat(destLng as string),
-            };
-
-            if (isNaN(origin.lat) || isNaN(origin.lng)) {
-                throw new BadRequestError('Invalid origin coordinates', 'INVALID_ORIGIN');
-            }
-
-            if (isNaN(destination.lat) || isNaN(destination.lng)) {
-                throw new BadRequestError('Invalid destination coordinates', 'INVALID_DESTINATION');
-            }
-
-            if (origin.lat < -90 || origin.lat > 90 || origin.lng < -180 || origin.lng > 180) {
-                throw new BadRequestError('Origin coordinates out of range', 'INVALID_ORIGIN_RANGE');
-            }
-
-            if (destination.lat < -90 || destination.lat > 90 || destination.lng < -180 || destination.lng > 180) {
-                throw new BadRequestError('Destination coordinates out of range', 'INVALID_DESTINATION_RANGE');
-            }
-
-            const paths = await queryManager.searchPathsByOriginDestination(origin, destination, userId);
+            const paths = await queryManager.searchPathsByOriginDestination(originCoords, destinationCoords, userId);
 
             if (paths.length === 0) {
                 throw new NotFoundError('No routes found for the specified origin and destination', 'NO_ROUTE');
@@ -378,6 +356,28 @@ export class PathManager {
                         createdAt: path.createdAt,
                         segmentCount: path.pathSegments.length,
                     })),
+                },
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Snap user drawn coordinates to nearest road using OSRM
+    async snapPath(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { coordinates } = req.body;
+
+            if (!coordinates || !Array.isArray(coordinates) || coordinates.length < 2) {
+                throw new BadRequestError('At least two coordinates are required', 'MISSING_COORDINATES');
+            }
+
+            const snapped = await snapToRoad(coordinates);
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    coordinates: snapped,
                 },
             });
         } catch (error) {

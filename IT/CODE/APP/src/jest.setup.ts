@@ -14,12 +14,23 @@ export const mockRedirectSpy = jest.fn()
 export const mockSegments: { value: string[] } = { value: ["(auth)"] }
 export const mockPathname: { value: string } = { value: "/home" }
 export const mockSlotElement: { value: any } = { value: null }
+export const mockSearchParams: { value: Record<string, string> } = { value: {} }
 
 jest.mock("expo-router", () => ({
   Slot: () => mockSlotElement.value,
   Redirect: (props: any) => {
     mockRedirectSpy(props.href)
     return null
+  },
+  useLocalSearchParams: () => mockSearchParams.value,
+  useFocusEffect: (effect: () => void | (() => void)) => {
+    const React = require("react")
+    const ranRef = React.useRef(false)
+    React.useEffect(() => {
+      if (ranRef.current) return
+      ranRef.current = true
+      return effect()
+    }, [effect])
   },
   useSegments: () => mockSegments.value,
   useRouter: () => mockRouter,
@@ -55,7 +66,7 @@ jest.mock("@/components/ui/AppButton", () => {
       }
       return React.createElement(
         Pressable,
-        { onPress: handlePress, accessibilityRole: "button", accessibilityLabel: title },
+        { onPress: handlePress },
         React.createElement(Text, { onPress: handlePress }, title)
       )
     },
@@ -72,7 +83,7 @@ jest.mock("@/components/ui/AppTextInput", () => {
         null,
         label ? React.createElement(Text, null, label) : null,
         React.createElement(TextInput, {
-          accessibilityLabel: label || placeholder,
+          placeholder,
           value,
           onChangeText,
         }),

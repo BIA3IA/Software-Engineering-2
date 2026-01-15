@@ -1,5 +1,6 @@
 import { sortTripSegmentsByChain, sortPathSegmentsByChain, prisma } from "../../utils/index.js";
 import { TripSegments, WeatherData, PathSegments, Coordinates} from "../../types/index.js";
+import { haversineDistanceMeters } from "../../utils/geo.js";
 
 
 export class QueryManager {
@@ -197,8 +198,10 @@ export class QueryManager {
     }
 
     async searchPathsByOriginDestination(origin: Coordinates, destination: Coordinates, userId?: string): Promise<PathSegments[]> {
-        // Tolerance radius in degrees (approximately 20m)
-        const tolerance = 0.0002;
+        // Tolerance radius in degrees (approximately 200m)
+        const tolerance = 0.002;
+        const maxDistanceMeters = 200;
+        const nearDistanceBufferMeters = 50;
 
         const paths = await prisma.path.findMany({
             where: {
@@ -221,12 +224,13 @@ export class QueryManager {
         });
 
         // Filter paths that match origin and destination within tolerance
-        const matchingPaths = paths.filter(path => {
+        const matchingPaths: Array<{ path: PathSegments; maxDistance: number }> = [];
+
+        for (const path of paths) {
             const pathOrigin = path.origin;
             const pathDestination = path.destination;
 
-            // Check if origin and destination are within tolerance
-            const originMatch = 
+            const originMatch =
                 Math.abs(pathOrigin.lat - origin.lat) <= tolerance &&
                 Math.abs(pathOrigin.lng - origin.lng) <= tolerance;
 
@@ -234,10 +238,33 @@ export class QueryManager {
                 Math.abs(pathDestination.lat - destination.lat) <= tolerance &&
                 Math.abs(pathDestination.lng - destination.lng) <= tolerance;
 
-            return originMatch && destinationMatch;
-        });
+            if (!originMatch || !destinationMatch) {
+                continue;
+            }
 
-        return matchingPaths.map(path => ({
+            const originDistance = haversineDistanceMeters(origin, pathOrigin);
+            const destinationDistance = haversineDistanceMeters(destination, pathDestination);
+            const maxDistance = Math.max(originDistance, destinationDistance);
+
+            matchingPaths.push({
+                path,
+                maxDistance,
+            });
+        }
+
+        if (!matchingPaths.length) {
+            return [];
+        }
+
+        const minDistance = Math.min(...matchingPaths.map(entry => entry.maxDistance));
+        const distanceCutoff = Math.min(maxDistanceMeters, minDistance + nearDistanceBufferMeters);
+
+        const filteredByDistance = matchingPaths
+            .filter(entry => entry.maxDistance <= distanceCutoff)
+            .sort((a, b) => a.maxDistance - b.maxDistance)
+            .map(entry => entry.path);
+
+        return filteredByDistance.map(path => ({
             ...path,
             pathSegments: sortPathSegmentsByChain(path.pathSegments),
         }));
@@ -283,6 +310,7 @@ export class QueryManager {
             },
         });
     }
+
 
     // get segment statistics for path status calculation
     async getSegmentStatistics(segmentIds: string[]) {

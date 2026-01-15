@@ -19,13 +19,13 @@ describe("edit profile integration", () => {
             sel({ updateProfile })
         )
 
-        const { getByLabelText, getByText, findByText } = render(<EditProfileScreen />)
+        const { getByPlaceholderText, getByText, findByText } = render(<EditProfileScreen />)
 
-        fireEvent.changeText(getByLabelText("Username"), "bia")
-        fireEvent.changeText(getByLabelText("Email Address"), "not-an-email")
-        fireEvent.changeText(getByLabelText("Current Password"), "123")
-        fireEvent.changeText(getByLabelText("New Password"), "12345")
-        fireEvent.changeText(getByLabelText("Confirm Password"), "12345679")
+        fireEvent.changeText(getByPlaceholderText("Enter your username"), "bia")
+        fireEvent.changeText(getByPlaceholderText("Enter your email"), "not-an-email")
+        fireEvent.changeText(getByPlaceholderText("Enter your current password"), "123")
+        fireEvent.changeText(getByPlaceholderText("Create a new password"), "12345")
+        fireEvent.changeText(getByPlaceholderText("Re-enter your new password"), "12345679")
         fireEvent.press(getByText("Save Changes"))
 
         expect(await findByText("Username must be at least 5 characters.")).toBeTruthy()
@@ -45,10 +45,10 @@ describe("edit profile integration", () => {
                 sel({ user, updateProfile })
             )
 
-        const { getByLabelText, getByText, findByText } = render(<EditProfileScreen />)
+        const { getByPlaceholderText, getByText, findByText } = render(<EditProfileScreen />)
 
-        fireEvent.changeText(getByLabelText("Username"), "bianca2")
-        fireEvent.changeText(getByLabelText("Email Address"), "b@b.com")
+        fireEvent.changeText(getByPlaceholderText("Enter your username"), "bianca2")
+        fireEvent.changeText(getByPlaceholderText("Enter your email"), "b@b.com")
         fireEvent.press(getByText("Save Changes"))
 
         await waitFor(() => {
