@@ -1,7 +1,7 @@
 import React from "react"
 import { View, StyleSheet, Pressable } from "react-native"
 import MapView, { Marker, Polyline, Circle } from "react-native-maps"
-import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle } from "lucide-react-native"
+import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle, X } from "lucide-react-native"
 import * as Location from "expo-location"
 
 import { layoutStyles, scale, verticalScale, radius } from "@/theme/layout"
@@ -23,6 +23,7 @@ import { useRouter } from "expo-router"
 import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
 import { type PrivacyPreference } from "@/constants/Privacy"
 import { searchPathsApi, type UserPathSummary } from "@/api/paths"
+import { createTripApi } from "@/api/trips"
 import { getApiErrorMessage } from "@/utils/apiError"
 
 export default function HomeScreen() {
@@ -41,6 +42,7 @@ export default function HomeScreen() {
   const [results, setResults] = React.useState<SearchResult[]>([])
   const [selectedResult, setSelectedResult] = React.useState<SearchResult | null>(null)
   const [activeTrip, setActiveTrip] = React.useState<SearchResult | null>(null)
+  const [activeTripStartedAt, setActiveTripStartedAt] = React.useState<Date | null>(null)
   const [userLocation, setUserLocation] = React.useState<LatLng | null>(null)
   const [userHeading, setUserHeading] = React.useState<number | null>(null)
   const mapRef = React.useRef<MapView | null>(null)
@@ -50,6 +52,7 @@ export default function HomeScreen() {
   const [isCompletedPopupVisible, setCompletedPopupVisible] = React.useState(false)
   const [isCreateModalVisible, setCreateModalVisible] = React.useState(false)
   const [isSearching, setIsSearching] = React.useState(false)
+  const [isCancelTripPopupVisible, setCancelTripPopupVisible] = React.useState(false)
   const [errorPopup, setErrorPopup] = React.useState({
     visible: false,
     title: "",
@@ -139,27 +142,101 @@ export default function HomeScreen() {
   function handleSelectResult(result: SearchResult) {
     setSelectedResult(result)
     setActiveTrip(null)
+    setActiveTripStartedAt(null)
   }
 
-  function handleStartTrip(result: SearchResult) {
+  async function handleStartTrip(result: SearchResult) {
     setSelectedResult(result)
     setActiveTrip(result)
+    setActiveTripStartedAt(new Date())
     setResultsVisible(false)
-    console.log("Start trip for", result.id)
+    if (isGuest) {
+      return
+    }
   }
 
   function handleCloseResults() {
     setResultsVisible(false)
     setSelectedResult(null)
     setActiveTrip(null)
+    setActiveTripStartedAt(null)
   }
 
-  function handleCompleteTrip() {
-    if (activeTrip) {
-      console.log("Trip completed", activeTrip.id)
-    }
+  function handleCancelTrip() {
+    setCancelTripPopupVisible(true)
+  }
+
+  function handleConfirmCancelTrip() {
     setActiveTrip(null)
     setSelectedResult(null)
+    setActiveTripStartedAt(null)
+    setReportVisible(false)
+    setResultsVisible(false)
+    setCancelTripPopupVisible(false)
+  }
+
+  function handleCloseCancelTripPopup() {
+    setCancelTripPopupVisible(false)
+  }
+
+  async function handleCompleteTrip() {
+    if (!activeTrip) {
+      return
+    }
+
+    if (!isGuest) {
+      if (!activeTripStartedAt || !startRoutePoint || !destinationPoint) {
+        setErrorPopup({
+          visible: true,
+          title: "Trip Error",
+          message: "Trip details are missing. Please try again.",
+        })
+        return
+      }
+
+      const tripSegments =
+        activeTrip.pathSegments?.map((segment) => ({
+          segmentId: segment.segmentId,
+          polylineCoordinates: segment.polylineCoordinates.map((point) => ({
+            lat: point.latitude,
+            lng: point.longitude,
+          })),
+        })) ?? []
+
+      const hasInvalidSegment = tripSegments.some((segment) => segment.polylineCoordinates.length < 2)
+
+      if (!tripSegments.length || hasInvalidSegment) {
+        setErrorPopup({
+          visible: true,
+          title: "Trip Error",
+          message: "Trip segments are incomplete. Please try again.",
+        })
+        return
+      }
+
+      try {
+        await createTripApi({
+          origin: { lat: startRoutePoint.latitude, lng: startRoutePoint.longitude },
+          destination: { lat: destinationPoint.latitude, lng: destinationPoint.longitude },
+          startedAt: activeTripStartedAt.toISOString(),
+          finishedAt: new Date().toISOString(),
+          title: activeTrip.title,
+          tripSegments,
+        })
+      } catch (error) {
+        const message = getApiErrorMessage(error, "Unable to save the trip. Please try again.")
+        setErrorPopup({
+          visible: true,
+          title: "Trip Error",
+          message,
+        })
+        return
+      }
+    }
+
+    setActiveTrip(null)
+    setSelectedResult(null)
+    setActiveTripStartedAt(null)
     setReportVisible(false)
     setCompletedPopupVisible(true)
   }
@@ -427,6 +504,19 @@ export default function HomeScreen() {
           <>
             <Pressable
               style={[
+                styles.closeTripButton,
+                {
+                  top: insets.top + verticalScale(12),
+                  backgroundColor: palette.surface.card,
+                  shadowColor: palette.border.muted,
+                },
+              ]}
+              onPress={handleCancelTrip}
+            >
+              <X size={iconSizes.lg} color={palette.text.primary} strokeWidth={2.2} />
+            </Pressable>
+            <Pressable
+              style={[
                 styles.fab,
                 {
                   backgroundColor: palette.status.danger,
@@ -494,6 +584,24 @@ export default function HomeScreen() {
         }}
       />
       <AppPopup
+        visible={isCancelTripPopupVisible}
+        title="End Trip?"
+        message="Your progress will be discarded if you leave now."
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
+        onClose={handleCloseCancelTripPopup}
+        primaryButton={{
+          label: "Yes, Discard",
+          variant: "destructive",
+          onPress: handleConfirmCancelTrip,
+        }}
+        secondaryButton={{
+          label: "No, Continue",
+          variant: "secondary",
+          onPress: handleCloseCancelTripPopup,
+        }}
+      />
+      <AppPopup
         visible={errorPopup.visible}
         title={errorPopup.title || "Error"}
         message={errorPopup.message || "Unable to complete the request."}
@@ -554,7 +662,6 @@ function regionCenteredOnDestination(route: LatLng[]) {
 
 type LatLng = { latitude: number; longitude: number }
 type ThemePalette = typeof Colors.light
-
 function regionAroundPoint(point: LatLng, delta = 0.01) {
   return {
     latitude: point.latitude,
@@ -582,6 +689,15 @@ function mapSearchPathToResult(path: UserPathSummary, palette: ThemePalette): Se
     tags.push(statusTag)
   }
 
+  const pathSegments = path.pathSegments?.map((segment) => ({
+    segmentId: segment.segmentId,
+    polylineCoordinates:
+      segment.segment?.polylineCoordinates.map((point) => ({
+        latitude: point.lat,
+        longitude: point.lng,
+      })) ?? [],
+  }))
+
   return {
     id: path.pathId,
     title: path.title || "Untitled Path",
@@ -591,6 +707,7 @@ function mapSearchPathToResult(path: UserPathSummary, palette: ThemePalette): Se
       { latitude: path.origin.lat, longitude: path.origin.lng },
       { latitude: path.destination.lat, longitude: path.destination.lng },
     ],
+    pathSegments,
   }
 }
 
@@ -696,5 +813,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowRadius: 20,
     elevation: 8,
+  },
+  closeTripButton: {
+    position: "absolute",
+    right: scale(20),
+    width: scale(44),
+    height: scale(44),
+    borderRadius: radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 12,
+    elevation: 6,
   },
 })

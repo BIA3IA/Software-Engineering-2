@@ -14,6 +14,10 @@ export type SearchResult = {
   description: string
   tags: PathResultTag[]
   route: { latitude: number; longitude: number }[]
+  pathSegments?: {
+    segmentId: string
+    polylineCoordinates: { latitude: number; longitude: number }[]
+  }[]
 }
 
 type SearchResultsSheetProps = {

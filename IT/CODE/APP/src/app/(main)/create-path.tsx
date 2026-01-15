@@ -9,11 +9,11 @@ import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { radius, scale, verticalScale } from "@/theme/layout"
-import { textStyles, iconSizes } from "@/theme/typography"
+import { iconSizes } from "@/theme/typography"
 import { PRIVACY_OPTIONS, type PrivacyPreference } from "@/constants/Privacy"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { AppButton } from "@/components/ui/AppButton"
-import { AlertTriangle, CheckCircle, Pencil, Undo2 } from "lucide-react-native"
+import { AlertTriangle, CheckCircle, Pencil, Undo2, X } from "lucide-react-native"
 import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
 import { createPathApi, snapPathApi, type PathPoint, type PathSegment } from "@/api/paths"
 import { getApiErrorMessage } from "@/utils/apiError"
@@ -48,6 +48,7 @@ export default function CreatePathScreen() {
   const [isSaving, setIsSaving] = React.useState(false)
   const [isSnapping, setIsSnapping] = React.useState(false)
   const [isDrawMode, setIsDrawMode] = React.useState(true)
+  const [isCancelPopupVisible, setCancelPopupVisible] = React.useState(false)
   const [errorPopup, setErrorPopup] = React.useState({
     visible: false,
     title: "",
@@ -196,6 +197,19 @@ export default function CreatePathScreen() {
   function handleSuccessDismiss() {
     setSuccessPopupVisible(false)
     router.replace("/(main)/home")
+  }
+
+  function handleCancelCreate() {
+    setCancelPopupVisible(true)
+  }
+
+  function handleConfirmCancel() {
+    setCancelPopupVisible(false)
+    router.replace("/(main)/home")
+  }
+
+  function handleCloseCancelPopup() {
+    setCancelPopupVisible(false)
   }
 
   function beginStroke() {
@@ -358,25 +372,19 @@ export default function CreatePathScreen() {
         )}
       </MapView>
 
-      <View
+      <Pressable
         style={[
-          styles.infoBar,
+          styles.closeButton,
           {
-            backgroundColor: palette.surface.elevated,
-            top: insets.top + verticalScale(16),
+            top: insets.top + verticalScale(12),
+            backgroundColor: palette.surface.card,
             shadowColor: palette.border.muted,
           },
         ]}
+        onPress={handleCancelCreate}
       >
-        <Text style={[textStyles.cardTitle, styles.infoTitle, { color: palette.text.primary }]}>
-          {searchParams.name ?? "New Path"}
-        </Text>
-        {searchParams.description ? (
-          <Text style={[textStyles.caption, styles.infoSubtitle, { color: palette.text.secondary }]} numberOfLines={2}>
-            {searchParams.description}
-          </Text>
-        ) : null}
-      </View>
+        <X size={iconSizes.lg} color={palette.text.primary} strokeWidth={2.2} />
+      </Pressable>
 
       <Pressable
         style={[
@@ -453,6 +461,24 @@ export default function CreatePathScreen() {
           textColor: palette.text.onAccent,
         }}
       />
+      <AppPopup
+        visible={isCancelPopupVisible}
+        title="Discard Path?"
+        message="Your draft will be lost if you leave now."
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
+        onClose={handleCloseCancelPopup}
+        primaryButton={{
+          label: "Yes, Discard",
+          variant: "destructive",
+          onPress: handleConfirmCancel,
+        }}
+        secondaryButton={{
+          label: "No, Continue",
+          variant: "secondary",
+          onPress: handleCloseCancelPopup,
+        }}
+      />
     </View>
   )
 }
@@ -514,28 +540,19 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
   },
-  infoBar: {
+  closeButton: {
     position: "absolute",
-    left: scale(16),
-    right: scale(16),
-    padding: scale(14),
-    borderRadius: radius.xl,
-    shadowOpacity: 0.18,
-    shadowOffset: { width: 0, height: 12 },
-    shadowRadius: radius.lg,
-    elevation: 10,
-    gap: verticalScale(4),
-    zIndex: 10,
-  },
-  infoTitle: {
-    fontSize: 18,
-  },
-  infoSubtitle: {
-    marginTop: verticalScale(2),
-  },
-  infoBadge: {
-    marginTop: verticalScale(4),
-    alignSelf: "flex-start",
+    right: scale(20),
+    width: scale(44),
+    height: scale(44),
+    borderRadius: radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 12,
+    elevation: 6,
+    zIndex: 12,
   },
   saveButton: {
     position: "absolute",
