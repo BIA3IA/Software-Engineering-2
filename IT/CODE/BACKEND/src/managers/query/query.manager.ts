@@ -117,7 +117,8 @@ export class QueryManager {
         startedAt: Date,
         finishedAt: Date,
         statistics: TripStatistics | null,
-        tripSegments: Array<{ segmentId: string; nextSegmentId: string | null }>
+        tripSegments: Array<{ segmentId: string; nextSegmentId: string | null }>,
+        title?: string | null
     ) {
         return await prisma.trip.create({
             data: {
@@ -126,6 +127,7 @@ export class QueryManager {
                 destination,
                 startedAt,
                 finishedAt,
+                title,
                 statistics: statistics ?? Prisma.JsonNull,
                 tripSegments: {
                     create: tripSegments.map(seg => ({

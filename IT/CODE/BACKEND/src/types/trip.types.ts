@@ -13,6 +13,7 @@ export interface Trip {
     createdAt: Date;
     startedAt: Date;
     finishedAt: Date;
+    title: string | null;
     origin: Coordinates;
     destination: Coordinates;
     statistics: TripStatistics | null;

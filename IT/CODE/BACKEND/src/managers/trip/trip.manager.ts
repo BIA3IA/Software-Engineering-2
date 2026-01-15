@@ -1,11 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { queryManager } from '../query/index.js';
+import { weatherManager } from '../weather/index.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
+import logger from '../../utils/logger';
 
 export class TripManager {
     async createTrip(req: Request, res: Response, next: NextFunction) {
         try {
-            const { origin, destination, startedAt, finishedAt, tripSegments } = req.body;
+            const { origin, destination, startedAt, finishedAt, tripSegments, title } = req.body;
             const userId = req.user?.userId;
 
             if (!userId) {
@@ -72,8 +74,15 @@ export class TripManager {
                 startedDate,
                 finishedDate,
                 null,
-                segments
+                segments,
+                title
             );
+
+            try {
+                await weatherManager.enrichTripWithWeather(trip);
+            } catch (error) {
+                logger.warn({ err: error, tripId: trip.tripId }, 'Trip weather enrichment failed');
+            }
 
             res.status(201).json({
                 success: true,
@@ -83,6 +92,7 @@ export class TripManager {
                     createdAt: trip.createdAt,
                     startedAt: trip.startedAt,
                     finishedAt: trip.finishedAt,
+                    title: trip.title,
                 },
             });
         } catch (error) {
@@ -109,6 +119,7 @@ export class TripManager {
                         createdAt: trip.createdAt,
                         startedAt: trip.startedAt,
                         finishedAt: trip.finishedAt,
+                        title: trip.title,
                         origin: trip.origin,
                         destination: trip.destination,
                         statistics: trip.statistics,
