@@ -41,23 +41,23 @@ describe("validation/path", () => {
     expect(result.success).toBe(false)
   })
 
-  test("createPathSchema accepts empty description", () => {
+  test("createPathSchema rejects empty description", () => {
     const result = createPathSchema.safeParse({
       name: "My Path",
       description: "",
       visibility: "public",
     })
 
-    expect(result.success).toBe(true)
+    expect(result.success).toBe(false)
   })
 
-  test("createPathSchema accepts missing description", () => {
+  test("createPathSchema rejects missing description", () => {
     const result = createPathSchema.safeParse({
       name: "My Path",
       visibility: "public",
     })
 
-    expect(result.success).toBe(true)
+    expect(result.success).toBe(false)
   })
 
   test("createPathSchema trims description before length check", () => {
