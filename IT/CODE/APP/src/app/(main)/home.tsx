@@ -29,7 +29,7 @@ import { useTripLaunchSelection, useSetTripLaunchSelection } from "@/hooks/useTr
 import { buildRouteFromLatLngSegments } from "@/utils/routes"
 import { mapUserPathSummaryToSearchResult } from "@/utils/pathMappers"
 import { findClosestPointIndex, normalizeSearchResult, regionAroundPoint, regionCenteredOnDestination } from "@/utils/map"
-import { isNearOrigin } from "@/utils/geo"
+import { isNearOrigin, minDistanceToRouteMeters } from "@/utils/geo"
 
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -60,6 +60,7 @@ export default function HomeScreen() {
   const [isCreateModalVisible, setCreateModalVisible] = React.useState(false)
   const [isSearching, setIsSearching] = React.useState(false)
   const [isCancelTripPopupVisible, setCancelTripPopupVisible] = React.useState(false)
+  const [isOffRoutePopupVisible, setOffRoutePopupVisible] = React.useState(false)
   const [errorPopup, setErrorPopup] = React.useState({
     visible: false,
     title: "",
@@ -67,8 +68,14 @@ export default function HomeScreen() {
   })
 
   const START_TRIP_DISTANCE_METERS = 100
+  const OFF_ROUTE_DISTANCE_METERS = 50
+  const OFF_ROUTE_MAX_CONSECUTIVE = 3
+  const OFF_ROUTE_MAX_MS = 15000
 
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const offRouteCountRef = React.useRef(0)
+  const offRouteStartedAtRef = React.useRef<number | null>(null)
+  const offRouteContinueUsedRef = React.useRef(false)
 
   const displayRoute = (activeTrip?.route ?? selectedResult?.route) ?? []
   const destinationPoint = displayRoute[displayRoute.length - 1]
@@ -86,6 +93,10 @@ export default function HomeScreen() {
           START_TRIP_DISTANCE_METERS
         )
     )
+  const canContinueOffRoute = !offRouteContinueUsedRef.current
+  const offRouteMessage = canContinueOffRoute
+    ? "You are too far from the path. End the trip?"
+    : "You are too far from the path and have already continued once. End the trip?"
 
   const routeProgressIndex = React.useMemo(() => {
     if (!activeTrip || !userLocation) return null
@@ -172,6 +183,9 @@ export default function HomeScreen() {
     setSelectedResult(normalized)
     setActiveTrip(normalized)
     setActiveTripStartedAt(new Date())
+    resetOffRouteTracking()
+    offRouteContinueUsedRef.current = false
+    setOffRoutePopupVisible(false)
     setResultsVisible(false)
     if (isGuest) {
       return
@@ -190,6 +204,8 @@ export default function HomeScreen() {
   }
 
   function handleConfirmCancelTrip() {
+    resetOffRouteTracking()
+    offRouteContinueUsedRef.current = false
     setActiveTrip(null)
     setSelectedResult(null)
     setActiveTripStartedAt(null)
@@ -200,6 +216,26 @@ export default function HomeScreen() {
 
   function handleCloseCancelTripPopup() {
     setCancelTripPopupVisible(false)
+  }
+
+  function resetOffRouteTracking() {
+    offRouteCountRef.current = 0
+    offRouteStartedAtRef.current = null
+  }
+
+  function handleContinueOffRoute() {
+    if (offRouteContinueUsedRef.current) {
+      handleEndOffRouteTrip()
+      return
+    }
+    offRouteContinueUsedRef.current = true
+    resetOffRouteTracking()
+    setOffRoutePopupVisible(false)
+  }
+
+  function handleEndOffRouteTrip() {
+    setOffRoutePopupVisible(false)
+    void handleCompleteTrip()
   }
 
   async function handleCompleteTrip() {
@@ -257,6 +293,8 @@ export default function HomeScreen() {
       }
     }
 
+    resetOffRouteTracking()
+    offRouteContinueUsedRef.current = false
     setActiveTrip(null)
     setSelectedResult(null)
     setActiveTripStartedAt(null)
@@ -302,9 +340,38 @@ export default function HomeScreen() {
     setSelectedResult(tripLaunchSelection)
     setActiveTrip(tripLaunchSelection)
     setActiveTripStartedAt(new Date())
+    resetOffRouteTracking()
+    offRouteContinueUsedRef.current = false
+    setOffRoutePopupVisible(false)
     setResultsVisible(false)
     setTripLaunchSelection(null)
   }, [tripLaunchSelection, setTripLaunchSelection])
+
+  React.useEffect(() => {
+    if (!hasActiveNavigation || !activeTrip || !userLocation || !activeTrip.route.length) {
+      resetOffRouteTracking()
+      setOffRoutePopupVisible(false)
+      return
+    }
+
+    if (isOffRoutePopupVisible) return
+
+    const distance = minDistanceToRouteMeters(activeTrip.route ?? [], userLocation)
+    if (distance <= OFF_ROUTE_DISTANCE_METERS) {
+      resetOffRouteTracking()
+      return
+    }
+
+    offRouteCountRef.current += 1
+    if (!offRouteStartedAtRef.current) {
+      offRouteStartedAtRef.current = Date.now()
+    }
+
+    const elapsed = Date.now() - offRouteStartedAtRef.current
+    if (offRouteCountRef.current >= OFF_ROUTE_MAX_CONSECUTIVE || elapsed >= OFF_ROUTE_MAX_MS) {
+      setOffRoutePopupVisible(true)
+    }
+  }, [activeTrip, hasActiveNavigation, isOffRoutePopupVisible, userLocation])
 
   React.useEffect(() => {
     let cancelled = false
@@ -632,6 +699,28 @@ export default function HomeScreen() {
           variant: "secondary",
           onPress: handleCloseCancelTripPopup,
         }}
+      />
+      <AppPopup
+        visible={isOffRoutePopupVisible}
+        title="Off Route"
+        message={offRouteMessage}
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
+        onClose={handleContinueOffRoute}
+        primaryButton={{
+          label: "End Trip",
+          variant: "destructive",
+          onPress: handleEndOffRouteTrip,
+        }}
+        secondaryButton={
+          canContinueOffRoute
+            ? {
+                label: "Continue",
+                variant: "secondary",
+                onPress: handleContinueOffRoute,
+              }
+            : undefined
+        }
       />
       <AppPopup
         visible={errorPopup.visible}
