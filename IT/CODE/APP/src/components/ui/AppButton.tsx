@@ -11,6 +11,8 @@ interface AppButtonProps {
   title: string
   variant?: Variant
   onPress?: () => void
+  loading?: boolean
+  disabled?: boolean
   textColor?: string
   borderColor?: string
   buttonColor?: string
@@ -22,6 +24,8 @@ export function AppButton({
   title,
   variant = "primary",
   onPress,
+  loading = false,
+  disabled = false,
   textColor,
   borderColor,
   buttonColor,
@@ -69,10 +73,15 @@ export function AppButton({
   const resolvedBorderColor = borderColor ?? computedBorderColor
   const mode = isOutline ? "outlined" : "contained"
 
+  const isBlocked = disabled || loading
+  const handlePress = isBlocked ? undefined : onPress
+
   return (
     <Button
       mode={mode}
-      onPress={onPress}
+      onPress={handlePress}
+      loading={loading}
+      disabled={disabled}
       buttonColor={resolvedButtonColor as any}
       textColor={resolvedTextColor as any}
       style={[

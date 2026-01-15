@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react"
-import { View, FlatList, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
+import { View, Text, FlatList, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
+import * as Location from "expo-location"
+import { useFocusEffect, useRouter } from "expo-router"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { RouteCard, RouteItem } from "@/components/route/RouteCard"
@@ -8,98 +10,95 @@ import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { scale, verticalScale } from "@/theme/layout"
 import { iconSizes } from "@/theme/typography"
-import { Trash2, Eye, EyeOff } from "lucide-react-native"
+import { AlertTriangle, Trash2, Eye, EyeOff } from "lucide-react-native"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
+import { changePathVisibilityApi, deletePathApi, getMyPathsApi, type PathPoint, type UserPathSummary } from "@/api/paths"
+import { getApiErrorMessage } from "@/utils/apiError"
+import { isNearOrigin as isNearOriginMeters } from "@/utils/geo"
+import { mapUserPathSummaryToRouteItem, mapUserPathSummaryToSearchResult } from "@/utils/pathMappers"
+import { useSetTripLaunchSelection } from "@/hooks/useTripLaunchSelection"
+import type { SearchResult } from "@/components/paths/SearchResultsSheet"
 
-const MOCK_PATHS: RouteItem[] = [
-  {
-    id: "p1",
-    name: "Sunset Coastal Route",
-    description: "A scenic path along the coast with gentle turns and sea breeze.",
-    distanceKm: 12.3,
-    durationMin: 55,
-    date: "05/05/25",
-    avgSpeed: 14.1,
-    maxSpeed: 26.4,
-    elevation: 120,
-    visibility: "public",
-    actionLabel: "Start Trip",
-    showWeatherBadge: false,
-    showPerformanceMetrics: false,
-    route: [
-      { latitude: 45.421, longitude: 9.18 },
-      { latitude: 45.425, longitude: 9.185 },
-      { latitude: 45.428, longitude: 9.192 },
-    ],
-  },
-  {
-    id: "p2",
-    name: "Forest Discovery",
-    description: "Immersive ride through dense woods with moderate climbs.",
-    distanceKm: 18.7,
-    durationMin: 82,
-    date: "02/05/25",
-    avgSpeed: 13.5,
-    maxSpeed: 28.1,
-    elevation: 210,
-    visibility: "private",
-    actionLabel: "Resume Planning",
-    showWeatherBadge: false,
-    showPerformanceMetrics: false,
-    route: [
-      { latitude: 45.36, longitude: 9.12 },
-      { latitude: 45.365, longitude: 9.13 },
-      { latitude: 45.37, longitude: 9.125 },
-    ],
-  },
-  {
-    id: "p3",
-    name: "City Highlights Loop",
-    description: "Urban exploration touching major landmarks and cafes.",
-    distanceKm: 9.5,
-    durationMin: 42,
-    date: "30/04/25",
-    avgSpeed: 15.2,
-    maxSpeed: 29.8,
-    elevation: 60,
-    visibility: "public",
-    actionLabel: "Preview Route",
-    showWeatherBadge: false,
-    showPerformanceMetrics: false,
-    route: [
-      { latitude: 45.48, longitude: 9.20 },
-      { latitude: 45.482, longitude: 9.206 },
-      { latitude: 45.485, longitude: 9.198 },
-    ],
-  },
-]
+type SortOption = "date" | "distance" | "alphabetical"
+type LatLng = { latitude: number; longitude: number }
 
-type SortOption = "date" | "distance" | "duration" | "alphabetical"
+const ORIGIN_PROXIMITY_METERS = 100
 
 const SORT_OPTIONS: { key: SortOption; label: string }[] = [
   { key: "date", label: "Date" },
   { key: "distance", label: "Distance" },
-  { key: "duration", label: "Duration" },
   { key: "alphabetical", label: "Alphabetical" },
 ]
 
 export default function PathsScreen() {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
+  const router = useRouter()
   const { setHidden: setNavHidden } = useBottomNavVisibility()
   const deleteIconSize = iconSizes.xl
   const visibilityIconSize = iconSizes.xl
+  const setTripLaunchSelection = useSetTripLaunchSelection()
 
-  const [paths, setPaths] = useState<RouteItem[]>(MOCK_PATHS)
+  const [paths, setPaths] = useState<RouteItem[]>([])
+  const [pathSummaries, setPathSummaries] = useState<UserPathSummary[]>([])
+  const [userLocation, setUserLocation] = useState<LatLng | null>(null)
   const [expandedPathId, setExpandedPathId] = useState<string | null>(null)
   const [isSortMenuVisible, setSortMenuVisible] = useState(false)
   const [sortOption, setSortOption] = useState<SortOption>("date")
   const [pendingDeletePath, setPendingDeletePath] = useState<RouteItem | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false)
+  const [emptyMessage, setEmptyMessage] = useState<string | null>(null)
   const [pendingVisibilityChange, setPendingVisibilityChange] = useState<{
     path: RouteItem
     target: "public" | "private"
   } | null>(null)
+  const [errorPopup, setErrorPopup] = useState({
+    visible: false,
+    title: "",
+    message: "",
+  })
   const lastScrollOffset = React.useRef(0)
+  const locationWatcherRef = React.useRef<Location.LocationSubscription | null>(null)
+
+  const loadPaths = React.useCallback(() => {
+    let isActive = true
+
+    async function fetchPaths() {
+      try {
+        const response = await getMyPathsApi()
+        if (!isActive) return
+        setPathSummaries(response)
+        setPaths(response.map(mapUserPathSummaryToRouteItem))
+        if (response.length === 0) {
+          setEmptyMessage("Your path library is empty.\nStart creating paths to see them here.")
+        } else {
+          setEmptyMessage(null)
+        }
+      } catch (error) {
+        const status = (error as { response?: { status?: number } })?.response?.status
+        if (status === 404) {
+          setPaths([])
+          setPathSummaries([])
+          setEmptyMessage("Your path library is empty.\nStart creating paths to see them here.")
+          return
+        }
+        const message = getApiErrorMessage(error, "Unable to load your paths. Please try again.")
+        setEmptyMessage(null)
+        setErrorPopup({
+          visible: true,
+          title: "Loading failed",
+          message,
+        })
+      }
+    }
+
+    fetchPaths()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   const sortedPaths = useMemo(() => {
     const parseDate = (value: string) => {
@@ -111,8 +110,6 @@ export default function PathsScreen() {
       switch (sortOption) {
         case "distance":
           return b.distanceKm - a.distanceKm
-        case "duration":
-          return b.durationMin - a.durationMin
         case "alphabetical":
           return a.name.localeCompare(b.name)
         case "date":
@@ -143,16 +140,44 @@ export default function PathsScreen() {
     setPendingDeletePath(path)
   }
 
-  function handleConfirmDeletePath() {
-    if (!pendingDeletePath) return
-    setPaths((current) => current.filter((path) => path.id !== pendingDeletePath.id))
-    setExpandedPathId((current) =>
-      current === pendingDeletePath.id ? null : current
-    )
-    setPendingDeletePath(null)
+  function handleStartTrip(pathId: string) {
+    const summary = pathSummaries.find((path) => path.pathId === pathId)
+    if (!summary) {
+      setErrorPopup({
+        visible: true,
+        title: "Trip Error",
+        message: "Path details are missing. Please try again.",
+      })
+      return
+    }
+    const selection = mapUserPathSummaryToSearchResult(summary, palette)
+    setTripLaunchSelection(selection)
+    router.replace("/(main)/home")
+  }
+
+  async function handleConfirmDeletePath() {
+    if (!pendingDeletePath || isDeleting) return
+    const pathId = pendingDeletePath.id
+    setIsDeleting(true)
+    try {
+      await deletePathApi(pathId)
+      setPaths((current) => current.filter((path) => path.id !== pathId))
+      setExpandedPathId((current) => (current === pathId ? null : current))
+      setPendingDeletePath(null)
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to delete the path. Please try again.")
+      setErrorPopup({
+        visible: true,
+        title: "Delete failed",
+        message,
+      })
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   function handleCancelDeletePath() {
+    if (isDeleting) return
     setPendingDeletePath(null)
   }
 
@@ -161,21 +186,41 @@ export default function PathsScreen() {
     setPendingVisibilityChange({ path, target })
   }
 
-  function handleConfirmVisibilityChange() {
-    if (!pendingVisibilityChange) return
-
-    setPaths((current) =>
-      current.map((path) =>
-        path.id === pendingVisibilityChange.path.id
-          ? { ...path, visibility: pendingVisibilityChange.target }
-          : path
+  async function handleConfirmVisibilityChange() {
+    if (!pendingVisibilityChange || isUpdatingVisibility) return
+    const pathId = pendingVisibilityChange.path.id
+    const nextVisibility = pendingVisibilityChange.target === "public"
+    setIsUpdatingVisibility(true)
+    try {
+      await changePathVisibilityApi(pathId, nextVisibility)
+      setPaths((current) =>
+        current.map((path) =>
+          path.id === pathId ? { ...path, visibility: pendingVisibilityChange.target } : path
+        )
       )
-    )
-    setPendingVisibilityChange(null)
+      setPendingVisibilityChange(null)
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to change visibility. Please try again.")
+      setErrorPopup({
+        visible: true,
+        title: "Visibility update failed",
+        message,
+      })
+    } finally {
+      setIsUpdatingVisibility(false)
+    }
   }
 
   function handleCancelVisibilityChange() {
+    if (isUpdatingVisibility) return
     setPendingVisibilityChange(null)
+  }
+
+  function handleCloseErrorPopup() {
+    setErrorPopup((prev) => ({
+      ...prev,
+      visible: false,
+    }))
   }
 
   function handleListScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -196,6 +241,54 @@ export default function PathsScreen() {
       setNavHidden(false)
     }
   }, [setNavHidden])
+
+  useFocusEffect(loadPaths)
+
+  React.useEffect(() => {
+    let cancelled = false
+    async function initLocation() {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync()
+        if (status !== "granted") {
+          return
+        }
+        const current = await Location.getCurrentPositionAsync({
+          accuracy: Location.LocationAccuracy.Balanced,
+        })
+        if (cancelled) return
+        setUserLocation({
+          latitude: current.coords.latitude,
+          longitude: current.coords.longitude,
+        })
+
+        const watcher = await Location.watchPositionAsync(
+          {
+            accuracy: Location.LocationAccuracy.Balanced,
+            distanceInterval: 5,
+          },
+          (location) => {
+            if (cancelled) return
+            setUserLocation({
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            })
+          }
+        )
+        locationWatcherRef.current = watcher
+      } catch (error) {
+      }
+    }
+
+    initLocation()
+
+    return () => {
+      cancelled = true
+      if (locationWatcherRef.current) {
+        locationWatcherRef.current.remove()
+        locationWatcherRef.current = null
+      }
+    }
+  }, [])
 
   const visibilityChangeMessage = pendingVisibilityChange
     ? pendingVisibilityChange.target === "private"
@@ -226,14 +319,26 @@ export default function PathsScreen() {
         ]}
         renderItem={({ item, index }) => (
           <View style={index === 0 ? styles.firstCardWrapper : undefined}>
+            {(() => {
+              const summary = pathSummaries.find((path) => path.pathId === item.id)
+              const canStartTrip = summary && userLocation
+                ? isNearOriginMeters(summary.origin, userLocation, ORIGIN_PROXIMITY_METERS)
+                : false
+              return (
             <RouteCard
-              trip={item}
+              trip={{
+                ...item,
+                actionLabel: canStartTrip ? "Start Trip" : undefined,
+                onActionPress: canStartTrip ? () => handleStartTrip(item.id) : undefined,
+              }}
               isExpanded={expandedPathId === item.id}
               onToggle={() => handleTogglePath(item.id)}
               onDeletePress={() => handleRequestDeletePath(item)}
               onVisibilityPress={() => handleVisibilityPress(item)}
               mapTitle="Path Map"
             />
+              )
+            })()}
           </View>
         )}
         ListHeaderComponent={
@@ -245,6 +350,15 @@ export default function PathsScreen() {
             />
             <View style={styles.headerSpacer} />
           </View>
+        }
+        ListEmptyComponent={
+          emptyMessage ? (
+            <View style={styles.emptyState}>
+              <Text style={[styles.emptyText, { color: palette.text.secondary }]}>
+                {emptyMessage}
+              </Text>
+            </View>
+          ) : null
         }
         onScroll={handleListScroll}
         scrollEventThrottle={16}
@@ -266,7 +380,7 @@ export default function PathsScreen() {
         iconBackgroundColor={`${palette.accent.red.surface}`}
         onClose={handleCancelDeletePath}
         primaryButton={{
-          label: "Yes, Delete",
+          label: isDeleting ? "Deleting..." : "Yes, Delete",
           variant: "destructive",
           onPress: handleConfirmDeletePath,
         }}
@@ -291,7 +405,7 @@ export default function PathsScreen() {
         iconBackgroundColor={visibilityIconBackground}
         onClose={handleCancelVisibilityChange}
         primaryButton={{
-          label: "Yes, Change",
+          label: isUpdatingVisibility ? "Updating..." : "Yes, Change",
           variant: "primary",
           onPress: handleConfirmVisibilityChange,
           buttonColor: visibilityPrimaryButtonColor,
@@ -305,9 +419,25 @@ export default function PathsScreen() {
           borderColor: visibilityIconColor,
         }}
       />
+      <AppPopup
+        visible={errorPopup.visible}
+        title={errorPopup.title || "Error"}
+        message={errorPopup.message || "Unable to complete the request."}
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
+        onClose={handleCloseErrorPopup}
+        primaryButton={{
+          label: "OK",
+          variant: "primary",
+          onPress: handleCloseErrorPopup,
+          buttonColor: palette.status.danger,
+          textColor: palette.text.onAccent,
+        }}
+      />
     </View>
   )
 }
+
 
 const styles = StyleSheet.create({
   screen: {
@@ -328,5 +458,13 @@ const styles = StyleSheet.create({
   },
   firstCardWrapper: {
     marginTop: -verticalScale(48),
+  },
+  emptyState: {
+    paddingVertical: verticalScale(32),
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: "center",
   },
 })

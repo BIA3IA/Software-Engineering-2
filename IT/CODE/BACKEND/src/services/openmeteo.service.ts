@@ -2,6 +2,7 @@ import { WeatherData, OpenMeteoWeather, Coordinates, PointWeatherData } from "..
 import { InternalServerError } from "../errors/index";
 import logger from "../utils/logger";
 import { getWeatherDescription } from "./wmo";
+import { haversineDistanceKm } from "../utils/geo";
 
 // This service must fetch weather data from OpenMeteo for given coordinates
 // and aggregate it to produce TripWeather data. The aggregation is made by taking
@@ -19,29 +20,11 @@ const SAMPLING_CONFIG = {
     MAX_SAMPLES: 10,         // Maximum number of samples
 };
 
-// Calculate the distance between two coordinates (Haversine formula)(https://github.com/thealmarques/haversine-distance-typescript.git)
-function calculateDistance(from: Coordinates, to: Coordinates): number {
-    var radius = 6371; // km
-
-    //Convert latitude and longitude to radians
-    const deltaLatitude = (to.lat - from.lat) * Math.PI / 180;
-    const deltaLongitude = (to.lng - from.lng) * Math.PI / 180;
-
-    const halfChordLength = Math.cos(
-        from.lat * Math.PI / 180) * Math.cos(to.lat * Math.PI / 180)
-        * Math.sin(deltaLongitude / 2) * Math.sin(deltaLongitude / 2)
-        + Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2);
-
-    const angularDistance = 2 * Math.atan2(Math.sqrt(halfChordLength), Math.sqrt(1 - halfChordLength));
-
-    return radius * angularDistance;
-}
-
 // Calculate the total distance of the route
 function getTotalDistance(coordinates: Coordinates[]): number {
     let total = 0;
     for (let i = 1; i < coordinates.length; i++) {
-        total += calculateDistance(coordinates[i - 1], coordinates[i]);
+        total += haversineDistanceKm(coordinates[i - 1], coordinates[i]);
     }
     return total;
 }
@@ -78,7 +61,7 @@ export function sampleCoordinates(coordinates: Coordinates[]): Coordinates[] {
     let lastDistance = 0;
 
     for (let i = 1; i < coordinates.length - 1; i++) {
-        lastDistance += calculateDistance(coordinates[i - 1], coordinates[i]);
+        lastDistance += haversineDistanceKm(coordinates[i - 1], coordinates[i]);
 
         if (lastDistance >= SAMPLING_CONFIG.SAMPLE_INTERVAL_KM) {
             sampled.push(coordinates[i]);

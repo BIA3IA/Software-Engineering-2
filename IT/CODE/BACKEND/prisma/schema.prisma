@@ -28,6 +28,7 @@ model User {
   systemPreferences String[]
   refreshTokens     RefreshToken[]
   trips             Trip[]
+  paths             Path[]
 }
 
 model RefreshToken {
@@ -46,6 +47,7 @@ model Trip {
   createdAt    DateTime      @default(now())
   startedAt    DateTime
   finishedAt   DateTime
+  title        String?
   /// [Coordinates]
   origin       Json
   /// [Coordinates]
@@ -64,6 +66,7 @@ model Segment {
   /// [Coordinates[]]
   polylineCoordinates Json
   tripSegments        TripSegment[]
+  pathSegments        PathSegment[]
 }
 
 model TripSegment {
@@ -75,4 +78,34 @@ model TripSegment {
   segment       Segment @relation(fields: [segmentId], references: [segmentId], onDelete: Cascade)
 
   @@unique([tripId, segmentId])
+}
+
+model Path {
+  pathId       String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
+  pathSegments PathSegment[]
+  status       String        @default("OPTIMAL")
+  /// [Coordinates]
+  origin       Json
+  /// [Coordinates]
+  destination  Json
+  visibility   Boolean       @default(false)
+  creationMode String        @default("MANUAL")
+  score        Float?
+  title        String?
+  description  String?
+}
+
+model PathSegment {
+  id            String  @id @default(cuid())
+  pathId        String
+  segmentId     String
+  nextSegmentId String?
+  status        String  @default("OPTIMAL")
+  path          Path    @relation(fields: [pathId], references: [pathId], onDelete: Cascade)
+  segment       Segment @relation(fields: [segmentId], references: [segmentId]) // No onDelete: Cascade here otherwise deleting a path would delete also the trip segments
+
+  @@unique([pathId, segmentId])
 }

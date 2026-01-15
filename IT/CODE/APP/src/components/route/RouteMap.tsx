@@ -17,6 +17,8 @@ export type WeatherDetails = {
   humidity: string
   visibility: string
   pressure: string
+  feelsLike?: string
+  precipitation?: string
 }
 
 type RouteMapProps = {
@@ -25,6 +27,7 @@ type RouteMapProps = {
   weather?: WeatherDetails
   showWeatherBadge?: boolean
   title?: string
+  showUserLocation?: boolean
 }
 
 export function RouteMap({
@@ -39,6 +42,7 @@ export function RouteMap({
   },
   showWeatherBadge = true,
   title = "Trip Map",
+  showUserLocation = true,
 }: RouteMapProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
@@ -117,11 +121,13 @@ export function RouteMap({
             toolbarEnabled={false}
             customMapStyle={scheme === "dark" ? darkMapStyle : lightMapStyle}
             showsCompass={false}
+            showsUserLocation={showUserLocation}
+            showsMyLocationButton={false}
           >
             {route.length > 1 && (
               <Polyline
                 coordinates={route}
-                strokeWidth={4}
+                strokeWidth={10}
                 strokeColor={palette.brand.dark}
               />
             )}
@@ -129,9 +135,9 @@ export function RouteMap({
             {start && (
               <Circle
                 center={start}
-                radius={18}
+                radius={2}
                 strokeColor={palette.brand.base}
-                fillColor={`${palette.brand.base}33`}
+                fillColor={`${palette.brand.base}22`}
               />
             )}
 
@@ -178,7 +184,7 @@ export function RouteMap({
             <Pressable
               style={[
                 styles.overlayScrim,
-                { backgroundColor: palette.overlay.scrim },
+                { backgroundColor: palette.overlay.scrim, opacity: 0.35 },
               ]}
               onPress={() => setWeatherOpen(false)}
             />
@@ -209,6 +215,8 @@ export function RouteMap({
               <WeatherRow label="Condition" value={weather.condition} />
               <WeatherRow label="Wind Speed" value={weather.windSpeed} />
               <WeatherRow label="Humidity" value={weather.humidity} />
+              <WeatherRow label="Feels Like" value={weather.feelsLike ?? "N/A"} />
+              <WeatherRow label="Precipitation" value={weather.precipitation ?? "N/A"} />
               <WeatherRow label="Visibility" value={weather.visibility} />
               <WeatherRow label="Pressure" value={weather.pressure} />
             </View>

@@ -119,6 +119,10 @@ Additional assets such as `logo.png` or `map-marker.png` can be added here and i
 ### utils/
 - `utils/apiError.ts` - normalizes Axios/JS errors into user-facing strings (used by Login/Signup/Edit Profile popups).
 - `utils/layout.ts` - responsive layout helpers (scale, verticalScale, moderateScale).
+- `utils/geo.ts` - haversine distance helpers plus `minDistanceToRouteMeters` for off-route detection.
+- `utils/routes.ts` - builds full polylines from path/trip segments.
+- `utils/map.ts` - map helpers (region fitting, search normalization, closest-point index).
+- `utils/pathMappers.ts` - adapters between API path payloads and UI-friendly SearchResult/RouteItem shapes.
 - `tests/utils/render.tsx` (in `tests/utils`) - test helper that wraps React components with PaperProvider + theme icon settings.
 
 ### tests/
@@ -186,6 +190,16 @@ When choosing UI libraries/components we looked at:
 1. **Cross-platform support** - must behave identically on Android/iOS (Paper passes this).
 2. **Composable primitives** - Paper provides theming + base components, while we extend with custom UI in `components/ui`.
 3. **Theming support** - Paper integrates with our Colors/typography, accessible dark/light switches, etc.
+
+## Trips & Navigation Behaviors
+
+- **Trip start** happens when a selected path is near the user origin (100m threshold).
+- **Off-route detection**: while a trip is active, we measure the minimum distance to the route polyline.
+  - Default threshold: 50 meters.
+  - Trigger: 3 consecutive updates outside the threshold or 15 seconds continuously off-route.
+  - Result: popup prompts to end the trip or continue (resetting the off-route counter).
+  - Continue is allowed only once per trip; subsequent prompts only allow ending the trip.
+  - Ending the trip here runs the same save flow as the manual "Complete Trip" button.
 - `(main)/home.tsx` - central map/route experience: search inputs, result sheet, Create Path FAB, report modal, navigation progress, start/complete trip actions.
 - `(main)/trips.tsx` - trip history, metrics, stats cards, entry points to detail screens.
 - `(main)/paths.tsx` - curated path list with filters/tags.

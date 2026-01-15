@@ -23,12 +23,12 @@ describe("signup integration", () => {
                 sel({ signupWithPassword })
             )
 
-        const { getByLabelText, getByText, findByText } = render(<SignUpScreen />)
+        const { getByPlaceholderText, getByText, findByText } = render(<SignUpScreen />)
 
-        fireEvent.changeText(getByLabelText("Username"), "bia")
-        fireEvent.changeText(getByLabelText("Email Address"), "not-an-email")
-        fireEvent.changeText(getByLabelText("Password"), "123")
-        fireEvent.changeText(getByLabelText("Confirm Password"), "12345679")
+        fireEvent.changeText(getByPlaceholderText("Choose a username"), "bia")
+        fireEvent.changeText(getByPlaceholderText("Enter your email"), "not-an-email")
+        fireEvent.changeText(getByPlaceholderText("Create a secure password"), "123")
+        fireEvent.changeText(getByPlaceholderText("Confirm your password"), "12345679")
         fireEvent.press(getByText("Sign Up"))
 
         expect(await findByText("Username must be at least 5 characters.")).toBeTruthy()
@@ -47,12 +47,12 @@ describe("signup integration", () => {
                 sel({ signupWithPassword })
             )
 
-        const { getByLabelText, getByText } = render(<SignUpScreen />)
+        const { getByPlaceholderText, getByText } = render(<SignUpScreen />)
 
-        fireEvent.changeText(getByLabelText("Username"), "bianca")
-        fireEvent.changeText(getByLabelText("Email Address"), "a@b.com")
-        fireEvent.changeText(getByLabelText("Password"), "12345678")
-        fireEvent.changeText(getByLabelText("Confirm Password"), "12345678")
+        fireEvent.changeText(getByPlaceholderText("Choose a username"), "bianca")
+        fireEvent.changeText(getByPlaceholderText("Enter your email"), "a@b.com")
+        fireEvent.changeText(getByPlaceholderText("Create a secure password"), "12345678")
+        fireEvent.changeText(getByPlaceholderText("Confirm your password"), "12345678")
         fireEvent.press(getByText("Sign Up"))
 
         await waitFor(() => {
@@ -68,12 +68,12 @@ describe("signup integration", () => {
                 sel({ signupWithPassword })
             )
 
-        const { getByLabelText, getByText, findByText } = render(<SignUpScreen />)
+        const { getByPlaceholderText, getByText, findByText } = render(<SignUpScreen />)
 
-        fireEvent.changeText(getByLabelText("Username"), "bianca")
-        fireEvent.changeText(getByLabelText("Email Address"), "a@b.com")
-        fireEvent.changeText(getByLabelText("Password"), "12345678")
-        fireEvent.changeText(getByLabelText("Confirm Password"), "12345678")
+        fireEvent.changeText(getByPlaceholderText("Choose a username"), "bianca")
+        fireEvent.changeText(getByPlaceholderText("Enter your email"), "a@b.com")
+        fireEvent.changeText(getByPlaceholderText("Create a secure password"), "12345678")
+        fireEvent.changeText(getByPlaceholderText("Confirm your password"), "12345678")
 
         fireEvent.press(getByText("Sign Up"))
 

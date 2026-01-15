@@ -89,8 +89,6 @@ function NavItem({ icon: Icon, label, active, onPress, palette, isGuest }: NavIt
     return (
         <TouchableOpacity
             onPress={onPress}
-            accessibilityRole="button"
-            accessibilityLabel={`${label} tab`}
             accessibilityState={{ selected: Boolean(active) }}
             style={[styles.item, isDimmed && styles.dimmed]}
             activeOpacity={0.8}

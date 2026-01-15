@@ -46,6 +46,7 @@ describe("Testing WeatherManager business logic", () => {
                 createdAt: new Date(),
                 startedAt: new Date(),
                 finishedAt: new Date(),
+                title: null,
                 origin: { lat: 45.4642, lng: 9.1900 },
                 destination: { lat: 45.4654, lng: 9.1859 },
                 statistics: { speed: 15, maxSpeed: 20, distance: 5, time: 20 },
@@ -60,7 +61,8 @@ describe("Testing WeatherManager business logic", () => {
                             polylineCoordinates: [
                                 { lat: 45.4645, lng: 9.1880 },
                                 { lat: 45.4650, lng: 9.1870 }
-                            ]
+                            ],
+                            createdAt: new Date()
                         }
                     }
                 ]
@@ -102,6 +104,7 @@ describe("Testing WeatherManager business logic", () => {
                 finishedAt: new Date(),
                 origin: null as any,
                 destination: null as any,
+                title: null,
                 statistics: { speed: 0, maxSpeed: 0, distance: 0, time: 0 },
                 weather: null,
                 tripSegments: []
@@ -131,6 +134,7 @@ describe("Testing WeatherManager business logic", () => {
                 createdAt: new Date(),
                 startedAt: new Date(),
                 finishedAt: new Date(),
+                title: null,
                 origin: { lat: 45.4642, lng: 9.1900 },
                 destination: { lat: 45.4654, lng: 9.1859 },
                 statistics: { speed: 15, maxSpeed: 20, distance: 5, time: 20 },
@@ -142,7 +146,8 @@ describe("Testing WeatherManager business logic", () => {
                         segment: {
                             segmentId: "seg1",
                             status: "active",
-                            polylineCoordinates: [{ lat: 45.4645, lng: 9.1880 }]
+                            polylineCoordinates: [{ lat: 45.4645, lng: 9.1880 }],
+                            createdAt: new Date()
                         }
                     }
                 ]
@@ -204,6 +209,7 @@ describe("Testing WeatherManager business logic", () => {
                 createdAt: new Date(),
                 startedAt: new Date(),
                 finishedAt: new Date(),
+                title: null,
                 origin: { lat: 45.4642, lng: 9.1900 },
                 destination: { lat: 45.4654, lng: 9.1859 },
                 statistics: { speed: 15, maxSpeed: 20, distance: 5, time: 20 },

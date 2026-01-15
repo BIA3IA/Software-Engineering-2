@@ -42,6 +42,7 @@ export default function SettingsScreen() {
   const appearanceButtonRef = React.useRef<View | null>(null)
   const privacyButtonRef = React.useRef<View | null>(null)
   const [isLogoutPopupVisible, setLogoutPopupVisible] = React.useState(false)
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false)
   const overlayOptions = activePicker === "privacy" ? PRIVACY_OPTIONS : APPEARANCE_OPTIONS
   const selectedKey = activePicker === "privacy" ? defaultPrivacy : appearancePreference
 
@@ -87,9 +88,20 @@ export default function SettingsScreen() {
   }
 
   async function handleConfirmLogout() {
-    await logout()
+    if (isLoggingOut) return
+    setIsLoggingOut(true)
+    try {
+      await logout()
+      setLogoutPopupVisible(false)
+      router.replace("/(auth)/welcome")
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
+  function handleCloseLogoutPopup() {
     setLogoutPopupVisible(false)
-    router.replace("/(auth)/welcome")
+    setIsLoggingOut(false)
   }
 
   return (
@@ -224,16 +236,19 @@ export default function SettingsScreen() {
         message="Are you sure you want to log out? You'll need to sign back in to sync your rides."
         icon={<LogOut size={iconSizes.xl} color={palette.status.danger} />}
         iconBackgroundColor={`${palette.accent.red.surface}`}
-        onClose={() => setLogoutPopupVisible(false)}
+        onClose={handleCloseLogoutPopup}
         primaryButton={{
-          label: "Yes, Log Out",
+          label: isLoggingOut ? "Logging Out..." : "Yes, Log Out",
           variant: "destructive",
           onPress: handleConfirmLogout,
         }}
         secondaryButton={{
           label: "No, Cancel",
           variant: "secondary",
-          onPress: () => setLogoutPopupVisible(false),
+          onPress: () => {
+            if (isLoggingOut) return
+            handleCloseLogoutPopup()
+          },
           textColor: palette.status.danger,
           borderColor: palette.status.danger,
         }}
