@@ -47,6 +47,7 @@ model Trip {
   createdAt    DateTime      @default(now())
   startedAt    DateTime
   finishedAt   DateTime
+  title        String?
   /// [Coordinates]
   origin       Json
   /// [Coordinates]

@@ -128,6 +128,31 @@ jest.mock("@/utils/apiError", () => ({
   getApiErrorMessage: () => "API error",
 }))
 
+jest.mock("expo-location", () => ({
+  requestForegroundPermissionsAsync: jest.fn(async () => ({ status: "granted" })),
+  getCurrentPositionAsync: jest.fn(async () => ({
+    coords: { latitude: 45.0, longitude: 9.0 },
+  })),
+  watchPositionAsync: jest.fn(async (_options: any, callback: any) => {
+    callback?.({ coords: { latitude: 45.0, longitude: 9.0 } })
+    return { remove: jest.fn() }
+  }),
+  reverseGeocodeAsync: jest.fn(async () => [{ city: "Test City", street: "Test Street" }]),
+  LocationAccuracy: { Balanced: 3 },
+}))
+
 jest.mock("expo-linear-gradient", () => ({
   LinearGradient: ({ children }: any) => children,
 }))
+
+jest.mock("lucide-react-native", () => {
+  const React = require("react")
+  const { Text } = require("react-native")
+  const MockIcon = () => React.createElement(Text, null, "icon")
+  return new Proxy(
+    {},
+    {
+      get: () => MockIcon,
+    }
+  )
+})

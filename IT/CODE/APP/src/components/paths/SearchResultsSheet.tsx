@@ -14,6 +14,10 @@ export type SearchResult = {
   description: string
   tags: PathResultTag[]
   route: { latitude: number; longitude: number }[]
+  pathSegments?: {
+    segmentId: string
+    polylineCoordinates: { latitude: number; longitude: number }[]
+  }[]
 }
 
 type SearchResultsSheetProps = {
@@ -38,7 +42,7 @@ export function SearchResultsSheet({
   maxHeight = verticalScale(260),
   selectedResultId = null,
   onSelectResult,
-  actionLabel = "Start Trip",
+  actionLabel,
   onActionPress,
 }: SearchResultsSheetProps) {
   const scheme = useColorScheme() ?? "light"

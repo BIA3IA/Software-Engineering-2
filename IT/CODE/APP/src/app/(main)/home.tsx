@@ -1,7 +1,7 @@
 import React from "react"
 import { View, StyleSheet, Pressable } from "react-native"
 import MapView, { Marker, Polyline, Circle } from "react-native-maps"
-import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle } from "lucide-react-native"
+import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle, X } from "lucide-react-native"
 import * as Location from "expo-location"
 
 import { layoutStyles, scale, verticalScale, radius } from "@/theme/layout"
@@ -22,8 +22,14 @@ import { AppButton } from "@/components/ui/AppButton"
 import { useRouter } from "expo-router"
 import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
 import { type PrivacyPreference } from "@/constants/Privacy"
-import { searchPathsApi, type UserPathSummary } from "@/api/paths"
+import { searchPathsApi } from "@/api/paths"
+import { createTripApi } from "@/api/trips"
 import { getApiErrorMessage } from "@/utils/apiError"
+import { useTripLaunchSelection, useSetTripLaunchSelection } from "@/hooks/useTripLaunchSelection"
+import { buildRouteFromLatLngSegments } from "@/utils/routes"
+import { mapUserPathSummaryToSearchResult } from "@/utils/pathMappers"
+import { findClosestPointIndex, normalizeSearchResult, regionAroundPoint, regionCenteredOnDestination } from "@/utils/map"
+import { isNearOrigin, minDistanceToRouteMeters } from "@/utils/geo"
 
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -35,12 +41,15 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const { setHidden: setNavHidden } = useBottomNavVisibility()
   const defaultVisibility = usePrivacyPreference()
+  const tripLaunchSelection = useTripLaunchSelection()
+  const setTripLaunchSelection = useSetTripLaunchSelection()
   const [startPoint, setStartPoint] = React.useState("")
   const [destination, setDestination] = React.useState("")
   const [resultsVisible, setResultsVisible] = React.useState(false)
   const [results, setResults] = React.useState<SearchResult[]>([])
   const [selectedResult, setSelectedResult] = React.useState<SearchResult | null>(null)
   const [activeTrip, setActiveTrip] = React.useState<SearchResult | null>(null)
+  const [activeTripStartedAt, setActiveTripStartedAt] = React.useState<Date | null>(null)
   const [userLocation, setUserLocation] = React.useState<LatLng | null>(null)
   const [userHeading, setUserHeading] = React.useState<number | null>(null)
   const mapRef = React.useRef<MapView | null>(null)
@@ -50,18 +59,44 @@ export default function HomeScreen() {
   const [isCompletedPopupVisible, setCompletedPopupVisible] = React.useState(false)
   const [isCreateModalVisible, setCreateModalVisible] = React.useState(false)
   const [isSearching, setIsSearching] = React.useState(false)
+  const [isCancelTripPopupVisible, setCancelTripPopupVisible] = React.useState(false)
+  const [isOffRoutePopupVisible, setOffRoutePopupVisible] = React.useState(false)
   const [errorPopup, setErrorPopup] = React.useState({
     visible: false,
     title: "",
     message: "",
   })
 
+  const START_TRIP_DISTANCE_METERS = 100
+  const OFF_ROUTE_DISTANCE_METERS = 50
+  const OFF_ROUTE_MAX_CONSECUTIVE = 3
+  const OFF_ROUTE_MAX_MS = 15000
+
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const offRouteCountRef = React.useRef(0)
+  const offRouteStartedAtRef = React.useRef<number | null>(null)
+  const offRouteContinueUsedRef = React.useRef(false)
 
   const displayRoute = (activeTrip?.route ?? selectedResult?.route) ?? []
   const destinationPoint = displayRoute[displayRoute.length - 1]
   const startRoutePoint = displayRoute[0]
   const hasActiveNavigation = Boolean(activeTrip && activeTrip.route.length > 0)
+  const canStartSelectedTrip =
+    !activeTrip &&
+    Boolean(
+      selectedResult &&
+        userLocation &&
+        startRoutePoint &&
+        isNearOrigin(
+          { lat: startRoutePoint.latitude, lng: startRoutePoint.longitude },
+          userLocation,
+          START_TRIP_DISTANCE_METERS
+        )
+    )
+  const canContinueOffRoute = !offRouteContinueUsedRef.current
+  const offRouteMessage = canContinueOffRoute
+    ? "You are too far from the path. End the trip?"
+    : "You are too far from the path and have already continued once. End the trip?"
 
   const routeProgressIndex = React.useMemo(() => {
     if (!activeTrip || !userLocation) return null
@@ -120,7 +155,7 @@ export default function HomeScreen() {
         origin: originQuery,
         destination: destinationQuery,
       })
-      setResults(response.map((path) => mapSearchPathToResult(path, palette)))
+      setResults(response.map((path) => mapUserPathSummaryToSearchResult(path, palette)))
       setResultsVisible(true)
     } catch (error) {
       const message = getApiErrorMessage(error, "Unable to search paths. Please try again.")
@@ -137,29 +172,132 @@ export default function HomeScreen() {
   }
 
   function handleSelectResult(result: SearchResult) {
-    setSelectedResult(result)
+    const normalized = normalizeSearchResult(result, buildRouteFromLatLngSegments)
+    setSelectedResult(normalized)
     setActiveTrip(null)
+    setActiveTripStartedAt(null)
   }
 
-  function handleStartTrip(result: SearchResult) {
-    setSelectedResult(result)
-    setActiveTrip(result)
+  async function handleStartTrip(result: SearchResult) {
+    const normalized = normalizeSearchResult(result, buildRouteFromLatLngSegments)
+    setSelectedResult(normalized)
+    setActiveTrip(normalized)
+    setActiveTripStartedAt(new Date())
+    resetOffRouteTracking()
+    offRouteContinueUsedRef.current = false
+    setOffRoutePopupVisible(false)
     setResultsVisible(false)
-    console.log("Start trip for", result.id)
+    if (isGuest) {
+      return
+    }
   }
 
   function handleCloseResults() {
     setResultsVisible(false)
     setSelectedResult(null)
     setActiveTrip(null)
+    setActiveTripStartedAt(null)
   }
 
-  function handleCompleteTrip() {
-    if (activeTrip) {
-      console.log("Trip completed", activeTrip.id)
-    }
+  function handleCancelTrip() {
+    setCancelTripPopupVisible(true)
+  }
+
+  function handleConfirmCancelTrip() {
+    resetOffRouteTracking()
+    offRouteContinueUsedRef.current = false
     setActiveTrip(null)
     setSelectedResult(null)
+    setActiveTripStartedAt(null)
+    setReportVisible(false)
+    setResultsVisible(false)
+    setCancelTripPopupVisible(false)
+  }
+
+  function handleCloseCancelTripPopup() {
+    setCancelTripPopupVisible(false)
+  }
+
+  function resetOffRouteTracking() {
+    offRouteCountRef.current = 0
+    offRouteStartedAtRef.current = null
+  }
+
+  function handleContinueOffRoute() {
+    if (offRouteContinueUsedRef.current) {
+      handleEndOffRouteTrip()
+      return
+    }
+    offRouteContinueUsedRef.current = true
+    resetOffRouteTracking()
+    setOffRoutePopupVisible(false)
+  }
+
+  function handleEndOffRouteTrip() {
+    setOffRoutePopupVisible(false)
+    void handleCompleteTrip()
+  }
+
+  async function handleCompleteTrip() {
+    if (!activeTrip) {
+      return
+    }
+
+    if (!isGuest) {
+      if (!activeTripStartedAt || !startRoutePoint || !destinationPoint) {
+        setErrorPopup({
+          visible: true,
+          title: "Trip Error",
+          message: "Trip details are missing. Please try again.",
+        })
+        return
+      }
+
+      const tripSegments =
+        activeTrip.pathSegments?.map((segment) => ({
+          segmentId: segment.segmentId,
+          polylineCoordinates: segment.polylineCoordinates.map((point) => ({
+            lat: point.latitude,
+            lng: point.longitude,
+          })),
+        })) ?? []
+
+      const hasInvalidSegment = tripSegments.some((segment) => segment.polylineCoordinates.length < 2)
+
+      if (!tripSegments.length || hasInvalidSegment) {
+        setErrorPopup({
+          visible: true,
+          title: "Trip Error",
+          message: "Trip segments are incomplete. Please try again.",
+        })
+        return
+      }
+
+      try {
+        await createTripApi({
+          origin: { lat: startRoutePoint.latitude, lng: startRoutePoint.longitude },
+          destination: { lat: destinationPoint.latitude, lng: destinationPoint.longitude },
+          startedAt: activeTripStartedAt.toISOString(),
+          finishedAt: new Date().toISOString(),
+          title: activeTrip.title,
+          tripSegments,
+        })
+      } catch (error) {
+        const message = getApiErrorMessage(error, "Unable to save the trip. Please try again.")
+        setErrorPopup({
+          visible: true,
+          title: "Trip Error",
+          message,
+        })
+        return
+      }
+    }
+
+    resetOffRouteTracking()
+    offRouteContinueUsedRef.current = false
+    setActiveTrip(null)
+    setSelectedResult(null)
+    setActiveTripStartedAt(null)
     setReportVisible(false)
     setCompletedPopupVisible(true)
   }
@@ -169,7 +307,6 @@ export default function HomeScreen() {
   }
 
   function handleSubmitReport(values: { condition: string; obstacle: string }) {
-    console.log("Report issue", values)
     setReportVisible(false)
     setSuccessPopupVisible(true)
 
@@ -197,6 +334,44 @@ export default function HomeScreen() {
     }
   }, [])
 
+
+  React.useEffect(() => {
+    if (!tripLaunchSelection) return
+    setSelectedResult(tripLaunchSelection)
+    setActiveTrip(tripLaunchSelection)
+    setActiveTripStartedAt(new Date())
+    resetOffRouteTracking()
+    offRouteContinueUsedRef.current = false
+    setOffRoutePopupVisible(false)
+    setResultsVisible(false)
+    setTripLaunchSelection(null)
+  }, [tripLaunchSelection, setTripLaunchSelection])
+
+  React.useEffect(() => {
+    if (!hasActiveNavigation || !activeTrip || !userLocation || !activeTrip.route.length) {
+      resetOffRouteTracking()
+      setOffRoutePopupVisible(false)
+      return
+    }
+
+    if (isOffRoutePopupVisible) return
+
+    const distance = minDistanceToRouteMeters(activeTrip.route ?? [], userLocation)
+    if (distance <= OFF_ROUTE_DISTANCE_METERS) {
+      resetOffRouteTracking()
+      return
+    }
+
+    offRouteCountRef.current += 1
+    if (!offRouteStartedAtRef.current) {
+      offRouteStartedAtRef.current = Date.now()
+    }
+
+    const elapsed = Date.now() - offRouteStartedAtRef.current
+    if (offRouteCountRef.current >= OFF_ROUTE_MAX_CONSECUTIVE || elapsed >= OFF_ROUTE_MAX_MS) {
+      setOffRoutePopupVisible(true)
+    }
+  }, [activeTrip, hasActiveNavigation, isOffRoutePopupVisible, userLocation])
 
   React.useEffect(() => {
     let cancelled = false
@@ -418,13 +593,27 @@ export default function HomeScreen() {
               onClose={handleCloseResults}
               selectedResultId={selectedResult?.id ?? null}
               onSelectResult={handleSelectResult}
-              onActionPress={handleStartTrip}
+              actionLabel={canStartSelectedTrip ? "Start Trip" : undefined}
+              onActionPress={canStartSelectedTrip ? handleStartTrip : undefined}
             />
           </>
         )}
 
         {hasActiveNavigation && (
           <>
+            <Pressable
+              style={[
+                styles.closeTripButton,
+                {
+                  top: insets.top + verticalScale(12),
+                  backgroundColor: palette.surface.card,
+                  shadowColor: palette.border.muted,
+                },
+              ]}
+              onPress={handleCancelTrip}
+            >
+              <X size={iconSizes.lg} color={palette.text.primary} strokeWidth={2.2} />
+            </Pressable>
             <Pressable
               style={[
                 styles.fab,
@@ -494,6 +683,46 @@ export default function HomeScreen() {
         }}
       />
       <AppPopup
+        visible={isCancelTripPopupVisible}
+        title="End Trip?"
+        message="Your progress will be discarded if you leave now."
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
+        onClose={handleCloseCancelTripPopup}
+        primaryButton={{
+          label: "Yes, Discard",
+          variant: "destructive",
+          onPress: handleConfirmCancelTrip,
+        }}
+        secondaryButton={{
+          label: "No, Continue",
+          variant: "secondary",
+          onPress: handleCloseCancelTripPopup,
+        }}
+      />
+      <AppPopup
+        visible={isOffRoutePopupVisible}
+        title="Off Route"
+        message={offRouteMessage}
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
+        onClose={handleContinueOffRoute}
+        primaryButton={{
+          label: "End Trip",
+          variant: "destructive",
+          onPress: handleEndOffRouteTrip,
+        }}
+        secondaryButton={
+          canContinueOffRoute
+            ? {
+                label: "Continue",
+                variant: "secondary",
+                onPress: handleContinueOffRoute,
+              }
+            : undefined
+        }
+      />
+      <AppPopup
         visible={errorPopup.visible}
         title={errorPopup.title || "Error"}
         message={errorPopup.message || "Unable to complete the request."}
@@ -518,51 +747,7 @@ export default function HomeScreen() {
   )
 }
 
-function regionCenteredOnDestination(route: LatLng[]) {
-  if (!route.length) {
-    return {
-      latitude: 45.478,
-      longitude: 9.227,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    }
-  }
-
-  const destination = route[route.length - 1]
-  let minLat = route[0].latitude
-  let maxLat = route[0].latitude
-  let minLng = route[0].longitude
-  let maxLng = route[0].longitude
-
-  for (const point of route) {
-    minLat = Math.min(minLat, point.latitude)
-    maxLat = Math.max(maxLat, point.latitude)
-    minLng = Math.min(minLng, point.longitude)
-    maxLng = Math.max(maxLng, point.longitude)
-  }
-
-  const latDelta = Math.max(0.01, (maxLat - minLat) * 2.4)
-  const lngDelta = Math.max(0.01, (maxLng - minLng) * 2.4)
-
-  return {
-    latitude: destination.latitude,
-    longitude: destination.longitude,
-    latitudeDelta: latDelta,
-    longitudeDelta: lngDelta,
-  }
-}
-
 type LatLng = { latitude: number; longitude: number }
-type ThemePalette = typeof Colors.light
-
-function regionAroundPoint(point: LatLng, delta = 0.01) {
-  return {
-    latitude: point.latitude,
-    longitude: point.longitude,
-    latitudeDelta: delta,
-    longitudeDelta: delta,
-  }
-}
 
 function formatAddress(address?: Location.LocationGeocodedAddress) {
   if (!address) return ""
@@ -575,64 +760,6 @@ function formatAddress(address?: Location.LocationGeocodedAddress) {
   return components.join(", ")
 }
 
-function mapSearchPathToResult(path: UserPathSummary, palette: ThemePalette): SearchResult {
-  const tags: SearchResult["tags"] = []
-  const statusTag = buildStatusTag(path.status, palette)
-  if (statusTag) {
-    tags.push(statusTag)
-  }
-
-  return {
-    id: path.pathId,
-    title: path.title || "Untitled Path",
-    description: path.description?.trim() ? path.description : "No description available.",
-    tags,
-    route: [
-      { latitude: path.origin.lat, longitude: path.origin.lng },
-      { latitude: path.destination.lat, longitude: path.destination.lng },
-    ],
-  }
-}
-
-function buildStatusTag(
-  status: string | null | undefined,
-  palette: ThemePalette
-): SearchResult["tags"][number] | null {
-  if (!status) return null
-  const normalized = status.toUpperCase()
-
-  if (normalized === "OPTIMAL") {
-    return { label: "Optimal", color: palette.accent.green.surface, textColor: palette.accent.green.base }
-  }
-  if (normalized === "MEDIUM") {
-    return { label: "Medium", color: palette.accent.blue.surface, textColor: palette.accent.blue.base }
-  }
-  if (normalized === "SUFFICIENT") {
-    return { label: "Sufficient", color: palette.accent.orange.surface, textColor: palette.accent.orange.base }
-  }
-  if (normalized === "REQUIRES_MAINTENANCE") {
-    return { label: "Maintenance", color: palette.accent.red.surface, textColor: palette.accent.red.base }
-  }
-
-  return null
-}
-
-function findClosestPointIndex(route: LatLng[], position: LatLng) {
-  if (!route.length) return 0
-  let minIndex = 0
-  let minDistance = Number.POSITIVE_INFINITY
-
-  for (let i = 0; i < route.length; i++) {
-    const point = route[i]
-    const distance = Math.hypot(point.latitude - position.latitude, point.longitude - position.longitude)
-    if (distance < minDistance) {
-      minDistance = distance
-      minIndex = i
-    }
-  }
-
-  return minIndex
-}
 
 const ISSUE_CONDITION_OPTIONS = [
   // { key: "OPTIMAL", label: "Optimal" },
@@ -696,5 +823,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowRadius: 20,
     elevation: 8,
+  },
+  closeTripButton: {
+    position: "absolute",
+    right: scale(20),
+    width: scale(44),
+    height: scale(44),
+    borderRadius: radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 12,
+    elevation: 6,
   },
 })

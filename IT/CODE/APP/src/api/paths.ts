@@ -40,6 +40,14 @@ export type UserPathSummary = {
   destination: PathPoint
   createdAt: string
   segmentCount: number
+  pathSegments?: Array<{
+    segmentId: string
+    nextSegmentId: string | null
+    polylineCoordinates?: PathPoint[]
+    segment?: {
+      polylineCoordinates: PathPoint[]
+    }
+  }>
 }
 
 type UserPathsResponse = {

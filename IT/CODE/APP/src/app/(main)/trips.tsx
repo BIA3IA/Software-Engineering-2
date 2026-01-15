@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react"
-import { View, StyleSheet, FlatList, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
+import { View, Text, StyleSheet, FlatList, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
+import { useFocusEffect } from "expo-router"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { RouteCard, RouteItem } from "@/components/route/RouteCard"
@@ -10,83 +11,10 @@ import { scale, verticalScale } from "@/theme/layout"
 import { iconSizes } from "@/theme/typography"
 import { Trash2 } from "lucide-react-native"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
-
-const MOCK_TRIPS: RouteItem[] = [
-  {
-    id: "1",
-    name: "Central Park Loop",
-    distanceKm: 5.2,
-    durationMin: 24,
-    date: "01/12/25",
-    avgSpeed: 13.2,
-    maxSpeed: 22.6,
-    elevation: 48,
-    temperatureLabel: "17°",
-    weather: {
-      condition: "Clear Skies",
-      windSpeed: "8 km/h",
-      humidity: "58%",
-      visibility: "12 km",
-      pressure: "1015 hPa",
-    },
-    route: [
-      { latitude: 45.4786, longitude: 9.2272 },
-      { latitude: 45.4794, longitude: 9.2308 },
-      { latitude: 45.4771, longitude: 9.2333 },
-      { latitude: 45.4756, longitude: 9.2295 },
-      { latitude: 45.4768, longitude: 9.2268 },
-      { latitude: 45.4786, longitude: 9.2272 },
-    ],
-  },
-  {
-    id: "2",
-    name: "River Trail",
-    distanceKm: 8.4,
-    durationMin: 38,
-    date: "28/11/25",
-    avgSpeed: 12.1,
-    maxSpeed: 25.4,
-    elevation: 62,
-    temperatureLabel: "15°",
-    weather: {
-      condition: "Breezy",
-      windSpeed: "18 km/h",
-      humidity: "70%",
-      visibility: "9 km",
-      pressure: "1010 hPa",
-    },
-    route: [
-      { latitude: 45.1863, longitude: 9.1582 },
-      { latitude: 45.1848, longitude: 9.1651 },
-      { latitude: 45.1829, longitude: 9.1706 },
-      { latitude: 45.1811, longitude: 9.1645 },
-    ],
-  },
-  {
-    id: "3",
-    name: "Downtown Express",
-    distanceKm: 3.1,
-    durationMin: 16,
-    date: "25/11/25",
-    avgSpeed: 14.5,
-    maxSpeed: 27.3,
-    elevation: 35,
-    temperatureLabel: "19°",
-    weather: {
-      condition: "Partly Cloudy",
-      windSpeed: "10 km/h",
-      humidity: "62%",
-      visibility: "10 km",
-      pressure: "1008 hPa",
-    },
-    route: [
-      { latitude: 45.4642, longitude: 9.1900 },
-      { latitude: 45.4660, longitude: 9.1940 },
-      { latitude: 45.4682, longitude: 9.1912 },
-    ],
-  },
-]
-
+import { deleteTripApi, getMyTripsApi, type TripSummary } from "@/api/trips"
+import { getApiErrorMessage } from "@/utils/apiError"
+import { formatDate } from "@/utils/date"
+import { buildRouteFromPathPointSegments } from "@/utils/routes"
 
 type SortOption = "date" | "distance" | "duration" | "alphabetical"
 
@@ -103,12 +31,57 @@ export default function TripHistoryScreen() {
   const { setHidden: setNavHidden } = useBottomNavVisibility()
   const deleteIconSize = iconSizes.xl
 
-  const [trips, setTrips] = useState<RouteItem[]>(MOCK_TRIPS)
+  const [trips, setTrips] = useState<RouteItem[]>([])
   const [expandedTripId, setExpandedTripId] = useState<string | null>(null)
   const [isSortMenuVisible, setSortMenuVisible] = useState(false)
   const [sortOption, setSortOption] = useState<SortOption>("date")
   const [pendingDeleteTrip, setPendingDeleteTrip] = useState<RouteItem | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [emptyMessage, setEmptyMessage] = useState<string | null>(null)
+  const [errorPopup, setErrorPopup] = useState({
+    visible: false,
+    title: "",
+    message: "",
+  })
   const lastScrollOffset = React.useRef(0)
+
+  const loadTrips = React.useCallback(() => {
+    let isActive = true
+
+    async function fetchTrips() {
+      try {
+        const response = await getMyTripsApi()
+        if (!isActive) return
+        console.log("trips api response", JSON.stringify(response, null, 2))
+        setTrips(response.map(mapTripSummaryToRouteItem))
+        if (response.length === 0) {
+          setEmptyMessage("Your Trip History is empty.\nStart recording trips to see them here.")
+        } else {
+          setEmptyMessage(null)
+        }
+      } catch (error) {
+        const status = (error as { response?: { status?: number } })?.response?.status
+        if (status === 404) {
+          setTrips([])
+          setEmptyMessage("Your Trip History is empty.\nStart recording trips to see them here.")
+          return
+        }
+        const message = getApiErrorMessage(error, "Unable to load your trips. Please try again.")
+        setEmptyMessage(null)
+        setErrorPopup({
+          visible: true,
+          title: "Loading failed",
+          message,
+        })
+      }
+    }
+
+    fetchTrips()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   const sortedTrips = useMemo(() => {
     const parseDate = (value: string) => {
@@ -152,13 +125,25 @@ export default function TripHistoryScreen() {
     setPendingDeleteTrip(trip)
   }
 
-  function handleConfirmDeleteTrip() {
-    if (!pendingDeleteTrip) return
-    setTrips((current) => current.filter((trip) => trip.id !== pendingDeleteTrip.id))
-    setExpandedTripId((current) =>
-      current === pendingDeleteTrip.id ? null : current
-    )
-    setPendingDeleteTrip(null)
+  async function handleConfirmDeleteTrip() {
+    if (!pendingDeleteTrip || isDeleting) return
+    const tripId = pendingDeleteTrip.id
+    setIsDeleting(true)
+    try {
+      await deleteTripApi(tripId)
+      setTrips((current) => current.filter((trip) => trip.id !== tripId))
+      setExpandedTripId((current) => (current === tripId ? null : current))
+      setPendingDeleteTrip(null)
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to delete the trip. Please try again.")
+      setErrorPopup({
+        visible: true,
+        title: "Delete failed",
+        message,
+      })
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   function handleCancelDeleteTrip() {
@@ -183,6 +168,8 @@ export default function TripHistoryScreen() {
       setNavHidden(false)
     }
   }, [setNavHidden])
+
+  useFocusEffect(loadTrips)
 
   return (
     <View style={[styles.screen, { backgroundColor: palette.surface.screen }]}>
@@ -210,6 +197,15 @@ export default function TripHistoryScreen() {
             <View style={styles.headerSpacer} />
           </View>
         }
+        ListEmptyComponent={
+          emptyMessage ? (
+            <View style={styles.emptyState}>
+              <Text style={[styles.emptyText, { color: palette.text.secondary }]}>
+                {emptyMessage}
+              </Text>
+            </View>
+          ) : null
+        }
         onScroll={handleListScroll}
         scrollEventThrottle={16}
       />
@@ -230,7 +226,7 @@ export default function TripHistoryScreen() {
         iconBackgroundColor={`${palette.accent.red.surface}`}
         onClose={handleCancelDeleteTrip}
         primaryButton={{
-          label: "Yes, Delete",
+          label: isDeleting ? "Deleting..." : "Yes, Delete",
           variant: "destructive",
           onPress: handleConfirmDeleteTrip,
         }}
@@ -240,8 +236,83 @@ export default function TripHistoryScreen() {
           onPress: handleCancelDeleteTrip,
         }}
       />
+
+      <AppPopup
+        visible={errorPopup.visible}
+        title={errorPopup.title}
+        message={errorPopup.message}
+        icon={<Trash2 size={deleteIconSize} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
+        onClose={() => setErrorPopup((prev) => ({ ...prev, visible: false }))}
+        primaryButton={{
+          label: "OK",
+          variant: "primary",
+          onPress: () => setErrorPopup((prev) => ({ ...prev, visible: false })),
+          buttonColor: palette.status.danger,
+          textColor: palette.text.onAccent,
+        }}
+      />
     </View>
   )
+}
+
+function mapTripSummaryToRouteItem(trip: TripSummary): RouteItem {
+  const route = buildRouteFromPathPointSegments(trip.tripSegments ?? [])
+  const fallbackRoute = [
+    { latitude: trip.origin.lat, longitude: trip.origin.lng },
+    { latitude: trip.destination.lat, longitude: trip.destination.lng },
+  ]
+
+  const statistics = trip.statistics
+  const weather = trip.weather as
+    | {
+        dominantWeatherDescription?: string
+        averageWindSpeed?: number
+        averageHumidity?: number
+        averagePressure?: number
+        averageTemperature?: number
+        averageApparentTemperature?: number
+        totalPrecipitation?: number
+      }
+    | null
+
+  return {
+    id: trip.tripId,
+    name: trip.title ?? "Trip",
+    description: undefined,
+    distanceKm: statistics?.distance ?? 0,
+    durationMin: statistics?.time ?? 0,
+    date: formatDate(trip.startedAt ?? trip.createdAt),
+    avgSpeed: statistics?.speed ?? 0,
+    maxSpeed: statistics?.maxSpeed ?? 0,
+    elevation: 0,
+    showWeatherBadge: Boolean(weather),
+    temperatureLabel:
+      weather?.averageTemperature !== undefined ? `${weather.averageTemperature.toFixed(1)}°` : undefined,
+    weather: weather
+      ? {
+          condition: weather.dominantWeatherDescription ?? "Unknown",
+          windSpeed:
+            weather.averageWindSpeed !== undefined
+              ? `${weather.averageWindSpeed.toFixed(1)} km/h`
+              : "N/A",
+          humidity: weather.averageHumidity !== undefined ? `${weather.averageHumidity}%` : "N/A",
+          visibility: "N/A",
+          feelsLike:
+            weather.averageApparentTemperature !== undefined
+              ? `${weather.averageApparentTemperature.toFixed(1)}°`
+              : "N/A",
+          precipitation:
+            weather.totalPrecipitation !== undefined
+              ? `${weather.totalPrecipitation.toFixed(1)} mm`
+              : "N/A",
+          pressure:
+            weather.averagePressure !== undefined ? `${weather.averagePressure.toFixed(1)} hPa` : "N/A",
+        }
+      : undefined,
+    showPerformanceMetrics: Boolean(statistics),
+    route: route.length ? route : fallbackRoute,
+  }
 }
 
 const styles = StyleSheet.create({
@@ -263,5 +334,13 @@ const styles = StyleSheet.create({
   },
   firstCardWrapper: {
     marginTop: -verticalScale(48),
+  },
+  emptyState: {
+    paddingVertical: verticalScale(32),
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: "center",
   },
 })

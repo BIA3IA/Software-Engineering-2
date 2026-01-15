@@ -162,6 +162,8 @@ export function RouteCard({
                                 title={trip.actionLabel}
                                 variant="primary"
                                 onPress={trip.onActionPress}
+                                style={styles.actionButton}
+                                contentStyle={styles.actionButtonContent}
                             />
                         </View>
                     )}
@@ -235,5 +237,12 @@ const styles = StyleSheet.create({
     },
     actionButtonWrapper: {
         marginTop: verticalScale(4),
+    },
+    actionButton: {
+        height: verticalScale(44),
+        borderRadius: radius.full,
+    },
+    actionButtonContent: {
+        height: verticalScale(44),
     },
 })

@@ -82,7 +82,6 @@ export default function SignUpScreen() {
         ],
       })
 
-      console.log("User signed up successfully")
       router.replace("/(main)/home")
     } catch (error) {
       const message = getApiErrorMessage(error, "Check the data you entered and try again.")
