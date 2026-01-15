@@ -110,6 +110,20 @@ export class TripManager {
 
             const trips = await queryManager.getTripsByUserId(userId);
 
+            await Promise.allSettled(
+                trips.map(async trip => {
+                    if (trip.weather) {
+                        return;
+                    }
+                    try {
+                        const weather = await weatherManager.enrichTripWithWeather(trip);
+                        trip.weather = weather;
+                    } catch (error) {
+                        logger.warn({ err: error, tripId: trip.tripId }, 'Trip weather enrichment failed');
+                    }
+                })
+            );
+
             res.json({
                 success: true,
                 data: {
@@ -125,6 +139,10 @@ export class TripManager {
                         statistics: trip.statistics,
                         weather: trip.weather,
                         segmentCount: trip.tripSegments.length,
+                        tripSegments: trip.tripSegments.map(ts => ({
+                            segmentId: ts.segmentId,
+                            polylineCoordinates: ts.segment?.polylineCoordinates ?? [],
+                        })),
                     })),
                 },
             });
