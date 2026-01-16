@@ -1,182 +1,180 @@
-
-\section{Code Organization}
-\label{sec:code_organization}
-
-\subsection{Frontend}
+\section{Frontend}
 \label{sec:frontend_structure}
 
-Here it is a walkthrough from the notes, should be written bette, but this is the content to include:
+The following directory tree provides an overview of the frontend source code structure
+of the BestBikePaths mobile app. The structure reflects the organization adopted
+by Expo Router and the separation of concerns between routing, UI components,
+and utilities.
 
- Directory Walkthrough (src)
+\begin{verbatim}
+src/
+|—— api/                          # Backend API communication
+|   |—— client.ts                 # Axios client with interceptors
+|   |—— auth.ts                   # Authentication API wrappers
+|   |__ ...                       # Other API modules
+|—— app/                          # Expo Router navigation structure
+|   |—— (auth)/                   # Authentication-related screens
+|   |   |—— _layout.tsx           # Auth flow layout
+|   |   |—— welcome.tsx           # Welcome screen
+|   |   |__ ...                   # Other auth screens
+|   |—— (main)/                   # Main application screens
+|   |   |—— _layout.tsx           # Bottom navigation and access guards
+|   |   |—— home.tsx              # Map-based path search and navigation
+|   |   |__ ...                   # Other main screens
+|   |—— _layout.tsx               # Root layout with global providers
+|   |__ +not-found.tsx            # Fallback screen for unknown routes
+|—— android/                      # Android native project
+|—— assets/                       # Static assets
+|   |—— images/                   # Icons and images
+|   |__ fonts/                    # Custom fonts
+|—— auth/                         # Authentication and session management
+|   |—— authSession.ts            # In-memory session handling
+|   |__ storage.ts                # Zustand store + SecureStore integration
+|—— components/                   # Reusable UI components
+|   |—— ui/                       # UI primitives (buttons, inputs, popups)
+|   |   |—— AppButton.tsx         # Custom button component
+|   |   |__ ...                   # Other UI primitives
+|   |—— icons/                    # Icon wrappers and helpers
+|   |   |__ LucideIcon.tsx        # Lucide icon set integration
+|   |__ ...                       # Other components
+|—— constants/                    # Static configuration values
+|   |—— Colors.ts                 # Color palette definitions
+|   |__ Privacy.ts                # Privacy options
+|—— hooks/                        # Custom React hooks
+|   |—— useBottomNavVisibility.tsx # Bottom navigation visibility
+|   |__ ...                       # Other hooks
+|—— ios/                          # iOS native project
+|—— tests/                        # Automated tests
+|   |—— integration/              # Integration tests 
+|   |—— mocks/                    # Module mocks
+|   |—— unit/                     # Unit tests
+|   |__ utils/                    # Test helpers
+|—— theme/                        # Theming configuration
+|   |—— layout.ts                 # Layout helpers
+|   |—— mapStyles.ts              # Map style definitions
+|   |—— paperTheme.ts             # React Native Paper theme
+|   |__ typography.ts             # Typography settings
+|—— utils/                        # Utility functions
+|   |—— geo.ts                    # Distance and route helpers
+|   |—— apiError.ts               # API error normalization
+|   |__ ...                       # Other utilities
+|—— validation/                   # Zod validation schemas
+|   |—— auth.ts                   # Login, signup, profile schemas
+|   |__ ...                       # Other validation schemas
+|—— .expo/                        # Expo local state
+|—— .env                          # Environment variables
+|—— .gitignore                    # Git ignore rules
+|—— .npmrc                        # NPM configuration
+|—— app.json                      # Expo app configuration
+|—— babel.config.js               # Babel configuration
+|—— expo-env.d.ts                 # Expo TypeScript env definitions
+|—— jest.config.js                # Jest configuration
+|—— jest.setup.ts                 # Global test setup
+|—— node_modules/                 # Installed dependencies
+|—— package.json                  # Dependencies and scripts
+|—— package-lock.json             # Locked dependency versions
+|__ tsconfig.json                 # TypeScript configuration
+\end{verbatim}
 
- Root files
- app.json / app.config.js  Expo project name, icon, splash, extra env vars.
- package.json  scripts + dependencies (Expo 54, React Native 0.81, Paper 5, Zustand, etc.).
- tsconfig.json  aliases @/ to src, JSX config.
- jest.config.js  React Native preset extended to include tests/unit + tests/integration.
- jest.setup.ts  global mocks for Expo Router, SecureStore, SafeArea, Paper UI, AppButton/TextInput/Popup shims, console suppression.
- tests/mocks/expoMock.ts  empty stub returned when some modules import expo.
-
- app/ (Expo Router)
- \_layout.tsx  wraps the entire navigation tree with PaperProvider, injects the Lucide icon set, calls useAuthStore.initAuth() and enforces redirects (unauth users forced to welcome, loggedin users prevented from staying in (auth)).
- +notfound.tsx  generic 404 screen.
- (auth)/\_layout.tsx  minimal layout for welcome/login/signup flows.
- (auth)/welcome.tsx  hero screen with CTA buttons and “Guest Mode”.
- (auth)/login.tsx and signup.tsx  React Hook Form + Zod validation wiring, call useAuthStore actions.
- (main)/\_layout.tsx  houses BottomNav, LoginPromptProvider, and the loginrequired popup (guest flows).
- (main)/home.tsx  central map/route experience: search inputs, result sheet, Create Path FAB, report modal, navigation progress, start/complete trip actions.
- (main)/trips.tsx  trip history, metrics, stats cards, entry points to detail screens.
- (main)/paths.tsx  curated path list with filters/tags.
- (main)/createpath.tsx  wizard/modal for usergenerated paths.
- (main)/profile.tsx  profile header, stats, privacy preferences, entry to editprofile.
- (main)/editprofile.tsx  full edit form with Zod validation, updateProfile call, success/error popups.
- (main)/settings.tsx  settings toggles, theme/preferences.
- Folder Structure Explained
-
- app/
-
-This is the main routing folder  Expo Router turns its structure into navigation automatically.
-
- Inside it:
-
- **(tabs)/** > Defines the bottom tab navigation (the bar with multiple pages).  
-   \_layout.tsx > Defines the navigation bar and icons for each tab.  
-   index.tsx > Home screen.  
-   two.tsx > Example second screen.  
-  (Additional screens can be added here, e.g., trip.tsx, paths.tsx, etc.)
-
- **\_layout.tsx** > Root layout for everything outside tabs (e.g., modals, login screens).  
- **+html.tsx** > Used internally when running on web to render HTML pages (can be ignored).  
- **+notfound.tsx** > The “404” page, shown if a user navigates to a nonexistent route.  
- **modal.tsx** > A demo modal screen (can be removed or replaced later).
-
- assets/
-
-Contains static files bundled with the app:
-
- images/ > App icons, splash screens, etc.  
- fonts/ > Custom fonts (the default project includes SpaceMonoRegular.ttf).
-
-Additional assets such as logo.png or mapmarker.png can be added here and imported in the screens.
-
- components/
- ui/  reusable primitives (AppButton, AppTextInput, AppPopup, SelectField, etc.).
- BottomNav.tsx  bottom navigation bar aware of auth/guest state.
- ScreenHeader, ProfileHeroHeader, PathResultCard, SearchResultsSheet, CreatePathModal, ReportIssueModal, RouteMap, RouteCard, etc. These encapsulate domain UI/logic for routes, paths, profile.
- components/icons/  LucideIcon wrapper to ensure consistent icon use inside Paper theme.
-
- auth/
- authSession.ts  inmemory tokens + listener for session changes.
- storage.ts  Zustand store connecting SecureStore, APIs, and UI (init, login, logout, fetch profile, update profile, guest mode).
-
- validation/
- auth.ts  Zod schemas + types for login, signup, and editprofile flows.
- path.ts  schema for createpath modal.
- index.ts  barrel so consumers can import { signupSchema } from "@/validation".
-
- api/
- client.ts  Axios instance with getAccessToken() injection and 401 interceptor that hits refreshAccessToken.
- auth.ts  login/signup/logout/profile/update API wrappers with typesafe mappers.
- tokenManager.ts  manual axios client to refresh tokens, handles concurrency and session clearing on failure.
-
- hooks/
- useColorScheme, useThemePreference  theme detection/persistence.
- useLoginPrompt  context to trigger global login modal (guest restrictions).
- useBottomNavVisibility  context provider to hide the nav for certain screens (e.g., edit profile).
- useTrips  handles trip fetching/state (caching between navigations).
- usePrivacyPreference  manages selected privacy option and persistence.
- useBottomNavVisibility context consumed by modals/screens to hide nav on scrollintensive views.
-
- constants/ and theme/
- constants/Colors.ts  light/dark palette, accent colors, guest colors, etc.
- constants/privacy.ts  static privacy preference options.
- theme/layout.ts / theme/typography.ts  spacing helpers, radius, font sizes.
- theme/mapStyles.ts, theme/paperTheme.ts  map style JSON and Paper theme definitions.
-
- assets/
- assets/images/  icons, splash, adaptive icon.
- assets/fonts/  custom typefaces (Space Mono).
-
- utils/
- utils/apiError.ts  normalizes Axios/JS errors into userfacing strings (used by Login/Signup/Edit Profile popups).
- utils/layout.ts  responsive layout helpers (scale, verticalScale, moderateScale).
- tests/utils/render.tsx (in tests/utils)  test helper that wraps React components with PaperProvider + theme icon settings.
-
- tests/
- tests/unit  permodule jest files.
- tests/integration  screen + navigation flow tests (auth, navigation).
- tests/utils/render.tsx  helper to render components with PaperProvider wrapper in tests.
- tests/mocks  Expo Router / Expo stub modules.
-
-\subsection{Backend}
+\section{Backend}
 \label{sec:backend_structure}
 
+The following directory tree outlines the structure of the backend source code of the
+BestBikePaths system. The backend follows a modular and
+layered architecture, separating concerns between routing, middleware, business logic,
+data access, and external service integrations.
 
-bash
-src/
--- middleware              - Middlewares
-|   -jwt.auth.ts         - JWT authentication middleware
-|   -http.logger.ts      - HTTP request logging middleware
-|   -...                 - Other middlewares
--- errors/                 - Custom error classes
-|   -app.errors.ts       - Applicationspecific errors
--- prisma/                 - Prisma setup
-|   -schema.prisma       - Prisma schema file
-|   -migrations/         - Prisma migrations
-|   -json.types.d.ts     - Prisma JSON type definitions with our custom types
--- services/               - External service integrations
-|   -openmeteo.service.ts - OpenMeteo API integration
--- managers/               - Business logic
-|   -user/...            - Userrelated logic
-|   -query/...           - Queryrelated logic
-|   -.../...             - Other related logic
--- routes/                 - API route definitions
-|   -v1/                 - Version 1 of the API
-|       -auth.routes.ts  - Authentication routes
-|       -user.routes.ts  - User routes
-|       -...             - Other routes
-|       -index.ts        - Central router for v1
--- types/                  - TypeScript type definitions
-|   -error.types.ts      - error types/interfaces
-|   -...                 - Other type definitions
--- utils/                  - Utility functions
-|   -prismaclient.ts    - Prisma client instance
-|   -...                 - Other utility functions
--- tests/                  - Test files
-|   -auth.test.ts        - Authentication tests
-|   -user.test.ts        - User tests
-|   -...                 - Other tests
--- .env                    - Environment variables
--- tsconfig.json           - TypeScript configuration
--- jest.config.mjs         - Jest configuration
--- prisma.config.ts        - Prisma configuration
--- package.json            - Package configuration
--- package.lock.json       - Package lock file
--server.ts               - Server entry point
+\begin{verbatim}
+backend/
+|—— prisma/                              # Prisma ORM configuration
+|   |—— schema.prisma                    # Database schema definition
+|   |—— migrations/                      # Database migrations
+|   |__ json.types.d.ts                  # Custom Prisma JSON type definitions
+|—— src/                                 # Source code
+|   |—— errors/                          # Custom error classes
+|   |   |—— app.errors.ts                # Application-specific errors
+|   |   |__ index.ts                     # Export all error classes
+|   |—— managers/                        # Business logic
+|   |   |—— auth/                        # Authentication logic
+|   |   |—— path/                        #  Path management logic
+|   |   |__ ...                          # Other managers
+|   |—— middleware/                      # Middlewares
+|   |   |—— jwt.auth.ts                  # JWT authentication middleware
+|   |   |—— http.logger.ts               # HTTP request logging middleware
+|   |   |__ ...                          # Other middlewares
+|   |—— routes/                          # API route definitions
+|   |   |—— v1/                          # Version 1 of the API
+|   |       |—— index.ts                 # API version entry point
+|   |       |—— auth.routes.ts           # Authentication routes
+|   |       |—— user.routes.ts           # User routes
+|   |       |__ ...                      # Other routes
+|   |—— schemas/                         # Validation schemas
+|   |   |—— auth.schema.ts               # Auth-related schemas
+|   |   |—— user.schema.ts               # User-related schemas
+|   |   |__ ...                          # Other schemas
+|   |—— services/                        # External service integrations
+|   |   |—— openmeteo.service.ts         # OpenMeteo API integration
+|   |   |__ ...                          # Other services
+|   |—— tests/                           # Test files
+|   |   |—— integration/                 # Integration tests
+|   |   |   |—— auth.integration.test.ts # Auth integration tests
+|   |   |   |__ ...                      # Other integration tests
+|   |   |—— unit/                        # Unit tests
+|   |       |——  auth.manager.test.ts    # Auth manager tests
+|   |       |__ ...                      # Other unit tests
+|   |—— types/                           # TypeScript type definitions
+|   |   |—— express/                     # Express-related types
+|   |   |   |—— index.d.ts               # Custom Express types
+|   |   |__ coordinates.types.ts         # Coordinate types
+|   |   |__ ...                          # Other type definitions
+|   |—— utils/                           # Utility functions
+|   |   |—— prismaclient.ts              # Prisma client instance
+|   |   |—— geo.ts                       # Geospatial utility functions
+|   |   |__ ...                          # Other utility functions
+|   |__ server.ts                        # Server entry point
+|—— .env                                 # Environment variables
+|—— .gitignore                           # Git ignore rules
+|—— docker-compose.yml                   # Docker Compose configuration
+|—— Dockerfile                           # Dockerfile for backend service
+|—— jest.config.mjs                      # Jest configuration
+|—— jest-storage/                        # Jest storage
+|—— node_modules/                        # Installed dependencies
+|—— notes.md                             # Project notes
+|—— package.json                         # Dependencies and scripts
+|—— package-lock.json                    # Locked dependency versions
+|—— prisma.config.ts                     # Prisma configuration
+|—— setup.test.ts                        # Global test setup
+|__ tsconfig.json                        # TypeScript configuration
+\end{verbatim}
 
+\pagebreak
 
-\subsection{Server}
+\section{Server}
 \label{sec:server_structure}
 
-bash
-/opt
--- nginx
-|   -- conf.d
-|   |   -- site.conf
-|   |   -api.conf
-|   -- ssl
-|   |   -- residenzaclasmarinaorigin.crt
-|   |   -- residenzaclasmarinaorigin.key
-|   |   -- bia3iaorigin.crt
-|   |   -bia3iaorigin.key
-|   -log
-|       -- access.log
-|       -error.log
-|
--- residenzaclasmarina
-|   -dockercompose.yml
-|
--- bbpbackend
-|   -- Dockerfile
-|   -- dockercompose.yml
-|   -.env
+The following directory structure provides a high-level overview of the server-side
+deployment environment used to host the BestBikePaths system. It illustrates the
+organization of reverse proxy configuration, SSL certificates, and Dockerized
+application services on the target server.
+
+\begin{verbatim}
+/opt/
+|—— nginx/                      # NGINX reverse proxy configuration
+|   |—— conf.d/                 # Virtual host and routing configuration
+|   |   |—— site.conf           # Main site configuration
+|   |   |__ api.conf            # Backend API proxy configuration
+|   |—— ssl/                    # TLS certificates and private keys
+|   |   |—— bia3iaorigin.crt
+|   |   |—— bia3iaorigin.key
+|   |   |__ ...                 # Other certificate files
+|   |—— log/                    # NGINX log files
+|       |—— access.log          # Access logs
+|       |__ error.log           # Error logs
+|—— residenzaclasmarina/        # Additional hosted service
+|   |—— docker-compose.yml      # Docker Compose configuration
+|   |__ ...                     # Service source code and configuration
+|__ bbpbackend/                 # BestBikePaths backend service
+    |—— Dockerfile              # Backend container definition
+    |—— docker-compose.yml      # Backend service orchestration
+    |__ ...                     # Backend source code and configuration
+\end{verbatim}
