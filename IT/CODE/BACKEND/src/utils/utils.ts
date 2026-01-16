@@ -1,4 +1,4 @@
-import { PathSegments, TripSegments } from '../types/index';
+import { PathWithSegments, TripSegments } from '../types/index';
 
 // Utility function to get JWT secrets from environment variables
 export const getJwtSecrets = () => {
@@ -50,7 +50,7 @@ export function sortTripSegmentsByChain(segments: TripSegmentItem[]): TripSegmen
     return sortedSegments;
 }
 
-type PathSegmentItem = PathSegments['pathSegments'][number];
+type PathSegmentItem = PathWithSegments['pathSegments'][number];
 
 // Sort pathSegments by following the nextSegmentId chain
 export function sortPathSegmentsByChain(segments: PathSegmentItem[]): PathSegmentItem[] {

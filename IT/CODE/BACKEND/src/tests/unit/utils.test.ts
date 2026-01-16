@@ -118,6 +118,12 @@ describe("Testing sortPathSegmentsByChain function", () => {
                 segmentId: "seg1",
                 nextSegmentId: null,
                 pathId: "path1",
+                segment: {
+                    segmentId: "seg1",
+                    status: "OPTIMAL",
+                    polylineCoordinates: [],
+                    createdAt: new Date(),
+                }
             }
         ];
 
@@ -127,21 +133,40 @@ describe("Testing sortPathSegmentsByChain function", () => {
     });
 
     test("Should return a sorted array of segments based on their nextSegmentId", () => {
+        const date = new Date();
         const segments = [
             {
                 segmentId: "seg3",
                 nextSegmentId: "seg1",
                 pathId: "path1",
+                segment: {
+                    segmentId: "seg3",
+                    status: "OPTIMAL",
+                    polylineCoordinates: [],
+                    createdAt: date,
+                }
             },
             {
                 segmentId: "seg1",
                 nextSegmentId: null,
                 pathId: "path1",
+                segment: {
+                    segmentId: "seg1",
+                    status: "OPTIMAL",
+                    polylineCoordinates: [],
+                    createdAt: date,
+                }
             },
             {
                 segmentId: "seg2",
                 nextSegmentId: "seg3",
                 pathId: "path1",
+                segment: {
+                    segmentId: "seg2",
+                    status: "OPTIMAL",
+                    polylineCoordinates: [],
+                    createdAt: date,
+                }
             }
         ];
 

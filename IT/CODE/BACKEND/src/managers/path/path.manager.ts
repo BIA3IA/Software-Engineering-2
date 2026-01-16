@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { queryManager } from '../query/index.js';
-import { Coordinates, PathSegments } from '../../types/index.js';
+import { Coordinates, PathWithSegments } from '../../types/index.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import logger from '../../utils/logger';
 import { snapToRoad, geocodeAddress } from '../../services/index.js';
+import { polylineDistanceKm } from '../../utils/geo.js';
 
 const STATUS_SCORE_MAP = {
     OPTIMAL: 5,
@@ -46,8 +47,9 @@ export class PathManager {
                 const origin: Coordinates = pathSegments[0].start;
                 const destination: Coordinates = pathSegments[pathSegments.length - 1].end;
 
-                // Create segments in DB and collect their IDs
+                // Create segments in DB and collect their IDs and coordinates for distance calculation
                 const createdSegmentIds: string[] = [];
+                const allCoordinates: Coordinates[] = [];
                 
                 for (const segment of pathSegments) {
                     // Build polyline from start to end (add intermediate points if needed)
@@ -55,7 +57,11 @@ export class PathManager {
                     
                     const createdSegment = await queryManager.createSegment('OPTIMAL', polylineCoordinates);
                     createdSegmentIds.push(createdSegment.segmentId);
+                    allCoordinates.push(...polylineCoordinates);
                 }
+
+                // Calculate total distance
+                const distanceKm = polylineDistanceKm(allCoordinates);
 
                 // Prepare segments with nextSegmentId using the created IDs
                 const segments = createdSegmentIds.map((segmentId, index) => ({
@@ -65,7 +71,23 @@ export class PathManager {
 
 
                 // we should also check if there is already a path with the same segments for this user otherwise we will create duplicates
-                // TODO: implement duplicate path check ?
+                const existingPath = await queryManager.getPathByOriginDestination(
+                    userId, 
+                    origin, 
+                    destination
+                );
+
+                if (existingPath) {
+                    return res.status(409).json({
+                        success: false,
+                        message: 'Path with same origin and destination already exists',
+                        data: {
+                            pathId: existingPath.pathId,
+                            origin: existingPath.origin,
+                            destination: existingPath.destination,
+                        },
+                    });
+                }
 
                 const path = await queryManager.createPath(
                     userId,
@@ -75,7 +97,8 @@ export class PathManager {
                     visibility,
                     creationMode,
                     title,
-                    description
+                    description,
+                    distanceKm
                 );
 
                 // Calculate and update path status
@@ -99,6 +122,7 @@ export class PathManager {
                         createdAt: updatedPath.createdAt,
                         status: updatedPath.status,
                         visibility: updatedPath.visibility,
+                        distanceKm: updatedPath.distanceKm,
                     },
                 });
 
@@ -267,11 +291,12 @@ export class PathManager {
                         visibility: path.visibility,
                         origin: path.origin,
                         destination: path.destination,
+                        distanceKm: path.distanceKm,
                         createdAt: path.createdAt,
                         segmentCount: path.pathSegments.length,
                         pathSegments: path.pathSegments.map(ps => ({
                             segmentId: ps.segmentId,
-                            polylineCoordinates: ps.segment?.polylineCoordinates ?? [],
+                            polylineCoordinates: ps.segment.polylineCoordinates,
                         })),
                     })),
                 },
@@ -315,16 +340,17 @@ export class PathManager {
                     visibility: path.visibility,
                     origin: path.origin,
                     destination: path.destination,
+                    distanceKm: path.distanceKm,
                     createdAt: path.createdAt,
                     creationMode: path.creationMode,
                     pathSegments: path.pathSegments.map(ps => ({
                         segmentId: ps.segmentId,
                         nextSegmentId: ps.nextSegmentId,
-                        segment: ps.segment ? {
+                        segment: {
                             status: ps.segment.status,
                             polylineCoordinates: ps.segment.polylineCoordinates,
                             createdAt: ps.segment.createdAt,
-                        } : undefined,
+                        },
                     })),
                 },
             });
@@ -357,11 +383,12 @@ export class PathManager {
                         visibility: path.visibility,
                         origin: path.origin,
                         destination: path.destination,
+                        distanceKm: path.distanceKm,
                         createdAt: path.createdAt,
                         segmentCount: path.pathSegments.length,
                         pathSegments: path.pathSegments.map(ps => ({
                             segmentId: ps.segmentId,
-                            polylineCoordinates: ps.segment?.polylineCoordinates ?? [],
+                            polylineCoordinates: ps.segment.polylineCoordinates,
                         })),
                     })),
                 },
