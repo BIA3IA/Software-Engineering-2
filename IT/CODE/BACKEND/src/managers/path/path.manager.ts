@@ -166,7 +166,7 @@ export class PathManager {
             const segmentIds = path.pathSegments.map(ps => ps.segmentId);
 
             if (segmentIds.length === 0) {
-                logger.warn({ pathId }, 'Path has no segments');
+                //logger.warn({ pathId }, 'Path has no segments');
                 return 'CLOSED';
             }
 
@@ -174,7 +174,7 @@ export class PathManager {
             const segments = await queryManager.getSegmentStatistics(segmentIds);
 
             if (segments.length === 0) {
-                logger.warn({ pathId, segmentIds }, 'No segments found for path');
+                //logger.warn({ pathId, segmentIds }, 'No segments found for path');
                 return 'CLOSED';
             }
 
@@ -189,12 +189,12 @@ export class PathManager {
             // Calculate average status score
             const averageStatusScore = totalStatusScore / segments.length;
 
-            logger.debug({ 
-                pathId, 
-                totalStatusScore, 
-                segmentCount: segments.length, 
-                averageStatusScore 
-            }, 'Calculated path status score');
+            //logger.debug({ 
+            //    pathId, 
+            //    totalStatusScore, 
+            //    segmentCount: segments.length, 
+            //    averageStatusScore 
+            //}, 'Calculated path status score');
 
             // Determine path status based on average score
             let pathStatus: string;
@@ -214,11 +214,11 @@ export class PathManager {
             // Update path status in database
             await queryManager.updatePathStatus(pathId, pathStatus);
 
-            logger.info({ pathId, pathStatus, averageStatusScore }, 'Path status updated');
+            //logger.info({ pathId, pathStatus, averageStatusScore }, 'Path status updated');
 
             return pathStatus;
         } catch (error) {
-            logger.error({ err: error, pathId }, 'Error calculating path status');
+            //logger.error({ err: error, pathId }, 'Error calculating path status');
             throw error;
         }
     }
@@ -298,59 +298,6 @@ export class PathManager {
                             segmentId: ps.segmentId,
                             polylineCoordinates: ps.segment.polylineCoordinates,
                         })),
-                    })),
-                },
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
-
-
-    // Get path details
-
-    async getPathDetails(req: Request, res: Response, next: NextFunction) {
-        try {
-            const { pathId } = req.params;
-            const userId = req.user?.userId;
-
-            if (!pathId) {
-                throw new BadRequestError('Path ID is required', 'MISSING_PATH_ID');
-            }
-
-            const path = await queryManager.getPathById(pathId);
-
-            if (!path) {
-                throw new NotFoundError('Selected route is unavailable', 'NOT_FOUND');
-            }
-
-            if (!path.visibility && path.userId !== userId) {
-                throw new ForbiddenError('You do not have permission to view this path', 'FORBIDDEN');
-            }
-
-            res.json({
-                success: true,
-                data: {
-                    pathId: path.pathId,
-                    userId: path.userId,
-                    title: path.title,
-                    description: path.description,
-                    status: path.status,
-                    score: path.score,
-                    visibility: path.visibility,
-                    origin: path.origin,
-                    destination: path.destination,
-                    distanceKm: path.distanceKm,
-                    createdAt: path.createdAt,
-                    creationMode: path.creationMode,
-                    pathSegments: path.pathSegments.map(ps => ({
-                        segmentId: ps.segmentId,
-                        nextSegmentId: ps.nextSegmentId,
-                        segment: {
-                            status: ps.segment.status,
-                            polylineCoordinates: ps.segment.polylineCoordinates,
-                            createdAt: ps.segment.createdAt,
-                        },
                     })),
                 },
             });
