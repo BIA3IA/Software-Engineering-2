@@ -14,8 +14,6 @@ pathRouter.post('/snap', verifyAccessToken, validate(snapPathSchema, 'body'), pa
 
 pathRouter.get('/my-paths', verifyAccessToken, pathManager.getUserPaths.bind(pathManager));
 
-pathRouter.get('/:pathId', pathManager.getPathDetails.bind(pathManager));
-
 pathRouter.delete('/:pathId', verifyAccessToken, pathManager.deletePath.bind(pathManager));
 
 pathRouter.patch('/:pathId/visibility', verifyAccessToken, validate(changePathVisibilitySchema, 'body'), 

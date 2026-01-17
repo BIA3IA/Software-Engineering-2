@@ -23,3 +23,17 @@ export function haversineDistanceKm(from: Coordinates, to: Coordinates): number 
 export function haversineDistanceMeters(from: Coordinates, to: Coordinates): number {
     return haversineDistanceKm(from, to) * 1000;
 }
+
+export function polylineDistanceKm(coordinates: Coordinates[]): number {
+    if (coordinates.length < 2) return 0;
+
+    let total = 0;
+    for (let i = 1; i < coordinates.length; i++) {
+        total += haversineDistanceKm(coordinates[i - 1], coordinates[i]);
+    }
+    return Math.round(total * 100) / 100;
+}
+
+export function polylineDistanceMeters(coordinates: Coordinates[]): number {
+    return polylineDistanceKm(coordinates) * 1000;
+}

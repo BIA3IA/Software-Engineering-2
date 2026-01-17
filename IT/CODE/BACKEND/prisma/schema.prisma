@@ -96,6 +96,7 @@ model Path {
   score        Float?
   title        String?
   description  String?
+  distanceKm   Float?
 }
 
 model PathSegment {

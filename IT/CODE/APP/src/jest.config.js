@@ -1,6 +1,7 @@
 /** @type {import('jest').Config} */
 const config = {
   preset: "react-native",
+  testEnvironment: "jsdom",
   rootDir: ".",
   testMatch: ["<rootDir>/tests/{unit,integration}/**/*.test.ts?(x)"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],

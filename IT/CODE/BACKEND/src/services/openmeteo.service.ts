@@ -2,7 +2,7 @@ import { WeatherData, OpenMeteoWeather, Coordinates, PointWeatherData } from "..
 import { InternalServerError } from "../errors/index";
 import logger from "../utils/logger";
 import { getWeatherDescription } from "./wmo";
-import { haversineDistanceKm } from "../utils/geo";
+import { haversineDistanceKm, polylineDistanceKm } from "../utils/geo";
 
 // This service must fetch weather data from OpenMeteo for given coordinates
 // and aggregate it to produce TripWeather data. The aggregation is made by taking
@@ -20,21 +20,12 @@ const SAMPLING_CONFIG = {
     MAX_SAMPLES: 10,         // Maximum number of samples
 };
 
-// Calculate the total distance of the route
-function getTotalDistance(coordinates: Coordinates[]): number {
-    let total = 0;
-    for (let i = 1; i < coordinates.length; i++) {
-        total += haversineDistanceKm(coordinates[i - 1], coordinates[i]);
-    }
-    return total;
-}
-
 // Select sampling points based on route length
 export function sampleCoordinates(coordinates: Coordinates[]): Coordinates[] {
     if (coordinates.length === 0) return [];
     if (coordinates.length === 1) return coordinates;
 
-    const totalDistance = getTotalDistance(coordinates);
+    const totalDistance = polylineDistanceKm(coordinates);
     const firstPoint = coordinates[0];
     const lastPoint = coordinates[coordinates.length - 1];
     

@@ -62,13 +62,13 @@ export class UserManager {
                 throw new NotFoundError('User not found', 'USER_NOT_FOUND');
             }
 
-            // TODO: include in the future also other info like trips or preferences
             res.json({
                 success: true,
                 data: {
                     userId: user.userId,
                     email: user.email,
                     username: user.username,
+                    systemPreferences: user.systemPreferences
                 }
             });
         } catch (error) {

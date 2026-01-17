@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { sortTripSegmentsByChain, sortPathSegmentsByChain, prisma } from "../../utils/index.js";
-import { TripSegments, TripStatistics, WeatherData, PathSegments, Coordinates } from "../../types/index.js";
+import { TripSegments, TripStatistics, WeatherData, PathWithSegments, Coordinates } from "../../types/index.js";
 import { haversineDistanceMeters } from "../../utils/geo.js";
 
 
@@ -184,9 +184,17 @@ export class QueryManager {
     // PATH
 
     // create path
-    async createPath(userId: string, origin: Coordinates, destination: Coordinates, 
-                        pathSegments: Array<{ segmentId: string; nextSegmentId: string | null }>,
-                        visibility: boolean, creationMode: string, title?: string | null, description?: string | null) {
+    async createPath(
+        userId: string,
+        origin: Coordinates,
+        destination: Coordinates, 
+        pathSegments: Array<{ segmentId: string; nextSegmentId: string | null }>,
+        visibility: boolean,
+        creationMode: string,
+        title?: string | null,
+        description?: string | null,
+        distanceKm?: number | null
+    ) {
         return await prisma.path.create({
             data: {
                 userId,
@@ -196,6 +204,7 @@ export class QueryManager {
                 creationMode,
                 title,
                 description,
+                distanceKm,
                 pathSegments: {
                     create: pathSegments.map(seg => ({
                         segmentId: seg.segmentId,
@@ -214,9 +223,7 @@ export class QueryManager {
     }
 
     // get path by id with segments
-
-    // get path by id with segments
-    async getPathById(pathId: string): Promise<PathSegments | null> {
+    async getPathById(pathId: string): Promise<PathWithSegments | null> {
         const path = await prisma.path.findUnique({
             where: { pathId },
             include: {
@@ -235,11 +242,11 @@ export class QueryManager {
         return {
             ...path,
             pathSegments: sortPathSegmentsByChain(path.pathSegments),
-        };
+        } as PathWithSegments;
     }
 
     // get paths by user id
-    async getPathsByUserId(userId: string): Promise<PathSegments[]> {
+    async getPathsByUserId(userId: string): Promise<PathWithSegments[]> {
         const paths = await prisma.path.findMany({
             where: { userId },
             include: {
@@ -257,10 +264,58 @@ export class QueryManager {
         return paths.map(path => ({
             ...path,
             pathSegments: sortPathSegmentsByChain(path.pathSegments),
-        }));
+        })) as PathWithSegments[];
     }
 
-    async searchPathsByOriginDestination(origin: Coordinates, destination: Coordinates, userId?: string): Promise<PathSegments[]> {
+    // get path by segments given by the user
+    async getPathByOriginDestination(
+        userId: string, 
+        origin: Coordinates, 
+        destination: Coordinates
+    ): Promise<PathWithSegments | null> {
+        const tolerance = 0.00002; // approx 2 meter
+
+        const paths = await prisma.path.findMany({
+            where: { userId },
+            include: {
+                pathSegments: {
+                    include: {
+                        segment: true,
+                    },
+                },
+            },
+        });
+
+        const matchingPath = paths.find(path => {
+            const pathOrigin = path.origin as Coordinates;
+            const pathDestination = path.destination as Coordinates;
+
+            const originMatch = 
+                Math.abs(pathOrigin.lat - origin.lat) <= tolerance &&
+                Math.abs(pathOrigin.lng - origin.lng) <= tolerance;
+
+            const destinationMatch = 
+                Math.abs(pathDestination.lat - destination.lat) <= tolerance &&
+                Math.abs(pathDestination.lng - destination.lng) <= tolerance;
+
+            return originMatch && destinationMatch;
+        });
+
+        if (!matchingPath) {
+            return null;
+        }
+
+        return {
+            ...matchingPath,
+            pathSegments: sortPathSegmentsByChain(matchingPath.pathSegments),
+        } as PathWithSegments;
+    }
+
+    async searchPathsByOriginDestination(
+        origin: Coordinates, 
+        destination: Coordinates, 
+        userId?: string
+    ): Promise<PathWithSegments[]> {
         // Tolerance radius in degrees (approximately 200m)
         const tolerance = 0.002;
         const maxDistanceMeters = 200;
@@ -287,7 +342,7 @@ export class QueryManager {
         });
 
         // Filter paths that match origin and destination within tolerance
-        const matchingPaths: Array<{ path: PathSegments; maxDistance: number }> = [];
+        const matchingPaths: Array<{ path: PathWithSegments; maxDistance: number }> = [];
 
         for (const path of paths) {
             const pathOrigin = path.origin;
@@ -310,7 +365,7 @@ export class QueryManager {
             const maxDistance = Math.max(originDistance, destinationDistance);
 
             matchingPaths.push({
-                path,
+                path: path as PathWithSegments,
                 maxDistance,
             });
         }
@@ -330,7 +385,7 @@ export class QueryManager {
         return filteredByDistance.map(path => ({
             ...path,
             pathSegments: sortPathSegmentsByChain(path.pathSegments),
-        }));
+        })) as PathWithSegments[];
     }
 
     // update path score

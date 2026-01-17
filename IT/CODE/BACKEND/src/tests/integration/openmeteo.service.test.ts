@@ -1,5 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import { sampleCoordinates, fetchWeatherForCoordinates, aggregateWeatherData,fetchAndAggregateWeatherData } from "../../services/openmeteo.service";
+import { sampleCoordinates, fetchWeatherForCoordinates, aggregateWeatherData, fetchAndAggregateWeatherData } from "../../services/openmeteo.service";
 import { Coordinates, PointWeatherData } from "../../types/index";
 
 jest.mock("../../utils/logger", () => ({

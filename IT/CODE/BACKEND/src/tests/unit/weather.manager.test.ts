@@ -112,12 +112,10 @@ describe("Testing WeatherManager business logic", () => {
 
             const weatherManager = new WeatherManager();
 
-            await expect(weatherManager.enrichTripWithWeather(mockTrip))
-                .rejects
-                .toThrow(expect.objectContaining({
-                    statusCode: 400,
-                    code: "NO_COORDINATES"
-                }));
+            await expect(weatherManager.enrichTripWithWeather(mockTrip)).rejects.toMatchObject({
+                statusCode: 400,
+                code: "NO_COORDINATES"
+            });
         });
     });
 

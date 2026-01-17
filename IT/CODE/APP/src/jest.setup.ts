@@ -96,7 +96,7 @@ jest.mock("@/components/ui/AppPopup", () => {
   const React = require("react")
   const { Pressable, Text, View } = require("react-native")
   return {
-    AppPopup: ({ visible, title, message, primaryButton }: any) =>
+    AppPopup: ({ visible, title, message, primaryButton, secondaryButton }: any) =>
       visible
         ? React.createElement(
             View,
@@ -108,6 +108,13 @@ jest.mock("@/components/ui/AppPopup", () => {
                   Pressable,
                   { onPress: primaryButton.onPress },
                   React.createElement(Text, null, primaryButton.label)
+                )
+              : null,
+            secondaryButton?.label
+              ? React.createElement(
+                  Pressable,
+                  { onPress: secondaryButton.onPress },
+                  React.createElement(Text, null, secondaryButton.label)
                 )
               : null
           )
