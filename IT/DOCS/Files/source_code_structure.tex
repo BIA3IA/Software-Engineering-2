@@ -1,0 +1,180 @@
+\section{Frontend}
+\label{sec:frontend_structure}
+
+The following directory tree provides an overview of the frontend source code structure
+of the BestBikePaths mobile app. The structure reflects the organization adopted
+by Expo Router and the separation of concerns between routing, UI components,
+and utilities.
+
+\begin{verbatim}
+src/
+|—— api/                          # Backend API communication
+|   |—— client.ts                 # Axios client with interceptors
+|   |—— auth.ts                   # Authentication API wrappers
+|   |__ ...                       # Other API modules
+|—— app/                          # Expo Router navigation structure
+|   |—— (auth)/                   # Authentication-related screens
+|   |   |—— _layout.tsx           # Auth flow layout
+|   |   |—— welcome.tsx           # Welcome screen
+|   |   |__ ...                   # Other auth screens
+|   |—— (main)/                   # Main application screens
+|   |   |—— _layout.tsx           # Bottom navigation and access guards
+|   |   |—— home.tsx              # Map-based path search and navigation
+|   |   |__ ...                   # Other main screens
+|   |—— _layout.tsx               # Root layout with global providers
+|   |__ +not-found.tsx            # Fallback screen for unknown routes
+|—— android/                      # Android native project
+|—— assets/                       # Static assets
+|   |—— images/                   # Icons and images
+|   |__ fonts/                    # Custom fonts
+|—— auth/                         # Authentication and session management
+|   |—— authSession.ts            # In-memory session handling
+|   |__ storage.ts                # Zustand store + SecureStore integration
+|—— components/                   # Reusable UI components
+|   |—— ui/                       # UI primitives (buttons, inputs, popups)
+|   |   |—— AppButton.tsx         # Custom button component
+|   |   |__ ...                   # Other UI primitives
+|   |—— icons/                    # Icon wrappers and helpers
+|   |   |__ LucideIcon.tsx        # Lucide icon set integration
+|   |__ ...                       # Other components
+|—— constants/                    # Static configuration values
+|   |—— Colors.ts                 # Color palette definitions
+|   |__ Privacy.ts                # Privacy options
+|—— hooks/                        # Custom React hooks
+|   |—— useBottomNavVisibility.tsx # Bottom navigation visibility
+|   |__ ...                       # Other hooks
+|—— ios/                          # iOS native project
+|—— tests/                        # Automated tests
+|   |—— integration/              # Integration tests 
+|   |—— mocks/                    # Module mocks
+|   |—— unit/                     # Unit tests
+|   |__ utils/                    # Test helpers
+|—— theme/                        # Theming configuration
+|   |—— layout.ts                 # Layout helpers
+|   |—— mapStyles.ts              # Map style definitions
+|   |—— paperTheme.ts             # React Native Paper theme
+|   |__ typography.ts             # Typography settings
+|—— utils/                        # Utility functions
+|   |—— geo.ts                    # Distance and route helpers
+|   |—— apiError.ts               # API error normalization
+|   |__ ...                       # Other utilities
+|—— validation/                   # Zod validation schemas
+|   |—— auth.ts                   # Login, signup, profile schemas
+|   |__ ...                       # Other validation schemas
+|—— .expo/                        # Expo local state
+|—— .env                          # Environment variables
+|—— .gitignore                    # Git ignore rules
+|—— .npmrc                        # NPM configuration
+|—— app.json                      # Expo app configuration
+|—— babel.config.js               # Babel configuration
+|—— expo-env.d.ts                 # Expo TypeScript env definitions
+|—— jest.config.js                # Jest configuration
+|—— jest.setup.ts                 # Global test setup
+|—— node_modules/                 # Installed dependencies
+|—— package.json                  # Dependencies and scripts
+|—— package-lock.json             # Locked dependency versions
+|__ tsconfig.json                 # TypeScript configuration
+\end{verbatim}
+
+\section{Backend}
+\label{sec:backend_structure}
+
+The following directory tree outlines the structure of the backend source code of the
+BestBikePaths system. The backend follows a modular and
+layered architecture, separating concerns between routing, middleware, business logic,
+data access, and external service integrations.
+
+\begin{verbatim}
+backend/
+|—— prisma/                              # Prisma ORM configuration
+|   |—— schema.prisma                    # Database schema definition
+|   |—— migrations/                      # Database migrations
+|   |__ json.types.d.ts                  # Custom Prisma JSON type definitions
+|—— src/                                 # Source code
+|   |—— errors/                          # Custom error classes
+|   |   |—— app.errors.ts                # Application-specific errors
+|   |   |__ index.ts                     # Export all error classes
+|   |—— managers/                        # Business logic
+|   |   |—— auth/                        # Authentication logic
+|   |   |—— path/                        #  Path management logic
+|   |   |__ ...                          # Other managers
+|   |—— middleware/                      # Middlewares
+|   |   |—— jwt.auth.ts                  # JWT authentication middleware
+|   |   |—— http.logger.ts               # HTTP request logging middleware
+|   |   |__ ...                          # Other middlewares
+|   |—— routes/                          # API route definitions
+|   |   |—— v1/                          # Version 1 of the API
+|   |       |—— index.ts                 # API version entry point
+|   |       |—— auth.routes.ts           # Authentication routes
+|   |       |—— user.routes.ts           # User routes
+|   |       |__ ...                      # Other routes
+|   |—— schemas/                         # Validation schemas
+|   |   |—— auth.schema.ts               # Auth-related schemas
+|   |   |—— user.schema.ts               # User-related schemas
+|   |   |__ ...                          # Other schemas
+|   |—— services/                        # External service integrations
+|   |   |—— openmeteo.service.ts         # OpenMeteo API integration
+|   |   |__ ...                          # Other services
+|   |—— tests/                           # Test files
+|   |   |—— integration/                 # Integration tests
+|   |   |   |—— auth.integration.test.ts # Auth integration tests
+|   |   |   |__ ...                      # Other integration tests
+|   |   |—— unit/                        # Unit tests
+|   |       |——  auth.manager.test.ts    # Auth manager tests
+|   |       |__ ...                      # Other unit tests
+|   |—— types/                           # TypeScript type definitions
+|   |   |—— express/                     # Express-related types
+|   |   |   |—— index.d.ts               # Custom Express types
+|   |   |__ coordinates.types.ts         # Coordinate types
+|   |   |__ ...                          # Other type definitions
+|   |—— utils/                           # Utility functions
+|   |   |—— prismaclient.ts              # Prisma client instance
+|   |   |—— geo.ts                       # Geospatial utility functions
+|   |   |__ ...                          # Other utility functions
+|   |__ server.ts                        # Server entry point
+|—— .env                                 # Environment variables
+|—— .gitignore                           # Git ignore rules
+|—— docker-compose.yml                   # Docker Compose configuration
+|—— Dockerfile                           # Dockerfile for backend service
+|—— jest.config.mjs                      # Jest configuration
+|—— jest-storage/                        # Jest storage
+|—— node_modules/                        # Installed dependencies
+|—— notes.md                             # Project notes
+|—— package.json                         # Dependencies and scripts
+|—— package-lock.json                    # Locked dependency versions
+|—— prisma.config.ts                     # Prisma configuration
+|—— setup.test.ts                        # Global test setup
+|__ tsconfig.json                        # TypeScript configuration
+\end{verbatim}
+
+\pagebreak
+
+\section{Server}
+\label{sec:server_structure}
+
+The following directory structure provides a high-level overview of the server-side
+deployment environment used to host the BestBikePaths system. It illustrates the
+organization of reverse proxy configuration, SSL certificates, and Dockerized
+application services on the target server.
+
+\begin{verbatim}
+/opt/
+|—— nginx/                      # NGINX reverse proxy configuration
+|   |—— conf.d/                 # Virtual host and routing configuration
+|   |   |—— site.conf           # Main site configuration
+|   |   |__ api.conf            # Backend API proxy configuration
+|   |—— ssl/                    # TLS certificates and private keys
+|   |   |—— bia3iaorigin.crt
+|   |   |—— bia3iaorigin.key
+|   |   |__ ...                 # Other certificate files
+|   |—— log/                    # NGINX log files
+|       |—— access.log          # Access logs
+|       |__ error.log           # Error logs
+|—— residenzaclasmarina/        # Additional hosted service
+|   |—— docker-compose.yml      # Docker Compose configuration
+|   |__ ...                     # Service source code and configuration
+|__ bbpbackend/                 # BestBikePaths backend service
+    |—— Dockerfile              # Backend container definition
+    |—— docker-compose.yml      # Backend service orchestration
+    |__ ...                     # Backend source code and configuration
+\end{verbatim}
