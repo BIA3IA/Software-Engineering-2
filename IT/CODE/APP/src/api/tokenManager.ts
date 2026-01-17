@@ -1,7 +1,7 @@
 import axios from "axios"
 import { getRefreshToken, setSession, clearSession, type AuthTokens } from "@/auth/authSession"
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_PROD_API_URL ?? "http://192.168.1.123:3000/api/v1"
+const API_BASE_URL = process.env.EXPO_PUBLIC_PROD_API_URL ?? process.env.EXPO_PUBLIC_DEVEL_API_URL
 
 type RefreshResponse = {
   tokens: AuthTokens

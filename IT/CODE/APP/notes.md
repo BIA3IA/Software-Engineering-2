@@ -103,7 +103,7 @@ In BBP:
 - `index.ts` - barrel so consumers can `import { signupSchema } from "@/validation"`.
 
 ### api/
-- `client.ts` - Axios instance with `getAccessToken()` injection and 401 interceptor that hits `refreshAccessToken`.
+- `client.ts` - Axios instance with `getAccessToken()` injection and 403 interceptor that hits `refreshAccessToken`.
 - `auth.ts` - login/signup/logout/profile/update API wrappers with type-safe mappers.
 - `tokenManager.ts` - manual axios client to refresh tokens, handles concurrency and session clearing on failure.
 
@@ -166,6 +166,7 @@ Expo CLI shortcuts inside Metro:
 - `r` - reload
 - `shift + r` - restart bundler/clear cache
 You can also scan the QR code with Expo Go to run on a physical device.
+
 ## Testing Strategy
 
 All tests live under `src/tests`. Jest is configured in `src/jest.config.js` and `src/jest.setup.ts` provides global mocks (router, SecureStore, Paper UI, Safe Area, LinearGradient...).
@@ -216,3 +217,30 @@ When choosing UI libraries/components we looked at:
 - `(main)/profile.tsx` - profile header, stats, privacy preferences, entry to edit-profile.
 - `(main)/edit-profile.tsx` - full edit form with Zod validation, updateProfile call, success/error popups.
 - `(main)/settings.tsx` - settings toggles, theme/preferences.
+
+## EAS Build (Android + iOS)
+
+All build commands should be run from `IT/CODE/APP/src`.
+
+Prerequisites:
+- Expo account (EAS uses your Expo login)
+- For iOS builds: Apple Developer account + Apple ID access
+- For Android builds: no account needed to build, Play Console needed to publish
+
+One-time setup:
+```bash
+npm install -g eas-cli
+eas login
+eas build:configure
+```
+
+Builds:
+```bash
+eas build -p android
+eas build -p ios
+```
+
+Notes:
+- Android artifacts are usually `.aab` (Play Store). For install on device you need to convert to APK.
+- iOS builds produce `.ipa` and require Apple credentials during the process.
+- EAS prints a download link; you can also find builds in the Expo dashboard.
