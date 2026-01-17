@@ -1,0 +1,317 @@
+import { describe, test, expect, beforeEach } from "@jest/globals";
+import { Request, Response } from "express";
+
+jest.mock('../../managers/query', () => ({
+    queryManager: {
+        createTrip: jest.fn(),
+        getTripById: jest.fn(),
+        getTripsByUserId: jest.fn(),
+        deleteTripById: jest.fn(),
+        getSegmentsByIds: jest.fn(),
+        createSegmentWithId: jest.fn(),
+    }
+}));
+
+jest.mock('../../managers/weather', () => ({
+    weatherManager: {
+        enrichTripWithWeather: jest.fn(),
+    }
+}));
+
+jest.mock('../../utils/logger', () => ({
+    __esModule: true,
+    default: {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn(),
+    },
+}));
+
+import { TripManager } from "../../managers/trip/trip.manager";
+import { queryManager } from "../../managers/query";
+import { weatherManager } from "../../managers/weather";
+
+describe("Testing TripManager business logic", () => {
+
+    const mockRequest = (method: string = 'GET', url: string = '/api/trips') => ({
+        method,
+        body: {},
+        originalUrl: url,
+        params: {},
+        query: {},
+        headers: {},
+        user: undefined,
+    }) as unknown as Request;
+
+    const mockResponse = () => ({
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+        send: jest.fn(),
+    }) as unknown as Response;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    describe("Testing createTrip method", () => {
+
+        test("Should create trip successfully", async () => {
+            const req = mockRequest('POST', '/api/trips/create');
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+            req.body = {
+                origin: { lat: 45.4642, lng: 9.1900 },
+                destination: { lat: 45.4700, lng: 9.1950 },
+                startedAt: "2025-01-15T10:00:00Z",
+                finishedAt: "2025-01-15T11:00:00Z",
+                tripSegments: [
+                    { segmentId: "segment1", polylineCoordinates: [{ lat: 45.4642, lng: 9.1900 }] }
+                ],
+                title: "Morning Ride"
+            };
+
+            const mockTrip = {
+                tripId: "trip1",
+                userId: "user123",
+                createdAt: new Date(),
+                startedAt: new Date("2025-01-15T10:00:00Z"),
+                finishedAt: new Date("2025-01-15T11:00:00Z"),
+                title: "Morning Ride",
+                tripSegments: []
+            };
+
+            (queryManager.getSegmentsByIds as jest.Mock).mockResolvedValue([]);
+            (queryManager.createSegmentWithId as jest.Mock).mockResolvedValue({});
+            (queryManager.createTrip as jest.Mock).mockResolvedValue(mockTrip);
+            (weatherManager.enrichTripWithWeather as jest.Mock).mockResolvedValue({});
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().createTrip(req, res, next);
+
+            expect(queryManager.createTrip).toHaveBeenCalled();
+            expect(res.status).toHaveBeenCalledWith(201);
+            expect(res.json).toHaveBeenCalledWith({
+                success: true,
+                message: 'Trip created successfully',
+                data: expect.objectContaining({
+                    tripId: "trip1",
+                    title: "Morning Ride"
+                })
+            });
+        });
+
+        test("Should throw BadRequestError when user not authenticated", async () => {
+            const req = mockRequest();
+            req.body = {
+                origin: { lat: 45.4642, lng: 9.1900 },
+                destination: { lat: 45.4700, lng: 9.1950 },
+                startedAt: "2025-01-15T10:00:00Z",
+                finishedAt: "2025-01-15T11:00:00Z",
+                tripSegments: [{ segmentId: "segment1" }]
+            };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().createTrip(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "UNAUTHORIZED"
+                })
+            );
+        });
+
+        test("Should throw BadRequestError for missing origin/destination", async () => {
+            const req = mockRequest();
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+            req.body = {
+                startedAt: "2025-01-15T10:00:00Z",
+                finishedAt: "2025-01-15T11:00:00Z",
+                tripSegments: [{ segmentId: "segment1" }]
+            };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().createTrip(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "MISSING_ORIGIN_DESTINATION"
+                })
+            );
+        });
+
+        test("Should throw BadRequestError for invalid date range", async () => {
+            const req = mockRequest();
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+            req.body = {
+                origin: { lat: 45.4642, lng: 9.1900 },
+                destination: { lat: 45.4700, lng: 9.1950 },
+                startedAt: "2025-01-15T12:00:00Z",
+                finishedAt: "2025-01-15T10:00:00Z",
+                tripSegments: [{ segmentId: "segment1" }]
+            };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().createTrip(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "INVALID_DATE_RANGE"
+                })
+            );
+        });
+
+        test("Should throw BadRequestError for duplicate segment IDs", async () => {
+            const req = mockRequest();
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+            req.body = {
+                origin: { lat: 45.4642, lng: 9.1900 },
+                destination: { lat: 45.4700, lng: 9.1950 },
+                startedAt: "2025-01-15T10:00:00Z",
+                finishedAt: "2025-01-15T11:00:00Z",
+                tripSegments: [
+                    { segmentId: "segment1" },
+                    { segmentId: "segment1" }
+                ]
+            };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().createTrip(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "DUPLICATE_SEGMENT_IDS"
+                })
+            );
+        });
+
+    });
+
+    describe("Testing getTripsByUser method", () => {
+
+        test("Should return all user trips", async () => {
+            const req = mockRequest();
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+
+            const mockTrips = [
+                {
+                    tripId: "trip1",
+                    userId: "user123",
+                    createdAt: new Date(),
+                    startedAt: new Date(),
+                    finishedAt: new Date(),
+                    title: "Trip 1",
+                    origin: { lat: 45.4642, lng: 9.1900 },
+                    destination: { lat: 45.4700, lng: 9.1950 },
+                    statistics: null,
+                    weather: { temp: 20 },
+                    tripSegments: [
+                        { segmentId: "segment1", segment: { polylineCoordinates: [] } }
+                    ]
+                }
+            ];
+
+            (queryManager.getTripsByUserId as jest.Mock).mockResolvedValue(mockTrips);
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().getTripsByUser(req, res, next);
+
+            expect(queryManager.getTripsByUserId).toHaveBeenCalledWith("user123");
+            expect(res.json).toHaveBeenCalledWith({
+                success: true,
+                data: expect.objectContaining({
+                    count: 1,
+                    trips: expect.arrayContaining([
+                        expect.objectContaining({ tripId: "trip1" })
+                    ])
+                })
+            });
+        });
+
+        test("Should throw BadRequestError when user not authenticated", async () => {
+            const req = mockRequest();
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().getTripsByUser(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "UNAUTHORIZED"
+                })
+            );
+        });
+
+    });
+
+    describe("Testing deleteTrip method", () => {
+
+        test("Should delete trip successfully", async () => {
+            const req = mockRequest();
+            req.params = { tripId: "trip1" };
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+
+            const mockTrip = {
+                tripId: "trip1",
+                userId: "user123"
+            };
+
+            (queryManager.getTripById as jest.Mock).mockResolvedValue(mockTrip);
+            (queryManager.deleteTripById as jest.Mock).mockResolvedValue({});
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().deleteTrip(req, res, next);
+
+            expect(queryManager.deleteTripById).toHaveBeenCalledWith("trip1");
+            expect(res.status).toHaveBeenCalledWith(204);
+            expect(res.send).toHaveBeenCalled();
+        });
+
+        test("Should throw ForbiddenError when deleting other user's trip", async () => {
+            const req = mockRequest();
+            req.params = { tripId: "trip1" };
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+
+            const mockTrip = {
+                tripId: "trip1",
+                userId: "otherUser"
+            };
+
+            (queryManager.getTripById as jest.Mock).mockResolvedValue(mockTrip);
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().deleteTrip(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 403,
+                    code: "FORBIDDEN"
+                })
+            );
+            expect(queryManager.deleteTripById).not.toHaveBeenCalled();
+        });
+
+    });
+
+});
