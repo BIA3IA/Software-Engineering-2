@@ -18,8 +18,56 @@ Expo Router -> Navigation
 \subsection{Backend}
 \label{sec:backend}
 
-NestJS
-Openmeteo service
+\textbf{Express.js} Express.js, or simply Express, is a back end web application framework for Node.js, released as free and 
+open-source software under the MIT License. It is designed for building web applications and APIs. It has been called the de 
+facto standard server framework for Node.js.\cite{enwiki:1331088521}
+
+The main reason for choosing Express.js as the backend framework is because it is very easy-to-use and flexible, together with 
+its ability to maintain high performance while offering a comprehensive set of features. Express provides pre-built functions, 
+libraries, and tools that help accelerate the web development process.
+
+It has also one of the most powerful and robust routing system that assists your application in responding to a client request via
+a particular endpoint. With the routing system in Express.js, we were able to split the routing system into manageable files using 
+the framework’s router instance. It is very helpful in managing the application structure grouping different routes into a 
+single folder/directory.
+
+ExpressJS uses middleware to process incoming requests before they reach their final destination. This allows us to 
+perform tasks such as authentication, validation, and logging in a reusable and modular manner.
+
+\textbf{Jest} is a testing framework for JavaScript applications, developed and maintained by Meta and distributed 
+as open-source software.
+It provides an all-in-one solution for writing, executing, and maintaining automated tests, including unit tests and integration tests.
+Jest includes built-in support for test runners, mocking utilities, and code coverage analysis, reducing the need for additional
+external dependencies.
+
+Jest was selected primarily for its integration with modern JavaScript and Node.js environments.
+It allowed us to quickly set up a testing environment with minimal overhead, while still offering advanced configuration options 
+when needed. The framework supports asynchronous testing out of the box, which is essential for backend applications that rely heavily on 
+asynchronous operations such as database access and HTTP requests.
+
+\subsubsection{Technologies used in the Backend}
+
+The backend relies on the following technologies and libraries:
+
+\begin{itemize}
+  \item \textbf{Node.js}: JavaScript runtime environment based on the V8 engine, enabling the execution of server-side 
+                        applications using an event-driven, non-blocking I/O model that is well suited for scalable backend services\cite{node:Node.js}.
+  \item \textbf{Joi}: data validation library used to define schemas for request payloads, ensuring that incoming data conforms to 
+                        expected formats and constraints before being processed by the application\cite{node:joi}.
+  \item \textbf{bcrypt}: cryptographic hashing library used to securely store user passwords by applying adaptive hashing algorithms,
+                        protecting against brute-force and rainbow table attacks\cite{node:bcrypt}.
+  \item \textbf{jsonwebtoken}: library used to implement stateless authentication through JSON Web Tokens (JWT), enabling secure 
+                        user session management and authorization across API endpoints\cite{node:jsonwebtoken}.
+  \item \textbf{cors}: middleware that enables and configures Cross-Origin Resource Sharing, allowing controlled access to backend 
+                        resources from client applications hosted on different domains\cite{node:cors}.
+  \item \textbf{Pino}: high-performance logging library designed for Node.js applications, used to record structured logs for monitoring,
+                        debugging, and auditing purposes\cite{node:pino}.
+  \item \textbf{pino-pretty}: development tool used to format Pino logs into a human-readable form, improving log readability during 
+                        debugging and local development\cite{node:pino-pretty}.
+  \item \textbf{Supertest}: HTTP testing library that allows automated testing of RESTful APIs by simulating HTTP requests and validating 
+                        responses without requiring a running network server\cite{node:supertest}.
+\end{itemize}
+
 
 \subsection{Data Layer}
 \label{subsec:data_layer}
