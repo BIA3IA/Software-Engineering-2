@@ -19,7 +19,8 @@ const loginPasswordSchema = z
 const usernameSchema = z
     .string()
     .trim()
-    .min(5, "Username must be at least 5 characters.")
+    .min(3, "Username must be at least 3 characters.")
+    .max(20, "Username must be at most 20 characters.")
 
 const confirmSchema = z
     .string()
