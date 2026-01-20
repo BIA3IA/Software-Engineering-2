@@ -146,7 +146,7 @@ In BBP:
 - **Login/signup** - call `api/auth`, persist tokens, update Zustand store, navigate to `/(main)/home`.
 - **Guest mode** - welcome screen triggers `loginAsGuest`, `MainLayout` shows the login popup when a guest tries to access restricted tabs/actions.
 - **Token refresh** - Axios response interceptor invokes `refreshAccessToken` on 401, coalescing concurrent refresh calls and updating `authSession`.
-- **Profile update** - `useAuthStore.updateProfile()` hits `/users/update-profile` and re-fetches profile to keep store + SecureStore in sync.
+- **Profile update** - `useAuthStore.updateProfile()` hits `/users/me` and re-fetches profile to keep store + SecureStore in sync.
 - **Navigation** - `BottomNav` reads `usePathname` to know the active tab and, for guests, calls `onRequireLogin` instead of navigating.
 
 ## Running the App

@@ -52,6 +52,8 @@ The main functional components include:
 	\item \textbf{PathManager}:  responsible for
 	      maintaining bike-path data, computing routes, and ranking candidate paths according to
 	      their condition and effectiveness.
+	\item \textbf{GeocodingService}: integrates with an external geocoding provider
+	      to resolve user-provided origins and destinations into coordinates for path search.
 	\item \textbf{ReportManager}: responsible
 	      for storing and aggregating reports, managing confirmations, and updating
 	      path-condition indicators.
@@ -112,7 +114,7 @@ The API Gateway exposes the following logical sub-APIs:
 	\item \textbf{TripAPI}: endpoints for starting, updating, and stopping a trip.
 	\item \textbf{PathAPI}: endpoints for route computation and retrieval of path metadata.
 	\item \textbf{ReportAPI}: endpoints for creating and confirming obstacle reports.
-	\item \textbf{StatisticsAPI}: endpoints for retrieving per-trip and aggregated statistics.
+\item \textbf{StatisticsAPI}: endpoints for retrieving per-trip and aggregated statistics.
 \end{itemize}
 
 \subsubsection{User Module}
@@ -136,6 +138,13 @@ data from the database, computing optimal routes between two locations,
 and ranking alternative routes according to their quality and reported conditions.
 This service exposes the routing logic to the API Gateway and interacts with the
 \textbf{QueryManager} to retrieve pre-aggregated segment conditions alongside path data needed for route computation.
+For path search requests, it resolves textual origins and destinations through the
+\textbf{GeocodingService} before querying the database.
+
+\subsubsection{Geocoding Service}
+The \textbf{Geocoding Service} wraps calls to an external provider to
+translate location strings into coordinates. It returns resolved coordinates to the
+\textbf{PathManager} and isolates third-party integration concerns.
 
 \subsubsection{Report Manager}
 The \textbf{ReportManager} handles obstacle reports submitted
@@ -246,7 +255,7 @@ are distributed at runtime.
 
 A new user wants to register into the BBP system.
 The process begins on the mobile app, where the guest user opens the registration page,
-and fills in the required details: email and password.
+and fills in the required details: username, email, and password.
 A first \textbf{local validation} step checks for malformed inputs before contacting the \textbf{backend}.
 
 If the data is valid, the mobile app sends a registration request to the \textbf{API Gateway}, which forwards it to the \textbf{UserManager}.
@@ -254,7 +263,7 @@ The \textbf{UserManager} checks whether the email is already in use by querying 
 If the email already exists, the system returns an error and the mobile app notifies the user.
 
 If the email is not already in use, the \textbf{UserManager} stores the new user in the database (with the password handled securely).
-The flow ends by showing a success message to the user.
+The flow ends successfully with a new user created.
 
 \begin{figure}[H]
 	\centering
@@ -272,9 +281,9 @@ a \textbf{local validation}, the app sends an HTTP request to the login endpoint
 
 The \textbf{API Gateway} forwards the request to the \textbf{AuthManager}, which first checks whether the provided
 email exists by querying the \textbf{DBMS} through the \textbf{QueryManager}. If the email is not found,
-the backend returns a \textbf{404 Not Found} error, which the mobile app displays to the user.
+the backend returns a \textbf{404} error, which the mobile app displays to the user.
 If the user exists, the \textbf{AuthManager} verifies the submitted password. Invalid credentials
-lead to a \textbf{401 Unauthorized} response and the corresponding error message on the client.
+lead to a \textbf{401} response and the corresponding error message on the client.
 
 When the credentials are correct, the \textbf{AuthManager} generates an \textbf{authentication token} and a \textbf{refresh token},
 returns them to the mobile app, which stores them securely using the device's
@@ -300,9 +309,8 @@ The \textbf{API Gateway} forwards the request to the \textbf{AuthManager}, which
 the corresponding \textbf{refresh token} through the \textbf{QueryManager}. The \textbf{QueryManager} executes a
 \textbf{DELETE} operation on the database to remove the stored token.
 
-If the operation succeeds, the server returns a \textbf{204 NO\_CONTENT} response and the app shows a success message.
-If a network or server error occurs (timeout or \textbf{5xx}), the flow is interrupted and the mobile app shows a
-\textbf{“Network unavailable”} error message.
+If the operation succeeds, the server returns a \textbf{204 NO\_CONTENT} response. If a network or server error occurs
+(timeout or \textbf{5xx}), the local logout remains effective and the server revocation can be retried later.
 
 \begin{figure}[H]
 	\centering
@@ -320,7 +328,7 @@ the app immediately notifies the user. If the input is valid, the updated
 payload is sent to the \textbf{API Gateway}, which delegates the request to the \textbf{UserManager}.
 
 The update is forwarded to the \textbf{QueryManager}, which issues the corresponding \textbf{UPDATE} operation on the database.
-If the update succeeds, the modified user profile is returned to the app and displayed to the user.
+If the update succeeds, the backend returns a confirmation message.
 
 In case of network or server errors during the request, the mobile app shows an appropriate error message.
 
@@ -336,14 +344,15 @@ In case of network or server errors during the request, the mobile app shows an 
 
 A user searches for bike paths between two locations by providing a starting point and a destination
 through the mobile app. Before contacting the backend, the app performs a \textbf{local validation}
-to ensure that the input data is complete and well-formed. If the validation fails, the user is
-immediately notified.
+to ensure that both fields are not empty. If the validation fails, the user is immediately notified.
 
 When the input is valid, the mobile app sends a search request to the backend through the
 \textbf{API Gateway}. The API Gateway forwards the request to the \textbf{PathManager}, which is
 responsible for path computation.
-The \textbf{PathManager} retrieves the relevant path segments and related information from the
-database by interacting with the \textbf{QueryManager}. Once the data is available, it computes
+The \textbf{PathManager} first resolves the origin and destination through the
+\textbf{GeocodingService} to obtain coordinates. It then retrieves the relevant
+path segments and related information from the database by interacting with the
+\textbf{QueryManager}. Once the data is available, it computes
 the best path or set of paths according to the system criteria and user constraints.
 
 If one or more valid routes are found, the \textbf{PathManager} returns the results to the
@@ -473,8 +482,9 @@ through the \textbf{QueryManager}. The QueryManager executes the corresponding
 
 If one or more paths are found, the list is returned to the mobile app and
 displayed to the user. If no paths exist for the given user, the backend returns
-a \textbf{404 NOT\_FOUND} response, and the mobile app notifies the user that
-no paths are available.
+a \textbf{200 OK} response with an empty list, and the mobile app notifies the user
+that no paths are available.
+
 In case of network or server errors, the request is interrupted and the
 mobile app displays an appropriate error message.
 

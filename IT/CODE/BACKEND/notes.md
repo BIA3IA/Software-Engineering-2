@@ -668,7 +668,7 @@ curl -i -k -H "Host: api.bia3ia.com" https://127.0.0.1/
 From outside:
 
 ```bash
-curl -i https://api.bia3ia.com/api/v1/users/profile
+curl -i https://api.bia3ia.com/api/v1/users/me
 ```
 
 Should answer with ACCESS_TOKEN_MISSING because no token is provided
