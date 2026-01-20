@@ -40,7 +40,7 @@ The base template gave us the `(tabs)` routing which we adapted into the `(auth)
 - `_layout.tsx` - wraps the entire navigation tree with `PaperProvider`, injects the Lucide icon set, calls `useAuthStore.initAuth()` and enforces redirects (unauth users forced to welcome, logged-in users prevented from staying in `(auth)`).
 - `+not-found.tsx` - generic 404 screen.
 - `(auth)/_layout.tsx` - minimal layout for welcome/login/signup flows.
-- `(auth)/welcome.tsx` - hero screen with CTA buttons and “Guest Mode”.
+- `(auth)/welcome.tsx` - hero screen with CTA buttons and "Guest Mode".
 - `(auth)/login.tsx` & `signup.tsx` - React Hook Form + Zod validation wiring, call `useAuthStore` actions.
 - `(main)/_layout.tsx` - houses `BottomNav`, `LoginPromptProvider`, and the login-required popup (guest flows).
 - `(main)/home.tsx` - central map/route experience: search inputs, result sheet, Create Path FAB, report modal, navigation progress, start/complete trip actions.
@@ -66,7 +66,7 @@ This is the main routing folder - Expo Router turns its structure into navigatio
 
 - **_layout.tsx** -> Root layout for everything outside tabs (e.g., modals, login screens).  
 - **+html.tsx** -> Used internally when running on web to render HTML pages (can be ignored).  
-- **+not-found.tsx** -> The “404” page, shown if a user navigates to a non-existent route.  
+- **+not-found.tsx** -> The "404" page, shown if a user navigates to a non-existent route.  
 - **modal.tsx** -> A demo modal screen (can be removed or replaced later).
 
 ### assets/

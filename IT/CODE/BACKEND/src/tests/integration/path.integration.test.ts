@@ -2,6 +2,9 @@ import { describe, test, expect, beforeEach } from "@jest/globals";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 
+const geocodeAddressMock = jest.fn();
+const snapToRoadMock = jest.fn();
+
 jest.mock("../../utils/prisma-client", () => ({
     __esModule: true,
     default: {
@@ -29,18 +32,17 @@ jest.mock("../../utils/logger", () => ({
     },
 }));
 
-jest.mock("../../services/geocoding.service", () => ({
-    geocodeAddress: jest.fn(),
+jest.mock("../../services/index.js", () => ({
+    geocodeAddress: geocodeAddressMock,
+    snapToRoad: snapToRoadMock,
 }));
-
-jest.mock("../../services/osrm.service", () => ({
-    snapToRoad: jest.fn(),
+jest.mock("../../services/index", () => ({
+    geocodeAddress: geocodeAddressMock,
+    snapToRoad: snapToRoadMock,
 }));
 
 import { app } from "../../server";
 import prisma from "../../utils/prisma-client";
-import { geocodeAddress } from "../../services/geocoding.service";
-import { snapToRoad } from "../../services/osrm.service";
 
 describe("Path Routes Integration Tests", () => {
 
@@ -62,8 +64,8 @@ describe("Path Routes Integration Tests", () => {
         (prisma.path.delete as jest.Mock).mockReset();
         (prisma.segment.create as jest.Mock).mockReset();
         (prisma.segment.findMany as jest.Mock).mockReset();
-        (geocodeAddress as jest.Mock).mockReset();
-        (snapToRoad as jest.Mock).mockReset();
+        geocodeAddressMock.mockReset();
+        snapToRoadMock.mockReset();
     });
 
     describe("Testing POST /api/v1/paths", () => {
@@ -218,6 +220,28 @@ describe("Path Routes Integration Tests", () => {
 
     describe("Testing GET /api/v1/paths/search", () => {
 
+        test("Should return 400 when origin is missing", async () => {
+            const response = await request(app)
+                .get("/api/v1/paths/search")
+                .query({
+                    destination: "Stazione Centrale, Milano"
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error.code).toBe("VALIDATION_ERROR");
+        });
+
+        test("Should return 400 when destination is missing", async () => {
+            const response = await request(app)
+                .get("/api/v1/paths/search")
+                .query({
+                    origin: "Piazza Duomo, Milano"
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error.code).toBe("VALIDATION_ERROR");
+        });
+
         test("Should find matching public paths", async () => {
             const mockPath = {
                 pathId: "path1",
@@ -245,8 +269,8 @@ describe("Path Routes Integration Tests", () => {
                 ]
             };
 
-            (geocodeAddress as jest.Mock).mockResolvedValueOnce({ lat: 45.4642, lng: 9.1900 });
-            (geocodeAddress as jest.Mock).mockResolvedValueOnce({ lat: 45.4700, lng: 9.1950 });
+            geocodeAddressMock.mockResolvedValueOnce({ lat: 45.4642, lng: 9.1900 });
+            geocodeAddressMock.mockResolvedValueOnce({ lat: 45.4700, lng: 9.1950 });
             (prisma.path.findMany as jest.Mock).mockResolvedValue([mockPath]);
 
             const response = await request(app)
@@ -263,8 +287,8 @@ describe("Path Routes Integration Tests", () => {
         });
 
         test("Should return 404 when no paths found", async () => {
-            (geocodeAddress as jest.Mock).mockResolvedValueOnce({ lat: 45.4642, lng: 9.1900 });
-            (geocodeAddress as jest.Mock).mockResolvedValueOnce({ lat: 45.4700, lng: 9.1950 });
+            geocodeAddressMock.mockResolvedValueOnce({ lat: 45.4642, lng: 9.1900 });
+            geocodeAddressMock.mockResolvedValueOnce({ lat: 45.4700, lng: 9.1950 });
             (prisma.path.findMany as jest.Mock).mockResolvedValue([]);
 
             const response = await request(app)
@@ -291,7 +315,7 @@ describe("Path Routes Integration Tests", () => {
                 { lat: 45.4700, lng: 9.1950 }
             ];
 
-            (snapToRoad as jest.Mock).mockResolvedValue(snappedCoords);
+            snapToRoadMock.mockResolvedValue(snappedCoords);
 
             const response = await request(app)
                 .post("/api/v1/paths/snap")

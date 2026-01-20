@@ -156,14 +156,23 @@ describe("Auth Routes Integration Tests", () => {
             });
         });
 
-        test("should return 401 for missing refresh token", async () => {
+        test("should return 400 for missing refresh token", async () => {
             const response = await request(app)
                 .post("/api/v1/auth/logout")
                 .send({});
 
-            expect(response.status).toBe(401);
+            expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
-            expect(response.body.error.code).toBe("MISSING_REFRESH_TOKEN");
+            expect(response.body.error.code).toBe("VALIDATION_ERROR");
+        });
+
+        test("should return 400 for empty refresh token", async () => {
+            const response = await request(app)
+                .post("/api/v1/auth/logout")
+                .send({ refreshToken: "" });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error.code).toBe("VALIDATION_ERROR");
         });
     });
 
@@ -211,13 +220,22 @@ describe("Auth Routes Integration Tests", () => {
             expect(response.body.tokens).toHaveProperty("refreshToken");
         });
 
-        test("should return 401 for missing refresh token", async () => {
+        test("should return 400 for missing refresh token", async () => {
             const response = await request(app)
                 .post("/api/v1/auth/refresh")
                 .send({});
 
-            expect(response.status).toBe(401);
-            expect(response.body.error.code).toBe("MISSING_REFRESH_TOKEN");
+            expect(response.status).toBe(400);
+            expect(response.body.error.code).toBe("VALIDATION_ERROR");
+        });
+
+        test("should return 400 for empty refresh token", async () => {
+            const response = await request(app)
+                .post("/api/v1/auth/refresh")
+                .send({ refreshToken: "" });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error.code).toBe("VALIDATION_ERROR");
         });
 
         test("should return 403 for invalid refresh token", async () => {
