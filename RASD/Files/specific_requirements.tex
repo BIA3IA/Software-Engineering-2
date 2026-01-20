@@ -188,7 +188,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		                         & 5. If validation succeeds, the system creates a new account and confirms the successful registration. \\ \hline
 		\textbf{Exit Condition}  & A new user account is created.                                                                        \\ \hline
 		\textbf{Exceptions}      & If the data are invalid or incomplete, the system shows an error and asks for correction.             \\
-		                         & If the email is already in use, the system shows an error and invites the user to log in.             \\
+		                         & If the email or username is already in use, the system shows an error.                                \\
 		                         & If a temporary connection or BBP error occurs, the system displays an appropriate error message.      \\ \hline
 		\textbf{Notes}           & The entered password is stored in a hashed form for security purposes.                                \\ \hline
 	\end{tabularx}
@@ -219,7 +219,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		\textbf{Exit Condition}  & The actor is successfully authenticated.                                                                                \\ \hline
 		\textbf{Exceptions}      & If the credentials are invalid or incomplete, the system displays an error message and prevents access until corrected. \\
 		                         & If the credentials are unrecognized,  the system displays an error message and allows another login attempt.            \\
-		                         & If a temporary connection or BBP error occurs,  the system displays an error message and allows retry.                  \\ \hline
+		                         & If a temporary connection or BBP error occurs, the system displays an error message and allows retry.                   \\ \hline
 		\textbf{Notes}           & After login, a valid session is created.                                                                                \\ \hline
 	\end{tabularx}
 	\caption{User Log In Process Detail}
@@ -239,14 +239,14 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 	\label{tab:UC3}
 	\begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
 		\hline
-		\textbf{Actor(s)}        & Logged-in User                                                                                                                                 \\ \hline
-		\textbf{Entry Condition} & The actor is authenticated and is using the application.                                                                                       \\ \hline
-		\textbf{Event Flow}      & 1. The actor clicks on the “Log out” option.                                                                                                   \\
-		                         & 2. The system disconnects the actor from the current session.                                                                                  \\
-		                         & 3. The system clears user-specific local data, and redirects the actor to the welcome page.                                                    \\ \hline
-		\textbf{Exit Condition}  & The actor is successfully logged out.                                                                                                          \\ \hline
-		\textbf{Exceptions}      & If BBP cannot invalidate the session or the network is unavailable, the system displays an error message and prompts the actor to retry later. \\ \hline
-		\textbf{Notes}           & Session is terminated; next access requires re-authentication.                                                                                 \\ \hline
+		\textbf{Actor(s)}        & Logged-in User                                                                                                                                    \\ \hline
+		\textbf{Entry Condition} & The actor is authenticated and is using the application.                                                                                          \\ \hline
+		\textbf{Event Flow}      & 1. The actor clicks on the “Log out” option.                                                                                                      \\
+		                         & 2. The system disconnects the actor from the current session.                                                                                     \\
+		                         & 3. The system clears user-specific local data, and redirects the actor to the welcome page.                                                       \\ \hline
+		\textbf{Exit Condition}  & The actor is successfully logged out.                                                                                                             \\ \hline
+		\textbf{Exceptions}      & If BBP cannot invalidate the session or the network is unavailable, the actor remains logged out locally; server revocation can be retried later. \\ \hline
+		\textbf{Notes}           & Session is terminated; next access requires re-authentication.                                                                                    \\ \hline
 	\end{tabularx}
 	\caption{User Log Out Process Detail}
 \end{table}
@@ -417,7 +417,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		\textbf{Event Flow}      & 1. The actor requests to view their saved paths.                                             \\
 		                         & 2. If the request succeeds, the system displays the list of paths associated with the actor. \\ \hline
 		\textbf{Exit Condition}  & The actor’s personal path library is displayed.                                              \\ \hline
-		\textbf{Exceptions}      & If no paths are found, the system displays an error message.                                 \\
+		\textbf{Exceptions}      & If no paths are found, the system displays an empty list message.                             \\
 		                         & If a temporary connection or BBP error occurs, the system displays an error message.         \\ \hline
 		\textbf{Notes}           & Only paths created or saved by the authenticated user are shown.                             \\ \hline
 	\end{tabularx}
