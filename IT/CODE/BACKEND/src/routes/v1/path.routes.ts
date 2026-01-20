@@ -6,13 +6,13 @@ import { createPathSchema, changePathVisibilitySchema, snapPathSchema } from '..
 
 const pathRouter = Router();
 
-pathRouter.post('/create', verifyAccessToken, validate(createPathSchema, 'body'), pathManager.createPath.bind(pathManager));
+pathRouter.post('/', verifyAccessToken, validate(createPathSchema, 'body'), pathManager.createPath.bind(pathManager));
 
 pathRouter.get('/search', pathManager.searchPath.bind(pathManager));
 
 pathRouter.post('/snap', verifyAccessToken, validate(snapPathSchema, 'body'), pathManager.snapPath.bind(pathManager));
 
-pathRouter.get('/my-paths', verifyAccessToken, pathManager.getUserPaths.bind(pathManager));
+pathRouter.get('/', verifyAccessToken, pathManager.getUserPaths.bind(pathManager));
 
 pathRouter.delete('/:pathId', verifyAccessToken, pathManager.deletePath.bind(pathManager));
 

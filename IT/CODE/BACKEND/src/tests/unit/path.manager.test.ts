@@ -59,7 +59,7 @@ describe("Testing PathManager business logic", () => {
     describe("Testing createPath method", () => {
 
         test("Should create path successfully with manual mode", async () => {
-            const req = mockRequest('POST', '/api/paths/create');
+            const req = mockRequest('POST', '/api/paths');
             req.user = { userId: "user123", iat: 0, exp: 0 };
             req.body = {
                 pathSegments: [
@@ -212,7 +212,7 @@ describe("Testing PathManager business logic", () => {
         });
 
         test("Should return 409 when path already exists", async () => {
-            const req = mockRequest('POST', '/api/paths/create');
+            const req = mockRequest('POST', '/api/paths');
             req.user = { userId: "user123", iat: 0, exp: 0 };
             req.body = {
                 pathSegments: [

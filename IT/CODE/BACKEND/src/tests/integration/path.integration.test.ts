@@ -66,7 +66,7 @@ describe("Path Routes Integration Tests", () => {
         (snapToRoad as jest.Mock).mockReset();
     });
 
-    describe("Testing POST /api/v1/paths/create", () => {
+    describe("Testing POST /api/v1/paths", () => {
 
         test("Should create a manual path successfully", async () => {
             const accessToken = generateValidAccessToken("user123");
@@ -129,7 +129,7 @@ describe("Path Routes Integration Tests", () => {
             (prisma.path.findUnique as jest.Mock).mockResolvedValueOnce(mockPath);
 
             const response = await request(app)
-                .post("/api/v1/paths/create")
+                .post("/api/v1/paths")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({
                     pathSegments: [
@@ -151,7 +151,7 @@ describe("Path Routes Integration Tests", () => {
             const accessToken = generateValidAccessToken("user123");
 
             const response = await request(app)
-                .post("/api/v1/paths/create")
+                .post("/api/v1/paths")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({
                     pathSegments: [
@@ -198,7 +198,7 @@ describe("Path Routes Integration Tests", () => {
             (prisma.path.findMany as jest.Mock).mockResolvedValue([existingPath]);
 
             const response = await request(app)
-                .post("/api/v1/paths/create")
+                .post("/api/v1/paths")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({
                     pathSegments: [
@@ -324,7 +324,7 @@ describe("Path Routes Integration Tests", () => {
 
     });
 
-    describe("Testing GET /api/v1/paths/my-paths", () => {
+    describe("Testing GET /api/v1/paths?owner=me", () => {
 
         test("Should return all user paths", async () => {
             const accessToken = generateValidAccessToken("user123");
@@ -360,7 +360,7 @@ describe("Path Routes Integration Tests", () => {
             (prisma.path.findMany as jest.Mock).mockResolvedValue(mockPaths);
 
             const response = await request(app)
-                .get("/api/v1/paths/my-paths")
+                .get("/api/v1/paths?owner=me")
                 .set("Authorization", `Bearer ${accessToken}`);
 
             expect(response.status).toBe(200);
@@ -375,7 +375,7 @@ describe("Path Routes Integration Tests", () => {
             (prisma.path.findMany as jest.Mock).mockResolvedValue([]);
 
             const response = await request(app)
-                .get("/api/v1/paths/my-paths")
+                .get("/api/v1/paths?owner=me")
                 .set("Authorization", `Bearer ${accessToken}`);
 
             expect(response.status).toBe(200);

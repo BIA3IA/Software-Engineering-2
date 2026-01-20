@@ -57,7 +57,7 @@ describe("Testing TripManager business logic", () => {
     describe("Testing createTrip method", () => {
 
         test("Should create trip successfully", async () => {
-            const req = mockRequest('POST', '/api/trips/create');
+            const req = mockRequest('POST', '/api/trips');
             req.user = { userId: "user123", iat: 0, exp: 0 };
             req.body = {
                 origin: { lat: 45.4642, lng: 9.1900 },

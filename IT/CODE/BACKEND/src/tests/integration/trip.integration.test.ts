@@ -51,7 +51,7 @@ describe("Trip Routes Integration Tests", () => {
         process.env.JWT_REFRESH_SECRET = "test-refresh-secret";
     });
 
-    describe("Testing POST /api/v1/trips/create", () => {
+    describe("Testing POST /api/v1/trips", () => {
 
         test("Should create trip successfully", async () => {
             const accessToken = generateValidAccessToken("user123");
@@ -81,7 +81,7 @@ describe("Trip Routes Integration Tests", () => {
             (prisma.trip.create as jest.Mock).mockResolvedValue(mockTrip);
 
             const response = await request(app)
-                .post("/api/v1/trips/create")
+                .post("/api/v1/trips")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({
                     origin: { lat: 45.4642, lng: 9.1900 },
@@ -110,7 +110,7 @@ describe("Trip Routes Integration Tests", () => {
             const accessToken = generateValidAccessToken("user123");
 
             const response = await request(app)
-                .post("/api/v1/trips/create")
+                .post("/api/v1/trips")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({
                     origin: { lat: 45.4642, lng: 9.1900 }
@@ -122,7 +122,7 @@ describe("Trip Routes Integration Tests", () => {
 
     });
 
-    describe("Testing GET /api/v1/trips/my-trips", () => {
+    describe("Testing GET /api/v1/trips?owner=me", () => {
 
         test("Should return all user trips with full data", async () => {
             const accessToken = generateValidAccessToken("user123");
@@ -157,7 +157,7 @@ describe("Trip Routes Integration Tests", () => {
             (prisma.trip.findMany as jest.Mock).mockResolvedValue(mockTrips);
 
             const response = await request(app)
-                .get("/api/v1/trips/my-trips")
+                .get("/api/v1/trips?owner=me")
                 .set("Authorization", `Bearer ${accessToken}`);
 
             expect(response.status).toBe(200);
@@ -174,7 +174,7 @@ describe("Trip Routes Integration Tests", () => {
             (prisma.trip.findMany as jest.Mock).mockResolvedValue([]);
 
             const response = await request(app)
-                .get("/api/v1/trips/my-trips")
+                .get("/api/v1/trips?owner=me")
                 .set("Authorization", `Bearer ${accessToken}`);
 
             expect(response.status).toBe(200);
