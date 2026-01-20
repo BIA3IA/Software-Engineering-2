@@ -786,9 +786,8 @@ to the user account.
 If one or more trips are found, the backend responds with a \textbf{200 OK}
 status containing the trip list, and the mobile app displays the history
 to the user.
-If no trips are found, the \textbf{TripManager} returns a
-\textbf{404 NOT\_FOUND} response, which is propagated to the mobile app
-and shown as a corresponding error message.
+If no trips are found, the backend responds with a \textbf{200 OK} status
+containing an empty list, and the mobile app shows an empty state message.
 
 In case of network or server failures, the request times out and the
 mobile app notifies the user that the service is unavailable.
