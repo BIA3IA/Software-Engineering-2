@@ -4,7 +4,12 @@
 
 \subsection{Frontend}
 \label{sec:frontend}
-
+The BBP mobile application is built using React Native within the Expo ecosystem. This choice allows for a single codebase to target both iOS and Android, ensuring consistent behavior for sensor data acquisition (GPS, accelerometer) across platforms.
+\begin{enumerate}
+    \item \textbf{UI and design system:} The interface is implemented using React Native Paper, providing a Material Design-compliant component library that ensures a native look and feel. Lucide Icons are utilized for a lightweight and consistent iconography set, while React Native Maps is integrated to handle the core functionality of visualizing bike paths and scores.
+    \item \textbf{Routing and State:} Navigation is managed via Expo Router, which provides file-based routing similar to modern web frameworks, improving maintainability. Application state is handled by Zustand, chosen for its minimal boilerplate and high performance in tracking real-time sensor data and user sessions.The application uses Expo Router for navigation and Zustand for state management.
+    \item \textbf{Data Handling and Security:} Communication with the backend is managed by Axios. To ensure data integrity, Zod is employed for schema validation, ensuring that information received from the API or collected via automated sensor mode conforms to expected formats before being processed or stored.
+\end{enumerate}
 React Native
 Expo
 React Paper -> Theming
