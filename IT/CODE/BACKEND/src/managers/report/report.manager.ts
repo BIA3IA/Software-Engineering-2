@@ -43,7 +43,7 @@ export class ReportManager {
                 path: path ?? '',
                 acquisitionMode: acquisitionMode ?? 'MANUAL',
                 status: status ?? 'WARNING',
-                pathSegmentId: pathSegmentId ?? null,
+                pathSegmentId: pathSegmentId,
             });
 
             res.status(201).json({

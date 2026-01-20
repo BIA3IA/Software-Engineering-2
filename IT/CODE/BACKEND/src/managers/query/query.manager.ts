@@ -470,7 +470,51 @@ export class QueryManager {
             },
         });
     }
+    async createReport(data: any) {
+        return await prisma.report.create({
+            data,
+            include: { user: { select: { username: true } } }
+        });
+    }
+
+    async getReportById(reportId: string) {
+        return await prisma.report.findUnique({
+            where: { reportId }
+        });
+    }
+
+    async deleteReportById(reportId: string) {
+        return await prisma.report.delete({
+            where: { reportId }
+        });
+    }
+
+    async getReportsByPathId(pathId: string) {
+        return await prisma.report.findMany({
+            where: {
+                segment: {
+                    pathSegments: { some: { pathId } }
+                }
+            },
+            include: { user: { select: { username: true } } },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
+
+    async getReportsByTripDetails(tripId: string, start: Date, end: Date) {
+        return await prisma.report.findMany({
+            where: {
+                segment: {
+                    tripSegments: { some: { tripId } }
+                },
+                createdAt: { gte: start, lte: end }
+            },
+            include: { user: { select: { username: true } } },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
 
 }
+
 
 export const queryManager = new QueryManager();
