@@ -28,12 +28,8 @@ jest.mock("../../utils/logger", () => ({
     },
 }));
 
-jest.mock("../../managers/weather/index", () => ({
-    weatherManager: {
-        enrichTripWithWeather: jest.fn().mockResolvedValue({}),
-        enrichTrip: jest.fn().mockImplementation((req, res) => res.json({ success: true })),
-        getTripWeather: jest.fn().mockImplementation((req, res) => res.json({ success: true })),
-    },
+jest.mock("../../services/index", () => ({
+    fetchAndAggregateWeatherData: jest.fn().mockRejectedValue(new Error("skip weather")),
 }));
 
 import { app } from "../../server";

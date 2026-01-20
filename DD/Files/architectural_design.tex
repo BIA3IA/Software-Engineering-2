@@ -56,13 +56,18 @@ The main functional components include:
 	      for storing and aggregating reports, managing confirmations, and updating
 	      path-condition indicators.
 	\item \textbf{StatsManager}: computes and stores user statistics and per-trip metrics.
-	\item \textbf{WeatherManager}: interfaces with an external weather service to retrieve
-	      meteorological data.
-	\item \textbf{QueryManager}
-	\item \textbf{WeatherService}
+	\item \textbf{QueryManager}: centralises database access and exposes CRUD-style
+	      operations to all Managers, enforcing a uniform data-access interface.
+\end{itemize}
+
+The application layer also relies on supporting services that encapsulate third-party integrations:
+\begin{itemize}
+	\item \textbf{WeatherService}: adapter for the external weather provider used 
+	to fetch and aggregate meteorological data.
 	\item \textbf{GeocodingService}: integrates with an external geocoding provider
 	      to resolve user-provided origins and destinations into coordinates for path search.
-	\item \textbf{SnappingService}:
+	\item \textbf{SnappingService}: maps raw GPS traces to road geometry to improve
+	      path accuracy before storage and analysis.
 \end{itemize}
 
 All modules are accessed through the \textbf{API Gateway}, which exposes a set of
@@ -116,7 +121,8 @@ The API Gateway exposes the following logical sub-APIs:
 	\item \textbf{UserAPI}: endpoints for registration and profile retrieval.
 	\item \textbf{TripAPI}: endpoints for creating, listing, and deleting trips.
 	\item \textbf{PathAPI}: endpoints for route computation and retrieval of path metadata.
-	\item \textbf{WeatherAPI}: endpoints for trip weather enrichment and retrieval.
+	\item \textbf{ReportAPI}: endpoints for submitting and retrieving obstacle reports.
+	\item \textbf{StatsAPI}: endpoints for retrieving user statistics and trip metrics.
 \end{itemize}
 
 \subsubsection{User Module}
@@ -132,16 +138,21 @@ The \textbf{TripManager} coordinates the lifecycle of a cycling session.
 GPS samples and live tracking stay on the mobile app during the trip; the backend is contacted only at stop time.
 Upon trip completion, the app sends the final payload containing origin/destination, timestamps, and trip segments.
 The TripManager persists the trip data through the \textbf{QueryManager} and can enrich the stored record with environmental
-data retrieved from the \textbf{WeatherManager}.
+data retrieved through the \textbf{WeatherService}.
 
 \subsubsection{Path Manager}
 The \textbf{PathManager} is responsible for retrieving graph
 data from the database, computing optimal routes between two locations,
 and ranking alternative routes according to their quality and reported conditions.
-This service exposes the routing logic to the API Gateway and interacts with the
-\textbf{QueryManager} to retrieve pre-aggregated segment conditions alongside path data needed for route computation.
 For path search requests, it resolves textual origins and destinations through the
 \textbf{GeocodingService} before querying the database.
+It also is responsible for creating new paths, either from user-drawn segments
+or from GPS samples recorded during automatic path creation. For both modes, 
+it interacts with the \textbf{SnappingService} to snap drawn or recorded paths to
+the road network.
+This service exposes the routing logic to the API Gateway and interacts with the
+\textbf{QueryManager} to retrieve pre-aggregated segment conditions alongside path 
+data needed for route computation.
 
 \subsubsection{Report Manager}
 The \textbf{ReportManager} handles obstacle reports submitted
@@ -160,12 +171,6 @@ exists for a specific trip ID. If the statistics are found, they are returned im
 This dual-layered approach ensures that data is only processed when necessary, effectively eliminating double computations by relying on the \textbf{QueryManager}
 to track the state of processed data.
 
-\subsubsection{Weather Manager}
-The \textbf{Weather Manager} interacts with the external weather API to obtain
-meteorological information. It aggregates weather data by sampling coordinates along the trip route,
-including path segment polylines and origin/destination when available. The resulting weather snapshot
-is returned to the \textbf{TripManager}, which stores it through the \textbf{QueryManager}.
-
 \subsubsection{QueryManager}
 The \textbf{QueryManager} is the data-access component of the backend.
 It acts as the single entry point for interacting with the relational DBMS and
@@ -174,7 +179,10 @@ Centralising data access in one component simplifies consistency checks, reduces
 keeps the domain layer independent of database details.
 
 \subsubsection{Weather Service}
-
+The \textbf{Weather Service} wraps calls to an external provider and aggregates
+meteorological data by sampling coordinates along a trip route, including path segment polylines
+and origin/destination when available. The resulting snapshot is returned to the \textbf{TripManager},
+which stores it through the \textbf{QueryManager}.
 
 \subsubsection{Geocoding Service}
 The \textbf{Geocoding Service} wraps calls to an external provider to
@@ -254,7 +262,7 @@ All diagrams follow the modular structure of the backend:
 the mobile client invokes the \textbf{API Gateway}, which routes each request to the
 appropriate \textbf{Manager}.
 Persistence operations are centralised in the \textbf{QueryManager}, whereas
-weather-related data requests involve the \textbf{WeatherManager} and its external API.
+weather-related data requests involve the \textbf{TripManager} and the \textbf{WeatherService}.
 
 The sequence diagrams that follow cover the core use cases and show how responsibilities
 are distributed at runtime.
@@ -673,7 +681,7 @@ request.
 
 When the trip is valid and the external service is reachable,
 the \textbf{TripManager} retrieves a weather
-snapshot from the \textbf{WeatherManager} based on the trip time and location.
+snapshot through the \textbf{WeatherService} based on the trip time and location.
 It then saves the complete trip data, including weather information if available.
 The summary is stored in the database through the \textbf{QueryManager}.
 
@@ -969,7 +977,7 @@ The public operations are:
 The \textbf{TripManager} coordinates the lifecycle of a cycling session.
 It receives trip metadata (origin/destination, timestamps, trip segments) from the mobile app and
 persists it through the \textbf{QueryManager}. Weather enrichment is performed via the
-\textbf{WeatherManager} on demand.
+\textbf{WeatherService} on demand.
 
 The component exposes the following methods:
 
@@ -980,14 +988,13 @@ The component exposes the following methods:
 
 \end{itemize}
 
-\subsection*{WeatherManager}
+\subsection*{WeatherService}
 
-The \textbf{WeatherManager} interfaces with an external weather provider and is used to
-enrich trip summaries with environmental context.
+The \textbf{WeatherService} interfaces with an external weather provider and is used by the
+\textbf{TripManager} to enrich trip summaries with environmental context.
 
 \begin{itemize}
-	\item \textbf{enrichTrip(tripId, userId)}: samples coordinates along the trip, fetches and aggregates weather data, stores it, and returns the snapshot.
-	\item \textbf{getTripWeather(tripId, userId)}: retrieves stored weather data for an existing trip.
+	\item \textbf{fetchAndAggregateWeatherData(coordinates)}: samples coordinates along the trip route, fetches point data, and returns an aggregated snapshot.
 \end{itemize}
 
 \subsection*{QueryManager}
@@ -1202,27 +1209,6 @@ and the possible responses. Standard HTTP status codes are adopted to represent 
 		      \item \textbf{400 Bad Request}: \texttt{UNAUTHORIZED}, \texttt{MISSING\_TRIP\_ID}
 		      \item \textbf{403 Forbidden}: \texttt{FORBIDDEN}
 		      \item \textbf{404 Not Found}: \texttt{NOT\_FOUND}
-	      \end{itemize}
-\end{itemize}
-
-\subsubsection*{Weather}
-\paragraph{\textbf{POST} \texttt{/weather/trips/:tripId/enrich}}
-\begin{itemize}
-	\item \textbf{Responses}:
-	      \begin{itemize}
-		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_TRIP\_ID}, \texttt{NO\_COORDINATES}
-		      \item \textbf{404 Not Found}: \texttt{TRIP\_NOT\_FOUND}
-	      \end{itemize}
-\end{itemize}
-
-\paragraph{\textbf{GET} \texttt{/weather/trips/:tripId}}
-\begin{itemize}
-	\item \textbf{Responses}:
-	      \begin{itemize}
-		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_TRIP\_ID}
-		      \item \textbf{404 Not Found}: \texttt{TRIP\_NOT\_FOUND}, \texttt{WEATHER\_NOT\_FOUND}
 	      \end{itemize}
 \end{itemize}
 

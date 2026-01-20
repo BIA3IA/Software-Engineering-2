@@ -9,13 +9,12 @@ jest.mock('../../managers/query', () => ({
         deleteTripById: jest.fn(),
         getSegmentsByIds: jest.fn(),
         createSegmentWithId: jest.fn(),
+        updateTripWeather: jest.fn(),
     }
 }));
 
-jest.mock('../../managers/weather', () => ({
-    weatherManager: {
-        enrichTripWithWeather: jest.fn(),
-    }
+jest.mock('../../services/index', () => ({
+    fetchAndAggregateWeatherData: jest.fn(),
 }));
 
 jest.mock('../../utils/logger', () => ({
@@ -30,7 +29,7 @@ jest.mock('../../utils/logger', () => ({
 
 import { TripManager } from "../../managers/trip/trip.manager";
 import { queryManager } from "../../managers/query";
-import { weatherManager } from "../../managers/weather";
+import { fetchAndAggregateWeatherData } from "../../services/index";
 
 describe("Testing TripManager business logic", () => {
 
@@ -83,7 +82,8 @@ describe("Testing TripManager business logic", () => {
             (queryManager.getSegmentsByIds as jest.Mock).mockResolvedValue([]);
             (queryManager.createSegmentWithId as jest.Mock).mockResolvedValue({});
             (queryManager.createTrip as jest.Mock).mockResolvedValue(mockTrip);
-            (weatherManager.enrichTripWithWeather as jest.Mock).mockResolvedValue({});
+            (fetchAndAggregateWeatherData as jest.Mock).mockResolvedValue({});
+            (queryManager.updateTripWeather as jest.Mock).mockResolvedValue({});
 
             const res = mockResponse();
             const next = jest.fn();
