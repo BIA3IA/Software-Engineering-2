@@ -14,8 +14,8 @@ export const createPathSchema = Joi.object({
     pathSegments: Joi.array().items(pathSegmentSchema).min(1).required(),
     visibility: Joi.boolean().required(),
     creationMode: Joi.string().valid('manual', 'automatic').required(),
-    title: Joi.string().max(100).allow(null).optional(),
-    description: Joi.string().max(500).allow(null).optional(),
+    title: Joi.string().trim().min(3).required(),
+    description: Joi.string().trim().min(1).max(280).required(),
 });
 
 export const changePathVisibilitySchema = Joi.object({

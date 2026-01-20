@@ -101,7 +101,7 @@ describe("Path Routes Integration Tests", () => {
                 status: "OPTIMAL",
                 score: null,
                 title: "Test Path",
-                description: null,
+                description: "Test description",
                 distanceKm: 0.64,
                 pathSegments: mockPathSegments
             };
@@ -137,7 +137,8 @@ describe("Path Routes Integration Tests", () => {
                     ],
                     visibility: true,
                     creationMode: "manual",
-                    title: "Test Path"
+                    title: "Test Path",
+                    description: "Test description"
                 });
 
             expect(response.status).toBe(201);
@@ -204,7 +205,9 @@ describe("Path Routes Integration Tests", () => {
                         { start: { lat: 45.4642, lng: 9.1900 }, end: { lat: 45.4700, lng: 9.1950 } }
                     ],
                     visibility: true,
-                    creationMode: "manual"
+                    creationMode: "manual",
+                    title: "Existing Path",
+                    description: "Existing description"
                 });
 
             expect(response.status).toBe(409);
