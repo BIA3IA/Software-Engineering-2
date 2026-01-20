@@ -181,7 +181,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		\hline
 		\textbf{Actor(s)}        & Guest User                                                                                            \\ \hline
 		\textbf{Entry Condition} & The actor does not have an account, wants to register and is on the app's welcome page.               \\ \hline
-		\textbf{Event Flow}      & 1. The actor clicks on the “Sign Up” button.                                                          \\
+		\textbf{Event Flow}      & 1. The actor clicks on the "Sign Up" button.                                                          \\
 		                         & 2. The system displays the registration form.                                                         \\
 		                         & 3. The actor fills in the required personal information (e.g., name, email, password).                \\
 		                         & 4. The system validates the provided data.                                                            \\
@@ -211,7 +211,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		\hline
 		\textbf{Actor(s)}        & Guest User                                                                                                              \\ \hline
 		\textbf{Entry Condition} & The actor has an account, wants to access it and is on the application's welcome page.                                  \\ \hline
-		\textbf{Event Flow}      & 1. The actor clicks the “Log In” button.                                                                                \\
+		\textbf{Event Flow}      & 1. The actor clicks the "Log In" button.                                                                                \\
 		                         & 2. The system displays the login form.                                                                                  \\
 		                         & 3. The actor enters valid credentials (email and password).                                                             \\
 		                         & 4. The system validates the credentials against the stored data.                                                        \\
@@ -241,7 +241,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                                                    \\ \hline
 		\textbf{Entry Condition} & The actor is authenticated and is using the application.                                                                                          \\ \hline
-		\textbf{Event Flow}      & 1. The actor clicks on the “Log out” option.                                                                                                      \\
+		\textbf{Event Flow}      & 1. The actor clicks on the "Log out" option.                                                                                                      \\
 		                         & 2. The system disconnects the actor from the current session.                                                                                     \\
 		                         & 3. The system clears user-specific local data, and redirects the actor to the welcome page.                                                       \\ \hline
 		\textbf{Exit Condition}  & The actor is successfully logged out.                                                                                                             \\ \hline
@@ -267,7 +267,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                                                                 \\ \hline
 		\textbf{Entry Condition} & The actor is authenticated and is on the personal profile page.                                                                                                \\ \hline
-		\textbf{Event Flow}      & 1. The actor selects the “Edit Profile” action.                                                                                                                \\
+		\textbf{Event Flow}      & 1. The actor selects the "Edit Profile" action.                                                                                                                \\
 		                         & 2. The system displays the editable profile form (e.g., username, email).                                                                                      \\
 		                         & 3. The actor modifies one or more fields and submits the changes.                                                                                              \\
 		                         & 4. The system validates the provided data.                                                                                                                     \\
@@ -635,7 +635,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		\hline
 		\textbf{Actor(s)}        & Logged-in User                                                                                                       \\ \hline
 		\textbf{Entry Condition} & The actor is authenticated, is on a trip, and wants to report a problem or an obstacle on the path.                  \\ \hline
-		\textbf{Event Flow}      & 1. The actor selects the “Report" option.                                                                            \\
+		\textbf{Event Flow}      & 1. The actor selects the "Report" option.                                                                            \\
 		                         & 2. The system displays the reporting form.                                                                           \\
 		                         & 3. The actor fills in the report data (e.g., type, description).                                                     \\
 		                         & 4. The system retrieves the actor’s current GPS position.                                                            \\
@@ -703,7 +703,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		                         & 2. The system displays a popup summarizing the reported issue.                                                                                                                                 \\
 		                         & 3. The actor chooses one of the available options:                                                                                                                                             \\
 		                         & \hspace{0.5em} Confirm: the system registers the actor’s confirmation, increasing the report’s reliability.                                                                                    \\
-		                         & \hspace{0.5em} Reject: the system registers the actor’s feedback as “not confirmed”.                                                                                                           \\
+		                         & \hspace{0.5em} Reject: the system registers the actor’s feedback as "not confirmed".                                                                                                           \\
 		                         & \hspace{0.5em} Ignore: the popup is dismissed without any action.                                                                                                                              \\
 		                         & 4. The trip continues normally.                                                                                                                                                                \\ \hline
 		\textbf{Exit Condition}  & The system updates the report’s confirmation status (confirmed, rejected, or unchanged).                                                                                                       \\ \hline

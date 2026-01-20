@@ -7,7 +7,7 @@
 
 The architecture of the Best Bike Paths (BBP) system follows a classic
 \textbf{three-tier structure}, separating the software into a presentation layer,
-an app layer, and a data layer. This architectural style ensures a clear
+an application layer, and a data layer. This architectural style ensures a clear
 division of responsibilities and simplifies the evolution of the system over time.
 Since BBP is conceived as a mobile-centric platform, the presentation tier is
 implemented entirely through the BBP mobile app, which communicates with
@@ -29,7 +29,7 @@ The mobile app is intentionally designed as a \textbf{thin client}.
 All domain logic, decision processes, ranking operations, and aggregation of path
 information are delegated to the application layer.
 The app interacts with device-level subsystems such as the GPS module
-and external sensors (when available), but these elements are not part of the backend architecture.
+and external sensors (when available), elements that are not part of the backend architecture.
 The mobile app also uses the secure storage facilities provided by the operating system
 (iOS Keychain / Android Keystore) to safely store authentication tokens and other sensitive data.
 
@@ -52,14 +52,17 @@ The main functional components include:
 	\item \textbf{PathManager}:  responsible for
 	      maintaining bike-path data, computing routes, and ranking candidate paths according to
 	      their condition and effectiveness.
-	\item \textbf{GeocodingService}: integrates with an external geocoding provider
-	      to resolve user-provided origins and destinations into coordinates for path search.
 	\item \textbf{ReportManager}: responsible
 	      for storing and aggregating reports, managing confirmations, and updating
 	      path-condition indicators.
 	\item \textbf{StatsManager}: computes and stores user statistics and per-trip metrics.
 	\item \textbf{WeatherManager}: interfaces with an external weather service to retrieve
 	      meteorological data.
+	\item \textbf{QueryManager}
+	\item \textbf{WeatherService}
+	\item \textbf{GeocodingService}: integrates with an external geocoding provider
+	      to resolve user-provided origins and destinations into coordinates for path search.
+	\item \textbf{SnappingService}:
 \end{itemize}
 
 All modules are accessed through the \textbf{API Gateway}, which exposes a set of
@@ -109,12 +112,11 @@ and translating domain errors into HTTP responses.
 
 The API Gateway exposes the following logical sub-APIs:
 \begin{itemize}
-	\item \textbf{AuthAPI}: endpoints for login, token generation and validation.
-	\item \textbf{UserAPI}: endpoints for registration, token refresh, and profile retrieval.
-	\item \textbf{TripAPI}: endpoints for starting, updating, and stopping a trip.
+	\item \textbf{AuthAPI}: endpoints for login, token refresh, and token validation.
+	\item \textbf{UserAPI}: endpoints for registration and profile retrieval.
+	\item \textbf{TripAPI}: endpoints for creating, listing, and deleting trips.
 	\item \textbf{PathAPI}: endpoints for route computation and retrieval of path metadata.
-	\item \textbf{ReportAPI}: endpoints for creating and confirming obstacle reports.
-\item \textbf{StatisticsAPI}: endpoints for retrieving per-trip and aggregated statistics.
+	\item \textbf{WeatherAPI}: endpoints for trip weather enrichment and retrieval.
 \end{itemize}
 
 \subsubsection{User Module}
@@ -128,9 +130,9 @@ Both Managers use the \textbf{QueryManager} for data retrieval and persistence.
 \subsubsection{Trip Manager}
 The \textbf{TripManager} coordinates the lifecycle of a cycling session.
 GPS samples and live tracking stay on the mobile app during the trip; the backend is contacted only at stop time.
-Upon trip completion, the app sends the final payload (trajectory, metrics) to the backend.
-The TripManager generates the summary, enriches it with environmental data retrieved from the \textbf{WeatherManager},
-and persists it through the \textbf{QueryManager}.
+Upon trip completion, the app sends the final payload containing origin/destination, timestamps, and trip segments.
+The TripManager persists the trip data through the \textbf{QueryManager} and can enrich the stored record with environmental
+data retrieved from the \textbf{WeatherManager}.
 
 \subsubsection{Path Manager}
 The \textbf{PathManager} is responsible for retrieving graph
@@ -140,11 +142,6 @@ This service exposes the routing logic to the API Gateway and interacts with the
 \textbf{QueryManager} to retrieve pre-aggregated segment conditions alongside path data needed for route computation.
 For path search requests, it resolves textual origins and destinations through the
 \textbf{GeocodingService} before querying the database.
-
-\subsubsection{Geocoding Service}
-The \textbf{Geocoding Service} wraps calls to an external provider to
-translate location strings into coordinates. It returns resolved coordinates to the
-\textbf{PathManager} and isolates third-party integration concerns.
 
 \subsubsection{Report Manager}
 The \textbf{ReportManager} handles obstacle reports submitted
@@ -165,8 +162,9 @@ to track the state of processed data.
 
 \subsubsection{Weather Manager}
 The \textbf{Weather Manager} interacts with the external weather API to obtain
-meteorological information. It provides a weather snapshot associated with trip start and end points.
-The snapshot is returned to the \textbf{TripManager}, which includes it in the final trip payload saved through the \textbf{QueryManager}.
+meteorological information. It aggregates weather data by sampling coordinates along the trip route,
+including path segment polylines and origin/destination when available. The resulting weather snapshot
+is returned to the \textbf{TripManager}, which stores it through the \textbf{QueryManager}.
 
 \subsubsection{QueryManager}
 The \textbf{QueryManager} is the data-access component of the backend.
@@ -174,6 +172,17 @@ It acts as the single entry point for interacting with the relational DBMS and
 provides a set of methods to retrieve, insert, update, and delete domain data.
 Centralising data access in one component simplifies consistency checks, reduces duplicated logic, and
 keeps the domain layer independent of database details.
+
+\subsubsection{Weather Service}
+
+
+\subsubsection{Geocoding Service}
+The \textbf{Geocoding Service} wraps calls to an external provider to
+translate location strings into coordinates. It returns resolved coordinates to the
+\textbf{PathManager} and isolates third-party integration concerns.
+
+\subsubsection{Snapping Service}
+
 
 % --------------------------------------------------------------------------
 % Deployment View
@@ -220,10 +229,9 @@ executed on dedicated hardware nodes and communicates with the others using secu
 	      exposure to external threats.
 
 	\item \textbf{Data Tier:}
-	      the Data Tier consists of a dedicated server running a PostgreSQL database instance, which stores all persistent system data
-	      such as user information, paths, trips, and analytics.
-	      Backend servers interact with the database over TCP/IP within an isolated internal network segment, typically via standard
-	      PostgreSQL drivers and the \textit{Prisma} ORM running on the Application Servers.
+	      the Data Tier consists of a managed PostgreSQL database.
+	      This database stores all persistent system data such as user information, paths, trips, and analytics.
+	      Backend servers connect to the managed service over the network.
 	      Centralizing the database simplifies backup strategies, consistency enforcement, and maintenance operations, while still
 	      allowing for potential future extensions such as replication or clustering without altering the upper tiers of the system.
 
@@ -363,7 +371,7 @@ condition, resulting in a \textbf{404} response that is propagated back to the m
 which notifies the user accordingly.
 
 In the event of network failures or server-side errors, the interaction is interrupted and
-the mobile app shows a generic “Network unavailable” error message.
+the mobile app shows a generic "Network unavailable" error message.
 
 \begin{figure}[H]
 	\centering
@@ -670,7 +678,7 @@ It then saves the complete trip data, including weather information if available
 The summary is stored in the database through the \textbf{QueryManager}.
 
 Upon successful completion, the backend responds with a \textbf{201 Created}
-status. The mobile app displays a success message to the user. 
+status. The mobile app displays a success message to the user.
 Network failures or server-side errors trigger the corresponding
 alternative flows.
 
@@ -899,10 +907,11 @@ displayed on the client.
 This section describes the operations exposed by each backend component and the
 interfaces through which these components collaborate at runtime.
 
-Unless explicitly noted, all Manager methods operate in an authenticated context:
+Unless explicitly noted, most Manager methods operate in an authenticated context:
 the identifier of the currently logged-in user is implicitly supplied by the
 \textbf{API Gateway} after validating the access token, and is therefore not
-included in the method signatures.
+included in the method signatures. Public endpoints (e.g., registration, login,
+and path search) are invoked without an authenticated context.
 The \textbf{QueryManager}, in contrast, interacts directly with the relational DBMS
 and does not rely on authentication parameters.
 
@@ -915,10 +924,9 @@ to retrieve and persist authentication metadata, including refresh tokens stored
 It exposes the following operations:
 
 \begin{itemize}
-	\item \textbf{registerUser(email, password, profileData)}: validates registration data, checks whether the email is
-	      already in use, hashes the password, stores the user profile, persists a refresh token, and returns a newly issued access/refresh token pair.
 	\item \textbf{loginUser(email, password)}: verifies the supplied credentials and, if valid, issues fresh access and refresh
 	      tokens and persists the new refresh token.
+	\item \textbf{refreshToken(refreshToken)}: validates and rotates the refresh token, issuing a new access/refresh token pair.
 	\item \textbf{logout(refreshToken)}: invalidates the provided refresh token and terminates the associated session in the DBMS.
 	      % \item \textbf{verifyPassword(userId, candidatePassword)}: internal method used to compares the given password against the 
 	      % stored hash to authorise profile updates requiring re-authentication.
@@ -932,13 +940,15 @@ The \textbf{UserManager} manages user-profile data and receives requests via the
 It uses the \textbf{QueryManager} for persistence and exposes:
 
 \begin{itemize}
-	\item \textbf{updateProfile(userId, profilePayload)}: validates editable fields, prevents duplicate emails, applies the update to the stored profile, and returns the updated information.
+	\item \textbf{registerUser(profilePayload)}: validates registration data, checks for duplicate email/username, stores the user profile, and returns the created user.
+	\item \textbf{getProfile(userId)}: retrieves the stored profile for the authenticated user.
+	\item \textbf{updateProfile(userId, profilePayload)}: validates editable fields, prevents duplicate emails/usernames, applies the update, and returns a confirmation message.
 \end{itemize}
 
 \subsection*{PathManager}
 
 The \textbf{PathManager} implements all functionality related to bike paths:
-manual and automatic creation, route computation, ranking of candidate routes,
+manual path creation, route search, ranking of candidate routes,
 path selection, deletion, and visibility updates.
 It is accessed through the \textbf{API Gateway} and uses the \textbf{QueryManager}
 to retrieve and update persistent path data.
@@ -946,12 +956,9 @@ to retrieve and update persistent path data.
 The public operations are:
 
 \begin{itemize}
-	\item \textbf{findPath(start, end, constraints)}: retrieves the required portion of the graph, including report-derived condition indicators
-	      for each segment, and computes candidate routes satisfying the given constraints.
-	      % \item \textbf{computeBestPath(paths)}: internal method that selects and ranks the best route among the candidates returned by \textbf{findPath}.
-	\item \textbf{getPathDetails(pathId)}: returns metadata, geometry, condition indicators, and aggregated reports for the selected path and its segments.
-	\item \textbf{createPath(pathPayload, userId)}: validates metadata and segment lists (manual mode) or GPS-derived samples (automatic mode), persists
-	      the new path, and associates it with the creator.
+	\item \textbf{searchPath(origin, destination, userId?)}: geocodes origin/destination, filters existing paths by visibility and proximity, and returns matching routes.
+	\item \textbf{createPath(pathPayload, userId)}: validates metadata and path segments (manual mode only), persists the new path, and associates it with the creator.
+	\item \textbf{snapPath(coordinates)}: snaps drawn coordinates to the road network using an external routing service.
 	\item \textbf{getPathsByUser(userId)}: retrieves all paths created by the authenticated user.
 	\item \textbf{deletePath(pathId, userId)}: verifies ownership and removes the specified path, triggering cascade deletion of dependent records.
 	\item \textbf{updateVisibility(pathId, visibility, userId)}: enforces ownership and updates the stored visibility field.
@@ -960,41 +967,17 @@ The public operations are:
 \subsection*{TripManager}
 
 The \textbf{TripManager} coordinates the lifecycle of a cycling session.
-It receives GPS samples from the mobile app, stores trip metadata, and, upon trip
-completion, composes the final summary enriched with weather data retrieved as a snapshot
-from the \textbf{WeatherManager}. All persistent data is saved through the \textbf{QueryManager}.
+It receives trip metadata (origin/destination, timestamps, trip segments) from the mobile app and
+persists it through the \textbf{QueryManager}. Weather enrichment is performed via the
+\textbf{WeatherManager} on demand.
 
 The component exposes the following methods:
 
 \begin{itemize}
-	\item \textbf{finalizeTrip(tripPayload, userId)}: receives the final trip payload from the API (including the locally
-	      generated trip identifier), obtains a weather snapshot from the \textbf{WeatherManager}, composes the completed trip summary and stores it.
+	\item \textbf{createTrip(tripPayload, userId)}: stores a completed trip using origin/destination, timestamps, and trip segment references.
 	\item \textbf{getTripsByUser(userId)}: returns the complete list of trips owned by the authenticated user, ordered by time.
 	\item \textbf{deleteTrip(tripId, userId)}: deletes the specified trip after verifying ownership.
 
-\end{itemize}
-
-\subsection*{ReportManager}
-
-The \textbf{ReportManager} handles submission and confirmation of obstacle reports,
-both manual and automatic.
-It centralises validation, association to a path, and persistence.
-It also updates path-segment condition indicators in the DBMS that are consumed by the \textbf{PathManager} when computing rankings, without requiring additional calls to the ReportManager at query time.
-
-\begin{itemize}
-	\item \textbf{createReport(position, payload)}: processes manual reports, automatic sensor-based reports, and confirmations of existing reports.
-	      It validates payload and location data, inserts the report, and returns the newly created report identifier.
-\end{itemize}
-
-\subsection*{StatsManager}
-
-The \textbf{StatsManager} computes aggregated statistics over user trips and
-derives detailed metrics for individual trips.
-Raw and processed data are retrieved via the \textbf{QueryManager}.
-
-\begin{itemize}
-	\item \textbf{computeOverallStats(userId)}: computes the user-level aggregated statistics (e.g., total distance, total duration, average speed), using cached values when available and recomputing them when the stored trip count differs from the current one.
-	\item \textbf{computeTripStats(userId, tripId)}: computes the detailed statistics for a specific trip, returning previously stored values when available or deriving them from the trip summary data and then persisting the result for subsequent requests.
 \end{itemize}
 
 \subsection*{WeatherManager}
@@ -1003,8 +986,8 @@ The \textbf{WeatherManager} interfaces with an external weather provider and is 
 enrich trip summaries with environmental context.
 
 \begin{itemize}
-	\item \textbf{getWeather(location, timeWindow)}: queries the external weather API and returns a snapshot containing
-	      temperature, precipitation, and wind information for the specified interval.
+	\item \textbf{enrichTrip(tripId, userId)}: samples coordinates along the trip, fetches and aggregates weather data, stores it, and returns the snapshot.
+	\item \textbf{getTripWeather(tripId, userId)}: retrieves stored weather data for an existing trip.
 \end{itemize}
 
 \subsection*{QueryManager}
@@ -1016,29 +999,231 @@ separation between domain logic and data storage.
 It exposes:
 
 \begin{itemize}
-	\item \textbf{checkDuplicateEmail(email)}: verifies whether an email is already associated with an existing user.
-	\item \textbf{insertUser(hashedData)}: inserts a new user record with hashed credentials and stores a refresh token issued for the user.
-	\item \textbf{checkEmail(email)}: retrieves credential metadata for login attempts.
-	\item \textbf{deleteRefreshToken(refreshToken)}: removes the refresh token associated with the terminated session.
-	\item \textbf{updateUser(userId, profilePayload)}: stores changes to user profile fields.
-	\item \textbf{fetchPaths(areaBounds)}: retrieves the relevant segments for route computation, including condition indicators already updated from reports.
-	\item \textbf{fetchPathById(pathId)}: returns the full record of the specified path, including aggregated report data for its segments.
-	\item \textbf{insertPath(pathPayload, userId)}: stores new path metadata and geometry.
-	\item \textbf{fetchUserPaths(userId)}: retrieves all paths created by the given user.
-	\item \textbf{fetchReportsByPath(pathId)}: retrieves reports associated with the path segments to support condition scoring.
-	\item \textbf{verifyPathOwnership(pathId, userId)}: checks whether the specified path belongs to the requesting user.
-	\item \textbf{deletePathCascade(pathId)}: deletes a path and its dependent records.
-	\item \textbf{updateVisibility(pathId, visibility)}: updates the visibility field of the selected path.
-	\item \textbf{insertTripSummary(tripSummary, userId)}: inserts a completed trip summary with its associated weather snapshot, if present.
-	\item \textbf{fetchUserTrips(userId)}: retrieves all trips belonging to the user, ordered by date.
-	\item \textbf{deleteTripCascade(tripId)}: removes the specified trip and all related records.
-	\item \textbf{verifyTripOwnership(tripId, userId)}: checks whether the specified trip belongs to the requesting user.
-	\item \textbf{insertReport(position, payload)}: persists manual or automatic reports and confirmations.
-	\item \textbf{fetchTripStats(tripId, userId)}: retrieves the precomputed statistics associated with the given trip and user, if already stored.
-	\item \textbf{saveTripStats(stats, tripId, userId)}: persists the computed per-trip statistics for the given trip and user.
-	\item \textbf{fetchTripCount(userId)}: returns the number of completed trips associated with the given user, used to validate whether cached overall statistics are still up to date.
-	\item \textbf{fetchStats(userId)}: retrieves the cached overall statistics previously stored for the given user, if available.
-	\item \textbf{saveStats(stats, userId)}: stores or updates the overall statistics for the given user, together with the current trip count used as a validity reference.
+	\item \textbf{createUser(email, password, username, systemPreferences)}: creates a new user record.
+	\item \textbf{getUserByEmail(email)}: retrieves a user by email.
+	\item \textbf{getUserById(userId)}: retrieves a user by identifier.
+	\item \textbf{getUserByUsername(username)}: retrieves a user by username.
+	\item \textbf{updateUserProfile(userId, profilePayload)}: stores changes to user profile fields.
+	\item \textbf{createRefreshToken(userId, token, expiresAt)}: persists a refresh token.
+	\item \textbf{getRefreshToken(token)}: retrieves a refresh token.
+	\item \textbf{deleteRefreshToken(token)}: removes a refresh token.
+	\item \textbf{getTripById(tripId)}: retrieves a trip and its ordered segments.
+	\item \textbf{createTrip(userId, origin, destination, startedAt, finishedAt, statistics, tripSegments, title)}: stores a completed trip.
+	\item \textbf{getTripsByUserId(userId)}: retrieves all trips for a user, ordered by date.
+	\item \textbf{deleteTripById(tripId)}: deletes a trip.
+	\item \textbf{updateTripWeather(tripId, weather)}: stores aggregated weather data for a trip.
+	\item \textbf{createPath(userId, origin, destination, pathSegments, visibility, creationMode, title, description, distanceKm)}: stores a new path.
+	\item \textbf{getPathById(pathId)}: retrieves a path and its ordered segments.
+	\item \textbf{getPathsByUserId(userId)}: retrieves all paths for a user.
+	\item \textbf{getPathByOriginDestination(userId, origin, destination)}: finds a user path by origin/destination.
+	\item \textbf{searchPathsByOriginDestination(origin, destination, userId?)}: returns matching paths by proximity and visibility.
+	\item \textbf{updatePathScore(pathId, score)}: updates the stored path score.
+	\item \textbf{updatePathStatus(pathId, status)}: updates the stored path status.
+	\item \textbf{deletePathById(pathId)}: deletes a path.
+	\item \textbf{changePathVisibility(pathId, visibility)}: updates path visibility.
+	\item \textbf{createSegment(status, polylineCoordinates)}: stores a segment.
+	\item \textbf{createSegmentWithId(segmentId, status, polylineCoordinates)}: stores a segment with a provided id.
+	\item \textbf{getSegmentsByIds(segmentIds)}: retrieves segments by id.
+	\item \textbf{getSegmentStatistics(segmentIds)}: retrieves segment status for scoring.
+\end{itemize}
+
+\subsection{RESTful API endpoints}
+\label{sec:api_endpoints}
+
+The BBP backend exposes a RESTful API consumed by the mobile application.
+All endpoints exchange JSON payloads over HTTPS.
+Unless otherwise specified, requests that access or modify user-specific resources require authentication via
+\texttt{Authorization: Bearer <access\_token>}. Refresh tokens are used to renew expired access tokens.
+
+Each endpoint definition reports the HTTP method, the resource path, the expected request parameters (query/path/body),
+and the possible responses. Standard HTTP status codes are adopted to represent successful outcomes and errors.
+
+\subsubsection*{Auth}
+\paragraph{\textbf{POST} \texttt{/auth/login}}
+\begin{itemize}
+	\item \textbf{Request Body}: \texttt{\{ email, password \}}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, user, tokens \}}
+		      \item \textbf{400 Bad Request}: \texttt{MISSING\_CREDENTIALS}
+		      \item \textbf{401 Unauthorized}: \texttt{INVALID\_CREDENTIALS}
+		      \item \textbf{404 Not Found}: \texttt{USER\_NOT\_FOUND}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{POST} \texttt{/auth/logout}}
+\begin{itemize}
+	\item \textbf{Request Body}: \texttt{\{ refreshToken \}}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{204 No Content}
+		      \item \textbf{401 Unauthorized}: \texttt{MISSING\_REFRESH\_TOKEN}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{POST} \texttt{/auth/refresh}}
+\begin{itemize}
+	\item \textbf{Request Body}: \texttt{\{ refreshToken \}}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, message, tokens \}}
+		      \item \textbf{401 Unauthorized}: \texttt{MISSING\_REFRESH\_TOKEN}
+		      \item \textbf{403 Forbidden}: \texttt{INVALID\_REFRESH\_TOKEN}, \texttt{REFRESH\_TOKEN\_NOT\_FOUND}, \texttt{REFRESH\_TOKEN\_EXPIRED}
+		      \item \textbf{404 Not Found}: \texttt{USER\_NOT\_FOUND}
+	      \end{itemize}
+\end{itemize}
+
+\subsubsection*{Users}
+\paragraph{\textbf{POST} \texttt{/users/register}}
+\begin{itemize}
+	\item \textbf{Request Body}: \texttt{\{ email, password, username, systemPreferences? \}}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{201 Created}: \texttt{\{ success, user \}}
+		      \item \textbf{400 Bad Request}: \texttt{MISSING\_CREDENTIALS}
+		      \item \textbf{409 Conflict}: \texttt{EMAIL\_ALREADY\_IN\_USE}, \texttt{USERNAME\_ALREADY\_IN\_USE}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{GET} \texttt{/users/me}}
+\begin{itemize}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
+		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
+		      \item \textbf{404 Not Found}: \texttt{USER\_NOT\_FOUND}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{PATCH} \texttt{/users/me}}
+\begin{itemize}
+	\item \textbf{Request Body}: \texttt{\{ username?, email?, currentPassword?, password?, systemPreferences? \}}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, message \}}
+		      \item \textbf{400 Bad Request}: \texttt{EMPTY\_PAYLOAD}, \texttt{INCORRECT\_PASSWORD}
+		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
+		      \item \textbf{404 Not Found}: \texttt{USER\_NOT\_FOUND}
+		      \item \textbf{409 Conflict}: \texttt{EMAIL\_ALREADY\_IN\_USE}, \texttt{USERNAME\_ALREADY\_IN\_USE}
+	      \end{itemize}
+\end{itemize}
+
+\subsubsection*{Paths}
+\paragraph{\textbf{POST} \texttt{/paths}}
+\begin{itemize}
+	\item \textbf{Request Body}: \texttt{\{ pathSegments, visibility, creationMode, title, description \}}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{201 Created}: \texttt{\{ success, message, data \}}
+		      \item \textbf{400 Bad Request}: \texttt{UNAUTHORIZED}, \texttt{MISSING\_PATH\_SEGMENTS}, \texttt{MISSING\_VISIBILITY}, \texttt{INVALID\_SEGMENT}, \texttt{MISSING\_CREATION\_MODE}, \texttt{INVALID\_CREATION\_MODE}, \texttt{NOT\_IMPLEMENTED}
+		      \item \textbf{404 Not Found}: \texttt{PATH\_NOT\_FOUND\_AFTER\_CREATION}
+		      \item \textbf{409 Conflict}: \texttt{Path with same origin and destination already exists}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{GET} \texttt{/paths/search}}
+\begin{itemize}
+	\item \textbf{Query Params}: \texttt{origin}, \texttt{destination}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
+		      \item \textbf{400 Bad Request}: \texttt{MISSING\_ORIGIN}, \texttt{MISSING\_DESTINATION}
+		      \item \textbf{404 Not Found}: \texttt{NO\_ROUTE}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{POST} \texttt{/paths/snap}}
+\begin{itemize}
+	\item \textbf{Request Body}: \texttt{\{ coordinates \}}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
+		      \item \textbf{400 Bad Request}: \texttt{MISSING\_COORDINATES}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{GET} \texttt{/paths?owner=me}}
+\begin{itemize}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, data \}} (empty list allowed)
+		      \item \textbf{400 Bad Request}: \texttt{UNAUTHORIZED}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{PATCH} \texttt{/paths/:pathId/visibility}}
+\begin{itemize}
+	\item \textbf{Request Body}: \texttt{\{ visibility \}}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, message, data \}}
+		      \item \textbf{400 Bad Request}: \texttt{UNAUTHORIZED}, \texttt{MISSING\_PATH\_ID}, \texttt{MISSING\_VISIBILITY}, \texttt{INVALID\_VISIBILITY}
+		      \item \textbf{403 Forbidden}: \texttt{FORBIDDEN}
+		      \item \textbf{404 Not Found}: \texttt{NOT\_FOUND}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{DELETE} \texttt{/paths/:pathId}}
+\begin{itemize}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{204 No Content}
+		      \item \textbf{400 Bad Request}: \texttt{UNAUTHORIZED}, \texttt{MISSING\_PATH\_ID}
+		      \item \textbf{403 Forbidden}: \texttt{FORBIDDEN}
+		      \item \textbf{404 Not Found}: \texttt{NOT\_FOUND}
+	      \end{itemize}
+\end{itemize}
+
+\subsubsection*{Trips}
+\paragraph{\textbf{POST} \texttt{/trips}}
+\begin{itemize}
+	\item \textbf{Request Body}: \texttt{\{ origin, destination, startedAt, finishedAt, tripSegments, title? \}}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{201 Created}: \texttt{\{ success, message, data \}}
+		      \item \textbf{400 Bad Request}: \texttt{UNAUTHORIZED}, \texttt{MISSING\_ORIGIN\_DESTINATION}, \texttt{MISSING\_DATES}, \texttt{INVALID\_DATES}, \texttt{INVALID\_DATE\_RANGE}, \texttt{MISSING\_TRIP\_SEGMENTS}, \texttt{DUPLICATE\_SEGMENT\_IDS}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{GET} \texttt{/trips?owner=me}}
+\begin{itemize}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, data \}} (empty list allowed)
+		      \item \textbf{400 Bad Request}: \texttt{UNAUTHORIZED}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{DELETE} \texttt{/trips/:tripId}}
+\begin{itemize}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{204 No Content}
+		      \item \textbf{400 Bad Request}: \texttt{UNAUTHORIZED}, \texttt{MISSING\_TRIP\_ID}
+		      \item \textbf{403 Forbidden}: \texttt{FORBIDDEN}
+		      \item \textbf{404 Not Found}: \texttt{NOT\_FOUND}
+	      \end{itemize}
+\end{itemize}
+
+\subsubsection*{Weather}
+\paragraph{\textbf{POST} \texttt{/weather/trips/:tripId/enrich}}
+\begin{itemize}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
+		      \item \textbf{400 Bad Request}: \texttt{MISSING\_TRIP\_ID}, \texttt{NO\_COORDINATES}
+		      \item \textbf{404 Not Found}: \texttt{TRIP\_NOT\_FOUND}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{GET} \texttt{/weather/trips/:tripId}}
+\begin{itemize}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
+		      \item \textbf{400 Bad Request}: \texttt{MISSING\_TRIP\_ID}
+		      \item \textbf{404 Not Found}: \texttt{TRIP\_NOT\_FOUND}, \texttt{WEATHER\_NOT\_FOUND}
+	      \end{itemize}
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -1118,8 +1303,6 @@ quality attributes and align with the mobile-first scope:
 	      Errors are normalised into structured HTTP responses so the mobile client can present
 	      consistent messages. Domain-specific errors (e.g., \texttt{NOT\_FOUND}) are explicitly
 	      mapped and surfaced through the Gateway.
-	      Empty collections are treated as \texttt{NOT\_FOUND} conditions to explicitly signal the absence
-	      of domain entities rather than returning empty datasets.
 
 	\item \textbf{Fault tolerance}.
 	      Calls to external services (e.g., weather provider) are wrapped with timeouts,

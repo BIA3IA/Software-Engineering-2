@@ -506,6 +506,10 @@ LOG_LEVEL=info
 JWT_SECRET= {{randomly_generated_secret}}
 JWT_REFRESH_SECRET= {{randomly_generated_refresh_secret}}
 DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key={{prisma_accelerate_api_key}}"
+OSRM_BASE_URL=http://osrm:5000
+OSRM_TIMEOUT_MS=8000
+GEOCODING_TIMEOUT_MS=8000
+OPENMETEO_TIMEOUT_MS=8000
 ```
 Secrets must never be committed to Git. 
 
@@ -818,6 +822,9 @@ Add to `/opt/bbp-backend/.env`:
 
 ```bash
 OSRM_BASE_URL=http://osrm:5000
+OSRM_TIMEOUT_MS=8000
+GEOCODING_TIMEOUT_MS=8000
+OPENMETEO_TIMEOUT_MS=8000
 ```
 
 Rebuild backend:
