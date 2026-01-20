@@ -14,7 +14,7 @@ const passwordSchema = z
 const loginPasswordSchema = z
     .string()
     .trim()
-    .min(1, "Password is required.")
+    .min(8, "Password must be at least 8 characters.")
 
 const usernameSchema = z
     .string()

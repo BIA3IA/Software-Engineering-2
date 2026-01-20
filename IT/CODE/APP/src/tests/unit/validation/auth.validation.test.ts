@@ -19,8 +19,8 @@ describe("auth validation", () => {
     expect(res.success).toBe(false)
   })
 
-  test("loginSchema rejects missing password", () => {
-    const res = loginSchema.safeParse({ email: "bianca@gmail.com", password: "" })
+  test("loginSchema rejects short password", () => {
+    const res = loginSchema.safeParse({ email: "bianca@gmail.com", password: "123" })
     expect(res.success).toBe(false)
   })
 

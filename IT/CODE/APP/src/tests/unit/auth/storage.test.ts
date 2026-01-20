@@ -92,6 +92,7 @@ describe("auth/storage store", () => {
 
         await useAuthStore.getState().logout()
 
+        expect(clearSession).toHaveBeenCalled()
         expect(logoutApi).toHaveBeenCalledWith("r9")
         expect(useAuthStore.getState().user).toBeNull()
         expect(useAuthStore.getState().loading).toBe(false)
@@ -137,6 +138,7 @@ describe("auth/storage store", () => {
 
         await useAuthStore.getState().logout()
 
+        expect(clearSession).toHaveBeenCalled()
         expect(useAuthStore.getState().user).toBeNull()
         expect(useAuthStore.getState().loading).toBe(false)
     })
