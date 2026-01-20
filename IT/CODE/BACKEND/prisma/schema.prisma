@@ -29,6 +29,7 @@ model User {
   refreshTokens     RefreshToken[]
   trips             Trip[]
   paths             Path[]
+  reports           Report[]
 }
 
 model RefreshToken {
@@ -67,6 +68,7 @@ model Segment {
   polylineCoordinates Json
   tripSegments        TripSegment[]
   pathSegments        PathSegment[]
+  reports             Report[]
 }
 
 model TripSegment {
@@ -100,13 +102,49 @@ model Path {
 }
 
 model PathSegment {
-  id            String  @id @default(cuid())
+  id            String   @id @default(cuid())
   pathId        String
   segmentId     String
   nextSegmentId String?
-  status        String  @default("OPTIMAL")
-  path          Path    @relation(fields: [pathId], references: [pathId], onDelete: Cascade)
-  segment       Segment @relation(fields: [segmentId], references: [segmentId]) // No onDelete: Cascade here otherwise deleting a path would delete also the trip segments
+  status        String   @default("OPTIMAL")
+  path          Path     @relation(fields: [pathId], references: [pathId], onDelete: Cascade)
+  segment       Segment  @relation(fields: [segmentId], references: [segmentId]) // No onDelete: Cascade here otherwise deleting a path would delete also the trip segments
+  reports       Report[]
 
   @@unique([pathId, segmentId])
+}
+
+model Report {
+  reportId  String   @id @default(uuid())
+  userId    String
+  segmentId String
+  createdAt DateTime @default(now())
+
+  // Content Attributes
+  obstacleType    String
+  path            String // e.g., a URI or encoded path string
+  acquisitionMode String // e.g., 'manual', 'sensor', 'automated'
+
+  // Status Attributes
+  status       String // Generic path status
+  reportStatus ReportStatus @default(CREATED)
+
+  // Location Data
+  polylineCoordinates Json
+
+  // Relations
+  user          User         @relation(fields: [userId], references: [userId])
+  segment       Segment      @relation(fields: [segmentId], references: [segmentId])
+  pathSegment   PathSegment? @relation(fields: [pathSegmentId], references: [id])
+  pathSegmentId String?
+
+  @@index([userId])
+  @@index([segmentId])
+}
+
+enum ReportStatus {
+  CONFIRMED
+  REJECTED
+  IGNORED
+  CREATED
 }

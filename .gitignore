@@ -152,3 +152,5 @@ vite.config.ts.timestamp-*
 **/.DS_Store
 *.bbl
 *.blg
+
+/generated/prisma
