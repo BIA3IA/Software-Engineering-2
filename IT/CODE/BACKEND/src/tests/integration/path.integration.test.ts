@@ -45,6 +45,11 @@ import { app } from "../../server";
 import prisma from "../../utils/prisma-client";
 
 describe("Path Routes Integration Tests", () => {
+    const assertStatus = (response: { status: number; body: unknown }, expected: number) => {
+        if (response.status !== expected) {
+            throw new Error(`Expected ${expected}, got ${response.status}: ${JSON.stringify(response.body)}`);
+        }
+    };
 
     const generateValidAccessToken = (userId: string) => {
         return jwt.sign({ userId }, process.env.JWT_SECRET!, { expiresIn: "15m" });
@@ -273,14 +278,12 @@ describe("Path Routes Integration Tests", () => {
             geocodeAddressMock.mockResolvedValueOnce({ lat: 45.4700, lng: 9.1950 });
             (prisma.path.findMany as jest.Mock).mockResolvedValue([mockPath]);
 
+            const originQuery = encodeURIComponent("Piazza Duomo, Milano");
+            const destinationQuery = encodeURIComponent("Stazione Centrale, Milano");
             const response = await request(app)
-                .get("/api/v1/paths/search")
-                .query({
-                    origin: "Piazza Duomo, Milano",
-                    destination: "Stazione Centrale, Milano"
-                });
+                .get(`/api/v1/paths/search?origin=${originQuery}&destination=${destinationQuery}`);
 
-            expect(response.status).toBe(200);
+            assertStatus(response, 200);
             expect(response.body.success).toBe(true);
             expect(response.body.data.count).toBeGreaterThan(0);
             expect(response.body.data.paths[0]).toHaveProperty("pathId");
@@ -291,14 +294,12 @@ describe("Path Routes Integration Tests", () => {
             geocodeAddressMock.mockResolvedValueOnce({ lat: 45.4700, lng: 9.1950 });
             (prisma.path.findMany as jest.Mock).mockResolvedValue([]);
 
+            const originQuery = encodeURIComponent("Nonexistent Place");
+            const destinationQuery = encodeURIComponent("Another Nonexistent Place");
             const response = await request(app)
-                .get("/api/v1/paths/search")
-                .query({
-                    origin: "Nonexistent Place",
-                    destination: "Another Nonexistent Place"
-                });
+                .get(`/api/v1/paths/search?origin=${originQuery}&destination=${destinationQuery}`);
 
-            expect(response.status).toBe(404);
+            assertStatus(response, 404);
             expect(response.body.error.code).toBe("NO_ROUTE");
         });
 

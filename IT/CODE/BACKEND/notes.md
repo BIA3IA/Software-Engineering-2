@@ -356,7 +356,7 @@ See more at: https://open-meteo.com/en/docs to see the structure of the API and 
 
 Unit tests focus on testing individual functions or components in isolation. During these tests, we mock calls to external services and dependencies to isolate the functionality we're testing. This approach ensures that the tests are reliable and unaffected by external factors such as network issues, database status, or API changes. Furthermore, by mocking dependencies, the tests become much more performant as we avoid network latency and database operations. Another advantage is that we can easily simulate various scenarios and edge cases that might be difficult to reproduce with real service calls.
 
-Integration tests, on the other hand, verify the end-to-end functionality of the application, testing how the different components work together. In our project, we directly import the Express app instance and use Supertest to simulate real HTTP requests. This allows us to test the entire application stack, from API routes to controllers, services, and database interactions, without having to continuously start and stop the server during testing. Integration tests validate the complete flow of data and interactions between components, providing us with confidence that the system behaves correctly when all parts work together.
+Integration tests, on the other hand, verify the end-to-end functionality of the application, testing how the different components work together. In our project, we directly import the Express app instance and use Supertest to simulate real HTTP requests. This allows us to test the entire application stack, from API routes to managers, services, middleware, and database interactions, without having to continuously start and stop the server during testing. Integration tests validate the complete flow of data and interactions between components, providing us with confidence that the system behaves correctly when all parts work together.
 
 #### Testing Tools
 
@@ -366,7 +366,7 @@ For integration tests, we use Supertest, a popular library for testing HTTP serv
 
 ```typescript
 import request from "supertest";
-import app from "../app";
+import { app } from "../server";
 
 describe("POST /api/auth/register", () => {
   it("should register a new user", async () => {
@@ -405,7 +405,7 @@ This report helps us identify areas that may require additional testing. The rep
 If we want to run a single test file, we can specify the path:
 
 ```bash
-npm test path/to/test/file.test.ts
+npm test -- path/to/test/file.test.ts
 ```
 
 Or we can run tests that match a specific pattern:
@@ -414,11 +414,22 @@ Or we can run tests that match a specific pattern:
 npm test -- --testNamePattern="should register"
 ```
 
+#### Run Live Test
+
+We keep a "RUN LIVE TEST" step to validate the real integration with external services and environment wiring (OSRM, Nominatim/OpenStreetMap, Open-Meteo, etc.). Our unit and integration tests mock those dependencies, so they cannot catch issues like network errors, API changes, rate limits, or misconfigured environment variables. The live test is a quick sanity check that the deployed setup behaves as expected end-to-end.
+
+Suggested checks for a live run:
+
+- Start the API with real env vars and database.
+- Hit `/api/v1/paths/search` with valid origin/destination and verify a 200 or a meaningful 404 when no route exists.
+- Hit `/api/v1/paths/snap` with a small coordinate set and verify snapped coordinates are returned.
+- Trigger weather/geocoding usage (trip creation or direct service call path) and verify non-timeout responses.
+
 #### Test Configuration
 
 Jest is configurable via the `jest.config.mjs` file in the project root, where we can specify settings such as the test environment, file patterns, and coverage thresholds. In our case, we use the `ts-jest` preset for TypeScript support and set the environment to `node` since we are testing a backend API. We also define patterns to identify which files Jest should consider as tests, typically files ending in `.test.ts` or files in the `__tests__` directory.
 
-The `setupTest.ts` file is run before all tests and configures the environment variables needed for the test environment. In our case, we set `NODE_ENV` to `test` and define the JWT secrets for the tests:
+The `setup.test.ts` file is run before all tests and configures the environment variables needed for the test environment. In our case, we set `NODE_ENV` to `test` and define the JWT secrets for the tests:
 
 ```typescript
 process.env.NODE_ENV = "test";

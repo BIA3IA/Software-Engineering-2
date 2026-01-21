@@ -26,7 +26,12 @@ export const snapPathSchema = Joi.object({
     coordinates: Joi.array().items(coordinatesSchema).min(2).required(),
 });
 
+const addressQuerySchema = Joi.alternatives().try(
+    Joi.string().trim().min(1),
+    Joi.array().items(Joi.string().trim().min(1)).min(1)
+);
+
 export const searchPathSchema = Joi.object({
-    origin: Joi.string().trim().min(1).required(),
-    destination: Joi.string().trim().min(1).required(),
+    origin: addressQuerySchema.required(),
+    destination: addressQuerySchema.required(),
 }).unknown(true);
