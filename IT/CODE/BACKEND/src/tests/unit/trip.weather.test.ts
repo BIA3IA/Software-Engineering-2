@@ -199,6 +199,58 @@ describe("Testing TripManager weather logic", () => {
             );
         });
 
+        test("Should return NotFoundError when trip is not found", async () => {
+            const req = mockRequest();
+            req.params = { tripId: "trip" };
+            req.user = { userId: "user", iat: 0, exp: 0 };
+
+            (queryManager.getTripById as jest.Mock).mockResolvedValue(null);
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().enrichTrip(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 404,
+                    code: "TRIP_NOT_FOUND"
+                })
+            );
+        });
+
+        test("Should return NotFoundError when trip belongs to another user", async () => {
+            const req = mockRequest();
+            req.params = { tripId: "trip" };
+            req.user = { userId: "user", iat: 0, exp: 0 };
+
+            (queryManager.getTripById as jest.Mock).mockResolvedValue({
+                tripId: "trip",
+                userId: "other-user",
+                createdAt: new Date(),
+                startedAt: new Date(),
+                finishedAt: new Date(),
+                title: null,
+                origin: { lat: 45.4642, lng: 9.1900 },
+                destination: { lat: 45.4654, lng: 9.1859 },
+                statistics: null,
+                weather: null,
+                tripSegments: []
+            });
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().enrichTrip(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 404,
+                    code: "TRIP_NOT_FOUND"
+                })
+            );
+        });
+
     });
 
     describe("Testing getTripWeather method", () => {
@@ -262,6 +314,90 @@ describe("Testing TripManager weather logic", () => {
                 expect.objectContaining({
                     statusCode: 400,
                     code: "MISSING_TRIP_ID"
+                })
+            );
+        });
+
+        test("Should return NotFoundError when trip is missing", async () => {
+            const req = mockRequest();
+            req.params = { tripId: "trip" };
+            req.user = { userId: "user", iat: 0, exp: 0 };
+
+            (queryManager.getTripById as jest.Mock).mockResolvedValue(null);
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().getTripWeather(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 404,
+                    code: "TRIP_NOT_FOUND"
+                })
+            );
+        });
+
+        test("Should return NotFoundError when trip belongs to another user", async () => {
+            const req = mockRequest();
+            req.params = { tripId: "trip" };
+            req.user = { userId: "user", iat: 0, exp: 0 };
+
+            (queryManager.getTripById as jest.Mock).mockResolvedValue({
+                tripId: "trip",
+                userId: "other-user",
+                createdAt: new Date(),
+                startedAt: new Date(),
+                finishedAt: new Date(),
+                title: null,
+                origin: { lat: 45.4642, lng: 9.1900 },
+                destination: { lat: 45.4654, lng: 9.1859 },
+                statistics: null,
+                weather: null,
+                tripSegments: []
+            });
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().getTripWeather(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 404,
+                    code: "TRIP_NOT_FOUND"
+                })
+            );
+        });
+
+        test("Should return NotFoundError when weather data is missing", async () => {
+            const req = mockRequest();
+            req.params = { tripId: "trip" };
+            req.user = { userId: "user", iat: 0, exp: 0 };
+
+            (queryManager.getTripById as jest.Mock).mockResolvedValue({
+                tripId: "trip",
+                userId: "user",
+                createdAt: new Date(),
+                startedAt: new Date(),
+                finishedAt: new Date(),
+                title: null,
+                origin: { lat: 45.4642, lng: 9.1900 },
+                destination: { lat: 45.4654, lng: 9.1859 },
+                statistics: null,
+                weather: null,
+                tripSegments: []
+            });
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().getTripWeather(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 404,
+                    code: "WEATHER_NOT_FOUND"
                 })
             );
         });
