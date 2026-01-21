@@ -22,7 +22,7 @@ This layer is responsible for:
 	\item rendering the user interface and handling user interactions;
 	\item acquiring device-level data (GPS, accelerometer, gyroscope) during trips;
 	\item displaying bike paths, trip summaries, statistics, and reports;
-	\item invoking backend functionalities through HTTP requests.
+	\item invoking backend functionalities through HTTPS requests.
 \end{itemize}
 
 The mobile app is intentionally designed as a \textbf{thin client}.
@@ -190,7 +190,9 @@ translate location strings into coordinates. It returns resolved coordinates to 
 \textbf{PathManager} and isolates third-party integration concerns.
 
 \subsubsection{Snapping Service}
-
+The \textbf{Snapping Service} interfaces with an internal routing engine to
+snap user-drawn or recorded paths to the road network, ensuring accurate route representation.
+It returns the adjusted path to the \textbf{PathManager}.
 
 % --------------------------------------------------------------------------
 % Deployment View
@@ -207,7 +209,7 @@ translate location strings into coordinates. It returns resolved coordinates to 
 \end{figure}
 
 The deployment view describes the hardware and software infrastructure supporting the \textit{BBP} system. Each tier is
-executed on dedicated hardware nodes and communicates with the others using secure protocols.
+deployed on logically separated infrastructure components and communicates with the others using secure protocols.
 
 \begin{itemize}
 	\item \textbf{Presentation Tier:}
@@ -221,16 +223,14 @@ executed on dedicated hardware nodes and communicates with the others using secu
 	\item \textbf{Application Tier:}
 	      this tier is responsible for handling incoming traffic, enforcing security, applying routing and load balancing policies, and
 	      executing the core business logic of the system.
-	      All external requests first pass through a Linux-based node configured as a Web Application Firewall using \textit{ModSecurity},
-	      enabling Layer-7 inspection and protection.
-	      ModSecurity blocks malicious traffic such as SQL injection attempts, cross-site scripting payloads, and abnormal request patterns,
-	      while supporting anomaly detection.
-	      TLS termination is performed at the WAF to allow full request inspection; validated traffic is re-encrypted and forwarded to the internal
-	      internal \textit{NGINX} gateway over HTTPS.
-	      NGINX acts as the system's reverse proxy and load balancer, exposing a single controlled entrypoint and distributing incoming
-	      requests across multiple backend replicas using load balancing strategies.
-	      Additional middleware functionalities (request logging or rate limiting) can be applied as needed at this level.
-	      The backend application itself is executed on one or more stateless Application Servers, each running the BBP RESTful backend.
+	      All external requests terminate at a shared \textit{NGINX} reverse proxy running on the server, which exposes the only public
+	      entrypoint and forwards traffic to the backend containers over an internal Docker network.
+	      TLS termination is handled at this reverse proxy using Cloudflare Origin Certificates, and the proxy also provides
+	      rate limiting, request filtering, and load balancing across backend replicas.
+	      The backend application itself is executed on one or more stateless Application Servers (Docker containers),
+	      each running the BBP RESTful backend.
+	      The snapping engine runs as a separate internal container and is reachable
+	      only over the private Docker network.
 	      Since authentication tokens are included in each request header, no server-side session state is maintained, enabling horizontal
 	      scaling and dynamic replica management.
 	      Communication between the gateway and the backend replicas is confined to a protected internal network, reducing the system's
@@ -258,11 +258,9 @@ While the Component View focuses on the static organisation of the backend,
 the Runtime View illustrates how these components interact dynamically
 during the execution of the main use cases.
 
-All diagrams follow the modular structure of the backend:
-the mobile client invokes the \textbf{API Gateway}, which routes each request to the
-appropriate \textbf{Manager}.
-Persistence operations are centralised in the \textbf{QueryManager}, whereas
-weather-related data requests involve the \textbf{TripManager} and the \textbf{WeatherService}.
+All diagrams follow the modular structure of the backend.
+The mobile client invokes the \textbf{API Gateway}, which routes each request to the
+appropriate \textbf{Manager}. Persistence operations are centralised in the \textbf{QueryManager}. 
 
 The sequence diagrams that follow cover the core use cases and show how responsibilities
 are distributed at runtime.
