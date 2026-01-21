@@ -102,6 +102,30 @@ describe("Trip Routes Integration Tests", () => {
             expect(response.body.data.title).toBe("Morning Ride");
         });
 
+        test("Should return 401 for missing access token", async () => {
+            const response = await request(app)
+                .post("/api/v1/trips")
+                .send({
+                    origin: { lat: 45.4642, lng: 9.1900 },
+                    destination: { lat: 45.4700, lng: 9.1950 },
+                    startedAt: "2025-01-15T10:00:00Z",
+                    finishedAt: "2025-01-15T11:00:00Z",
+                    tripSegments: [
+                        {
+                            segmentId: "segment1",
+                            polylineCoordinates: [
+                                { lat: 45.4642, lng: 9.1900 },
+                                { lat: 45.4700, lng: 9.1950 }
+                            ]
+                        }
+                    ],
+                    title: "Morning Ride"
+                });
+
+            expect(response.status).toBe(401);
+            expect(response.body.error.code).toBe("ACCESS_TOKEN_MISSING");
+        });
+
         test("Should return 400 for missing required fields", async () => {
             const accessToken = generateValidAccessToken("user123");
 
@@ -176,6 +200,23 @@ describe("Trip Routes Integration Tests", () => {
             expect(response.status).toBe(200);
             expect(response.body.data.count).toBe(0);
             expect(response.body.data.trips).toEqual([]);
+        });
+
+        test("Should return 401 for missing access token", async () => {
+            const response = await request(app)
+                .get("/api/v1/trips?owner=me");
+
+            expect(response.status).toBe(401);
+            expect(response.body.error.code).toBe("ACCESS_TOKEN_MISSING");
+        });
+
+        test("Should return 403 for invalid access token", async () => {
+            const response = await request(app)
+                .get("/api/v1/trips?owner=me")
+                .set("Authorization", "Bearer invalid-token");
+
+            expect(response.status).toBe(403);
+            expect(response.body.error.code).toBe("INVALID_ACCESS_TOKEN");
         });
 
     });

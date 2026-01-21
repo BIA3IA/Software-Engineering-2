@@ -147,6 +147,52 @@ describe("Testing TripManager business logic", () => {
             );
         });
 
+        test("Should throw BadRequestError for missing dates", async () => {
+            const req = mockRequest();
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+            req.body = {
+                origin: { lat: 45.4642, lng: 9.1900 },
+                destination: { lat: 45.4700, lng: 9.1950 },
+                tripSegments: [{ segmentId: "segment1" }]
+            };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().createTrip(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "MISSING_DATES"
+                })
+            );
+        });
+
+        test("Should throw BadRequestError for invalid dates", async () => {
+            const req = mockRequest();
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+            req.body = {
+                origin: { lat: 45.4642, lng: 9.1900 },
+                destination: { lat: 45.4700, lng: 9.1950 },
+                startedAt: "invalid-date",
+                finishedAt: "also-invalid",
+                tripSegments: [{ segmentId: "segment1" }]
+            };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().createTrip(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "INVALID_DATES"
+                })
+            );
+        });
+
         test("Should throw BadRequestError for invalid date range", async () => {
             const req = mockRequest();
             req.user = { userId: "user123", iat: 0, exp: 0 };
@@ -194,6 +240,30 @@ describe("Testing TripManager business logic", () => {
                 expect.objectContaining({
                     statusCode: 400,
                     code: "DUPLICATE_SEGMENT_IDS"
+                })
+            );
+        });
+
+        test("Should throw BadRequestError for missing trip segments", async () => {
+            const req = mockRequest();
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+            req.body = {
+                origin: { lat: 45.4642, lng: 9.1900 },
+                destination: { lat: 45.4700, lng: 9.1950 },
+                startedAt: "2025-01-15T10:00:00Z",
+                finishedAt: "2025-01-15T11:00:00Z",
+                tripSegments: []
+            };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().createTrip(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "MISSING_TRIP_SEGMENTS"
                 })
             );
         });
@@ -310,6 +380,24 @@ describe("Testing TripManager business logic", () => {
                 })
             );
             expect(queryManager.deleteTripById).not.toHaveBeenCalled();
+        });
+
+        test("Should throw BadRequestError when tripId is missing", async () => {
+            const req = mockRequest();
+            req.params = {};
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().deleteTrip(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "MISSING_TRIP_ID"
+                })
+            );
         });
 
     });

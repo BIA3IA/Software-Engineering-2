@@ -248,6 +248,78 @@ describe("Testing PathManager business logic", () => {
             });
         });
 
+        test("Should throw BadRequestError for invalid segment data", async () => {
+            const req = mockRequest('POST', '/api/paths');
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+            req.body = {
+                pathSegments: [
+                    { start: { lat: 45.4642, lng: 9.1900 } }
+                ],
+                visibility: true,
+                creationMode: "manual"
+            };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new PathManager().createPath(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "INVALID_SEGMENT"
+                })
+            );
+        });
+
+        test("Should throw BadRequestError for automatic creation mode", async () => {
+            const req = mockRequest('POST', '/api/paths');
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+            req.body = {
+                pathSegments: [
+                    { start: { lat: 45.4642, lng: 9.1900 }, end: { lat: 45.4700, lng: 9.1950 } }
+                ],
+                visibility: true,
+                creationMode: "automatic"
+            };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new PathManager().createPath(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "NOT_IMPLEMENTED"
+                })
+            );
+        });
+
+        test("Should throw BadRequestError for invalid creation mode", async () => {
+            const req = mockRequest('POST', '/api/paths');
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+            req.body = {
+                pathSegments: [
+                    { start: { lat: 45.4642, lng: 9.1900 }, end: { lat: 45.4700, lng: 9.1950 } }
+                ],
+                visibility: true,
+                creationMode: "invalid"
+            };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new PathManager().createPath(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "INVALID_CREATION_MODE"
+                })
+            );
+        });
+
     });
 
     describe("Testing getUserPaths method", () => {
@@ -533,6 +605,74 @@ describe("Testing PathManager business logic", () => {
             );
         });
 
+        test("Should throw BadRequestError for invalid visibility type", async () => {
+            const req = mockRequest();
+            req.params = { pathId: "path1" };
+            req.user = { userId: "user123", iat: 0, exp: 0 };
+            req.body = { visibility: "yes" };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new PathManager().changePathVisibility(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "INVALID_VISIBILITY"
+                })
+            );
+        });
+
+    });
+
+    describe("Testing calculatePathStatus method", () => {
+        test("Should return CLOSED when path has no segments", async () => {
+            const mockPath = {
+                pathId: "path1",
+                pathSegments: []
+            };
+
+            (queryManager.getPathById as jest.Mock).mockResolvedValue(mockPath);
+
+            const result = await new PathManager().calculatePathStatus("path1");
+
+            expect(result).toBe("CLOSED");
+            expect(queryManager.updatePathStatus).not.toHaveBeenCalled();
+        });
+
+        test("Should return CLOSED when no segment statistics found", async () => {
+            const mockPath = {
+                pathId: "path1",
+                pathSegments: [{ segmentId: "segment1" }]
+            };
+
+            (queryManager.getPathById as jest.Mock).mockResolvedValue(mockPath);
+            (queryManager.getSegmentStatistics as jest.Mock).mockResolvedValue([]);
+
+            const result = await new PathManager().calculatePathStatus("path1");
+
+            expect(result).toBe("CLOSED");
+            expect(queryManager.updatePathStatus).not.toHaveBeenCalled();
+        });
+
+        test("Should calculate status based on average segment score", async () => {
+            const mockPath = {
+                pathId: "path1",
+                pathSegments: [{ segmentId: "segment1" }, { segmentId: "segment2" }]
+            };
+
+            (queryManager.getPathById as jest.Mock).mockResolvedValue(mockPath);
+            (queryManager.getSegmentStatistics as jest.Mock).mockResolvedValue([
+                { segmentId: "segment1", status: "OPTIMAL", createdAt: new Date() },
+                { segmentId: "segment2", status: "MEDIUM", createdAt: new Date() }
+            ]);
+
+            const result = await new PathManager().calculatePathStatus("path1");
+
+            expect(result).toBe("OPTIMAL");
+            expect(queryManager.updatePathStatus).toHaveBeenCalledWith("path1", "OPTIMAL");
+        });
     });
 
 });

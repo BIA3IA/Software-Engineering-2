@@ -181,6 +181,24 @@ describe("Testing TripManager weather logic", () => {
             expect(next).not.toHaveBeenCalled();
         });
 
+        test("Should return BadRequestError when tripId is missing", async () => {
+            const req = mockRequest();
+            req.params = {};
+            req.user = { userId: "user", iat: 0, exp: 0 };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().enrichTrip(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "MISSING_TRIP_ID"
+                })
+            );
+        });
+
     });
 
     describe("Testing getTripWeather method", () => {
@@ -228,6 +246,24 @@ describe("Testing TripManager weather logic", () => {
                 data: mockWeatherData,
             });
             expect(next).not.toHaveBeenCalled();
+        });
+
+        test("Should return BadRequestError when tripId is missing", async () => {
+            const req = mockRequest();
+            req.params = {};
+            req.user = { userId: "user", iat: 0, exp: 0 };
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new TripManager().getTripWeather(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "MISSING_TRIP_ID"
+                })
+            );
         });
 
     });

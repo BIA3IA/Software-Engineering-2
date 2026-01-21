@@ -154,6 +154,23 @@ describe("Path Routes Integration Tests", () => {
             expect(response.body.data.status).toBe("OPTIMAL");
         });
 
+        test("Should return 401 for missing access token", async () => {
+            const response = await request(app)
+                .post("/api/v1/paths")
+                .send({
+                    pathSegments: [
+                        { start: { lat: 45.4642, lng: 9.1900 }, end: { lat: 45.4700, lng: 9.1950 } }
+                    ],
+                    visibility: true,
+                    creationMode: "manual",
+                    title: "Test Path",
+                    description: "Test description"
+                });
+
+            expect(response.status).toBe(401);
+            expect(response.body.error.code).toBe("ACCESS_TOKEN_MISSING");
+        });
+
         test("Should return 400 for missing required fields", async () => {
             const accessToken = generateValidAccessToken("user123");
 
@@ -406,6 +423,23 @@ describe("Path Routes Integration Tests", () => {
             expect(response.status).toBe(200);
             expect(response.body.data.count).toBe(0);
             expect(response.body.data.paths).toEqual([]);
+        });
+
+        test("Should return 401 for missing access token", async () => {
+            const response = await request(app)
+                .get("/api/v1/paths?owner=me");
+
+            expect(response.status).toBe(401);
+            expect(response.body.error.code).toBe("ACCESS_TOKEN_MISSING");
+        });
+
+        test("Should return 403 for invalid access token", async () => {
+            const response = await request(app)
+                .get("/api/v1/paths?owner=me")
+                .set("Authorization", "Bearer invalid-token");
+
+            expect(response.status).toBe(403);
+            expect(response.body.error.code).toBe("INVALID_ACCESS_TOKEN");
         });
 
     });
