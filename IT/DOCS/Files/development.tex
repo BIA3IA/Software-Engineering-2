@@ -18,8 +18,24 @@ Expo Router -> Navigation
 \subsection{Backend}
 \label{sec:backend}
 
-NestJS
+NestJS \\
 Openmeteo service
+
+The backend infrastructure for BBP is developed using NestJS, a progressive Node.js framework. This choice provides a highly structured, modular architecture that ensures scalability and maintainability as the platform grows.
+The key architectural decisions and components of the backend are as follows:
+
+\begin{itemize} 
+    \item \textbf{Modular Architecture:} The system is organized into self-contained modules (e.g., UsersModule, TripsModule, PathsModule). This separation of concerns allows for independent development and testing of core features like the automated pothole detection logic and the path scoring algorithm.
+
+    \item \textbf{Dependency Injection and Type Safety:} Leveraging TypeScript and NestJS built-in dependency injection, the backend ensures robust data handling. Business logic is encapsulated in Services, which are injected into Controllers to handle incoming HTTP requests from the mobile application.
+
+    \item \textbf{External Service Integration (Open-Meteo):} To fulfill the requirement of enriching trip data with meteorological information, the system integrates the Open-Meteo API.
+    
+    \begin{itemize} % This nested list is already correct
+        \item \textbf{Data Acquisition:} A dedicated weather service within the backend performs asynchronous calls to Open-Meteo's REST endpoints using geographic coordinates (latitude/longitude) collected during user trips.
+        \item \textbf{Performance:} Since Open-Meteo provides high-resolution data without requiring an API key, it allows the BBP system to retrieve temperature, wind speed, and weather conditions in real-time or historically to match the exact timeframe of a recorded cycling session.
+    \end{itemize}
+\end{itemize}
 
 \subsection{Data Layer}
 \label{subsec:data_layer}
