@@ -1,22 +1,116 @@
+The BBP platform can be used in different configurations, depending on the intended use case and on whether
+the user aims to simply run the application or to actively develop and test it.
+
+In particular, three main usage scenarios are supported:
+\begin{itemize}
+    \item \textbf{Remote backend with prebuilt mobile application}: the user installs a prebuilt APK and interacts with an already deployed backend instance.
+    \item \textbf{Fully local execution}: both the backend services and the mobile application are executed locally for development and testing purposes.
+    \item \textbf{Hybrid configuration}: the mobile application is run locally while relying on a remotely deployed backend.
+\end{itemize}
 
 \section{Prerequisites}
 \label{sec:prerequisites}
 
-Node
-npm
+To run the BBP platform locally, a set of prerequisites must be satisfied to ensure a consistent and 
+reproducible development environment.
+
+\begin{itemize}
+    \item \textbf{Node.js and npm}: required to manage dependencies and execute project scripts for both the
+    backend services and the mobile application. All build, test, and development workflows rely on the Node.js runtime.
+    
+    \item \textbf{Docker and Docker Compose}: required to run backend services and auxiliary components in isolated
+    containers. In the local setup, Docker Compose is used to start the BBP backend, the PostgreSQL database,
+    and the OSRM routing service, ensuring a configuration that closely mirrors the production environment without
+    requiring manual installation of these components on the host system.
+    
+    \item \textbf{Expo CLI}: required to run the mobile application locally during development. It is used to
+    start the Metro bundler and to enable live previews of the application on emulators or physical devices.
+    
+    \item \textbf{Expo Go}: required on a physical mobile device to preview the application during development
+    by connecting to the local Metro bundler started via Expo CLI. May be replaced with an emulator.
+\end{itemize}
 
 \section{Backend Setup}
 \label{sec:backend_setup}
 
-Is running on a Personal Server managed via Docker.
-If you want to run it locally, you need to have PostgreSQL installed and running.
-Then, clone the repository, install the dependencies with npm install, set up the .env file with the necessary environment variables, and run the migrations with Prisma.
+\subsection{Production Deployment}
+\label{subsec:backend_production}
+
+The BBP backend is deployed on a \textbf{VPS} using a \textbf{container-based architecture} built on Docker
+and Docker Compose. The service is designed to coexist with other applications hosted on the same server
+while remaining isolated and not directly exposed to the public network.
+
+The backend application runs as a stateless service inside \textbf{Docker containers} and listens on port 3000,
+which is reachable only within the container network. No backend container exposes public ports on the
+host system. All incoming traffic is handled by a \textbf{shared NGINX reverse proxy}, which is the only component
+exposing ports 80 and 443.
+
+NGINX acts as the \textbf{single entry point} for the system and is responsible for HTTPS termination, request
+routing, load balancing, and basic traffic filtering. TLS is managed using \textbf{Cloudflare Origin Certificates},
+with Cloudflare acting as \textbf{DNS provider and upstream security layer}. Requests validated by Cloudflare are
+forwarded to the reverse proxy, which then routes them to the backend service.
+
+The backend is horizontally scalable and is deployed using \textbf{multiple container replicas}. In the current
+configuration, three backend instances are executed in parallel. NGINX resolves backend containers
+dynamically using \textbf{Docker’s embedded DNS} and \textbf{balances incoming requests} across replicas through an
+upstream definition. This approach allows the system to scale without introducing a dedicated load
+balancer and ensures high availability of the API layer.
+
+The deployment process starts by copying the backend project files to the server. This can be performed
+from a local machine using a secure file transfer mechanism, for example:
+
+\begin{verbatim}
+rsync -avz ./BACKEND/ user@<SERVER_IP>:/opt/bbp-backend/
+\end{verbatim}
+
+Once the project is available on the server, environment-specific configuration values are provided
+through a dedicated \textbf{.env} file. This file defines runtime parameters such as authentication
+secrets, database connection details, and service timeouts. Sensitive values are \textbf{never committed} to
+version control and are configured directly on the server.
+
+The backend is built and started using \textbf{Docker Compose}. A shared \textbf{Docker network}
+is created once and is used to connect the reverse proxy, backend replicas, and auxiliary services.
+The backend containers join this network and expose port 3000 only internally. The services can be
+built and started with the following commands:
+
+\begin{verbatim}
+docker compose build --no-cache
+docker compose --profile tools run --rm migrate
+docker compose up -d --scale api=3
+\end{verbatim}
+
+Database \textbf{migrations} are executed explicitly through a dedicated migration container and are only run
+when schema changes are introduced. This avoids unintended schema modifications during routine
+restarts.
+
+Persistent data storage is handled through \textbf{PostgreSQL} accessed via \textbf{Prisma Accelerate}. This configuration
+allows the backend to rely on a \textbf{managed database connection layer} without hosting a database instance
+directly on the server, while still preserving transactional guarantees and schema consistency.
+
+In addition to the core backend service, snapping-related functionalities are delegated to a separate
+\textbf{OSRM service}, which runs in its own container. OSRM is responsible for snapping user-defined paths to
+the OpenStreetMap road network using a cycling profile. The backend communicates with OSRM through an
+internal HTTP interface and exposes a dedicated API endpoint to the mobile application.
+
+After deployment, the backend can be verified by inspecting container status and logs:
+
+\begin{verbatim}
+docker compose ps
+docker logs -f bbp_api --tail=50
+\end{verbatim}
+
+A dedicated \textbf{health endpoint} is exposed and can be used by the reverse proxy to verify service
+availability. If correctly deployed, the backend responds to authenticated API requests through the
+public API endpoint exposed by the reverse proxy.
+
+\subsection{Local Backend Execution}
+\label{subsec:backend_local}
 
 \section{Frontend Setup}
 \label{sec:frontend_setup}
 
-You can build the app, run it on a simulator or physical device using Expo CLI.
-You can install the apk on Android devices directly.
+Use Expo CLI to run the app locally on an emulator or a physical device.
+You can also build an APK for Android and install it directly.
 
 If you want to use a local server you should change the API URL in the .env file and build it or run it on the emulator,
 since the built app points to the production server.
