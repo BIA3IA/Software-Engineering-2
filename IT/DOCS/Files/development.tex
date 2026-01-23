@@ -26,6 +26,12 @@ Openmeteo service
 
 PostgreSQL
 Prisma
+For data storage and management, the BBP platform utilizes PostgreSQL as its primary DBMS. To bridge the gap between the modular NestJS backend and the relational data, Prisma is employed as the Object-Relational Mapping (ORM) tool.
+\begin{itemize}
+    \item \textbf{Relational Data Integrity:} PostgreSQL was selected for its reliability and its ability to handle complex relational queries, such as merging path information from multiple users or calculating scores based on freshness and confirmation counts.
+    \item \textbf{Type-Safe Persistence:} Prisma provides a type-safe database client that is automatically generated from a central schema file. This ensures that the DTOs used in the application layer are perfectly synchronized with the database layer, significantly reducing runtime errors during data insertion (e.g., manual vs. automated mode data).
+    \item \textbf{Schema Management:} Using Prisma Migrations, the technical team can track and version-control changes to the database structure, such as new tables for "Reports" or "Meteorological Snapshots," ensuring consistency across development and production environments.
+\end{itemize}
 
 \section{Adopted Programming Languages}
 \label{subsec:languages}
