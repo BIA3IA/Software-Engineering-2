@@ -70,7 +70,7 @@ The application layer also relies on supporting services that encapsulate third-
 	      path accuracy before storage and analysis.
 \end{itemize}
 
-All modules are accessed through the \textbf{API Gateway}, which exposes a set of
+All modules are accessed through the \textbf{API Entrypoint}, which exposes a set of
 RESTful sub-APIs and routes incoming requests to the appropriate Manager.
 
 \subsection*{Data Layer}
@@ -109,13 +109,15 @@ and their responsibilities. As required by the three-tier architecture adopted b
 the backend is structured into a set of independent yet cooperating modules, each exposing
 well-defined interfaces and encapsulating a cohesive subset of the app logic.
 
-\subsubsection{API Gateway}
-The \textbf{API Gateway} acts as the entry point for all interactions between the BBP mobile
-app and the backend. It is responsible for routing incoming requests to the appropriate
-internal services, enforcing authentication and authorization requirements, validating inputs,
-and translating domain errors into HTTP responses.
+\subsubsection{API Entrypoint}
+The \textbf{API Entrypoint} represents the single entry point for all interactions between the BBP mobile
+app and the backend. It is not a standalone gateway component, 
+it is a logical layer implemented inside the backend application. It centralizes request routing
+toward the Managers, applies authentication middleware on
+protected endpoints, performs input validation at the boundary, and translates domain errors into
+HTTP responses.
 
-The API Gateway exposes the following logical sub-APIs:
+The API Entrypoint exposes the following logical sub-APIs:
 \begin{itemize}
 	\item \textbf{AuthAPI}: endpoints for login, token refresh, and token validation.
 	\item \textbf{UserAPI}: endpoints for registration and profile retrieval.
@@ -150,7 +152,7 @@ It also is responsible for creating new paths, either from user-drawn segments
 or from GPS samples recorded during automatic path creation. For both modes, 
 it interacts with the \textbf{SnappingService} to snap drawn paths to
 the road network.
-This service exposes the routing logic to the API Gateway and interacts with the
+This service exposes the routing logic to the API Entrypoint and interacts with the
 \textbf{QueryManager} to retrieve pre-aggregated segment conditions alongside path 
 data needed for route computation.
 
@@ -259,7 +261,7 @@ the Runtime View illustrates how these components interact dynamically
 during the execution of the main use cases.
 
 All diagrams follow the modular structure of the backend.
-The mobile client invokes the \textbf{API Gateway}, which routes each request to the
+The mobile client invokes the \textbf{API Entrypoint}, which routes each request to the
 appropriate \textbf{Manager}. Persistence operations are centralised in the \textbf{QueryManager}.
 When required, Managers also interact with dedicated \textbf{Services}
 to complete the requested operation.
@@ -274,7 +276,7 @@ The process begins on the mobile app, where the guest user opens the registratio
 and fills in the required details: username, email, and password.
 A first \textbf{local validation} step checks for malformed inputs before contacting the \textbf{backend}.
 
-If the data is valid, the mobile app sends a registration request to the \textbf{API Gateway}, which forwards it to the \textbf{UserManager}.
+If the data is valid, the mobile app sends a registration request to the \textbf{API Entrypoint}, which forwards it to the \textbf{UserManager}.
 The \textbf{UserManager} checks whether the email is already in use by querying the DBMS through the \textbf{QueryManager}.
 If the email already exists, the system returns an error and the mobile app notifies the user.
 
@@ -293,9 +295,9 @@ The flow ends successfully with a new user created.
 
 A guest user wants to authenticate and obtain access to the system. The process starts
 when the user opens the login form and submits credentials through the mobile app. After
-a \textbf{local validation}, the app sends an HTTP request to the login endpoint exposed by the \textbf{API Gateway}.
+a \textbf{local validation}, the app sends an HTTP request to the login endpoint exposed by the \textbf{API Entrypoint}.
 
-The \textbf{API Gateway} forwards the request to the \textbf{AuthManager}, which first checks whether the provided
+The \textbf{API Entrypoint} forwards the request to the \textbf{AuthManager}, which first checks whether the provided
 email exists by querying the \textbf{DBMS} through the \textbf{QueryManager}. If the email is not found,
 the backend returns a \textbf{404} error, which the mobile app displays to the user.
 If the user exists, the \textbf{AuthManager} verifies the submitted password. Invalid credentials
@@ -320,8 +322,8 @@ When a logged-in user initiates the logout operation from the mobile app, the cl
 stored tokens from the device's \textbf{secure storage}. This ensures the user is logged out on the client side
 even if the network request fails.
 
-After clearing local data, the mobile app sends an HTTP request to the logout endpoint exposed by the \textbf{API Gateway}.
-The \textbf{API Gateway} forwards the request to the \textbf{AuthManager}, which invalidates the current session by deleting
+After clearing local data, the mobile app sends an HTTP request to the logout endpoint exposed by the \textbf{API Entrypoint}.
+The \textbf{API Entrypoint} forwards the request to the \textbf{AuthManager}, which invalidates the current session by deleting
 the corresponding \textbf{refresh token} through the \textbf{QueryManager}. The \textbf{QueryManager} executes a
 \textbf{DELETE} operation on the database to remove the stored token.
 
@@ -341,7 +343,7 @@ If the operation succeeds, the server returns a \textbf{204 NO\_CONTENT} respons
 After the logged-in user opens the edit form, the mobile app
 locally validates the submitted fields. If the data is incomplete or invalid,
 the app immediately notifies the user. If the input is valid, the updated payload
-is sent with a \textbf{PATCH} request to the \textbf{API Gateway},
+is sent with a \textbf{PATCH} request to the \textbf{API Entrypoint},
 which delegates the request to the \textbf{UserManager}. The diagram illustrates
 the email update flow, but the same sequence applies to username changes as well.
 Before applying the update, the \textbf{UserManager} checks for duplicate
@@ -367,7 +369,7 @@ through the mobile app. Before contacting the backend, the app performs a \textb
 to ensure that both fields are not empty. If the validation fails, the user is immediately notified.
 
 When the input is valid, the mobile app sends a search request to the backend through the
-\textbf{API Gateway}. The API Gateway forwards the request to the \textbf{PathManager}, which is
+\textbf{API Entrypoint}. The API Entrypoint forwards the request to the \textbf{PathManager}, which is
 responsible for path computation.
 The \textbf{PathManager} first resolves the origin and destination through the
 \textbf{GeocodingService} to obtain coordinates. It then retrieves the relevant
@@ -376,7 +378,7 @@ path segments and related information from the database by interacting with the
 the best path or set of paths according to the system criteria and user constraints.
 
 If one or more valid routes are found, the \textbf{PathManager} returns the results to the
-\textbf{API Gateway}, which responds to the mobile app with a \textbf{200 OK} message containing
+\textbf{API Entrypoint}, which responds to the mobile app with a \textbf{200 OK} message containing
 the suggested paths. The app then displays the available routes to the user.
 If no suitable route can be computed, the \textbf{PathManager} signals a \textbf{NO\_ROUTE}
 condition, resulting in a \textbf{404} response that is propagated back to the mobile app,
@@ -398,16 +400,16 @@ the mobile app shows a generic "Network unavailable" error message.
 After receiving a list of suggested routes, the user can select a specific path to
 see its details on a map, and inspect its associated reports. When the user selects a path,
 the mobile app sends a request containing the selected path identifier to the backend
-through the \textbf{API Gateway}.
+through the \textbf{API Entrypoint}.
 
 Path details (e.g., segments and status) are obtained during the search phase,
 while reports are refreshed every time a path is selected to ensure the information
 is always up to date.
 
-The \textbf{API Gateway} forwards the request to the \textbf{ReportManager}, which retrieves
+The \textbf{API Entrypoint} forwards the request to the \textbf{ReportManager}, which retrieves
 the corresponding reports by querying the database through the \textbf{QueryManager}.
 
-If reports are found, the ReportManager returns them to the API Gateway,
+If reports are found, the ReportManager returns them to the API Entrypoint,
 which responds with a \textbf{200 OK} status and forwards the information to the mobile app.
 The app then displays the list of reports to the user.
 
@@ -438,14 +440,14 @@ via the \textbf{SnappingService}.
 Any error during the snapping process is non-blocking, so the flow continues and the
 user is not interrupted if snapping fails at any moment.
 After the drawing phase, the user submits the generated segments.
-Then, the mobile app sends a \textbf{POST} request to the backend through the \textbf{API Gateway}.
+Then, the mobile app sends a \textbf{POST} request to the backend through the \textbf{API Entrypoint}.
 The gateway forwards the request to the \textbf{PathManager}, which handles the creation logic.
 
 The PathManager delegates the persistence of the new path to the \textbf{QueryManager},
 which executes the corresponding \textbf{INSERT} operation on the \textbf{DBMS}, associating
 the path with the authenticated user.
 Upon successful insertion, the PathManager returns the generated path identifier to the
-API Gateway, which responds with a \textbf{201 Created} status. The mobile app receives
+API Entrypoint, which responds with a \textbf{201 Created} status. The mobile app receives
 the response and displays a confirmation message indicating that the path has been
 successfully created. In case of network or server errors, the app notifies the user
 accordingly.
@@ -475,11 +477,11 @@ the collected samples undergo a final \textbf{local validation}. If the data is 
 the user is notified.
 
 If both metadata and recorded samples are valid, the mobile app sends a \textbf{POST}
-request to the backend through the \textbf{API Gateway}. The gateway forwards the request
+request to the backend through the \textbf{API Entrypoint}. The gateway forwards the request
 to the \textbf{PathManager}, which stores the new path by delegating persistence to the
 \textbf{QueryManager}.
 After the path is successfully inserted into the \textbf{DBMS}, the PathManager returns
-the generated path identifier to the API Gateway, which responds with a
+the generated path identifier to the API Entrypoint, which responds with a
 \textbf{201 Created} status. The mobile app then displays a success message confirming
 that the automatically generated path has been saved.
 
@@ -498,8 +500,8 @@ Network or server failures are handled consistently with other interactions.
 A logged-in user wants to view the list of paths previously created.
 The interaction starts when the user opens the personal path library section
 in the mobile application. The app sends a request to the backend through the
-\textbf{API Gateway} to retrieve all paths associated with the authenticated user.
-The \textbf{API Gateway} forwards the request to the \textbf{PathManager},
+\textbf{API Entrypoint} to retrieve all paths associated with the authenticated user.
+The \textbf{API Entrypoint} forwards the request to the \textbf{PathManager},
 which retrieves the list of paths owned by the user by querying the database
 through the \textbf{QueryManager}. The QueryManager executes the corresponding
 \textbf{SELECT} operation on the \textbf{DBMS}.
@@ -525,9 +527,9 @@ mobile app displays an appropriate error message.
 A logged-in user wants to change the visibility of one of his previously created paths.
 The interaction begins when the user selects a path and requests a visibility update
 from the mobile application. The app sends a \textbf{PATCH} request to the backend
-through the \textbf{API Gateway}, specifying the desired visibility value.
+through the \textbf{API Entrypoint}, specifying the desired visibility value.
 
-The \textbf{API Gateway} forwards the request to the \textbf{PathManager},
+The \textbf{API Entrypoint} forwards the request to the \textbf{PathManager},
 which first verifies that the requesting user is the owner of the selected path.
 This ownership check is performed by querying the database through the
 \textbf{QueryManager}. If the path does not exist, the backend returns a
@@ -554,9 +556,9 @@ display of an appropriate error message on the client.
 When a logged-in user wants to permanently delete one of his paths,
 he first selects a path to delete from the mobile
 application. The app sends a \textbf{DELETE} request to the backend through the
-\textbf{API Gateway}.
+\textbf{API Entrypoint}.
 
-The \textbf{API Gateway} forwards the request to the \textbf{PathManager},
+The \textbf{API Entrypoint} forwards the request to the \textbf{PathManager},
 which first verifies that the path exists and that the requesting user is its owner.
 This verification is performed by querying the database through the
 \textbf{QueryManager}. If the path does not exist, a \textbf{404 NOT\_FOUND} response
@@ -673,7 +675,7 @@ The interaction begins when the user selects the \textbf{Stop Trip} action
 from the mobile app. The app first terminates any active data acquisition and,
 if the trip was started in automatic mode, external sensor connections. The
 collected data is then validated. If the validation succeeds, the mobile app
-sends a finalisation request to the backend through the \textbf{API Gateway}.
+sends a finalisation request to the backend through the \textbf{API Entrypoint}.
 The \textbf{TripManager} processes the request.
 
 When the trip is valid and the external service is reachable, the
@@ -696,7 +698,6 @@ alternative flows.
 \end{figure}
 \pagebreak
 
-% TODO review
 \subsubsection*{[UC17] - Make a Report in Manual Mode}
 
 When a logged-in user wants to manually report an issue encountered on a path,
@@ -710,10 +711,10 @@ then submits the report. Before contacting the backend, the mobile app performs
 a \textbf{local validation} to ensure that all mandatory fields are correctly filled.
 If validation fails, the app shows an error message and no request is sent.
 When the input is valid, the mobile app sends a \textbf{POST request} containing the
-report payload to the backend through the \textbf{API Gateway}. In case of network
+report payload to the backend through the \textbf{API Entrypoint}. In case of network
 timeouts or server-side failures, the app notifies the user accordingly.
 
-The \textbf{API Gateway} forwards the request to the \textbf{ReportManager}, which
+The \textbf{API Entrypoint} forwards the request to the \textbf{ReportManager}, which
 creates the report by storing the user identifier, the associated path, the position,
 and the report data through the \textbf{QueryManager}. The \textbf{DBMS} generates a
 new report identifier and confirms the insertion.
@@ -728,7 +729,6 @@ and the mobile app displays a confirmation message to the user.
 \end{figure}
 \pagebreak
 
-% TODO review
 \subsubsection*{[UC18] - Make a Report in Automatic Mode}
 
 During an ongoing trip with automatic mode enabled, external sensors may automatically detect an obstacle or issue
@@ -744,7 +744,7 @@ report data. If the payload is invalid or incomplete, an error is shown and the 
 is not contacted.
 
 When validation succeeds, the app sends the report payload to the backend via the
-\textbf{API Gateway}. Network or server errors result in a timeout and an appropriate
+\textbf{API Entrypoint}. Network or server errors result in a timeout and an appropriate
 error message is displayed to the user.
 The \textbf{ReportManager} receives the request and creates a new report by delegating
 its persistence to the \textbf{QueryManager}, which inserts the record into the
@@ -760,7 +760,6 @@ Finally, the mobile app informs the user that the report has been submitted succ
 \end{figure}
 \pagebreak
 
-% TODO review
 \subsubsection*{[UC19] - Confirm a Report}
 
 While a logged-in user is travelling, the system may notify him of an existing report
@@ -771,9 +770,9 @@ and no further action is taken. If the user submits a decision, the mobile
 app performs a \textbf{local validation} to ensure that the input is valid.
 
 When validation succeeds, the app sends the confirmation (or rejection) request to the backend through
-the \textbf{API Gateway}. In case of network or server errors, an appropriate error
+the \textbf{API Entrypoint}. In case of network or server errors, an appropriate error
 message is shown to the user.
-The \textbf{API Gateway} forwards the request to the \textbf{ReportManager}, which creates
+The \textbf{API Entrypoint} forwards the request to the \textbf{ReportManager}, which creates
 a report entry. The confirmation is persisted through the \textbf{QueryManager} by inserting the record
 into the \textbf{DBMS}.
 
@@ -792,7 +791,7 @@ The mobile app then notifies the user that the confirmation has been submitted s
 \subsubsection*{[UC20] - View Trip History}
 
 When a logged-in user opens the trip history section from the mobile application,
-the mobile app sends a request to the backend through the \textbf{API Gateway}
+the mobile app sends a request to the backend through the \textbf{API Entrypoint}
 to retrieve the list of trips associated with the user.
 The \textbf{API} forwards the request to the \textbf{TripManager}, which
 retrieves the user identifier and queries the database through the
@@ -827,9 +826,9 @@ mobile app notifies the user that the service is unavailable.
 
 A logged-in user wants to permanently delete one of his recorded trips.
 He selects a trip to delete from the mobile application. The app sends a \textbf{DELETE}
-request to the backend through the \textbf{API Gateway}.
+request to the backend through the \textbf{API Entrypoint}.
 
-The \textbf{API Gateway} forwards the request to the \textbf{TripManager},
+The \textbf{API Entrypoint} forwards the request to the \textbf{TripManager},
 which first verifies that the trip exists and that the requesting user is its owner.
 This verification is performed by querying the database through the
 \textbf{QueryManager}. If the trip does not exist, the backend answers with a
@@ -852,11 +851,10 @@ a corresponding error message.
 \end{figure}
 \pagebreak
 
-% TODO review
 \subsubsection*{[UC22] - View Overall Statistics}
 
 A logged-in user opens the overall statistics section from the mobile app.
-The application sends a request to the backend through the \textbf{API Gateway}
+The application sends a request to the backend through the \textbf{API Entrypoint}
 to retrieve aggregated statistics across all user trips.
 
 The \textbf{API} delegates the request to the \textbf{StatsManager}, which
@@ -896,7 +894,7 @@ interfaces through which these components collaborate at runtime.
 
 Unless explicitly noted, most Manager methods operate in an authenticated context:
 the identifier of the currently logged-in user is implicitly supplied by the
-\textbf{API Gateway} after validating the access token, and is therefore not
+\textbf{API Entrypoint} after validating the access token, and is therefore not
 included in the method signatures. Public endpoints (e.g., registration, login,
 and path search) are invoked without an authenticated context.
 The \textbf{QueryManager}, in contrast, interacts directly with the relational DBMS
@@ -905,7 +903,7 @@ and does not rely on authentication parameters.
 \subsection*{User Module - AuthManager}
 The \textbf{AuthManager} handles user authentication, credential verification,
 token generation, and logout flows.
-It is invoked through the \textbf{API Gateway} and relies on the \textbf{QueryManager}
+It is invoked through the \textbf{API Entrypoint} and relies on the \textbf{QueryManager}
 to retrieve and persist authentication metadata, including refresh tokens stored in the DBMS.
 
 It exposes the following operations:
@@ -923,7 +921,7 @@ It exposes the following operations:
 
 \subsection*{User Module - UserManager}
 The \textbf{UserManager} manages user-profile data and receives requests via the
-\textbf{API Gateway}.
+\textbf{API Entrypoint}.
 It uses the \textbf{QueryManager} for persistence and exposes:
 
 \begin{itemize}
@@ -937,7 +935,7 @@ It uses the \textbf{QueryManager} for persistence and exposes:
 The \textbf{PathManager} implements all functionality related to bike paths:
 manual path creation, route search, ranking of candidate routes,
 path selection, deletion, and visibility updates.
-It is accessed through the \textbf{API Gateway} and uses the \textbf{QueryManager}
+It is accessed through the \textbf{API Entrypoint} and uses the \textbf{QueryManager}
 to retrieve and update persistent path data.
 
 The public operations are:
@@ -1204,7 +1202,7 @@ This structure ensures clear responsibility separation, simplifies maintenance,
 and supports the mobile-first design goals described in the system overview.
 
 \begin{itemize}
-	\item \textbf{API Gateway with modular backend}.
+	\item \textbf{API Entrypoint with modular backend}.
 	      All external requests pass through a Gateway that centralises routing, authentication,
 	      input validation and error normalisation.
 	      Behind it, the backend is organised as a collection of Managers, each encapsulating
@@ -1255,11 +1253,11 @@ quality attributes and align with the mobile-first scope:
 	      Access control relies on short-lived access tokens and refresh tokens securely stored
 	      on the mobile client. Refresh tokens are also persisted in the DBMS to enable validation,
 	      rotation, and logout.
-	      The API Gateway enforces authentication, while domain-level authorisation (guest vs
+	      The API Entrypoint enforces authentication, while domain-level authorisation (guest vs
 	      authenticated user) is performed inside the Managers.
 
 	\item \textbf{Validation and error handling}.
-	      Validation occurs at the system boundary (API Gateway) ensuring malformed
+	      Validation occurs at the system boundary (API Entrypoint) ensuring malformed
 	      (e.g. missing JWT, invalid JSON schema) or invalid endpoint requests
 	      are filtered before reaching the business layer.
 	      On the other hand, user input is validated when the request reaches the
