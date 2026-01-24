@@ -30,6 +30,7 @@ model User {
   trips             Trip[]
   paths             Path[]
   reports           Report[]
+  confirmations     Confirmation[]
 }
 
 model RefreshToken {
@@ -58,6 +59,7 @@ model Trip {
   /// [WeatherData]
   weather      Json?
   tripSegments TripSegment[]
+  reports      Report[]
 }
 
 model Segment {
@@ -115,36 +117,30 @@ model PathSegment {
 }
 
 model Report {
-  reportId  String   @id @default(uuid())
-  userId    String
-  segmentId String
-  createdAt DateTime @default(now())
+  reportId      String      @id @default(cuid())
+  createdAt     DateTime    @default(now())
+  userId        String
+  user          User        @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  segmentId     String
+  segment       Segment     @relation(fields: [segmentId], references: [segmentId])
+  pathSegmentId String
+  pathSegment   PathSegment @relation(fields: [pathSegmentId], references: [id], onDelete: Cascade)
+  tripId        String
+  trip          Trip        @relation(fields: [tripId], references: [tripId], onDelete: Cascade)
+  obstacleType  String // Enum values: POTHOLE, WORK_IN_PROGRESS, FLOODING, OBSTACLE, OTHER
+  status        String      @default("CREATED") // Enum values: CONFIRMED, REJECTED, IGNORED, CREATED
+  reportMode    String // Enum values: MANUAL, AUTOMATIC (Maps to 'creationMode')
+  position      Json
 
-  // Content Attributes
-  obstacleType    String
-  path            String // e.g., a URI or encoded path string
-  acquisitionMode String // e.g., 'manual', 'sensor', 'automated'
-
-  // Status Attributes
-  status       String // Generic path status
-  reportStatus ReportStatus @default(CREATED)
-
-  // Location Data
-  polylineCoordinates Json
-
-  // Relations
-  user          User         @relation(fields: [userId], references: [userId])
-  segment       Segment      @relation(fields: [segmentId], references: [segmentId])
-  pathSegment   PathSegment? @relation(fields: [pathSegmentId], references: [id])
-  pathSegmentId String?
-
-  @@index([userId])
-  @@index([segmentId])
+  confirmations Confirmation[]
 }
 
-enum ReportStatus {
-  CONFIRMED
-  REJECTED
-  IGNORED
-  CREATED
+model Confirmation {
+  confirmationId String   @id @default(cuid())
+  reportId       String
+  report         Report   @relation(fields: [reportId], references: [reportId], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  decision       String // e.g., "CONFIRMED", "REJECTED"
 }

@@ -470,47 +470,67 @@ export class QueryManager {
             },
         });
     }
-    async createReport(data: any) {
-        return await prisma.report.create({
-            data,
-            include: { user: { select: { username: true } } }
+        async getSegmentById(segmentId: string) {
+        return await prisma.segment.findUnique({
+            where: { segmentId },
         });
     }
-
+    async createReport(data: {
+        userId: string;
+        segmentId: string;
+        pathSegmentId: string;
+        tripId: string;
+        obstacleType: string;
+        position: any; // Coordinates JSON
+        reportMode: string;
+        status: string;
+    }) {
+        return await prisma.report.create({
+            data: {
+                userId: data.userId,
+                segmentId: data.segmentId,
+                pathSegmentId: data.pathSegmentId,
+                tripId: data.tripId,
+                obstacleType: data.obstacleType,
+                position: data.position,
+                reportMode: data.reportMode,
+                status: data.status,
+            },
+        });
+    }
     async getReportById(reportId: string) {
         return await prisma.report.findUnique({
-            where: { reportId }
+            where: { reportId },
         });
     }
-
-    async deleteReportById(reportId: string) {
-        return await prisma.report.delete({
-            where: { reportId }
-        });
-    }
-
-    async getReportsByPathId(pathId: string) {
+    async getReportsByTripId(tripId: string) {
         return await prisma.report.findMany({
-            where: {
-                segment: {
-                    pathSegments: { some: { pathId } }
+            where: { tripId },
+            include: {
+                confirmations: true, // Optional: include confirmations for details
+                user: {
+                    select: { username: true } // Identify reporter
                 }
             },
-            include: { user: { select: { username: true } } },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
     }
-
-    async getReportsByTripDetails(tripId: string, start: Date, end: Date) {
+    async getReportsByPathSegmentId(pathSegmentId: string) {
         return await prisma.report.findMany({
-            where: {
-                segment: {
-                    tripSegments: { some: { tripId } }
-                },
-                createdAt: { gte: start, lte: end }
+            where: { pathSegmentId },
+            include: {
+                confirmations: true
             },
-            include: { user: { select: { username: true } } },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+    async createConfirmation(userId: string, reportId: string, decision: string) {
+        return await prisma.confirmation.create({
+            data: {
+                userId,
+                reportId,
+                decision,
+            },
         });
     }
 

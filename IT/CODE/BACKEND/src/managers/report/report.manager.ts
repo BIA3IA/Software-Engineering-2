@@ -1,86 +1,93 @@
 import { Request, Response, NextFunction } from 'express';
 import { queryManager } from '../query/index.js';
-import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
+import { NotFoundError, BadRequestError } from '../../errors/index.js';
 import logger from '../../utils/logger';
 
 export class ReportManager {
-    /**
-     * POST /reports
-     * Creates a report linked to a specific segment.
-     */
     async createReport(req: Request, res: Response, next: NextFunction) {
         try {
             const { 
                 segmentId, 
+                pathSegmentId, 
+                tripId, 
                 obstacleType, 
-                polylineCoordinates, 
-                path, 
-                acquisitionMode, 
-                status, 
-                pathSegmentId 
+                position, 
+                reportMode 
             } = req.body;
             const userId = req.user?.userId;
 
+            // Authentication check
             if (!userId) {
                 throw new BadRequestError('User is not authenticated', 'UNAUTHORIZED');
             }
 
-            if (!segmentId || !obstacleType || !polylineCoordinates) {
-                throw new BadRequestError('Missing required report data', 'MISSING_FIELDS');
+            // Local validation (Backend enforcement of mobile app checks)
+            if (!segmentId || !pathSegmentId || !obstacleType || !position) {
+                throw new BadRequestError('Invalid or incomplete data', 'INVALID_REPORT_DATA');
             }
 
-            // Verify the segment exists (using existing queryManager method)
-            const segments = await queryManager.getSegmentsByIds([segmentId]);
-            if (segments.length === 0) {
+            // Verify the segment exists before attaching a report
+            const segment = await queryManager.getSegmentById(segmentId);
+            if (!segment) {
                 throw new NotFoundError('Target segment not found', 'SEGMENT_NOT_FOUND');
             }
 
+            // Create report through Query Manager
             const report = await queryManager.createReport({
                 userId,
                 segmentId,
+                pathSegmentId,
+                tripId,
                 obstacleType,
-                polylineCoordinates,
-                path: path ?? '',
-                acquisitionMode: acquisitionMode ?? 'MANUAL',
-                status: status ?? 'WARNING',
-                pathSegmentId: pathSegmentId,
+                position,
+                reportMode: reportMode || 'MANUAL',
+                status: 'CREATED'
             });
 
+            // Return 201 Created as per sequence diagrams
             res.status(201).json({
                 success: true,
-                message: 'Report created successfully',
-                data: report
+                message: 'Report submitted successfully',
+                data: {
+                    reportId: report.reportId,
+                    createdAt: report.createdAt
+                }
             });
         } catch (error) {
             next(error);
         }
     }
 
-    /**
-     * GET /reports/path/:pathId
-     * Gets all reports for segments belonging to a path.
-     */
-    async getReportsByPath(req: Request, res: Response, next: NextFunction) {
+    async confirmReport(req: Request, res: Response, next: NextFunction) {
         try {
-            const { pathId } = req.params;
+            const { reportId, decision } = req.body;
+            const userId = req.user?.userId;
 
-            if (!pathId) {
-                throw new BadRequestError('Path ID is required', 'MISSING_PATH_ID');
+            if (!userId) {
+                throw new BadRequestError('User is not authenticated', 'UNAUTHORIZED');
             }
 
-            // Check if path exists
-            const path = await queryManager.getPathById(pathId);
-            if (!path) {
-                throw new NotFoundError('Path not found', 'PATH_NOT_FOUND');
+            if (!reportId || !['CONFIRMED', 'REJECTED'].includes(decision)) {
+                throw new BadRequestError('Invalid decision or missing report ID', 'INVALID_CONFIRMATION');
             }
 
-            const reports = await queryManager.getReportsByPathId(pathId);
+            // Verify report existence
+            const report = await queryManager.getReportById(reportId);
+            if (!report) {
+                throw new NotFoundError('Report not found', 'NOT_FOUND');
+            }
 
-            res.json({
+            // Persist confirmation
+            const confirmation = await queryManager.createConfirmation(
+                userId,
+                reportId,
+                decision
+            );
+            res.status(201).json({
                 success: true,
+                message: 'Report submitted',
                 data: {
-                    count: reports.length,
-                    reports
+                    confirmationId: confirmation.confirmationId
                 }
             });
         } catch (error) {
@@ -89,8 +96,7 @@ export class ReportManager {
     }
 
     /**
-     * GET /reports/trip/:tripId
-     * Gets reports relevant to a trip's segments during its timeframe.
+     * Retrieves all reports associated with a specific trip.
      */
     async getReportsByTrip(req: Request, res: Response, next: NextFunction) {
         try {
@@ -100,53 +106,31 @@ export class ReportManager {
                 throw new BadRequestError('Trip ID is required', 'MISSING_TRIP_ID');
             }
 
-            const trip = await queryManager.getTripById(tripId);
-            if (!trip) {
-                throw new NotFoundError('Trip not found', 'TRIP_NOT_FOUND');
-            }
-
-            const reports = await queryManager.getReportsByTripDetails(
-                tripId, 
-                trip.startedAt, 
-                trip.finishedAt
-            );
+            const reports = await queryManager.getReportsByTripId(tripId);
 
             res.json({
                 success: true,
-                data: {
-                    tripId,
-                    count: reports.length,
-                    reports
-                }
+                data: reports
             });
         } catch (error) {
             next(error);
         }
     }
 
-    /**
-     * DELETE /reports/:reportId
-     */
-    async deleteReport(req: Request, res: Response, next: NextFunction) {
+    async getReportsByPathSegment(req: Request, res: Response, next: NextFunction) {
         try {
-            const { reportId } = req.params;
-            const userId = req.user?.userId;
+            const { pathSegmentId } = req.params;
 
-            if (!userId) {
-                throw new BadRequestError('User is not authenticated', 'UNAUTHORIZED');
+            if (!pathSegmentId) {
+                throw new BadRequestError('Path Segment ID is required', 'MISSING_PATH_SEGMENT_ID');
             }
 
-            const report = await queryManager.getReportById(reportId);
-            if (!report) {
-                throw new NotFoundError('Report not found', 'NOT_FOUND');
-            }
+            const reports = await queryManager.getReportsByPathSegmentId(pathSegmentId);
 
-            if (report.userId !== userId) {
-                throw new ForbiddenError('You do not have permission to delete this report', 'FORBIDDEN');
-            }
-
-            await queryManager.deleteReportById(reportId);
-            res.status(204).send();
+            res.json({
+                success: true,
+                data: reports
+            });
         } catch (error) {
             next(error);
         }

@@ -10,5 +10,20 @@ reportRouter.post(
     verifyAccessToken,
     reportManager.createReport.bind(reportManager)
 );
+reportRouter.post(
+    "/confirm",
+    verifyAccessToken,
+    reportManager.confirmReport.bind(reportManager)
+);
+reportRouter.get(
+    "/trip/:tripId",
+    verifyAccessToken,
+    reportManager.getReportsByTrip.bind(reportManager)
+);
+reportRouter.get(
+    "/path-segment/:pathSegmentId",
+    verifyAccessToken,
+    reportManager.getReportsByPathSegment.bind(reportManager)
+);
 
 export { reportRouter };
