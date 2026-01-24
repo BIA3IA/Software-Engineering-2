@@ -477,7 +477,6 @@ export class QueryManager {
     }
     async createReport(data: {
         userId: string;
-        segmentId: string;
         pathSegmentId: string;
         tripId: string;
         obstacleType: string;
@@ -488,7 +487,6 @@ export class QueryManager {
         return await prisma.report.create({
             data: {
                 userId: data.userId,
-                segmentId: data.segmentId,
                 pathSegmentId: data.pathSegmentId,
                 tripId: data.tripId,
                 obstacleType: data.obstacleType,

@@ -7,7 +7,6 @@ export class ReportManager {
     async createReport(req: Request, res: Response, next: NextFunction) {
         try {
             const { 
-                segmentId, 
                 pathSegmentId, 
                 tripId, 
                 obstacleType, 
@@ -22,20 +21,19 @@ export class ReportManager {
             }
 
             // Local validation (Backend enforcement of mobile app checks)
-            if (!segmentId || !pathSegmentId || !obstacleType || !position) {
+            if (!pathSegmentId || !obstacleType || !position) {
                 throw new BadRequestError('Invalid or incomplete data', 'INVALID_REPORT_DATA');
             }
 
             // Verify the segment exists before attaching a report
-            const segment = await queryManager.getSegmentById(segmentId);
-            if (!segment) {
-                throw new NotFoundError('Target segment not found', 'SEGMENT_NOT_FOUND');
-            }
+            //const segment = await queryManager.getSegmentById(pathSegmentId);
+           // if (!segment) {
+             //   throw new NotFoundError('Target segment not found', 'SEGMENT_NOT_FOUND');
+            //}
 
             // Create report through Query Manager
             const report = await queryManager.createReport({
                 userId,
-                segmentId,
                 pathSegmentId,
                 tripId,
                 obstacleType,

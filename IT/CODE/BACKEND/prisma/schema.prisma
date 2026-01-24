@@ -70,7 +70,6 @@ model Segment {
   polylineCoordinates Json
   tripSegments        TripSegment[]
   pathSegments        PathSegment[]
-  reports             Report[]
 }
 
 model TripSegment {
@@ -121,8 +120,6 @@ model Report {
   createdAt     DateTime    @default(now())
   userId        String
   user          User        @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  segmentId     String
-  segment       Segment     @relation(fields: [segmentId], references: [segmentId])
   pathSegmentId String
   pathSegment   PathSegment @relation(fields: [pathSegmentId], references: [id], onDelete: Cascade)
   tripId        String
