@@ -24,24 +24,59 @@ Openmeteo service
 \subsection{Data Layer}
 \label{subsec:data_layer}
 
-PostgreSQL
-Prisma
-For data storage and management, the BBP platform utilizes PostgreSQL as its primary DBMS. To bridge the gap between the modular NestJS backend and the relational data, Prisma is employed as the Object-Relational Mapping (ORM) tool.
-\begin{itemize}
-    \item \textbf{Relational Data Integrity:} PostgreSQL was selected for its reliability and its ability to handle complex relational queries, such as merging path information from multiple users or calculating scores based on freshness and confirmation counts.
-    \item \textbf{Type-Safe Persistence:} Prisma provides a type-safe database client that is automatically generated from a central schema file. This ensures that the DTOs used in the application layer are perfectly synchronized with the database layer, significantly reducing runtime errors during data insertion (e.g., manual vs. automated mode data).
-    \item \textbf{Schema Management:} Using Prisma Migrations, the technical team can track and version-control changes to the database structure, such as new tables for "Reports" or "Meteorological Snapshots," ensuring consistency across development and production environments.
-\end{itemize}
+For data storage and management, the BBP platform relies on \textbf{PostgreSQL} as its primary \textbf{DBMS}. 
+This choice is motivated by its proven reliability and by its relational data model, which fits well
+with the platform’s core entities, such as users, paths, segments, and trips, and supports the enforcement 
+of consistency constraints across related data.
+
+A relational approach is particularly suitable for BBP, where path-related information evolves over time and
+must remain consistent despite frequent user-generated updates. \textbf{PostgreSQL} provides the transactional 
+guarantees and integrity mechanisms required to manage this evolving dataset in a robust and predictable way.
+
+The interaction between the modular \textbf{NestJS} backend and the database is handled through \textbf{Prisma}, which is 
+adopted as the \textbf{ORM}. \textbf{Prisma} generates a type-safe client starting from a single schema
+definition, ensuring that database queries are strongly typed and aligned with the \textbf{TypeScript} types 
+used throughout the application. This approach helps detect data access errors at compile time and keeps 
+the persistence layer consistent as the data model evolves during development.
 
 \section{Adopted Programming Languages}
 \label{subsec:languages}
 
-TypeScript
+The platform is mainly developed using \textbf{TypeScript}, which is adopted across both the mobile application, 
+built with \textbf{React Native} and \textbf{Expo}, and the backend services, built with \textbf{NestJS} and \textbf{Prisma}.
+Using a single, strongly typed language
+across different layers of the system improves maintainability and reduces the likelihood of runtime 
+errors, while also simplifying development workflows.
+
+On the server side, \textbf{TypeScript} integrates smoothly with \textbf{Prisma}, as the generated client types help
+identify data access issues at compile time. On the client side, it works well with form validation
+and API interaction, making input models and component properties explicit and easier to evolve over time.
+
+Overall, this language choice results in clearer and more robust code, supports safer refactoring, and
+reduces the effort required for developers to work across multiple components of the platform.
 
 \section{Development Tools}
 \label{sec:dev_tools}
 
-Docker + Shared Nginx + Cloudflare + Docker
+The development workflow is based on \textbf{Node.js} and \textbf{npm}, which are used to manage dependencies and execute 
+project scripts for both the backend and the mobile application. On the backend side, \textbf{Docker} and \textbf{Docker
+Compose} are adopted to build and run the service in a reproducible and isolated environment, ensuring 
+consistency across development and production setups. Database-related tasks, including client generation 
+and schema migrations, are handled through the \textbf{Prisma CLI}.
+
+For the mobile application, development and local testing are carried out using the \textbf{Expo CLI}. The \textbf{Expo Go} 
+application enables real-time previews on physical devices by scanning the Metro QR code, allowing rapid 
+iteration and immediate feedback during development. For distributable builds, the \textbf{EAS CLI} is used to 
+generate \textbf{Android} and \textbf{iOS} build artifacts, with APK files produced from the Android build output.
+
+In the production environment, the backend is exposed through a shared \textbf{Nginx} reverse proxy. HTTPS 
+termination and certificate management are handled using \textbf{Cloudflare Origin Certificates}, which centralize 
+TLS configuration and request routing while keeping backend services isolated from direct internet exposure.
+
+To support integration testing and a shared development workflow, \textbf{EchoAPI} is used to mock and inspect 
+backend responses. This tool allows team members to validate client-side behavior against expected API 
+outputs, facilitating coordination between frontend and backend development and reducing coupling during 
+implementation phases.
 
 \section{API Calls}
 \label{sec:api_calls}
