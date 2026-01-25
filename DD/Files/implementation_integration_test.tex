@@ -9,9 +9,16 @@
 This chapter outlines the strategies adopted for the implementation, integration, and testing of the \textbf{Best Bike Paths (BBP)} platform.
 The primary objective is to ensure that the system meets the functional and non-functional requirements defined in the RASD document.
 
-The chosen integration approach is \textbf{Bottom-Up}. This strategy involves developing and testing starting from low-level components 
-(Data Layer and independent services) and then moving up towards more complex business logic components, finally reaching the presentation layer. 
-This method allows for isolating and resolving bugs in the early stages, ensuring solid foundations for the higher-level modules.
+The chosen integration and testing strategy is a mix of a \textbf{Thread} approach and a \textbf{Bottom-Up} approach. 
+In practice, we develop and test starting from low-level components and then progressively move upward toward more complex business-logic components.
+
+By following a thread-based implementation, we can build and validate independent components \textbf{quickly and in parallel}, 
+and start integration testing early instead of waiting for major modules (e.g., \textit{PathManager} or \textit{ReportManager}) 
+to be fully completed. At the same time, for components that require more time and have strong dependencies such as \textit{TripManager}, 
+which relies on \textit{PathManager} and \textit{StatsManager}, or \textit{ReportManager}, which depends on both \textit{PathManager} and \textit{TripManager}, a 
+Bottom-Up progression is more suitable, since these modules can be integrated only once the underlying layers and required managers are stable.
+
+This combined strategy helps us identify and resolve integration issues earlier, reducing the risk of costly problems emerging later in development.
 
 \section{Implementation Plan}
 The implementation of the BBP backend will follow a three-tier architecture (Data, Application, Presentation), developed iteratively.
@@ -20,18 +27,24 @@ The implementation of the BBP backend will follow a three-tier architecture (Dat
 Before starting the coding of modules, the development environment will be set up:
 \begin{itemize}
     \item \textbf{Version Control}: Use of Git with a feature-branch workflow.
-    \item \textbf{DBMS Setup}: Configuration of the PostgreSQL instance and definition of relational schemas.
+    \item \textbf{DBMS Setup}: Configuration of the PostgreSQL instance and definition of relational schemas. 
+                            For this purpose, we will use the free tier cloud version of PostgreSQL offered by Prisma.
     \item \textbf{CI/CD}: Configuration of pipelines for automated building and testing.
 \end{itemize}
 
 \subsection{Implementation Order}
 The implementation order of software components will be as follows:
 \begin{enumerate}
-    \item \textbf{Data Access Layer}: Implementation of the \texttt{QueryManager} and database configuration.
+    \item \textbf{Data Access Layer}: Implementation of the \texttt{QueryManager} and database configuration. Inside the QueryManager, 
+                                    we will implement the necessary CRUD operations as we implement each specific manager.
+    \item \textbf{External Services Integration}: Implementation of the \texttt{Geocoding}, \texttt{Weather} and \texttt{Snapping} services 
+                                    for communication with external weather APIs.
     \item \textbf{Core Services}: Development of \texttt{AuthManager} and \texttt{UserManager} for identity management.
-    \item \textbf{External Services Integration}: Implementation of the \texttt{WeatherManager} for communication with external weather APIs.
-    \item \textbf{Business Logic Services}: Sequential development of \texttt{PathManager}, \texttt{TripManager}, \texttt{ReportManager}, and \texttt{StatsManager}.
-    \item \textbf{Interface Layer}: Implementation of the \texttt{API Gateway} and definition of REST endpoints.
+    \item \textbf{Business Logic Services}: \texttt{PathManager} can be implemented independently.
+                                    Then we will develop \texttt{TripManager}, \texttt{StatsManager}, and \texttt{ReportManager} 
+                                    in this order.
+    \item \textbf{Interface Layer}: Definition of REST endpoints and configuration of the external access layer (Cloudflare 
+                                    for DNS/TLS termination and NGINX reverse proxy routing to the backend).
     \item \textbf{Presentation Layer}: Development of the \texttt{Mobile App} (developed in parallel using Mock APIs in the initial stages).
 \end{enumerate}
 
@@ -41,11 +54,12 @@ The implementation order of software components will be as follows:
 
 \section{Integration Plan}
 \label{sec:integration_plan}%
-Component integration will strictly follow the Bottom-Up approach. In this plan, each \texttt{*Manager} denotes a backend module within
-the Application Tier (i.e., part of the BBP backend), rather than an independently deployed microservice.
+Each \texttt{Manager} denotes a backend module within the Application Tier (i.e., part of the BBP backend), rather than an independently deployed microservice.
 Each phase integrates one or more modules into the existing subsystem and verifies their correct behavior through a dedicated
-test driver that simulates invocations from higher layers. Whenever external dependencies are involved (e.g., Weather APIs), stubs/mocks
-are adopted to keep tests deterministic and reproducible.
+test driver that simulates invocations from higher layers.
+Following a mixed \textit{thread-based} and \textit{bottom-up} strategy, we integrate independent components early,
+while managers with stronger dependencies are added progressively on top of already stable lower-level modules.
+Whenever external dependencies are involved (e.g., Weather/Geocoding/Snapping APIs), stubs/mocks are adopted to keep tests reproducible.
 
 The first step consists of integrating the \texttt{DBMS} with the \texttt{QueryManager}. Since all subsequent managers depend on
 data access, this subsystem constitutes the foundation of the architecture.
@@ -53,6 +67,7 @@ The test driver will simulate query requests (CRUD) to verify correct connectivi
 the manipulation of persistent data. Additionally, database migrations will be applied automatically as part of the test setup
 to ensure a clean and consistent initial state across runs.
 
+\vspace{1cm}
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.20\textwidth]{../Images/iit/iit1.png}
@@ -75,17 +90,17 @@ are performed by authenticated users. The driver will simulate registration, log
 \end{figure}
 
 
-\newpage
-In parallel, the \texttt{WeatherManager} is integrated. As a component that primarily interacts with an external 
-Weather Service API and has minimal internal dependencies, it can be tested independently. The driver will rely on a stubbed weather 
-endpoint to simulate both successful and failing API calls, verifying correct parsing of meteorological data, correct
-handling of timeouts and HTTP errors, and the propagation of meaningful error codes when the external service is unavailable.
+In parallel, we integrate the external services used by the backend, namely \texttt{Weather}, \texttt{Geocoding}, and \texttt{Snapping}.
+Since these components primarily interact with external APIs and have minimal internal dependencies, they can be also tested independently.
+The driver will rely on stubbed endpoints to simulate both successful and failing API calls, verifying correct
+request formatting, response parsing, and robust handling of timeouts and HTTP errors. Meaningful error codes must be propagated
+when an external service is unavailable.
 
 \vspace{1cm}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.55\textwidth]{../Images/iit/iit3.png}
-    \caption{Step 3: WeatherManager Integration}
+    \includegraphics[width=0.55\textwidth]{../Images/iit/iit3.pdf}
+    \caption{Step 3: External Services Integration (Weather/Geocoding/Snapping)}
     \label{fig:iit3}
 \end{figure}
 
@@ -98,80 +113,66 @@ candidate routes using stored path and report information, and properly handles 
 \vspace{1cm}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{../Images/iit/iit4.png}
+    \includegraphics[width=0.75\textwidth]{../Images/iit/iit4.pdf}
     \caption{Step 4: PathManager Integration}
     \label{fig:iit4}
 \end{figure}
 
-\vspace{1cm}
-The \texttt{TripManager} is added next. This module manages user trips and relies on both the \texttt{PathManager} and 
-the \texttt{WeatherManager} to associate route and weather data with each trip. Integration tests will verify that raw trip 
-samples and metadata are correctly stored, that each trip is linked to the selected path and corresponding weather snapshot, 
-and that a complete trip summary is generated upon closure, even if the external weather service is temporarily unavailable.
 
+The \texttt{TripManager} is added next. This module manages user trips and relies on the \texttt{PathManager} 
+and the weather external service to associate contextual data with each trip. 
+Integration tests will verify that raw trip samples and metadata are correctly stored, that each trip is linked to the 
+selected path and corresponding weather snapshot, and that a complete trip summary is generated upon closure, 
+even if the external weather service is temporarily unavailable.
+
+\vspace{1cm}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{../Images/iit/iit5.png}
+    \includegraphics[width=0.85\textwidth]{../Images/iit/iit5.pdf}
     \caption{Step 5: TripManager Integration}
     \label{fig:iit5}
 \end{figure}
 
+After the \texttt{TripManager}, we integrate the \texttt{StatsManager}. This component aggregates data generated
+by the user's device to provide statistics. Its integration enables testing data flows based on trips and their associated routes.
+Integration tests will exercise interactions involving trips and paths to ensure that computed aggregates are consistent with the underlying data,
+preserve referential integrity, and remain efficient on realistic data volumes.
 
-After the \texttt{TripManager}, we integrate the \texttt{ReportManager}. This module allows users to report obstacles.
-Integration tests will verify that reports are correctly linked to existing users and paths, that attempts to create reports for non-existing
-entities are rejected, and that report updates and confirmations are properly propagated to the \texttt{PathManager} so that route computation
-can take report information into account.
-
+\vspace{1cm}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{../Images/iit/iit6.png}
-    \caption{Step 6: ReportManager Integration}
+    \includegraphics[width=0.95\textwidth]{../Images/iit/iit6.pdf}
+    \caption{Step 6: StatsManager Integration}
     \label{fig:iit6}
 \end{figure}
 
 
-The backend system is completed with the addition of the \texttt{StatsManager}. This component aggregates data generated 
-by the user's device to provide statistics. Being the final logical module, its integration allows testing complex data 
-flows traversing the entire application domain.
-Integration tests will exercise end-to-end interactions involving trips, paths, reports, and confirmations to ensure that 
-computed aggregates are consistent with the underlying data, preserve referential integrity, and remain efficient on realistic data volumes.
+After the \texttt{StatsManager}, we integrate the \texttt{ReportManager}. This module allows users to report obstacles.
+Integration tests will verify that reports are correctly linked to existing users and paths, that attempts to create reports for non-existing
+entities are rejected, and that report updates and confirmations are properly propagated to the \texttt{PathManager} so that route computation
+can take report information into account.
 
 \vspace{1cm}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{../Images/iit/iit7.png}
-    \caption{Step 7: StatsManager Integration (Complete Backend System)}
+    \includegraphics[width=0.85\textwidth]{../Images/iit/iit7.pdf}
+    \caption{Step 7: ReportManager Integration}
     \label{fig:iit7}
 \end{figure}
 
 
-The \texttt{API Gateway} is introduced, acting as the single entry point for the system. At this stage, the test driver no 
-longer directly invokes individual Managers but sends REST HTTP requests to the API Gateway, which handles routing to the 
-correct components (\texttt{Auth}, \texttt{User}, \texttt{Trip}, etc.). Tests will verify request/response contracts (status codes, payload validation), correct error mapping, and enforcement of
-cross-cutting concerns such as authentication, authorization, and rate limiting.
+Finally, the mobile application (front-end) is integrated and used to perform real requests against the backend, replacing the driver.
+At this final stage, integration tests are executed end-to-end by exercising the main use cases from the mobile client, including real device sensors
+(e.g., GPS), and checking that interactions between the app, backend components, and the database behave as described in the Runtime View sequence diagrams.
 
 \vspace{1cm}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{../Images/iit/iit8.png}
-    \caption{Step 8: API Gateway Integration}
+    \includegraphics[width=0.95\textwidth]{../Images/iit/iit8.pdf}
+    \caption{Step 8: System Integration via HTTP Test Driver}
     \label{fig:iit8}
 \end{figure}
 
-
-Finally, the test driver is removed and from now on the interaction is performed between the mobile device, the API Gateway, 
-and all backend services, including real device sensors (GPS).
-At this final stage, integration tests will be executed end-to-end by exercising the main use cases from the mobile client, checking 
-that interactions involving device sensors, the API Gateway, backend services, and the database behave as described in the Runtime View 
-sequence diagrams.
-
-\vspace{1cm}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{../Images/iit/iit9.png}
-    \caption{Step 9: Complete System Integration}
-    \label{fig:iit9}
-\end{figure}
 
 % --------------------------------------------------------------------------
 % Test Plan

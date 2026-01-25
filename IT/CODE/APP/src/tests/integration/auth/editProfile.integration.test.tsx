@@ -21,14 +21,14 @@ describe("edit profile integration", () => {
 
         const { getByPlaceholderText, getByText, findByText } = render(<EditProfileScreen />)
 
-        fireEvent.changeText(getByPlaceholderText("Enter your username"), "bia")
+        fireEvent.changeText(getByPlaceholderText("Enter your username"), "bi")
         fireEvent.changeText(getByPlaceholderText("Enter your email"), "not-an-email")
         fireEvent.changeText(getByPlaceholderText("Enter your current password"), "123")
         fireEvent.changeText(getByPlaceholderText("Create a new password"), "12345")
         fireEvent.changeText(getByPlaceholderText("Re-enter your new password"), "12345679")
         fireEvent.press(getByText("Save Changes"))
 
-        expect(await findByText("Username must be at least 5 characters.")).toBeTruthy()
+        expect(await findByText("Username must be at least 3 characters.")).toBeTruthy()
         expect(await findByText("Please enter a valid email address.")).toBeTruthy()
         expect(await findByText("Current password must be at least 8 characters.")).toBeTruthy()
         expect(await findByText("New password must be at least 8 characters.")).toBeTruthy()

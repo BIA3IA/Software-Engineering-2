@@ -1,4 +1,5 @@
 import * as SecureStore from "expo-secure-store"
+import { waitFor } from "@testing-library/react-native"
 import { useAuthStore } from "@/auth/storage"
 import { setSession, clearSession } from "@/auth/authSession"
 import { loginApi, signupApi, logoutApi, getProfileApi, updateProfileApi } from "@/api/auth"
@@ -32,7 +33,7 @@ describe("auth/storage store", () => {
         } as any)
     })
 
-    test("initAuth loads from SecureStore and sets state when all present", async () => {
+    test("initAuth loads from SecureStore and refreshes profile when all present", async () => {
         SS.getItemAsync.mockImplementation(async (k: string) => {
             if (k === "bbp_user") return JSON.stringify({ id: "u1", username: "bianca", email: "bianca@gmail.com" })
             if (k === "bbp_access_token") return "a1"
@@ -45,10 +46,14 @@ describe("auth/storage store", () => {
 
         const st = useAuthStore.getState()
         expect(setSession).toHaveBeenCalledWith({ accessToken: "a1", refreshToken: "r1" })
-        expect(st.user?.username).toBe("bianca")
         expect(st.accessToken).toBe("a1")
         expect(st.refreshToken).toBe("r1")
         expect(st.loading).toBe(false)
+
+        await waitFor(() => {
+            expect(getProfileApi).toHaveBeenCalled()
+            expect(useAuthStore.getState().user?.username).toBe("bianca2")
+        })
     })
 
     test("initAuth clears when missing data", async () => {
@@ -92,6 +97,7 @@ describe("auth/storage store", () => {
 
         await useAuthStore.getState().logout()
 
+        expect(clearSession).toHaveBeenCalled()
         expect(logoutApi).toHaveBeenCalledWith("r9")
         expect(useAuthStore.getState().user).toBeNull()
         expect(useAuthStore.getState().loading).toBe(false)
@@ -137,6 +143,7 @@ describe("auth/storage store", () => {
 
         await useAuthStore.getState().logout()
 
+        expect(clearSession).toHaveBeenCalled()
         expect(useAuthStore.getState().user).toBeNull()
         expect(useAuthStore.getState().loading).toBe(false)
     })

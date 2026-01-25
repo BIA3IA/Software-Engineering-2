@@ -1,1 +1,0 @@
-export { weatherManager } from './weather.manager.js';

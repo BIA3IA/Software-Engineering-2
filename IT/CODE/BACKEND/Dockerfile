@@ -37,5 +37,4 @@ COPY --from=build /app/dist ./dist
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npm run prisma:deploy && node ./dist/server.js"]
-
+CMD ["node", "./dist/server.js"]

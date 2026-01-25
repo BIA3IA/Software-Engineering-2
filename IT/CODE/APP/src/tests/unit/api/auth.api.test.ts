@@ -63,7 +63,7 @@ describe("api/auth", () => {
 
         const out = await getProfileApi()
 
-        expect(api.get).toHaveBeenCalledWith("/users/profile")
+        expect(api.get).toHaveBeenCalledWith("/users/me")
         expect(out).toEqual({ id: "u9", username: "simone", email: "simone@gmail.com" })
     })
 
@@ -72,7 +72,7 @@ describe("api/auth", () => {
 
         const msg = await updateProfileApi({ username: "newName" })
 
-        expect(api.patch).toHaveBeenCalledWith("/users/update-profile", { username: "newName" })
+        expect(api.patch).toHaveBeenCalledWith("/users/me", { username: "newName" })
         expect(msg).toBe("ok")
     })
 })

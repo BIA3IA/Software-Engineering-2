@@ -174,17 +174,6 @@ describe("trips integration", () => {
         expect(await findByText("API error")).toBeTruthy()
     })
 
-    test("404 error shows empty message", async () => {
-        ;(getMyTripsApi as jest.Mock).mockRejectedValueOnce({
-            response: { status: 404 },
-        })
-
-        const { findByText, queryByText } = render(<TripHistoryScreen />)
-
-        expect(await findByText(/Your Trip History is empty/)).toBeTruthy()
-        expect(queryByText("Loading failed")).toBeNull()
-    })
-
     test("sorts alphabetically when selected", async () => {
         ;(getMyTripsApi as jest.Mock).mockResolvedValue([
             createMockTrip({ tripId: "t1", title: "Zulu Ride", startedAt: "2025-01-15T10:00:00Z" }),

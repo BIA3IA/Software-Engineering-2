@@ -35,7 +35,7 @@ describe("api/paths", () => {
             ],
         })
 
-        expect(api.post).toHaveBeenCalledWith("/paths/create", {
+        expect(api.post).toHaveBeenCalledWith("/paths", {
             visibility: true,
             creationMode: "manual",
             title: "My path",
@@ -56,7 +56,7 @@ describe("api/paths", () => {
 
         const out = await getMyPathsApi()
 
-        expect(api.get).toHaveBeenCalledWith("/paths/my-paths")
+        expect(api.get).toHaveBeenCalledWith("/paths", { params: { owner: "me" } })
         expect(out[0].pathId).toBe("p1")
     })
 

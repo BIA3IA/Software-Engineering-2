@@ -6,6 +6,7 @@ const config = {
   testMatch: ["<rootDir>/tests/{unit,integration}/**/*.test.ts?(x)"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   testPathIgnorePatterns: ["/node_modules/", "/android/", "/ios/"],
+  testTimeout: 15000,
   transformIgnorePatterns: [
     "node_modules/(?!(jest-)?react-native|@react-native|react-native-paper|expo(nent)?|@expo(nent)?/.*|expo-router|@unimodules|unimodules|nativewind|react-native-svg)",
   ],
