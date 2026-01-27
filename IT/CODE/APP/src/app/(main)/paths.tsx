@@ -76,13 +76,6 @@ export default function PathsScreen() {
           setEmptyMessage(null)
         }
       } catch (error) {
-        const status = (error as { response?: { status?: number } })?.response?.status
-        if (status === 404) {
-          setPaths([])
-          setPathSummaries([])
-          setEmptyMessage("Your path library is empty.\nStart creating paths to see them here.")
-          return
-        }
         const message = getApiErrorMessage(error, "Unable to load your paths. Please try again.")
         setEmptyMessage(null)
         setErrorPopup({

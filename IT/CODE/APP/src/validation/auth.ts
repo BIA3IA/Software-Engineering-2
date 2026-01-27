@@ -14,12 +14,13 @@ const passwordSchema = z
 const loginPasswordSchema = z
     .string()
     .trim()
-    .min(1, "Password is required.")
+    .min(8, "Password must be at least 8 characters.")
 
 const usernameSchema = z
     .string()
     .trim()
-    .min(5, "Username must be at least 5 characters.")
+    .min(3, "Username must be at least 3 characters.")
+    .max(20, "Username must be at most 20 characters.")
 
 const confirmSchema = z
     .string()

@@ -7,6 +7,9 @@ import logger from "./utils/logger.js"
 
 const app = express()
 
+// This is needed for nginx, it makes express proxy aware
+app.set("trust proxy", 1);
+
 app.use(express.json())
 app.use(cookieParser())
 
@@ -20,6 +23,11 @@ app.use(
 )
 
 app.use(httpLogger)
+
+// healthcheck
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 
 app.use("/api/v1", routesV1)
 

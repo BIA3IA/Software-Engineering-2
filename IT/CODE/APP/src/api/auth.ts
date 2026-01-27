@@ -81,11 +81,11 @@ export async function refreshTokenApi(refreshToken: string): Promise<AuthTokens>
 }
 
 export async function getProfileApi(): Promise<User> {
-  const res = await api.get<ProfileResponse>(`${USERS_BASE}/profile`)
+  const res = await api.get<ProfileResponse>(`${USERS_BASE}/me`)
   return mapUser(res.data.data)
 }
 
 export async function updateProfileApi(payload: UpdateProfilePayload): Promise<string> {
-  const res = await api.patch<UpdateProfileResponse>(`${USERS_BASE}/update-profile`, payload)
+  const res = await api.patch<UpdateProfileResponse>(`${USERS_BASE}/me`, payload)
   return res.data.message
 }

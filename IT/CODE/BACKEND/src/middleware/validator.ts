@@ -16,7 +16,11 @@ export const validate = (schema: ObjectSchema, target: Target = 'body') =>
                 abortEarly: false,
                 errors: { wrap: { label: false } }, // Disable quotes around labels in error messages
             });
-            req[target] = validated;
+            if (target === 'query' && req.query && typeof req.query === 'object') {
+                Object.assign(req.query, validated);
+            } else {
+                req[target] = validated;
+            }
             next();
         } catch (error: any) {
             // With mapping we extract all error messages from Joi and join them into a single string
