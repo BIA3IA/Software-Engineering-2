@@ -2,18 +2,32 @@
 \section{Adopted Frameworks}
 \label{sec:frameworks}
 
-\subsection{Frontend}
-\label{sec:frontend}
+The BBP platform relies on a set of technologies selected to cover the needs of the mobile client, the server
+side, and the persistence layer. In the sections below, we outline the core frameworks used in each area and
+briefly describe their role, key characteristics, and why they were chosen for this project.
 
-React Native
-Expo
-React Paper -> Theming
-Lucide Icons -> Icons
-React Native Maps -> Maps
-Axios -> Api Calls
-Zod -> Data Validation
-Zustand -> State Management
-Expo Router -> Navigation
+\subsection{Mobile App}
+\label{sec:mobile_app}
+
+The BBP mobile application is developed with React Native in the Expo ecosystem, allowing a single codebase
+to target both iOS and Android while keeping GPS access consistent across devices. Expo also simplifies build
+and deployment steps, which reduces overhead during development and testing.
+
+Navigation is handled through Expo Router, which offers file-based routing and keeps screen structure easy to
+maintain as the app grows. Global state is managed with Zustand, selected for its minimal boilerplate and
+efficient updates, which are important for user session handling.
+
+The user interface relies on React Native Paper to provide a Material Design-compliant component library with
+built-in theming support. Lucide Icons supplies a lightweight and consistent icon set, while React Native Maps
+is used for the core map experience, including path visualization and score overlays. Expo Linear Gradient is
+used in selected screens to provide branded visual accents in the interface.
+
+Location tracking is implemented via Expo Location, which handles permission requests and continuous GPS
+updates needed for map views and trip-related features.
+
+For data exchange, Axios manages HTTP requests to the backend. Zod defines schemas for client-side input
+validation (e.g., authentication and profile forms) and integrates with React Hook Form via resolvers to
+enforce those constraints in the UI. Expo Secure Store persists authentication tokens on device.
 
 \subsection{Backend}
 \label{sec:backend}
