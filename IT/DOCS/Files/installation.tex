@@ -106,6 +106,71 @@ public API endpoint exposed by the reverse proxy.
 \subsection{Local Backend Execution}
 \label{subsec:backend_local}
 
+For local development and testing, the BBP backend can be executed using a Docker-based setup that mirrors
+the production environment, while enabling development-specific features such as live reload.
+To keep the production configuration unchanged, the local development setup is defined
+through an additional Docker Compose file and a dedicated development Dockerfile.
+
+Before starting the backend locally, developers must ensure they are operating from the backend project
+directory, which contains the production \textbf{docker-compose.yml}, the development override
+\textbf{docker-compose.dev.yml}, and the related \textbf{Dockerfile.dev}. All commands must be executed
+from this directory.
+
+The development configuration builds the backend image using \textbf{Dockerfile.dev} and runs the service
+with \textbf{NODE\_ENV=development}. Project source files are mounted into the container through bind mounts,
+so changes to the codebase are immediately reflected without rebuilding the image. Node.js dependencies
+are installed inside the container during the image build and are not required on the host system.
+
+Environment-specific configuration values are provided through a dedicated \textbf{.env} file located in
+the backend project directory. This file defines authentication secrets, database connection parameters,
+and service endpoints. Additional local-only variables can be added when needed without affecting the
+production configuration.
+
+To build and start the backend locally, the development override is applied on top of the base
+configuration using Docker Compose:
+
+\begin{verbatim}
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+\end{verbatim}
+
+Once the backend container is running, application logs can be inspected in real time to monitor startup
+and runtime behavior:
+
+\begin{verbatim}
+docker logs -f bbp_api --tail=50
+\end{verbatim}
+
+A basic health check endpoint is exposed by the backend and can be used to verify that the service is
+running correctly:
+
+\begin{verbatim}
+curl -i http://localhost:3000/health
+\end{verbatim}
+
+In the development configuration, port 3000 is published on the host system. As a result, the backend API
+is available at \textbf{http://localhost:3000} and can be accessed by the mobile application or by API
+testing tools.
+
+Automated tests can be executed directly inside the running backend container. This allows tests to run
+in the same environment as the application, without requiring local dependency installation. Tests can be
+started with:
+
+\begin{verbatim}
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api npm run test:watch
+\end{verbatim}
+
+When the local backend is no longer needed, all running services can be stopped and removed using Docker
+Compose:
+
+\begin{verbatim}
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+\end{verbatim}
+
+This command stops and removes the containers associated with the local development environment without
+affecting images or configuration files.
+All backend services can be stopped and restarted at any time without affecting the host system, as the
+entire runtime environment is isolated within containers.
+
 \section{Frontend Setup}
 \label{sec:frontend_setup}
 
