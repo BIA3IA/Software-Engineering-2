@@ -237,13 +237,15 @@ describe("Testing UserManager business logic", () => {
         test("Update with new password hashes the password", async () => {
             const req = mockRequest();
             req.user = { userId: "cuid123", iat: 0, exp: 0 };
-            req.body = { password: "newpassword123" };
+            req.body = { currentPassword: "oldpassword123", password: "newpassword123" };
 
             (queryManager.getUserById as jest.Mock).mockResolvedValue({
                 userId: "cuid123",
                 email: "test@email.com",
                 username: "testuser",
+                password: "hashedPassword",
             });
+            (bcrypt.compare as jest.Mock).mockResolvedValue(true);
             (bcrypt.hash as jest.Mock).mockResolvedValue("newHashedPassword");
             (queryManager.updateUserProfile as jest.Mock).mockResolvedValue({});
 

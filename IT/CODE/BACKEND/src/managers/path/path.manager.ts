@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { queryManager } from '../query/index.js';
 import { Coordinates, PathWithSegments, PATH_STATUS_SCORE_MAP } from '../../types/index.js';
 import { mapScoreToStatus } from '../../utils/utils.js';
+import { sortPathSegmentsByChain } from '../../utils/index.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import logger from '../../utils/logger';
 import { snapToRoad, geocodeAddress } from '../../services/index.js';
@@ -172,6 +173,10 @@ export class PathManager {
             const destinationCoords = await geocodeAddress(destinationText);
 
             const paths = await queryManager.searchPathsByOriginDestination(userId);
+            const sortedPaths = paths.map(path => ({
+                ...path,
+                pathSegments: sortPathSegmentsByChain(path.pathSegments),
+            }));
 
             // Tolerance radius in degrees (approximately 200m)
             const tolerance = 0.002;
@@ -180,7 +185,7 @@ export class PathManager {
 
             const matchingPaths: Array<{ path: PathWithSegments; maxDistance: number }> = [];
 
-            for (const path of paths) {
+            for (const path of sortedPaths) {
                 const pathOrigin = path.origin;
                 const pathDestination = path.destination;
 
@@ -300,12 +305,16 @@ export class PathManager {
             }
 
             const paths = await queryManager.getPathsByUserId(userId);
+            const sortedPaths = paths.map(path => ({
+                ...path,
+                pathSegments: sortPathSegmentsByChain(path.pathSegments),
+            }));
 
             res.json({
                 success: true,
                 data: {
-                    count: paths.length,
-                    paths: paths.map(path => ({
+                    count: sortedPaths.length,
+                    paths: sortedPaths.map(path => ({
                         pathId: path.pathId,
                         title: path.title,
                         description: path.description,

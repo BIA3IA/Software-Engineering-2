@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { reportManager } from "../../managers/report/report.manager.js";
+import { reportManager } from "../../managers/report/index.js";
 import { verifyAccessToken } from "../../middleware/index.js";
 
 const reportRouter = Router();

@@ -111,7 +111,14 @@ export class UserManager {
             }
 
 
-            if (currentPassword !== undefined) {
+            if (password !== undefined) {
+                if (!currentPassword) {
+                    throw new BadRequestError(
+                        'Current password is required to set a new password',
+                        'CURRENT_PASSWORD_REQUIRED'
+                    );
+                }
+
                 const matches = await bcrypt.compare(currentPassword, user.password);
                 if (!matches) {
                     throw new BadRequestError('Current password is incorrect', 'INCORRECT_PASSWORD');

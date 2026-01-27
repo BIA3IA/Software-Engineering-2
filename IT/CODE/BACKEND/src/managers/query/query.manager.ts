@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { sortTripSegmentsByChain, sortPathSegmentsByChain, prisma } from "../../utils/index.js";
+import { prisma } from "../../utils/index.js";
 import { TripSegments, TripStatistics, WeatherData, PathWithSegments, Coordinates } from "../../types/index.js";
 
 
@@ -61,27 +61,27 @@ export class QueryManager {
     // CRUD methods to manage refresh tokens
 
     // create refresh token
-    async createRefreshToken(userId: string, token: string, expiresAt: Date) {
+    async createRefreshToken(userId: string, tokenHash: string, expiresAt: Date) {
         return await prisma.refreshToken.create({
             data: {
                 userId,
-                token,
+                token: tokenHash,
                 expiresAt,
             },
         });
     }
 
     // get refresh token
-    async getRefreshToken(token: string) {
+    async getRefreshToken(tokenHash: string) {
         return await prisma.refreshToken.findUnique({
-            where: { token },
+            where: { token: tokenHash },
         });
     }
 
     // delete refresh token
-    async deleteRefreshToken(token: string) {
+    async deleteRefreshToken(tokenHash: string) {
         return await prisma.refreshToken.delete({
-            where: { token },
+            where: { token: tokenHash },
         });
     }
 
@@ -98,14 +98,7 @@ export class QueryManager {
             },
         });
 
-        if (!trip) {
-            return null;
-        }
-
-        return {
-            ...trip,
-            tripSegments: sortTripSegmentsByChain(trip.tripSegments),
-        };
+        return trip as TripSegments | null;
     }
 
     // create trip
@@ -157,10 +150,7 @@ export class QueryManager {
             },
         });
 
-        return trips.map(trip => ({
-            ...trip,
-            tripSegments: sortTripSegmentsByChain(trip.tripSegments),
-        }));
+        return trips as TripSegments[];
     }
 
     // delete trip by id
@@ -234,14 +224,7 @@ export class QueryManager {
             },
         });
 
-        if (!path) {
-            return null;
-        }
-
-        return {
-            ...path,
-            pathSegments: sortPathSegmentsByChain(path.pathSegments),
-        } as PathWithSegments;
+        return path as PathWithSegments | null;
     }
 
     // get paths by user id
@@ -260,10 +243,7 @@ export class QueryManager {
             },
         });
 
-        return paths.map(path => ({
-            ...path,
-            pathSegments: sortPathSegmentsByChain(path.pathSegments),
-        })) as PathWithSegments[];
+        return paths as PathWithSegments[];
     }
 
     // get path by segments given by the user
@@ -304,10 +284,7 @@ export class QueryManager {
             return null;
         }
 
-        return {
-            ...matchingPath,
-            pathSegments: sortPathSegmentsByChain(matchingPath.pathSegments),
-        } as PathWithSegments;
+        return matchingPath as PathWithSegments;
     }
 
     async searchPathsByOriginDestination(userId?: string): Promise<PathWithSegments[]> {
@@ -330,10 +307,7 @@ export class QueryManager {
             },
         });
 
-        return paths.map(path => ({
-            ...path,
-            pathSegments: sortPathSegmentsByChain(path.pathSegments),
-        })) as PathWithSegments[];
+        return paths as PathWithSegments[];
     }
 
     // delete path by id

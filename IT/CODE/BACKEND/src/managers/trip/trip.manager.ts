@@ -4,6 +4,7 @@ import { fetchAndAggregateWeatherData } from '../../services/index.js';
 import { Coordinates, TripSegments, WeatherData } from '../../types/index.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import logger from '../../utils/logger';
+import { sortTripSegmentsByChain } from '../../utils/index.js';
 
 export class TripManager {
 
@@ -83,6 +84,7 @@ export class TripManager {
             try {
                 const tripWithSegments = await queryManager.getTripById(trip.tripId);
                 if (tripWithSegments) {
+                    tripWithSegments.tripSegments = sortTripSegmentsByChain(tripWithSegments.tripSegments);
                     await this.enrichTripWithWeather(tripWithSegments);
                 }
             } catch (error) {
@@ -114,9 +116,13 @@ export class TripManager {
             }
 
             const trips = await queryManager.getTripsByUserId(userId);
+            const sortedTrips = trips.map(trip => ({
+                ...trip,
+                tripSegments: sortTripSegmentsByChain(trip.tripSegments),
+            }));
 
             await Promise.allSettled(
-                trips.map(async trip => {
+                sortedTrips.map(async trip => {
                     if (trip.weather) {
                         return;
                     }
@@ -130,14 +136,14 @@ export class TripManager {
             );
 
             const tripReports = await Promise.all(
-                trips.map(trip => queryManager.getReportsByTripId(trip.tripId))
+                sortedTrips.map(trip => queryManager.getReportsByTripId(trip.tripId))
             );
 
             res.json({
                 success: true,
                 data: {
-                    count: trips.length,
-                    trips: trips.map((trip, index) => ({
+                    count: sortedTrips.length,
+                    trips: sortedTrips.map((trip, index) => ({
                         tripId: trip.tripId,
                         createdAt: trip.createdAt,
                         startedAt: trip.startedAt,
@@ -198,6 +204,8 @@ export class TripManager {
         if (trip.origin) {
             allCoordinates.push(trip.origin);
         }
+
+        trip.tripSegments = sortTripSegmentsByChain(trip.tripSegments);
 
         for (const tripSegment of trip.tripSegments) {
             const polyline = tripSegment.segment.polylineCoordinates;
