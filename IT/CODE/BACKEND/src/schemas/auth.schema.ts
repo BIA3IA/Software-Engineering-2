@@ -11,3 +11,11 @@ export const registerSchema = Joi.object({
     username: Joi.string().alphanum().min(3).max(20).required(),
     systemPreferences: Joi.array().items(Joi.string()),
 });
+
+export const logoutSchema = Joi.object({
+    refreshToken: Joi.string().required(),
+});
+
+export const refreshSchema = Joi.object({
+    refreshToken: Joi.string().required(),
+});

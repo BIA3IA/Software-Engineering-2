@@ -1,5 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import { snapToRoad } from "../../services/osrm.service";
+import { snapToRoad } from "../../services/snapping.service";
 
 jest.mock("../../utils/logger", () => ({
     __esModule: true,
@@ -11,7 +11,10 @@ jest.mock("../../utils/logger", () => ({
     },
 }));
 
-describe("OSRM Service Integration Tests", () => {
+const runLive = process.env.RUN_LIVE_TESTS === "1";
+const describeLive = runLive ? describe : describe.skip;
+
+describeLive("OSRM Service Integration Tests", () => {
 
     describe("snapToRoad", () => {
 

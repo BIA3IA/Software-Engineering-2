@@ -19,8 +19,8 @@ describe("auth validation", () => {
     expect(res.success).toBe(false)
   })
 
-  test("loginSchema rejects missing password", () => {
-    const res = loginSchema.safeParse({ email: "bianca@gmail.com", password: "" })
+  test("loginSchema rejects short password", () => {
+    const res = loginSchema.safeParse({ email: "bianca@gmail.com", password: "123" })
     expect(res.success).toBe(false)
   })
 
@@ -37,6 +37,16 @@ describe("auth validation", () => {
   test("signupSchema rejects short username", () => {
     const res = signupSchema.safeParse({
       username: "bi",
+      email: "bianca@gmail.com",
+      password: "12345678",
+      confirm: "12345678",
+    })
+    expect(res.success).toBe(false)
+  })
+
+  test("signupSchema rejects long username", () => {
+    const res = signupSchema.safeParse({
+      username: "a".repeat(21),
       email: "bianca@gmail.com",
       password: "12345678",
       confirm: "12345678",
@@ -107,7 +117,15 @@ describe("auth validation", () => {
 
   test("editProfileSchema rejects short username", () => {
     const res = editProfileSchema.safeParse({
-      username: "vaj",
+      username: "va",
+      email: "vajihe@gmail.com",
+    })
+    expect(res.success).toBe(false)
+  })
+
+  test("editProfileSchema rejects long username", () => {
+    const res = editProfileSchema.safeParse({
+      username: "a".repeat(21),
       email: "vajihe@gmail.com",
     })
     expect(res.success).toBe(false)

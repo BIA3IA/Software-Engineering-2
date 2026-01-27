@@ -6,14 +6,14 @@ import { validate, verifyAccessToken } from "../../middleware/index.js";
 const tripRouter = Router();
 
 tripRouter.post(
-    "/create",
+    "/",
     verifyAccessToken,
     validate(createTripSchema, "body"),
     tripManager.createTrip.bind(tripManager)
 );
 
 tripRouter.get(
-    "/my-trips",
+    "/",
     verifyAccessToken,
     tripManager.getTripsByUser.bind(tripManager)
 );
