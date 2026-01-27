@@ -132,7 +132,11 @@ describe("create-path integration", () => {
         fireEvent(getByTestId("map"), "press", { nativeEvent: { coordinate: { latitude: 1, longitude: 2 } } })
         fireEvent(getByTestId("map"), "press", { nativeEvent: { coordinate: { latitude: 3, longitude: 4 } } })
 
-        fireEvent.press(getByText(/Save Path|Snapping/))
+        await waitFor(() => {
+            expect(getByText("Snapping...")).toBeTruthy()
+        })
+
+        fireEvent.press(getByText("Snapping..."))
 
         expect(createPathApi).not.toHaveBeenCalled()
 

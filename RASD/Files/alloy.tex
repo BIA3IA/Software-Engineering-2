@@ -420,7 +420,7 @@ pred do_something_else {
 
 The do\_something\_else predicate represents a stuttering step in which the system performs no significant action with respect to the modeled entities and all mutable relations remain unchanged.
 This allows the model to capture periods of inactivity or transitions without observable effects, making the execution traces more realistic.
-In addition, do\_something\_else ensures that the trans fact can always be satisfied: when none of the main events is enabled (because their preconditions fail), the system can still progress by taking a do\_something\_else step instead of “hanging” in a deadlocked state.
+In addition, do\_something\_else ensures that the trans fact can always be satisfied: when none of the main events is enabled (because their preconditions fail), the system can still progress by taking a do\_something\_else step instead of "hanging" in a deadlocked state.
 
 \begin{lstlisting}[language=alloy]
 

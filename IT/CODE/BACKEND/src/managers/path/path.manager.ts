@@ -230,16 +230,27 @@ export class PathManager {
             const { origin, destination } = req.query;
             const userId = req.user?.userId;
 
-            if (typeof origin !== 'string' || !origin.trim()) {
+            const originValue = Array.isArray(origin) ? origin[0] : origin;
+            const destinationValue = Array.isArray(destination) ? destination[0] : destination;
+            const originText =
+                typeof originValue === 'string' ? originValue : originValue ? String(originValue) : '';
+            const destinationText =
+                typeof destinationValue === 'string'
+                    ? destinationValue
+                    : destinationValue
+                      ? String(destinationValue)
+                      : '';
+
+            if (!originText.trim()) {
                 throw new BadRequestError('Origin address is required', 'MISSING_ORIGIN');
             }
 
-            if (typeof destination !== 'string' || !destination.trim()) {
+            if (!destinationText.trim()) {
                 throw new BadRequestError('Destination address is required', 'MISSING_DESTINATION');
             }
 
-            const originCoords = await geocodeAddress(origin);
-            const destinationCoords = await geocodeAddress(destination);
+            const originCoords = await geocodeAddress(originText);
+            const destinationCoords = await geocodeAddress(destinationText);
 
             const paths = await queryManager.searchPathsByOriginDestination(originCoords, destinationCoords, userId);
 

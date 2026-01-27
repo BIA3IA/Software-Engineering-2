@@ -65,11 +65,13 @@ export type SearchPathsParams = {
 const PATHS_BASE = "/paths"
 
 export async function createPathApi(payload: CreatePathPayload): Promise<void> {
-  await api.post(`${PATHS_BASE}/create`, payload)
+  await api.post(`${PATHS_BASE}`, payload)
 }
 
 export async function getMyPathsApi(): Promise<UserPathSummary[]> {
-  const res = await api.get<UserPathsResponse>(`${PATHS_BASE}/my-paths`)
+  const res = await api.get<UserPathsResponse>(`${PATHS_BASE}`, {
+    params: { owner: "me" },
+  })
   return res.data.data.paths
 }
 

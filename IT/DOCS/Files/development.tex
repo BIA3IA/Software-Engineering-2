@@ -2,18 +2,32 @@
 \section{Adopted Frameworks}
 \label{sec:frameworks}
 
-\subsection{Frontend}
-\label{sec:frontend}
+The BBP platform relies on a set of technologies selected to cover the needs of the mobile client, the server
+side, and the persistence layer. In the sections below, we outline the core frameworks used in each area and
+briefly describe their role, key characteristics, and why they were chosen for this project.
 
-React Native
-Expo
-React Paper -> Theming
-Lucide Icons -> Icons
-React Native Maps -> Maps
-Axios -> Api Calls
-Zod -> Data Validation
-Zustand -> State Management
-Expo Router -> Navigation
+\subsection{Mobile App}
+\label{sec:mobile_app}
+
+The BBP mobile application is developed with React Native in the Expo ecosystem, allowing a single codebase
+to target both iOS and Android while keeping GPS access consistent across devices. Expo also simplifies build
+and deployment steps, which reduces overhead during development and testing.
+
+Navigation is handled through Expo Router, which offers file-based routing and keeps screen structure easy to
+maintain as the app grows. Global state is managed with Zustand, selected for its minimal boilerplate and
+efficient updates, which are important for user session handling.
+
+The user interface relies on React Native Paper to provide a Material Design-compliant component library with
+built-in theming support. Lucide Icons supplies a lightweight and consistent icon set, while React Native Maps
+is used for the core map experience, including path visualization and score overlays. Expo Linear Gradient is
+used in selected screens to provide branded visual accents in the interface.
+
+Location tracking is implemented via Expo Location, which handles permission requests and continuous GPS
+updates needed for map views and trip-related features.
+
+For data exchange, Axios manages HTTP requests to the backend. Zod defines schemas for client-side input
+validation (e.g., authentication and profile forms) and integrates with React Hook Form via resolvers to
+enforce those constraints in the UI. Expo Secure Store persists authentication tokens on device.
 
 \subsection{Backend}
 \label{sec:backend}
@@ -24,18 +38,59 @@ Openmeteo service
 \subsection{Data Layer}
 \label{subsec:data_layer}
 
-PostgreSQL
-Prisma
+For data storage and management, the BBP platform relies on \textbf{PostgreSQL} as its primary \textbf{DBMS}. 
+This choice is motivated by its proven reliability and by its relational data model, which fits well
+with the platform’s core entities, such as users, paths, segments, and trips, and supports the enforcement 
+of consistency constraints across related data.
+
+A relational approach is particularly suitable for BBP, where path-related information evolves over time and
+must remain consistent despite frequent user-generated updates. \textbf{PostgreSQL} provides the transactional 
+guarantees and integrity mechanisms required to manage this evolving dataset in a robust and predictable way.
+
+The interaction between the modular \textbf{NestJS} backend and the database is handled through \textbf{Prisma}, which is 
+adopted as the \textbf{ORM}. \textbf{Prisma} generates a type-safe client starting from a single schema
+definition, ensuring that database queries are strongly typed and aligned with the \textbf{TypeScript} types 
+used throughout the application. This approach helps detect data access errors at compile time and keeps 
+the persistence layer consistent as the data model evolves during development.
 
 \section{Adopted Programming Languages}
 \label{subsec:languages}
 
-TypeScript
+The platform is mainly developed using \textbf{TypeScript}, which is adopted across both the mobile application, 
+built with \textbf{React Native} and \textbf{Expo}, and the backend services, built with \textbf{NestJS} and \textbf{Prisma}.
+Using a single, strongly typed language
+across different layers of the system improves maintainability and reduces the likelihood of runtime 
+errors, while also simplifying development workflows.
+
+On the server side, \textbf{TypeScript} integrates smoothly with \textbf{Prisma}, as the generated client types help
+identify data access issues at compile time. On the client side, it works well with form validation
+and API interaction, making input models and component properties explicit and easier to evolve over time.
+
+Overall, this language choice results in clearer and more robust code, supports safer refactoring, and
+reduces the effort required for developers to work across multiple components of the platform.
 
 \section{Development Tools}
 \label{sec:dev_tools}
 
-Docker + Shared Nginx + Cloudflare + Docker
+The development workflow is based on \textbf{Node.js} and \textbf{npm}, which are used to manage dependencies and execute 
+project scripts for both the backend and the mobile application. On the backend side, \textbf{Docker} and \textbf{Docker
+Compose} are adopted to build and run the service in a reproducible and isolated environment, ensuring 
+consistency across development and production setups. Database-related tasks, including client generation 
+and schema migrations, are handled through the \textbf{Prisma CLI}.
+
+For the mobile application, development and local testing are carried out using the \textbf{Expo CLI}. The \textbf{Expo Go} 
+application enables real-time previews on physical devices by scanning the Metro QR code, allowing rapid 
+iteration and immediate feedback during development. For distributable builds, the \textbf{EAS CLI} is used to 
+generate \textbf{Android} and \textbf{iOS} build artifacts, with APK files produced from the Android build output.
+
+In the production environment, the backend is exposed through a shared \textbf{Nginx} reverse proxy. HTTPS 
+termination and certificate management are handled using \textbf{Cloudflare Origin Certificates}, which centralize 
+TLS configuration and request routing while keeping backend services isolated from direct internet exposure.
+
+To support integration testing and a shared development workflow, \textbf{EchoAPI} is used to mock and inspect 
+backend responses. This tool allows team members to validate client-side behavior against expected API 
+outputs, facilitating coordination between frontend and backend development and reducing coupling during 
+implementation phases.
 
 \section{API Calls}
 \label{sec:api_calls}

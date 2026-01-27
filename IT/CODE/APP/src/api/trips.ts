@@ -49,11 +49,13 @@ export type CreateTripPayload = {
 const TRIPS_BASE = "/trips"
 
 export async function createTripApi(payload: CreateTripPayload): Promise<void> {
-  await api.post(`${TRIPS_BASE}/create`, payload)
+  await api.post(`${TRIPS_BASE}`, payload)
 }
 
 export async function getMyTripsApi(): Promise<TripSummary[]> {
-  const res = await api.get<TripsResponse>(`${TRIPS_BASE}/my-trips`)
+  const res = await api.get<TripsResponse>(`${TRIPS_BASE}`, {
+    params: { owner: "me" },
+  })
   return res.data.data.trips
 }
 

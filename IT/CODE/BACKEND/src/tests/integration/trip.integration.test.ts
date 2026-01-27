@@ -28,12 +28,8 @@ jest.mock("../../utils/logger", () => ({
     },
 }));
 
-jest.mock("../../managers/weather/index", () => ({
-    weatherManager: {
-        enrichTripWithWeather: jest.fn().mockResolvedValue({}),
-        enrichTrip: jest.fn().mockImplementation((req, res) => res.json({ success: true })),
-        getTripWeather: jest.fn().mockImplementation((req, res) => res.json({ success: true })),
-    },
+jest.mock("../../services/index", () => ({
+    fetchAndAggregateWeatherData: jest.fn().mockRejectedValue(new Error("skip weather")),
 }));
 
 import { app } from "../../server";
@@ -51,7 +47,7 @@ describe("Trip Routes Integration Tests", () => {
         process.env.JWT_REFRESH_SECRET = "test-refresh-secret";
     });
 
-    describe("Testing POST /api/v1/trips/create", () => {
+    describe("Testing POST /api/v1/trips", () => {
 
         test("Should create trip successfully", async () => {
             const accessToken = generateValidAccessToken("user123");
@@ -81,7 +77,7 @@ describe("Trip Routes Integration Tests", () => {
             (prisma.trip.create as jest.Mock).mockResolvedValue(mockTrip);
 
             const response = await request(app)
-                .post("/api/v1/trips/create")
+                .post("/api/v1/trips")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({
                     origin: { lat: 45.4642, lng: 9.1900 },
@@ -106,11 +102,35 @@ describe("Trip Routes Integration Tests", () => {
             expect(response.body.data.title).toBe("Morning Ride");
         });
 
+        test("Should return 401 for missing access token", async () => {
+            const response = await request(app)
+                .post("/api/v1/trips")
+                .send({
+                    origin: { lat: 45.4642, lng: 9.1900 },
+                    destination: { lat: 45.4700, lng: 9.1950 },
+                    startedAt: "2025-01-15T10:00:00Z",
+                    finishedAt: "2025-01-15T11:00:00Z",
+                    tripSegments: [
+                        {
+                            segmentId: "segment1",
+                            polylineCoordinates: [
+                                { lat: 45.4642, lng: 9.1900 },
+                                { lat: 45.4700, lng: 9.1950 }
+                            ]
+                        }
+                    ],
+                    title: "Morning Ride"
+                });
+
+            expect(response.status).toBe(401);
+            expect(response.body.error.code).toBe("ACCESS_TOKEN_MISSING");
+        });
+
         test("Should return 400 for missing required fields", async () => {
             const accessToken = generateValidAccessToken("user123");
 
             const response = await request(app)
-                .post("/api/v1/trips/create")
+                .post("/api/v1/trips")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({
                     origin: { lat: 45.4642, lng: 9.1900 }
@@ -122,7 +142,7 @@ describe("Trip Routes Integration Tests", () => {
 
     });
 
-    describe("Testing GET /api/v1/trips/my-trips", () => {
+    describe("Testing GET /api/v1/trips?owner=me", () => {
 
         test("Should return all user trips with full data", async () => {
             const accessToken = generateValidAccessToken("user123");
@@ -157,7 +177,7 @@ describe("Trip Routes Integration Tests", () => {
             (prisma.trip.findMany as jest.Mock).mockResolvedValue(mockTrips);
 
             const response = await request(app)
-                .get("/api/v1/trips/my-trips")
+                .get("/api/v1/trips?owner=me")
                 .set("Authorization", `Bearer ${accessToken}`);
 
             expect(response.status).toBe(200);
@@ -174,12 +194,29 @@ describe("Trip Routes Integration Tests", () => {
             (prisma.trip.findMany as jest.Mock).mockResolvedValue([]);
 
             const response = await request(app)
-                .get("/api/v1/trips/my-trips")
+                .get("/api/v1/trips?owner=me")
                 .set("Authorization", `Bearer ${accessToken}`);
 
             expect(response.status).toBe(200);
             expect(response.body.data.count).toBe(0);
             expect(response.body.data.trips).toEqual([]);
+        });
+
+        test("Should return 401 for missing access token", async () => {
+            const response = await request(app)
+                .get("/api/v1/trips?owner=me");
+
+            expect(response.status).toBe(401);
+            expect(response.body.error.code).toBe("ACCESS_TOKEN_MISSING");
+        });
+
+        test("Should return 403 for invalid access token", async () => {
+            const response = await request(app)
+                .get("/api/v1/trips?owner=me")
+                .set("Authorization", "Bearer invalid-token");
+
+            expect(response.status).toBe(403);
+            expect(response.body.error.code).toBe("INVALID_ACCESS_TOKEN");
         });
 
     });
