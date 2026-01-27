@@ -261,6 +261,62 @@ describe("Testing UserManager business logic", () => {
             });
         });
 
+        test("Email already in use throws ConflictError", async () => {
+            const req = mockRequest();
+            req.user = { userId: "cuid123", iat: 0, exp: 0 };
+            req.body = { email: "taken@email.com" };
+
+            (queryManager.getUserById as jest.Mock).mockResolvedValue({
+                userId: "cuid123",
+                email: "test@email.com",
+                username: "testuser",
+                password: "hashedPassword",
+            });
+            (queryManager.getUserByEmail as jest.Mock).mockResolvedValue({
+                userId: "otherUser",
+                email: "taken@email.com",
+            });
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new UserManager().updateProfile(req, res, next);
+
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 409,
+                    code: "EMAIL_ALREADY_IN_USE",
+                })
+            );
+        });
+
+        test("Incorrect current password throws BadRequestError", async () => {
+            const req = mockRequest();
+            req.user = { userId: "cuid123", iat: 0, exp: 0 };
+            req.body = { currentPassword: "wrong-password", password: "newpassword123" };
+
+            (queryManager.getUserById as jest.Mock).mockResolvedValue({
+                userId: "cuid123",
+                email: "test@email.com",
+                username: "testuser",
+                password: "hashedPassword",
+            });
+            (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+            const res = mockResponse();
+            const next = jest.fn();
+
+            await new UserManager().updateProfile(req, res, next);
+
+            expect(bcrypt.compare).toHaveBeenCalledWith("wrong-password", "hashedPassword");
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    statusCode: 400,
+                    code: "INCORRECT_PASSWORD",
+                })
+            );
+        });
+
         test("Missing userId calls next with UnauthorizedError", async () => {
             const req = mockRequest();
             req.user = undefined;

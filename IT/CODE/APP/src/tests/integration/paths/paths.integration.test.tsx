@@ -2,6 +2,7 @@ import React from "react"
 import { render, fireEvent, waitFor } from "@testing-library/react-native"
 import PathsScreen from "@/app/(main)/paths"
 import { getMyPathsApi, deletePathApi, changePathVisibilityApi } from "@/api/paths"
+import { mockRouter } from "@/jest.setup"
 
 jest.mock("@/api/paths", () => ({
     getMyPathsApi: jest.fn(),
@@ -35,7 +36,14 @@ jest.mock("@/components/route/RouteCard", () => {
                     Pressable,
                     { onPress: onVisibilityPress },
                     React.createElement(Text, null, `Visibility ${trip.id}`)
-                )
+                ),
+                trip.actionLabel
+                    ? React.createElement(
+                          Pressable,
+                          { onPress: trip.onActionPress },
+                          React.createElement(Text, null, trip.actionLabel)
+                      )
+                    : null
             ),
     }
 })
@@ -78,6 +86,16 @@ jest.mock("@/components/ui/SelectionOverlay", () => {
                 : null,
     }
 })
+
+const mockSetTripLaunchSelection = jest.fn()
+
+jest.mock("@/hooks/useTripLaunchSelection", () => ({
+    useSetTripLaunchSelection: () => mockSetTripLaunchSelection,
+}))
+
+jest.mock("@/utils/geo", () => ({
+    isNearOrigin: () => true,
+}))
 
 describe("paths integration", () => {
     beforeEach(() => {
@@ -123,7 +141,7 @@ describe("paths integration", () => {
         ])
             ; (deletePathApi as jest.Mock).mockResolvedValueOnce(undefined)
 
-        const { findByText, getByText, queryByText } = render(<PathsScreen />)
+        const { findByText, getByText } = render(<PathsScreen />)
 
         await findByText("My Path")
         fireEvent.press(getByText("Delete p1"))
@@ -133,6 +151,31 @@ describe("paths integration", () => {
             expect(deletePathApi).toHaveBeenCalledWith("p1")
         })
 
+    })
+
+    test("start trip sets selection and navigates home", async () => {
+        ; (getMyPathsApi as jest.Mock).mockResolvedValueOnce([
+            {
+                pathId: "p1",
+                title: "My Path",
+                description: "desc",
+                status: "OPTIMAL",
+                score: 5,
+                visibility: true,
+                origin: { lat: 1, lng: 2 },
+                destination: { lat: 3, lng: 4 },
+                createdAt: new Date().toISOString(),
+                segmentCount: 2,
+            },
+        ])
+
+        const { findByText, getByText } = render(<PathsScreen />)
+
+        await findByText("My Path")
+        fireEvent.press(getByText("Start Trip"))
+
+        expect(mockSetTripLaunchSelection).toHaveBeenCalled()
+        expect(mockRouter.replace).toHaveBeenCalledWith("/(main)/home")
     })
 
     test("visibility change calls api", async () => {
@@ -214,6 +257,23 @@ describe("paths integration", () => {
         fireEvent.press(getByText("Yes, Change"))
 
         expect(await findByText("Visibility update failed")).toBeTruthy()
+        expect(await findByText("API error")).toBeTruthy()
+    })
+
+    test("shows empty message when no paths", async () => {
+        ; (getMyPathsApi as jest.Mock).mockResolvedValueOnce([])
+
+        const { findByText } = render(<PathsScreen />)
+
+        expect(await findByText(/Your path library is empty/)).toBeTruthy()
+    })
+
+    test("loading error shows popup", async () => {
+        ; (getMyPathsApi as jest.Mock).mockRejectedValueOnce(new Error("fail"))
+
+        const { findByText } = render(<PathsScreen />)
+
+        expect(await findByText("Loading failed")).toBeTruthy()
         expect(await findByText("API error")).toBeTruthy()
     })
 

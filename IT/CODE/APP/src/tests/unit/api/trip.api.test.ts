@@ -34,7 +34,7 @@ describe("api/trips", () => {
             ],
         })
 
-        expect(api.post).toHaveBeenCalledWith("/trips/create", {
+        expect(api.post).toHaveBeenCalledWith("/trips", {
             origin: { lat: 45.0, lng: 9.0 },
             destination: { lat: 45.5, lng: 9.5 },
             startedAt: "2025-01-15T10:00:00Z",
@@ -63,7 +63,7 @@ describe("api/trips", () => {
             tripSegments: [],
         })
 
-        expect(api.post).toHaveBeenCalledWith("/trips/create", {
+        expect(api.post).toHaveBeenCalledWith("/trips", {
             origin: { lat: 45.0, lng: 9.0 },
             destination: { lat: 45.5, lng: 9.5 },
             startedAt: "2025-01-15T10:00:00Z",
@@ -97,7 +97,7 @@ describe("api/trips", () => {
 
         const out = await getMyTripsApi()
 
-        expect(api.get).toHaveBeenCalledWith("/trips/my-trips")
+        expect(api.get).toHaveBeenCalledWith("/trips", { params: { owner: "me" } })
         expect(out).toHaveLength(1)
         expect(out[0].tripId).toBe("t1")
         expect(out[0].title).toBe("Morning Ride")
@@ -116,7 +116,7 @@ describe("api/trips", () => {
 
         const out = await getMyTripsApi()
 
-        expect(api.get).toHaveBeenCalledWith("/trips/my-trips")
+        expect(api.get).toHaveBeenCalledWith("/trips", { params: { owner: "me" } })
         expect(out).toEqual([])
     })
 

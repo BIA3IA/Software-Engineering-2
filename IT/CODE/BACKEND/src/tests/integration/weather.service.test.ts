@@ -1,5 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import { sampleCoordinates, fetchWeatherForCoordinates, aggregateWeatherData, fetchAndAggregateWeatherData } from "../../services/openmeteo.service";
+import { sampleCoordinates, fetchWeatherForCoordinates, aggregateWeatherData, fetchAndAggregateWeatherData } from "../../services/weather.service";
 import { Coordinates, PointWeatherData } from "../../types/index";
 
 jest.mock("../../utils/logger", () => ({
@@ -11,6 +11,9 @@ jest.mock("../../utils/logger", () => ({
         debug: jest.fn(),
     },
 }));
+
+const runLive = process.env.RUN_LIVE_TESTS === "1";
+const describeLive = runLive ? describe : describe.skip;
 
 describe("OpenMeteo Service Integration Tests", () => {
 
@@ -144,7 +147,7 @@ describe("OpenMeteo Service Integration Tests", () => {
         });
     });
 
-    describe("Testing fetchWeatherForCoordinates function", () => {
+    describeLive("Testing fetchWeatherForCoordinates function", () => {
 
         test("Should fetch real weather data from OpenMeteo API", async () => {
             const coord: Coordinates = { lat: 45.4642, lng: 9.1900 };
@@ -170,7 +173,7 @@ describe("OpenMeteo Service Integration Tests", () => {
 
     });
 
-    describe("Testing fetchAndAggregateWeatherData function (end-to-end)", () => {
+    describeLive("Testing fetchAndAggregateWeatherData function (end-to-end)", () => {
 
         test("Should fetch and aggregate weather for a short route", async () => {
             const coords: Coordinates[] = [
@@ -182,7 +185,7 @@ describe("OpenMeteo Service Integration Tests", () => {
 
             expect(result).toBeDefined();
             expect(result.sampleCount).toBeGreaterThan(0);
-            expect(result.averageTemperature).not.toBe(0);
+            expect(Number.isFinite(result.averageTemperature)).toBe(true);
             expect(result.dominantWeatherDescription).not.toBe("Unknown");
             expect(typeof result.fetchedAt).toBe("string");
             expect(new Date(result.fetchedAt).toString()).not.toBe("Invalid Date");
@@ -209,7 +212,7 @@ describe("OpenMeteo Service Integration Tests", () => {
 
             expect(result.sampleCount).toBeGreaterThanOrEqual(2);
             expect(result.sampleCount).toBeLessThanOrEqual(3);
-            expect(result.averageTemperature).not.toBe(0);
+            expect(Number.isFinite(result.averageTemperature)).toBe(true);
             expect(result.averageHumidity).toBeGreaterThanOrEqual(0);
             expect(result.averageHumidity).toBeLessThanOrEqual(100);
         }, 20000);

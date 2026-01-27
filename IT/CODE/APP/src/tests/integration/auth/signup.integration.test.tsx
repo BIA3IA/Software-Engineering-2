@@ -25,13 +25,13 @@ describe("signup integration", () => {
 
         const { getByPlaceholderText, getByText, findByText } = render(<SignUpScreen />)
 
-        fireEvent.changeText(getByPlaceholderText("Choose a username"), "bia")
+        fireEvent.changeText(getByPlaceholderText("Choose a username"), "bi")
         fireEvent.changeText(getByPlaceholderText("Enter your email"), "not-an-email")
         fireEvent.changeText(getByPlaceholderText("Create a secure password"), "123")
         fireEvent.changeText(getByPlaceholderText("Confirm your password"), "12345679")
         fireEvent.press(getByText("Sign Up"))
 
-        expect(await findByText("Username must be at least 5 characters.")).toBeTruthy()
+        expect(await findByText("Username must be at least 3 characters.")).toBeTruthy()
         expect(await findByText("Please enter a valid email address.")).toBeTruthy()
         expect(await findByText("Password must be at least 8 characters.")).toBeTruthy()
         expect(await findByText("Passwords must match.")).toBeTruthy()

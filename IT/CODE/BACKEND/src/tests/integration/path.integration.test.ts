@@ -2,6 +2,9 @@ import { describe, test, expect, beforeEach } from "@jest/globals";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 
+const geocodeAddressMock = jest.fn();
+const snapToRoadMock = jest.fn();
+
 jest.mock("../../utils/prisma-client", () => ({
     __esModule: true,
     default: {
@@ -29,20 +32,24 @@ jest.mock("../../utils/logger", () => ({
     },
 }));
 
-jest.mock("../../services/geocoding.service", () => ({
-    geocodeAddress: jest.fn(),
+jest.mock("../../services/index.js", () => ({
+    geocodeAddress: geocodeAddressMock,
+    snapToRoad: snapToRoadMock,
 }));
-
-jest.mock("../../services/osrm.service", () => ({
-    snapToRoad: jest.fn(),
+jest.mock("../../services/index", () => ({
+    geocodeAddress: geocodeAddressMock,
+    snapToRoad: snapToRoadMock,
 }));
 
 import { app } from "../../server";
 import prisma from "../../utils/prisma-client";
-import { geocodeAddress } from "../../services/geocoding.service";
-import { snapToRoad } from "../../services/osrm.service";
 
 describe("Path Routes Integration Tests", () => {
+    const assertStatus = (response: { status: number; body: unknown }, expected: number) => {
+        if (response.status !== expected) {
+            throw new Error(`Expected ${expected}, got ${response.status}: ${JSON.stringify(response.body)}`);
+        }
+    };
 
     const generateValidAccessToken = (userId: string) => {
         return jwt.sign({ userId }, process.env.JWT_SECRET!, { expiresIn: "15m" });
@@ -62,11 +69,11 @@ describe("Path Routes Integration Tests", () => {
         (prisma.path.delete as jest.Mock).mockReset();
         (prisma.segment.create as jest.Mock).mockReset();
         (prisma.segment.findMany as jest.Mock).mockReset();
-        (geocodeAddress as jest.Mock).mockReset();
-        (snapToRoad as jest.Mock).mockReset();
+        geocodeAddressMock.mockReset();
+        snapToRoadMock.mockReset();
     });
 
-    describe("Testing POST /api/v1/paths/create", () => {
+    describe("Testing POST /api/v1/paths", () => {
 
         test("Should create a manual path successfully", async () => {
             const accessToken = generateValidAccessToken("user123");
@@ -101,7 +108,7 @@ describe("Path Routes Integration Tests", () => {
                 status: "OPTIMAL",
                 score: null,
                 title: "Test Path",
-                description: null,
+                description: "Test description",
                 distanceKm: 0.64,
                 pathSegments: mockPathSegments
             };
@@ -129,7 +136,7 @@ describe("Path Routes Integration Tests", () => {
             (prisma.path.findUnique as jest.Mock).mockResolvedValueOnce(mockPath);
 
             const response = await request(app)
-                .post("/api/v1/paths/create")
+                .post("/api/v1/paths")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({
                     pathSegments: [
@@ -137,7 +144,8 @@ describe("Path Routes Integration Tests", () => {
                     ],
                     visibility: true,
                     creationMode: "manual",
-                    title: "Test Path"
+                    title: "Test Path",
+                    description: "Test description"
                 });
 
             expect(response.status).toBe(201);
@@ -146,11 +154,28 @@ describe("Path Routes Integration Tests", () => {
             expect(response.body.data.status).toBe("OPTIMAL");
         });
 
+        test("Should return 401 for missing access token", async () => {
+            const response = await request(app)
+                .post("/api/v1/paths")
+                .send({
+                    pathSegments: [
+                        { start: { lat: 45.4642, lng: 9.1900 }, end: { lat: 45.4700, lng: 9.1950 } }
+                    ],
+                    visibility: true,
+                    creationMode: "manual",
+                    title: "Test Path",
+                    description: "Test description"
+                });
+
+            expect(response.status).toBe(401);
+            expect(response.body.error.code).toBe("ACCESS_TOKEN_MISSING");
+        });
+
         test("Should return 400 for missing required fields", async () => {
             const accessToken = generateValidAccessToken("user123");
 
             const response = await request(app)
-                .post("/api/v1/paths/create")
+                .post("/api/v1/paths")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({
                     pathSegments: [
@@ -197,14 +222,16 @@ describe("Path Routes Integration Tests", () => {
             (prisma.path.findMany as jest.Mock).mockResolvedValue([existingPath]);
 
             const response = await request(app)
-                .post("/api/v1/paths/create")
+                .post("/api/v1/paths")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({
                     pathSegments: [
                         { start: { lat: 45.4642, lng: 9.1900 }, end: { lat: 45.4700, lng: 9.1950 } }
                     ],
                     visibility: true,
-                    creationMode: "manual"
+                    creationMode: "manual",
+                    title: "Existing Path",
+                    description: "Existing description"
                 });
 
             expect(response.status).toBe(409);
@@ -214,6 +241,28 @@ describe("Path Routes Integration Tests", () => {
     });
 
     describe("Testing GET /api/v1/paths/search", () => {
+
+        test("Should return 400 when origin is missing", async () => {
+            const response = await request(app)
+                .get("/api/v1/paths/search")
+                .query({
+                    destination: "Stazione Centrale, Milano"
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error.code).toBe("VALIDATION_ERROR");
+        });
+
+        test("Should return 400 when destination is missing", async () => {
+            const response = await request(app)
+                .get("/api/v1/paths/search")
+                .query({
+                    origin: "Piazza Duomo, Milano"
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error.code).toBe("VALIDATION_ERROR");
+        });
 
         test("Should find matching public paths", async () => {
             const mockPath = {
@@ -242,36 +291,32 @@ describe("Path Routes Integration Tests", () => {
                 ]
             };
 
-            (geocodeAddress as jest.Mock).mockResolvedValueOnce({ lat: 45.4642, lng: 9.1900 });
-            (geocodeAddress as jest.Mock).mockResolvedValueOnce({ lat: 45.4700, lng: 9.1950 });
+            geocodeAddressMock.mockResolvedValueOnce({ lat: 45.4642, lng: 9.1900 });
+            geocodeAddressMock.mockResolvedValueOnce({ lat: 45.4700, lng: 9.1950 });
             (prisma.path.findMany as jest.Mock).mockResolvedValue([mockPath]);
 
+            const originQuery = encodeURIComponent("Piazza Duomo, Milano");
+            const destinationQuery = encodeURIComponent("Stazione Centrale, Milano");
             const response = await request(app)
-                .get("/api/v1/paths/search")
-                .query({
-                    origin: "Piazza Duomo, Milano",
-                    destination: "Stazione Centrale, Milano"
-                });
+                .get(`/api/v1/paths/search?origin=${originQuery}&destination=${destinationQuery}`);
 
-            expect(response.status).toBe(200);
+            assertStatus(response, 200);
             expect(response.body.success).toBe(true);
             expect(response.body.data.count).toBeGreaterThan(0);
             expect(response.body.data.paths[0]).toHaveProperty("pathId");
         });
 
         test("Should return 404 when no paths found", async () => {
-            (geocodeAddress as jest.Mock).mockResolvedValueOnce({ lat: 45.4642, lng: 9.1900 });
-            (geocodeAddress as jest.Mock).mockResolvedValueOnce({ lat: 45.4700, lng: 9.1950 });
+            geocodeAddressMock.mockResolvedValueOnce({ lat: 45.4642, lng: 9.1900 });
+            geocodeAddressMock.mockResolvedValueOnce({ lat: 45.4700, lng: 9.1950 });
             (prisma.path.findMany as jest.Mock).mockResolvedValue([]);
 
+            const originQuery = encodeURIComponent("Nonexistent Place");
+            const destinationQuery = encodeURIComponent("Another Nonexistent Place");
             const response = await request(app)
-                .get("/api/v1/paths/search")
-                .query({
-                    origin: "Nonexistent Place",
-                    destination: "Another Nonexistent Place"
-                });
+                .get(`/api/v1/paths/search?origin=${originQuery}&destination=${destinationQuery}`);
 
-            expect(response.status).toBe(404);
+            assertStatus(response, 404);
             expect(response.body.error.code).toBe("NO_ROUTE");
         });
 
@@ -288,7 +333,7 @@ describe("Path Routes Integration Tests", () => {
                 { lat: 45.4700, lng: 9.1950 }
             ];
 
-            (snapToRoad as jest.Mock).mockResolvedValue(snappedCoords);
+            snapToRoadMock.mockResolvedValue(snappedCoords);
 
             const response = await request(app)
                 .post("/api/v1/paths/snap")
@@ -321,7 +366,7 @@ describe("Path Routes Integration Tests", () => {
 
     });
 
-    describe("Testing GET /api/v1/paths/my-paths", () => {
+    describe("Testing GET /api/v1/paths?owner=me", () => {
 
         test("Should return all user paths", async () => {
             const accessToken = generateValidAccessToken("user123");
@@ -357,7 +402,7 @@ describe("Path Routes Integration Tests", () => {
             (prisma.path.findMany as jest.Mock).mockResolvedValue(mockPaths);
 
             const response = await request(app)
-                .get("/api/v1/paths/my-paths")
+                .get("/api/v1/paths?owner=me")
                 .set("Authorization", `Bearer ${accessToken}`);
 
             expect(response.status).toBe(200);
@@ -372,12 +417,29 @@ describe("Path Routes Integration Tests", () => {
             (prisma.path.findMany as jest.Mock).mockResolvedValue([]);
 
             const response = await request(app)
-                .get("/api/v1/paths/my-paths")
+                .get("/api/v1/paths?owner=me")
                 .set("Authorization", `Bearer ${accessToken}`);
 
             expect(response.status).toBe(200);
             expect(response.body.data.count).toBe(0);
             expect(response.body.data.paths).toEqual([]);
+        });
+
+        test("Should return 401 for missing access token", async () => {
+            const response = await request(app)
+                .get("/api/v1/paths?owner=me");
+
+            expect(response.status).toBe(401);
+            expect(response.body.error.code).toBe("ACCESS_TOKEN_MISSING");
+        });
+
+        test("Should return 403 for invalid access token", async () => {
+            const response = await request(app)
+                .get("/api/v1/paths?owner=me")
+                .set("Authorization", "Bearer invalid-token");
+
+            expect(response.status).toBe(403);
+            expect(response.body.error.code).toBe("INVALID_ACCESS_TOKEN");
         });
 
     });
