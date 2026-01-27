@@ -129,11 +129,15 @@ export class TripManager {
                 })
             );
 
+            const tripReports = await Promise.all(
+                trips.map(trip => queryManager.getReportsByTripId(trip.tripId))
+            );
+
             res.json({
                 success: true,
                 data: {
                     count: trips.length,
-                    trips: trips.map(trip => ({
+                    trips: trips.map((trip, index) => ({
                         tripId: trip.tripId,
                         createdAt: trip.createdAt,
                         startedAt: trip.startedAt,
@@ -143,6 +147,7 @@ export class TripManager {
                         destination: trip.destination,
                         statistics: trip.statistics,
                         weather: trip.weather,
+                        reports: tripReports[index] ?? [],
                         segmentCount: trip.tripSegments.length,
                         tripSegments: trip.tripSegments.map(ts => ({
                             segmentId: ts.segmentId,

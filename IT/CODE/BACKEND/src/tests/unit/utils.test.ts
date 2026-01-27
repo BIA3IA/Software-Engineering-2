@@ -118,6 +118,7 @@ describe("Testing sortPathSegmentsByChain function", () => {
                 segmentId: "seg1",
                 nextSegmentId: null,
                 pathId: "path1",
+                status: "OPTIMAL",
                 segment: {
                     segmentId: "seg1",
                     status: "OPTIMAL",
@@ -139,6 +140,7 @@ describe("Testing sortPathSegmentsByChain function", () => {
                 segmentId: "seg3",
                 nextSegmentId: "seg1",
                 pathId: "path1",
+                status: "OPTIMAL",
                 segment: {
                     segmentId: "seg3",
                     status: "OPTIMAL",
@@ -150,6 +152,7 @@ describe("Testing sortPathSegmentsByChain function", () => {
                 segmentId: "seg1",
                 nextSegmentId: null,
                 pathId: "path1",
+                status: "OPTIMAL",
                 segment: {
                     segmentId: "seg1",
                     status: "OPTIMAL",
@@ -161,6 +164,7 @@ describe("Testing sortPathSegmentsByChain function", () => {
                 segmentId: "seg2",
                 nextSegmentId: "seg3",
                 pathId: "path1",
+                status: "OPTIMAL",
                 segment: {
                     segmentId: "seg2",
                     status: "OPTIMAL",

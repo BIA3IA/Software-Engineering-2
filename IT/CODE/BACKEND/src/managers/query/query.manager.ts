@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { sortTripSegmentsByChain, sortPathSegmentsByChain, prisma } from "../../utils/index.js";
 import { TripSegments, TripStatistics, WeatherData, PathWithSegments, Coordinates } from "../../types/index.js";
-import { haversineDistanceMeters } from "../../utils/geo.js";
 
 
 export class QueryManager {
@@ -311,16 +310,7 @@ export class QueryManager {
         } as PathWithSegments;
     }
 
-    async searchPathsByOriginDestination(
-        origin: Coordinates, 
-        destination: Coordinates, 
-        userId?: string
-    ): Promise<PathWithSegments[]> {
-        // Tolerance radius in degrees (approximately 200m)
-        const tolerance = 0.002;
-        const maxDistanceMeters = 200;
-        const nearDistanceBufferMeters = 50;
-
+    async searchPathsByOriginDestination(userId?: string): Promise<PathWithSegments[]> {
         const paths = await prisma.path.findMany({
             where: {
                 OR: [
@@ -335,73 +325,15 @@ export class QueryManager {
                     },
                 },
             },
-            orderBy: [
-                { score: { sort: 'desc', nulls: 'last' } },
-                { createdAt: 'desc' },
-            ],
+            orderBy: {
+                createdAt: 'desc',
+            },
         });
 
-        // Filter paths that match origin and destination within tolerance
-        const matchingPaths: Array<{ path: PathWithSegments; maxDistance: number }> = [];
-
-        for (const path of paths) {
-            const pathOrigin = path.origin;
-            const pathDestination = path.destination;
-
-            const originMatch =
-                Math.abs(pathOrigin.lat - origin.lat) <= tolerance &&
-                Math.abs(pathOrigin.lng - origin.lng) <= tolerance;
-
-            const destinationMatch =
-                Math.abs(pathDestination.lat - destination.lat) <= tolerance &&
-                Math.abs(pathDestination.lng - destination.lng) <= tolerance;
-
-            if (!originMatch || !destinationMatch) {
-                continue;
-            }
-
-            const originDistance = haversineDistanceMeters(origin, pathOrigin);
-            const destinationDistance = haversineDistanceMeters(destination, pathDestination);
-            const maxDistance = Math.max(originDistance, destinationDistance);
-
-            matchingPaths.push({
-                path: path as PathWithSegments,
-                maxDistance,
-            });
-        }
-
-        if (!matchingPaths.length) {
-            return [];
-        }
-
-        const minDistance = Math.min(...matchingPaths.map(entry => entry.maxDistance));
-        const distanceCutoff = Math.min(maxDistanceMeters, minDistance + nearDistanceBufferMeters);
-
-        const filteredByDistance = matchingPaths
-            .filter(entry => entry.maxDistance <= distanceCutoff)
-            .sort((a, b) => a.maxDistance - b.maxDistance)
-            .map(entry => entry.path);
-
-        return filteredByDistance.map(path => ({
+        return paths.map(path => ({
             ...path,
             pathSegments: sortPathSegmentsByChain(path.pathSegments),
         })) as PathWithSegments[];
-    }
-
-    // update path score
-    async updatePathScore(pathId: string, score: number) {
-        return await prisma.path.update({
-            where: { pathId },
-            data: { score },
-        });
-    }
-
-    // update path status
-    async updatePathStatus(pathId: string, status: string) {
-        return await prisma.path.update({
-            where: { pathId },
-            data: { status },
-        });
     }
 
     // delete path by id
@@ -470,16 +402,38 @@ export class QueryManager {
             },
         });
     }
-        async getSegmentById(segmentId: string) {
+
+    // get segment by id
+    async getSegmentById(segmentId: string) {
         return await prisma.segment.findUnique({
             where: { segmentId },
         });
     }
+
+    // get path segment by id
+    async getPathSegmentById(pathSegmentId: string) {
+        return await prisma.pathSegment.findUnique({
+            where: { id: pathSegmentId },
+        });
+    }
+
+    // update path segment status
+    async updatePathSegmentStatus(pathSegmentId: string, status: string) {
+        return await prisma.pathSegment.update({
+            where: { id: pathSegmentId },
+            data: { status },
+        });
+    }
+
+    // REPORTS
+
+    // create report
     async createReport(data: {
         userId: string;
         pathSegmentId: string;
         tripId: string;
         obstacleType: string;
+        pathStatus: string;
         position: any; // Coordinates JSON
         reportMode: string;
         status: string;
@@ -490,22 +444,26 @@ export class QueryManager {
                 pathSegmentId: data.pathSegmentId,
                 tripId: data.tripId,
                 obstacleType: data.obstacleType,
+                pathStatus: data.pathStatus,
                 position: data.position,
                 reportMode: data.reportMode,
                 status: data.status,
             },
         });
     }
+
+    // get report by id
     async getReportById(reportId: string) {
         return await prisma.report.findUnique({
             where: { reportId },
         });
     }
+
+    // get reports by trip id
     async getReportsByTripId(tripId: string) {
         return await prisma.report.findMany({
             where: { tripId },
             include: {
-                confirmations: true, // Optional: include confirmations for details
                 user: {
                     select: { username: true } // Identify reporter
                 }
@@ -513,22 +471,32 @@ export class QueryManager {
             orderBy: { createdAt: 'desc' },
         });
     }
-    async getReportsByPathSegmentId(pathSegmentId: string) {
+
+    // get reports by path id
+    async getReportsByPathId(pathId: string) {
         return await prisma.report.findMany({
-            where: { pathSegmentId },
+            where: {
+                pathSegment: {
+                    pathId,
+                },
+            },
             include: {
-                confirmations: true
+                user: {
+                    select: { username: true },
+                },
+                pathSegment: {
+                    select: { pathId: true },
+                },
             },
             orderBy: { createdAt: 'desc' },
         });
     }
-    async createConfirmation(userId: string, reportId: string, decision: string) {
-        return await prisma.confirmation.create({
-            data: {
-                userId,
-                reportId,
-                decision,
-            },
+
+    // get reports by path segment id
+    async getReportsByPathSegmentId(pathSegmentId: string) {
+        return await prisma.report.findMany({
+            where: { pathSegmentId },
+            orderBy: { createdAt: 'desc' },
         });
     }
 

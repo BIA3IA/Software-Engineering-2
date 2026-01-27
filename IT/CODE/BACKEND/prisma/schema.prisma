@@ -30,7 +30,6 @@ model User {
   trips             Trip[]
   paths             Path[]
   reports           Report[]
-  confirmations     Confirmation[]
 }
 
 model RefreshToken {
@@ -89,14 +88,12 @@ model Path {
   user         User          @relation(fields: [userId], references: [userId], onDelete: Cascade)
   createdAt    DateTime      @default(now())
   pathSegments PathSegment[]
-  status       String        @default("OPTIMAL")
   /// [Coordinates]
   origin       Json
   /// [Coordinates]
   destination  Json
   visibility   Boolean       @default(false)
   creationMode String        @default("MANUAL")
-  score        Float?
   title        String?
   description  String?
   distanceKm   Float?
@@ -125,19 +122,8 @@ model Report {
   tripId        String
   trip          Trip        @relation(fields: [tripId], references: [tripId], onDelete: Cascade)
   obstacleType  String // Enum values: POTHOLE, WORK_IN_PROGRESS, FLOODING, OBSTACLE, OTHER
+  pathStatus    String      @default("SUFFICIENT") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
   status        String      @default("CREATED") // Enum values: CONFIRMED, REJECTED, IGNORED, CREATED
   reportMode    String // Enum values: MANUAL, AUTOMATIC (Maps to 'creationMode')
   position      Json
-
-  confirmations Confirmation[]
-}
-
-model Confirmation {
-  confirmationId String   @id @default(cuid())
-  reportId       String
-  report         Report   @relation(fields: [reportId], references: [reportId], onDelete: Cascade)
-  userId         String
-  user           User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  createdAt      DateTime @default(now())
-  decision       String // e.g., "CONFIRMED", "REJECTED"
 }

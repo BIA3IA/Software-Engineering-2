@@ -11,6 +11,9 @@ jest.mock("../../utils/prisma-client", () => ({
             create: jest.fn(),
             delete: jest.fn(),
         },
+        report: {
+            findMany: jest.fn(),
+        },
         segment: {
             findMany: jest.fn(),
             create: jest.fn(),
@@ -175,6 +178,7 @@ describe("Trip Routes Integration Tests", () => {
             ];
 
             (prisma.trip.findMany as jest.Mock).mockResolvedValue(mockTrips);
+            (prisma.report.findMany as jest.Mock).mockResolvedValue([]);
 
             const response = await request(app)
                 .get("/api/v1/trips?owner=me")
@@ -192,6 +196,7 @@ describe("Trip Routes Integration Tests", () => {
             const accessToken = generateValidAccessToken("user123");
 
             (prisma.trip.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.report.findMany as jest.Mock).mockResolvedValue([]);
 
             const response = await request(app)
                 .get("/api/v1/trips?owner=me")

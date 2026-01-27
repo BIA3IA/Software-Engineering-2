@@ -10,8 +10,6 @@ jest.mock('../../managers/query', () => ({
         getPathsByUserId: jest.fn(),
         deletePathById: jest.fn(),
         changePathVisibility: jest.fn(),
-        updatePathStatus: jest.fn(),
-        getSegmentStatistics: jest.fn(),
     }
 }));
 
@@ -88,8 +86,6 @@ describe("Testing PathManager business logic", () => {
                 visibility: true,
                 creationMode: "manual",
                 title: "My Route",
-                status: "OPTIMAL",
-                score: null,
                 distanceKm: 0.5,
                 createdAt: new Date(),
                 pathSegments: [
@@ -104,9 +100,6 @@ describe("Testing PathManager business logic", () => {
             (queryManager.getPathByOriginDestination as jest.Mock).mockResolvedValue(null);
             (queryManager.createSegment as jest.Mock).mockResolvedValue(mockSegment);
             (queryManager.createPath as jest.Mock).mockResolvedValue(mockPath);
-            (queryManager.getSegmentStatistics as jest.Mock).mockResolvedValue([
-                { segmentId: "segment1", status: "OPTIMAL", createdAt: new Date() }
-            ]);
             (queryManager.getPathById as jest.Mock).mockResolvedValue(mockPath);
 
             const res = mockResponse();
@@ -121,8 +114,7 @@ describe("Testing PathManager business logic", () => {
                 success: true,
                 message: 'Path created successfully',
                 data: expect.objectContaining({
-                    pathId: "path1",
-                    status: "OPTIMAL"
+                    pathId: "path1"
                 })
             });
         });
@@ -334,8 +326,6 @@ describe("Testing PathManager business logic", () => {
                     userId: "user123",
                     title: "Route 1",
                     description: "Description",
-                    status: "OPTIMAL",
-                    score: null,
                     visibility: true,
                     origin: { lat: 45.4642, lng: 9.1900 },
                     destination: { lat: 45.4700, lng: 9.1950 },
@@ -345,6 +335,7 @@ describe("Testing PathManager business logic", () => {
                         {
                             segmentId: "segment1",
                             nextSegmentId: null,
+                            status: "OPTIMAL",
                             segment: {
                                 polylineCoordinates: [
                                     { lat: 45.4642, lng: 9.1900 },
@@ -624,55 +615,6 @@ describe("Testing PathManager business logic", () => {
             );
         });
 
-    });
-
-    describe("Testing calculatePathStatus method", () => {
-        test("Should return CLOSED when path has no segments", async () => {
-            const mockPath = {
-                pathId: "path1",
-                pathSegments: []
-            };
-
-            (queryManager.getPathById as jest.Mock).mockResolvedValue(mockPath);
-
-            const result = await new PathManager().calculatePathStatus("path1");
-
-            expect(result).toBe("CLOSED");
-            expect(queryManager.updatePathStatus).not.toHaveBeenCalled();
-        });
-
-        test("Should return CLOSED when no segment statistics found", async () => {
-            const mockPath = {
-                pathId: "path1",
-                pathSegments: [{ segmentId: "segment1" }]
-            };
-
-            (queryManager.getPathById as jest.Mock).mockResolvedValue(mockPath);
-            (queryManager.getSegmentStatistics as jest.Mock).mockResolvedValue([]);
-
-            const result = await new PathManager().calculatePathStatus("path1");
-
-            expect(result).toBe("CLOSED");
-            expect(queryManager.updatePathStatus).not.toHaveBeenCalled();
-        });
-
-        test("Should calculate status based on average segment score", async () => {
-            const mockPath = {
-                pathId: "path1",
-                pathSegments: [{ segmentId: "segment1" }, { segmentId: "segment2" }]
-            };
-
-            (queryManager.getPathById as jest.Mock).mockResolvedValue(mockPath);
-            (queryManager.getSegmentStatistics as jest.Mock).mockResolvedValue([
-                { segmentId: "segment1", status: "OPTIMAL", createdAt: new Date() },
-                { segmentId: "segment2", status: "MEDIUM", createdAt: new Date() }
-            ]);
-
-            const result = await new PathManager().calculatePathStatus("path1");
-
-            expect(result).toBe("OPTIMAL");
-            expect(queryManager.updatePathStatus).toHaveBeenCalledWith("path1", "OPTIMAL");
-        });
     });
 
 });

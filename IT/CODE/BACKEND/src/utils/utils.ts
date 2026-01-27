@@ -85,3 +85,23 @@ export function sortPathSegmentsByChain(segments: PathSegmentItem[]): PathSegmen
 
     return sortedSegments;
 }
+
+export function clamp(value: number, min: number, max: number) {
+    return Math.max(min, Math.min(max, value));
+}
+
+export function mapScoreToStatus(score: number) {
+    if (score >= 4.5) {
+        return 'OPTIMAL';
+    }
+    if (score >= 3.5) {
+        return 'MEDIUM';
+    }
+    if (score >= 2.5) {
+        return 'SUFFICIENT';
+    }
+    if (score >= 1.5) {
+        return 'REQUIRES_MAINTENANCE';
+    }
+    return 'CLOSED';
+}

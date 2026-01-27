@@ -1,17 +1,25 @@
 // Path-related type definitions for TypeScript type checking purposes
 import { Coordinates, Segment } from './index.js';
 
+export const PATH_STATUS_SCORE_MAP = {
+    OPTIMAL: 5,
+    MEDIUM: 4,
+    SUFFICIENT: 3,
+    REQUIRES_MAINTENANCE: 2,
+    CLOSED: 1,
+} as const;
+
+export type PathStatus = keyof typeof PATH_STATUS_SCORE_MAP;
+
 // Base Path interface
 export interface Path {
     pathId: string;
     userId: string;
     createdAt: Date;
-    status: string;
     origin: Coordinates;
     destination: Coordinates;
     visibility: boolean;
     creationMode: string;
-    score: number | null;
     title: string | null;
     description: string | null;
     distanceKm: number | null;
@@ -20,6 +28,7 @@ export interface Path {
 
 // Base path segment without the joined Segment
 export interface PathSegment {
+    status: string;
     segmentId: string;
     nextSegmentId: string | null;
     pathId: string;
@@ -30,6 +39,7 @@ export interface PathSegment {
 
 // Path segment with the joined Segment, used when fetching paths with their segments
 export interface PathSegmentWithSegment extends PathSegment {
+    status: string;
     segment: Segment;
 }
 

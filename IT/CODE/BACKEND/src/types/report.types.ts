@@ -6,16 +6,6 @@ export type ReportStatus = 'CONFIRMED' | 'REJECTED' | 'IGNORED' | 'CREATED';
 
 export type ReportMode = 'MANUAL' | 'AUTOMATIC';
 
-export type ConfirmationDecision = 'CONFIRMED' | 'REJECTED';
-
-export interface Confirmation {
-    confirmationId: string;
-    reportId: string;
-    userId: string;
-    createdAt: Date;
-    decision: ConfirmationDecision;
-}
-
 export interface Report {
     reportId: string;
     createdAt: Date;
@@ -28,8 +18,4 @@ export interface Report {
     reportMode: ReportMode;
     position: Coordinates;
     pathStatus: string;
-}
-
-export interface ReportWithConfirmations extends Report {
-    confirmations: Confirmation[];
 }

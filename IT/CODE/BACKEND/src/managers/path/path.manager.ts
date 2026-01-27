@@ -1,18 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { queryManager } from '../query/index.js';
-import { Coordinates, PathWithSegments } from '../../types/index.js';
+import { Coordinates, PathWithSegments, PATH_STATUS_SCORE_MAP } from '../../types/index.js';
+import { mapScoreToStatus } from '../../utils/utils.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import logger from '../../utils/logger';
 import { snapToRoad, geocodeAddress } from '../../services/index.js';
-import { polylineDistanceKm } from '../../utils/geo.js';
-
-const STATUS_SCORE_MAP = {
-    OPTIMAL: 5,
-    MEDIUM: 4,
-    SUFFICIENT: 3,
-    REQUIRES_MAINTENANCE: 2,
-    CLOSED: 1,
-} as const;
+import { haversineDistanceMeters, polylineDistanceKm } from '../../utils/geo.js';
 
 export class PathManager {
 
@@ -101,13 +94,6 @@ export class PathManager {
                     distanceKm
                 );
 
-                // Calculate and update path status
-                const score = await this.calculatePathStatus(path.pathId);
-
-                if (score !== null)  {
-                    queryManager.updatePathStatus(path.pathId, score);
-                }
-
                 const updatedPath = await queryManager.getPathById(path.pathId);
 
                 if (!updatedPath) {
@@ -120,7 +106,6 @@ export class PathManager {
                     data: {
                         pathId: updatedPath.pathId,
                         createdAt: updatedPath.createdAt,
-                        status: updatedPath.status,
                         visibility: updatedPath.visibility,
                         distanceKm: updatedPath.distanceKm,
                     },
@@ -141,86 +126,20 @@ export class PathManager {
         }
     }
 
-    /* Calculate path status based on segment status scores
-       Formula (without reports for now):
-       PathStatus = Σ(statusScore) / number_of_segments
-       
-       Then map to status:
-       - >= 4.5 -> OPTIMAL
-       - >= 3.5 -> MEDIUM
-       - >= 2.5 -> SUFFICIENT
-       - >= 1.5 -> REQUIRES_MAINTENANCE
-       - default -> CLOSED
-
-       TODO: consider background jobs or service to periodically recalculate path statuses based on reports and segment updates?
-    */
-    async calculatePathStatus(pathId: string): Promise<string> {
-        try {
-            const path = await queryManager.getPathById(pathId);
-
-            if (!path) {
-                throw new NotFoundError('Path not found', 'PATH_NOT_FOUND');
-            }
-
-            // Get all segment IDs from the path
-            const segmentIds = path.pathSegments.map(ps => ps.segmentId);
-
-            if (segmentIds.length === 0) {
-                //logger.warn({ pathId }, 'Path has no segments');
-                return 'CLOSED';
-            }
-
-            // Get segment statistics
-            const segments = await queryManager.getSegmentStatistics(segmentIds);
-
-            if (segments.length === 0) {
-                //logger.warn({ pathId, segmentIds }, 'No segments found for path');
-                return 'CLOSED';
-            }
-
-            // Calculate total status score
-            let totalStatusScore = 0;
-            
-            for (const segment of segments) {
-                const statusScore = STATUS_SCORE_MAP[segment.status as keyof typeof STATUS_SCORE_MAP] || 0;
-                totalStatusScore += statusScore;
-            }
-
-            // Calculate average status score
-            const averageStatusScore = totalStatusScore / segments.length;
-
-            //logger.debug({ 
-            //    pathId, 
-            //    totalStatusScore, 
-            //    segmentCount: segments.length, 
-            //    averageStatusScore 
-            //}, 'Calculated path status score');
-
-            // Determine path status based on average score
-            let pathStatus: string;
-
-            if (averageStatusScore >= 4.5) {
-                pathStatus = 'OPTIMAL';
-            } else if (averageStatusScore >= 3.5) {
-                pathStatus = 'MEDIUM';
-            } else if (averageStatusScore >= 2.5) {
-                pathStatus = 'SUFFICIENT';
-            } else if (averageStatusScore >= 1.5) {
-                pathStatus = 'REQUIRES_MAINTENANCE';
-            } else {
-                pathStatus = 'CLOSED';
-            }
-
-            // Update path status in database
-            await queryManager.updatePathStatus(pathId, pathStatus);
-
-            //logger.info({ pathId, pathStatus, averageStatusScore }, 'Path status updated');
-
-            return pathStatus;
-        } catch (error) {
-            //logger.error({ err: error, pathId }, 'Error calculating path status');
-            throw error;
+    private computePathStatusFromSegments(pathSegments: PathWithSegments['pathSegments']) {
+        if (pathSegments.length === 0) {
+            return { status: 'OPTIMAL' };
         }
+
+        const totalStatusScore = pathSegments.reduce((sum, segment) => {
+            const statusScore = PATH_STATUS_SCORE_MAP[segment.status as keyof typeof PATH_STATUS_SCORE_MAP] || 0;
+            return sum + statusScore;
+        }, 0);
+
+        const averageStatusScore = totalStatusScore / pathSegments.length;
+        const status = mapScoreToStatus(averageStatusScore);
+
+        return { status };
     }
 
     // User searches path
@@ -252,14 +171,63 @@ export class PathManager {
             const originCoords = await geocodeAddress(originText);
             const destinationCoords = await geocodeAddress(destinationText);
 
-            const paths = await queryManager.searchPathsByOriginDestination(originCoords, destinationCoords, userId);
+            const paths = await queryManager.searchPathsByOriginDestination(userId);
 
-            if (paths.length === 0) {
+            // Tolerance radius in degrees (approximately 200m)
+            const tolerance = 0.002;
+            const maxDistanceMeters = 200;
+            const nearDistanceBufferMeters = 50;
+
+            const matchingPaths: Array<{ path: PathWithSegments; maxDistance: number }> = [];
+
+            for (const path of paths) {
+                const pathOrigin = path.origin;
+                const pathDestination = path.destination;
+
+                const originMatch =
+                    Math.abs(pathOrigin.lat - originCoords.lat) <= tolerance &&
+                    Math.abs(pathOrigin.lng - originCoords.lng) <= tolerance;
+
+                const destinationMatch =
+                    Math.abs(pathDestination.lat - destinationCoords.lat) <= tolerance &&
+                    Math.abs(pathDestination.lng - destinationCoords.lng) <= tolerance;
+
+                if (!originMatch || !destinationMatch) {
+                    continue;
+                }
+
+                const originDistance = haversineDistanceMeters(originCoords, pathOrigin);
+                const destinationDistance = haversineDistanceMeters(destinationCoords, pathDestination);
+                const maxDistance = Math.max(originDistance, destinationDistance);
+
+                matchingPaths.push({
+                    path,
+                    maxDistance,
+                });
+            }
+
+            if (!matchingPaths.length) {
                 throw new NotFoundError('No routes found for the specified origin and destination', 'NO_ROUTE');
             }
 
+            const minDistance = Math.min(...matchingPaths.map(entry => entry.maxDistance));
+            const distanceCutoff = Math.min(maxDistanceMeters, minDistance + nearDistanceBufferMeters);
+
+            const filteredByDistance = matchingPaths
+                .filter(entry => entry.maxDistance <= distanceCutoff)
+                .sort((a, b) => a.maxDistance - b.maxDistance)
+                .map(entry => entry.path);
+
+            const pathsWithComputedStatus = filteredByDistance.map(path => {
+                const { status } = this.computePathStatusFromSegments(path.pathSegments);
+                return {
+                    ...path,
+                    status,
+                };
+            });
+
             // Compute optimal paths by filtering and sorting
-            const optimalPaths = paths
+            const optimalPaths = pathsWithComputedStatus
                 .filter(path => {
                     // Exclude CLOSED paths from suggestions
                     if (path.status === 'CLOSED'){
@@ -284,7 +252,13 @@ export class PathManager {
                         return statusA - statusB;
                     }
 
-                    // Sort by freshness??
+                    // If same status, prefer shorter
+                    const distanceA = a.distanceKm ?? Number.POSITIVE_INFINITY;
+                    const distanceB = b.distanceKm ?? Number.POSITIVE_INFINITY;
+                    if (distanceA !== distanceB) {
+                        return distanceA - distanceB;
+                    }
+
                     return b.createdAt.getTime() - a.createdAt.getTime();
                 });
 
@@ -298,7 +272,6 @@ export class PathManager {
                         title: path.title,
                         description: path.description,
                         status: path.status,
-                        score: path.score,
                         visibility: path.visibility,
                         origin: path.origin,
                         destination: path.destination,
@@ -336,8 +309,6 @@ export class PathManager {
                         pathId: path.pathId,
                         title: path.title,
                         description: path.description,
-                        status: path.status,
-                        score: path.score,
                         visibility: path.visibility,
                         origin: path.origin,
                         destination: path.destination,
