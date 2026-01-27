@@ -171,6 +171,31 @@ affecting images or configuration files.
 All backend services can be stopped and restarted at any time without affecting the host system, as the
 entire runtime environment is isolated within containers.
 
+\subsection{Backend Services in Local Development}
+\label{subsec:backend_services_local}
+
+Some backend functionalities depend on external services. In a local
+development environment, these services behave differently depending on their availability and deployment
+model.
+
+Weather-related features rely on the \textbf{Open-Meteo} service. This integration works out of the box
+in local development, as Open-Meteo provides a public API that does not require authentication or API
+keys.
+
+Geocoding functionalities are handled through \textbf{Nominatim}. In the local setup, no additional
+configuration is required, as the backend uses the public Nominatim API to resolve textual addresses into
+geographic coordinates.
+
+Path snapping functionalities depend on \textbf{OSRM} (Open Source Routing Machine). Unlike the previous
+services, OSRM is not a public API and must be explicitly deployed as a separate service. In the production
+environment, OSRM runs as a dedicated container and is accessed by the backend through an internal HTTP
+interface. In a local development setup, OSRM is not available by default.
+
+As a result, snapping-related features are disabled locally unless an OSRM instance is explicitly
+configured. Developers who need to test path snapping locally have to deploy OSRM locally by following
+the OSRM deployment procedure, which involves downloading OpenStreetMap extracts, preprocessing the dataset,
+and running the OSRM service inside a Docker container.
+
 \section{Frontend Setup}
 \label{sec:frontend_setup}
 
