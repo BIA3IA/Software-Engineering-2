@@ -81,6 +81,7 @@ describe("Testing PathManager business logic", () => {
             const mockPath = {
                 pathId: "path1",
                 userId: "user123",
+                status: "OPTIMAL",
                 origin: { lat: 45.4642, lng: 9.1900 },
                 destination: { lat: 45.4700, lng: 9.1950 },
                 visibility: true,
@@ -92,6 +93,7 @@ describe("Testing PathManager business logic", () => {
                     {
                         segmentId: "segment1",
                         nextSegmentId: null,
+                        status: "OPTIMAL",
                         segment: mockSegment
                     }
                 ]
@@ -217,6 +219,7 @@ describe("Testing PathManager business logic", () => {
             const existingPath = {
                 pathId: "existing1",
                 userId: "user123",
+                status: "OPTIMAL",
                 origin: { lat: 45.4642, lng: 9.1900 },
                 destination: { lat: 45.4700, lng: 9.1950 },
                 pathSegments: []
@@ -327,6 +330,7 @@ describe("Testing PathManager business logic", () => {
                     title: "Route 1",
                     description: "Description",
                     visibility: true,
+                    status: "OPTIMAL",
                     origin: { lat: 45.4642, lng: 9.1900 },
                     destination: { lat: 45.4700, lng: 9.1950 },
                     distanceKm: 0.5,
@@ -450,6 +454,7 @@ describe("Testing PathManager business logic", () => {
             const mockPath = {
                 pathId: "path1",
                 userId: "user123",
+                status: "OPTIMAL",
                 pathSegments: []
             };
 
@@ -474,6 +479,7 @@ describe("Testing PathManager business logic", () => {
             const mockPath = {
                 pathId: "path1",
                 userId: "otherUser",
+                status: "OPTIMAL",
                 pathSegments: []
             };
 
@@ -526,6 +532,7 @@ describe("Testing PathManager business logic", () => {
             const mockPath = {
                 pathId: "path1",
                 userId: "user123",
+                status: "OPTIMAL",
                 visibility: true,
                 pathSegments: []
             };
@@ -578,6 +585,7 @@ describe("Testing PathManager business logic", () => {
             const mockPath = {
                 pathId: "path1",
                 userId: "otherUser",
+                status: "OPTIMAL",
                 pathSegments: []
             };
 

@@ -22,6 +22,10 @@ export const changePathVisibilitySchema = Joi.object({
     visibility: Joi.boolean().required(),
 });
 
+export const pathIdParamsSchema = Joi.object({
+    pathId: Joi.string().trim().min(1).required(),
+});
+
 export const snapPathSchema = Joi.object({
     coordinates: Joi.array().items(coordinatesSchema).min(2).required(),
 });

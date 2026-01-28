@@ -265,6 +265,7 @@ export class QueryManager {
             },
         });
 
+        // find path matching origin and destination within tolerance
         const matchingPath = paths.find(path => {
             const pathOrigin = path.origin as Coordinates;
             const pathDestination = path.destination as Coordinates;
@@ -322,6 +323,14 @@ export class QueryManager {
         return await prisma.path.update({
             where: { pathId },
             data: { visibility },
+        });
+    }
+
+    // update path status
+    async updatePathStatus(pathId: string, status: string) {
+        return await prisma.path.update({
+            where: { pathId },
+            data: { status } as Prisma.PathUpdateInput,
         });
     }
 

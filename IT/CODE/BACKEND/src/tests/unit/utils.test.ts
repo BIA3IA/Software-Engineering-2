@@ -118,10 +118,10 @@ describe("Testing sortPathSegmentsByChain function", () => {
                 segmentId: "seg1",
                 nextSegmentId: null,
                 pathId: "path1",
-                status: "OPTIMAL",
+                status: "OPTIMAL" as const,
                 segment: {
                     segmentId: "seg1",
-                    status: "OPTIMAL",
+                    status: "OPTIMAL" as const,
                     polylineCoordinates: [],
                     createdAt: new Date(),
                 }
@@ -140,10 +140,10 @@ describe("Testing sortPathSegmentsByChain function", () => {
                 segmentId: "seg3",
                 nextSegmentId: "seg1",
                 pathId: "path1",
-                status: "OPTIMAL",
+                status: "OPTIMAL" as const,
                 segment: {
                     segmentId: "seg3",
-                    status: "OPTIMAL",
+                    status: "OPTIMAL" as const,
                     polylineCoordinates: [],
                     createdAt: date,
                 }
@@ -152,10 +152,10 @@ describe("Testing sortPathSegmentsByChain function", () => {
                 segmentId: "seg1",
                 nextSegmentId: null,
                 pathId: "path1",
-                status: "OPTIMAL",
+                status: "OPTIMAL" as const,
                 segment: {
                     segmentId: "seg1",
-                    status: "OPTIMAL",
+                    status: "OPTIMAL" as const,
                     polylineCoordinates: [],
                     createdAt: date,
                 }
@@ -164,10 +164,10 @@ describe("Testing sortPathSegmentsByChain function", () => {
                 segmentId: "seg2",
                 nextSegmentId: "seg3",
                 pathId: "path1",
-                status: "OPTIMAL",
+                status: "OPTIMAL" as const,
                 segment: {
                     segmentId: "seg2",
-                    status: "OPTIMAL",
+                    status: "OPTIMAL" as const,
                     polylineCoordinates: [],
                     createdAt: date,
                 }

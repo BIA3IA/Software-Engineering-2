@@ -11,7 +11,7 @@ export class UserManager {
     // Uses bcrypt to hash passwords before storing.
     async register(req: Request, res: Response, next: NextFunction) {
         try {
-            const { email, password, username, systemPreferences } = req.body;
+            const { email, password, username, systemPreferences } = req.body ?? {};
 
             if (!email || !password || !username) {
                 return next(new BadRequestError('Email, password and username are required', 'MISSING_CREDENTIALS'));

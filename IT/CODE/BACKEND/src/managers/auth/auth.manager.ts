@@ -16,12 +16,12 @@ export class AuthManager {
     // Uses bcrypt to compare hashed passwords.
     async login(req: Request, res: Response, next: NextFunction) {
         try {
-            const { email, password } = req.body;
-            
+            const { email, password } = req.body ?? {};
+
             if (!email || !password) {
                 return next(new BadRequestError('Email and password are required', 'MISSING_CREDENTIALS'));
             }
-
+            
             const user = await queryManager.getUserByEmail(email);
             if (!user) {
                 return next(new NotFoundError('User not found', 'USER_NOT_FOUND'));
@@ -64,7 +64,7 @@ export class AuthManager {
     // Avoid to let user logout if no refresh token is present (should we?)
     async logout(req: Request, res: Response, next: NextFunction) {
         try {
-            const refreshToken = req.body.refreshToken;
+            const { refreshToken } = req.body ?? {};
 
             if (!refreshToken) {
                 return next(new UnauthorizedError('No refresh token provided', 'MISSING_REFRESH_TOKEN'));
@@ -97,7 +97,7 @@ export class AuthManager {
     // Verifies both JWT validity and database existence/expiration of the refresh token.
     async refresh(req: Request, res: Response, next: NextFunction) {
         try {
-            const oldRefreshToken = req.body.refreshToken;
+            const { refreshToken: oldRefreshToken } = req.body ?? {};
 
             if (!oldRefreshToken) {
                 return next(new UnauthorizedError('Refresh token required', 'MISSING_REFRESH_TOKEN'));

@@ -16,6 +16,7 @@ export interface Path {
     pathId: string;
     userId: string;
     createdAt: Date;
+    status: PathStatus;
     origin: Coordinates;
     destination: Coordinates;
     visibility: boolean;
@@ -28,7 +29,7 @@ export interface Path {
 
 // Base path segment without the joined Segment
 export interface PathSegment {
-    status: string;
+    status: PathStatus;
     segmentId: string;
     nextSegmentId: string | null;
     pathId: string;
@@ -39,7 +40,7 @@ export interface PathSegment {
 
 // Path segment with the joined Segment, used when fetching paths with their segments
 export interface PathSegmentWithSegment extends PathSegment {
-    status: string;
+    status: PathStatus;
     segment: Segment;
 }
 
