@@ -41,6 +41,7 @@ export type UserPathSummary = {
   createdAt: string
   segmentCount: number
   pathSegments?: Array<{
+    pathSegmentId?: string
     segmentId: string
     nextSegmentId: string | null
     polylineCoordinates?: PathPoint[]

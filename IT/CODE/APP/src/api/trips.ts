@@ -46,10 +46,17 @@ export type CreateTripPayload = {
   tripSegments: TripSegmentPayload[]
 }
 
+type CreateTripResponse = {
+  data: {
+    tripId: string
+  }
+}
+
 const TRIPS_BASE = "/trips"
 
-export async function createTripApi(payload: CreateTripPayload): Promise<void> {
-  await api.post(`${TRIPS_BASE}`, payload)
+export async function createTripApi(payload: CreateTripPayload): Promise<string> {
+  const res = await api.post<CreateTripResponse>(`${TRIPS_BASE}`, payload)
+  return res.data.data.tripId
 }
 
 export async function getMyTripsApi(): Promise<TripSummary[]> {

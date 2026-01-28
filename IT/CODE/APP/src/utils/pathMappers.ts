@@ -19,6 +19,7 @@ export function mapUserPathSummaryToSearchResult(
     }
 
     const pathSegments = path.pathSegments?.map((segment) => ({
+        pathSegmentId: segment.pathSegmentId,
         segmentId: segment.segmentId,
         polylineCoordinates: (segment.polylineCoordinates ?? segment.segment?.polylineCoordinates ?? []).map(
             (point) => ({

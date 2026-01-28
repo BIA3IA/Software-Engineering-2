@@ -24,6 +24,7 @@ import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
 import { type PrivacyPreference } from "@/constants/Privacy"
 import { searchPathsApi } from "@/api/paths"
 import { createTripApi } from "@/api/trips"
+import { attachReportsToTripApi, createReportApi } from "@/api/reports"
 import { getApiErrorMessage } from "@/utils/apiError"
 import { useTripLaunchSelection, useSetTripLaunchSelection } from "@/hooks/useTripLaunchSelection"
 import { buildRouteFromLatLngSegments } from "@/utils/routes"
@@ -76,6 +77,7 @@ export default function HomeScreen() {
   const offRouteCountRef = React.useRef(0)
   const offRouteStartedAtRef = React.useRef<number | null>(null)
   const offRouteContinueUsedRef = React.useRef(false)
+  const reportSessionIdRef = React.useRef<string | null>(null)
 
   const displayRoute = (activeTrip?.route ?? selectedResult?.route) ?? []
   const destinationPoint = displayRoute[displayRoute.length - 1]
@@ -183,6 +185,9 @@ export default function HomeScreen() {
     setSelectedResult(normalized)
     setActiveTrip(normalized)
     setActiveTripStartedAt(new Date())
+    if (!reportSessionIdRef.current) {
+      reportSessionIdRef.current = generateSessionId()
+    }
     resetOffRouteTracking()
     offRouteContinueUsedRef.current = false
     setOffRoutePopupVisible(false)
@@ -210,6 +215,7 @@ export default function HomeScreen() {
     setSelectedResult(null)
     setActiveTripStartedAt(null)
     setReportVisible(false)
+    reportSessionIdRef.current = null
     setResultsVisible(false)
     setCancelTripPopupVisible(false)
   }
@@ -274,7 +280,7 @@ export default function HomeScreen() {
       }
 
       try {
-        await createTripApi({
+        const tripId = await createTripApi({
           origin: { lat: startRoutePoint.latitude, lng: startRoutePoint.longitude },
           destination: { lat: destinationPoint.latitude, lng: destinationPoint.longitude },
           startedAt: activeTripStartedAt.toISOString(),
@@ -282,6 +288,25 @@ export default function HomeScreen() {
           title: activeTrip.title,
           tripSegments,
         })
+
+        if (reportSessionIdRef.current) {
+          try {
+            await attachReportsToTripApi({
+              sessionId: reportSessionIdRef.current,
+              tripId,
+            })
+          } catch (error) {
+            const message = getApiErrorMessage(
+              error,
+              "Unable to attach reports to the trip. Please try again."
+            )
+            setErrorPopup({
+              visible: true,
+              title: "Trip Error",
+              message,
+            })
+          }
+        }
       } catch (error) {
         const message = getApiErrorMessage(error, "Unable to save the trip. Please try again.")
         setErrorPopup({
@@ -299,6 +324,7 @@ export default function HomeScreen() {
     setSelectedResult(null)
     setActiveTripStartedAt(null)
     setReportVisible(false)
+    reportSessionIdRef.current = null
     setCompletedPopupVisible(true)
   }
 
@@ -306,7 +332,49 @@ export default function HomeScreen() {
     router.replace(to as any)
   }
 
-  function handleSubmitReport(values: { condition: string; obstacle: string }) {
+  async function handleSubmitReport(values: { condition: string; obstacle: string }) {
+    if (!activeTrip || !userLocation) {
+      setErrorPopup({
+        visible: true,
+        title: "Report Error",
+        message: "Trip details are missing. Please try again.",
+      })
+      return
+    }
+
+    const sessionId = reportSessionIdRef.current ?? generateSessionId()
+    reportSessionIdRef.current = sessionId
+
+    const closestSegment = findClosestSegment(activeTrip.pathSegments ?? [], userLocation)
+    if (!closestSegment) {
+      setErrorPopup({
+        visible: true,
+        title: "Report Error",
+        message: "Unable to determine the reported segment. Please try again.",
+      })
+      return
+    }
+
+    try {
+      await createReportApi({
+        pathSegmentId: closestSegment.pathSegmentId,
+        pathId: closestSegment.pathSegmentId ? undefined : activeTrip.id,
+        segmentId: closestSegment.pathSegmentId ? undefined : closestSegment.segmentId,
+        sessionId,
+        obstacleType: values.obstacle,
+        condition: values.condition,
+        position: { lat: userLocation.latitude, lng: userLocation.longitude },
+      })
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to submit the report. Please try again.")
+      setErrorPopup({
+        visible: true,
+        title: "Report Error",
+        message,
+      })
+      return
+    }
+
     setReportVisible(false)
     setSuccessPopupVisible(true)
 
@@ -748,6 +816,34 @@ export default function HomeScreen() {
 }
 
 type LatLng = { latitude: number; longitude: number }
+
+function generateSessionId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function findClosestSegment(
+  segments: Array<{ pathSegmentId?: string; segmentId: string; polylineCoordinates: LatLng[] }>,
+  position: LatLng
+) {
+  let bestSegment: { pathSegmentId?: string; segmentId: string } | null = null
+  let bestDistance = Number.POSITIVE_INFINITY
+
+  for (const segment of segments) {
+    if (!segment.polylineCoordinates.length && !bestSegment) {
+      // Fallback when segment geometry is missing
+      bestSegment = { pathSegmentId: segment.pathSegmentId, segmentId: segment.segmentId }
+    }
+    for (const point of segment.polylineCoordinates) {
+      const distance = Math.hypot(point.latitude - position.latitude, point.longitude - position.longitude)
+      if (distance < bestDistance) {
+        bestDistance = distance
+        bestSegment = { pathSegmentId: segment.pathSegmentId, segmentId: segment.segmentId }
+      }
+    }
+  }
+
+  return bestSegment
+}
 
 function formatAddress(address?: Location.LocationGeocodedAddress) {
   if (!address) return ""

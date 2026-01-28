@@ -15,7 +15,7 @@ describe("api/trips", () => {
     })
 
     test("createTripApi posts payload", async () => {
-        ;(api.post as jest.Mock).mockResolvedValueOnce({ data: {} })
+        ;(api.post as jest.Mock).mockResolvedValueOnce({ data: { data: { tripId: "t1" } } })
 
         await createTripApi({
             origin: { lat: 45.0, lng: 9.0 },
@@ -53,7 +53,7 @@ describe("api/trips", () => {
     })
 
     test("createTripApi posts payload without optional title", async () => {
-        ;(api.post as jest.Mock).mockResolvedValueOnce({ data: {} })
+        ;(api.post as jest.Mock).mockResolvedValueOnce({ data: { data: { tripId: "t1" } } })
 
         await createTripApi({
             origin: { lat: 45.0, lng: 9.0 },
