@@ -33,6 +33,13 @@ import { mapUserPathSummaryToSearchResult } from "@/utils/pathMappers"
 import { findClosestPointIndex, normalizeSearchResult, regionAroundPoint, regionCenteredOnDestination } from "@/utils/map"
 import { haversineDistanceMetersLatLng, isNearOrigin, minDistanceToRouteMeters } from "@/utils/geo"
 import { getConditionLabel, getObstacleLabel } from "@/utils/reportOptions"
+import {
+  AUTO_COMPLETE_DISTANCE_METERS,
+  OFF_ROUTE_DISTANCE_METERS,
+  REPORT_CONFIRM_DISMISS_MS,
+  REPORT_CONFIRM_DISTANCE_METERS,
+  START_TRIP_DISTANCE_METERS,
+} from "@/constants/appConfig"
 
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -72,13 +79,8 @@ export default function HomeScreen() {
     message: "",
   })
 
-  const START_TRIP_DISTANCE_METERS = 20
-  const OFF_ROUTE_DISTANCE_METERS = 20
   const OFF_ROUTE_MAX_CONSECUTIVE = 3
   const OFF_ROUTE_MAX_MS = 15000
-  const REPORT_CONFIRM_DISTANCE_METERS = 15
-  const REPORT_CONFIRM_DISMISS_MS = 8000
-  const AUTO_COMPLETE_DISTANCE_METERS = 10
 
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const offRouteCountRef = React.useRef(0)
