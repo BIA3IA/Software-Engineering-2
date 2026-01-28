@@ -30,6 +30,8 @@ model User {
   trips             Trip[]
   paths             Path[]
   reports           Report[]
+  stats             Stat[]
+  overallStat       OverallStat?
 }
 
 model RefreshToken {
@@ -59,6 +61,7 @@ model Trip {
   weather      Json?
   tripSegments TripSegment[]
   reports      Report[]
+  stat         Stat?
 }
 
 model Segment {
@@ -129,4 +132,40 @@ model Report {
   position      Json
 
   @@index([sessionId])
+}
+
+model Stat {
+  statId String @id @default(cuid())
+  tripId String @unique
+  userId String
+
+  // Per-trip metrics (Single trip performance)
+  avgSpeed   Float @default(0) // km/h
+  duration   Float @default(0) // seconds
+  kilometers Float @default(0) // distance
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  trip Trip @relation(fields: [tripId], references: [tripId], onDelete: Cascade)
+  // Ensure you add the back-relation to the User model as well
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model OverallStat {
+  userId String @id
+
+  // Aggregated averages across all user trips
+  avgSpeed      Float @default(0)
+  avgDuration   Float @default(0)
+  avgKilometers Float @default(0)
+
+  // State-aware recomputation logic
+  lastTripCount Int      @default(0)
+  updatedAt     DateTime @updatedAt
+
+  // Relation
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
