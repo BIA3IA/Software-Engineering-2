@@ -3,6 +3,10 @@ import { queryManager } from "../query/index.js";
 import bcrypt from 'bcrypt';
 import { generateTokens, verifyRefreshToken } from "../../middleware/index.js";
 import { UnauthorizedError, BadRequestError, NotFoundError, ForbiddenError } from '../../errors/index.js';
+import crypto from 'crypto';
+
+const hashRefreshToken = (token: string) =>
+    crypto.createHash('sha256').update(token).digest('hex');
 
 export class AuthManager {
     
@@ -12,12 +16,12 @@ export class AuthManager {
     // Uses bcrypt to compare hashed passwords.
     async login(req: Request, res: Response, next: NextFunction) {
         try {
-            const { email, password } = req.body;
-            
+            const { email, password } = req.body ?? {};
+
             if (!email || !password) {
                 return next(new BadRequestError('Email and password are required', 'MISSING_CREDENTIALS'));
             }
-
+            
             const user = await queryManager.getUserByEmail(email);
             if (!user) {
                 return next(new NotFoundError('User not found', 'USER_NOT_FOUND'));
@@ -35,7 +39,7 @@ export class AuthManager {
             const expiresAt = new Date();
             expiresAt.setHours(expiresAt.getHours() + 1);
 
-            await queryManager.createRefreshToken( user.userId, refreshToken, expiresAt);
+            await queryManager.createRefreshToken(user.userId, hashRefreshToken(refreshToken), expiresAt);
 
             res.json({
                 success: true,
@@ -60,13 +64,26 @@ export class AuthManager {
     // Avoid to let user logout if no refresh token is present (should we?)
     async logout(req: Request, res: Response, next: NextFunction) {
         try {
-            const refreshToken = req.body.refreshToken;
+            const { refreshToken } = req.body ?? {};
 
             if (!refreshToken) {
                 return next(new UnauthorizedError('No refresh token provided', 'MISSING_REFRESH_TOKEN'));
             }
 
-            await queryManager.deleteRefreshToken(refreshToken);
+            let decoded;
+            try {
+                decoded = verifyRefreshToken(refreshToken);
+            } catch (error) {
+                return next(new ForbiddenError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN'));
+            }
+
+            const tokenHash = hashRefreshToken(refreshToken);
+            const tokenData = await queryManager.getRefreshToken(tokenHash);
+            if (!tokenData || tokenData.userId !== decoded.userId) {
+                return next(new ForbiddenError('Refresh token not found', 'REFRESH_TOKEN_NOT_FOUND'));
+            }
+
+            await queryManager.deleteRefreshToken(tokenHash);
             
             res.status(204).json({ });
         } catch (error) {
@@ -80,7 +97,7 @@ export class AuthManager {
     // Verifies both JWT validity and database existence/expiration of the refresh token.
     async refresh(req: Request, res: Response, next: NextFunction) {
         try {
-            const oldRefreshToken = req.body.refreshToken;
+            const { refreshToken: oldRefreshToken } = req.body ?? {};
 
             if (!oldRefreshToken) {
                 return next(new UnauthorizedError('Refresh token required', 'MISSING_REFRESH_TOKEN'));
@@ -95,7 +112,8 @@ export class AuthManager {
             }
 
             // Check if token exists in database
-            const tokenData = await queryManager.getRefreshToken(oldRefreshToken);
+            const oldTokenHash = hashRefreshToken(oldRefreshToken);
+            const tokenData = await queryManager.getRefreshToken(oldTokenHash);
             
             if (!tokenData) {
                 return next(new ForbiddenError('Refresh token not found', 'REFRESH_TOKEN_NOT_FOUND'));
@@ -103,7 +121,7 @@ export class AuthManager {
 
             // Check database expiration
             if (tokenData.expiresAt < new Date()) {
-                await queryManager.deleteRefreshToken(oldRefreshToken);
+                await queryManager.deleteRefreshToken(oldTokenHash);
                 return next(new ForbiddenError('Refresh token expired', 'REFRESH_TOKEN_EXPIRED'));
             }
 
@@ -113,7 +131,7 @@ export class AuthManager {
             }
 
             // Delete old refresh token
-            await queryManager.deleteRefreshToken(oldRefreshToken);
+            await queryManager.deleteRefreshToken(oldTokenHash);
 
             // Generate new tokens
             const { accessToken, refreshToken } = generateTokens(user.userId);
@@ -122,7 +140,7 @@ export class AuthManager {
             const expiresAt = new Date();
             expiresAt.setHours(expiresAt.getHours() + 1);
 
-            await queryManager.createRefreshToken(user.userId, refreshToken, expiresAt);
+            await queryManager.createRefreshToken(user.userId, hashRefreshToken(refreshToken), expiresAt);
 
             res.json({ 
                 success: true, 

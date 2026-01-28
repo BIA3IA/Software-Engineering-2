@@ -126,7 +126,7 @@ describe("User Routes Integration Tests", () => {
     });
 
 
-    describe("Testing GET /api/v1/users/profile", () => {
+    describe("Testing GET /api/v1/users/me", () => {
 
         test("Should return user profile with valid access token", async () => {
             const accessToken = generateValidAccessToken("cuid123");
@@ -138,7 +138,7 @@ describe("User Routes Integration Tests", () => {
             });
 
             const response = await request(app)
-                .get("/api/v1/users/profile")
+                .get("/api/v1/users/me")
                 .set("Authorization", `Bearer ${accessToken}`);
 
             expect(response.status).toBe(200);
@@ -152,7 +152,7 @@ describe("User Routes Integration Tests", () => {
 
         test("Should return 401 for missing access token", async () => {
             const response = await request(app)
-                .get("/api/v1/users/profile");
+                .get("/api/v1/users/me");
 
             expect(response.status).toBe(401);
             expect(response.body.error.code).toBe("ACCESS_TOKEN_MISSING");
@@ -160,7 +160,7 @@ describe("User Routes Integration Tests", () => {
 
         test("Should return 403 for invalid access token", async () => {
             const response = await request(app)
-                .get("/api/v1/users/profile")
+                .get("/api/v1/users/me")
                 .set("Authorization", "Bearer invalid-token");
 
             expect(response.status).toBe(403);
@@ -173,7 +173,7 @@ describe("User Routes Integration Tests", () => {
             (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
             const response = await request(app)
-                .get("/api/v1/users/profile")
+                .get("/api/v1/users/me")
                 .set("Authorization", `Bearer ${accessToken}`);
 
             expect(response.status).toBe(404);
@@ -181,7 +181,7 @@ describe("User Routes Integration Tests", () => {
         });
     });
 
-    describe("Testing PATCH /api/v1/users/update-profile", () => {
+    describe("Testing PATCH /api/v1/users/me", () => {
 
         test("Should update profile successfully", async () => {
             const accessToken = generateValidAccessToken("cuid123");
@@ -201,7 +201,7 @@ describe("User Routes Integration Tests", () => {
             });
 
             const response = await request(app)
-                .patch("/api/v1/users/update-profile")
+                .patch("/api/v1/users/me")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({ username: "newusername" });
 
@@ -212,7 +212,7 @@ describe("User Routes Integration Tests", () => {
 
         test("Should return 401 for missing access token", async () => {
             const response = await request(app)
-                .patch("/api/v1/users/update-profile")
+                .patch("/api/v1/users/me")
                 .send({ username: "newusername" });
 
             expect(response.status).toBe(401);
@@ -229,7 +229,7 @@ describe("User Routes Integration Tests", () => {
             });
 
             const response = await request(app)
-                .patch("/api/v1/users/update-profile")
+                .patch("/api/v1/users/me")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({});
 
@@ -251,7 +251,7 @@ describe("User Routes Integration Tests", () => {
                 });
 
             const response = await request(app)
-                .patch("/api/v1/users/update-profile")
+                .patch("/api/v1/users/me")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({ username: "takenusername" });
 

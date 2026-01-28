@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach } from "@jest/globals";
 import { Request, Response, NextFunction } from "express";
+import crypto from 'crypto';
 
 jest.mock('bcrypt', () => ({
     compare: jest.fn(),
@@ -46,6 +47,8 @@ describe("Testing AuthManager business logic", () => {
         jest.clearAllMocks();
     });
 
+    const hashToken = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
+
     describe("Testing login method", () => {
         
         test("Successful login returns user and tokens", async () => {
@@ -78,6 +81,11 @@ describe("Testing AuthManager business logic", () => {
             expect(queryManager.getUserByEmail).toHaveBeenCalledWith("test@email.com");
             expect(bcrypt.compare).toHaveBeenCalledWith("password123", "hashedPassword");
             expect(generateTokens).toHaveBeenCalledWith("cuid123");
+            expect(queryManager.createRefreshToken).toHaveBeenCalledWith(
+                "cuid123",
+                hashToken("refresh123"),
+                expect.any(Date)
+            );
             expect(res.json).toHaveBeenCalledWith({
                 success: true,
                 user: { userId: "cuid123", email: "test@email.com", username: "testuser" },
@@ -156,13 +164,16 @@ describe("Testing AuthManager business logic", () => {
             req.body = { refreshToken: "refresh123" };
 
             (queryManager.deleteRefreshToken as jest.Mock).mockResolvedValue({});
+            (queryManager.getRefreshToken as jest.Mock).mockResolvedValue({ userId: "cuid123" });
+            (verifyRefreshToken as jest.Mock).mockReturnValue({ userId: "cuid123" });
 
             const res = mockResponse();
             const next = jest.fn();
 
             await new AuthManager().logout(req, res, next);
 
-            expect(queryManager.deleteRefreshToken).toHaveBeenCalledWith("refresh123");
+            expect(queryManager.getRefreshToken).toHaveBeenCalledWith(hashToken("refresh123"));
+            expect(queryManager.deleteRefreshToken).toHaveBeenCalledWith(hashToken("refresh123"));
             expect(res.status).toHaveBeenCalledWith(204);
             expect(res.json).toHaveBeenCalledWith({});
             expect(next).not.toHaveBeenCalled();
@@ -207,7 +218,7 @@ describe("Testing AuthManager business logic", () => {
             (verifyRefreshToken as jest.Mock).mockReturnValue({ userId: "cuid123" });
             (queryManager.getRefreshToken as jest.Mock).mockResolvedValue({
                 userId: "cuid123",
-                token: "oldRefreshToken",
+                token: hashToken("oldRefreshToken"),
                 expiresAt: futureDate,
             });
             (queryManager.getUserById as jest.Mock).mockResolvedValue(fakeUser);
@@ -224,9 +235,9 @@ describe("Testing AuthManager business logic", () => {
             await new AuthManager().refresh(req, res, next);
 
             expect(verifyRefreshToken).toHaveBeenCalledWith("oldRefreshToken");
-            expect(queryManager.getRefreshToken).toHaveBeenCalledWith("oldRefreshToken");
+            expect(queryManager.getRefreshToken).toHaveBeenCalledWith(hashToken("oldRefreshToken"));
             expect(queryManager.getUserById).toHaveBeenCalledWith("cuid123");
-            expect(queryManager.deleteRefreshToken).toHaveBeenCalledWith("oldRefreshToken");
+            expect(queryManager.deleteRefreshToken).toHaveBeenCalledWith(hashToken("oldRefreshToken"));
             expect(generateTokens).toHaveBeenCalledWith("cuid123");
             expect(queryManager.createRefreshToken).toHaveBeenCalled();
             expect(res.json).toHaveBeenCalledWith({
@@ -293,7 +304,7 @@ describe("Testing AuthManager business logic", () => {
             await new AuthManager().refresh(req, res, next);
 
             expect(verifyRefreshToken).toHaveBeenCalledWith("nonexistentToken");
-            expect(queryManager.getRefreshToken).toHaveBeenCalledWith("nonexistentToken");
+            expect(queryManager.getRefreshToken).toHaveBeenCalledWith(hashToken("nonexistentToken"));
             expect(next).toHaveBeenCalledWith(
                 expect.objectContaining({
                     statusCode: 403,
@@ -313,7 +324,7 @@ describe("Testing AuthManager business logic", () => {
             (verifyRefreshToken as jest.Mock).mockReturnValue({ userId: "cuid123" });
             (queryManager.getRefreshToken as jest.Mock).mockResolvedValue({
                 userId: "cuid123",
-                token: "expiredToken",
+                token: hashToken("expiredToken"),
                 expiresAt: pastDate,
             });
             (queryManager.deleteRefreshToken as jest.Mock).mockResolvedValue({});
@@ -323,7 +334,7 @@ describe("Testing AuthManager business logic", () => {
 
             await new AuthManager().refresh(req, res, next);
 
-            expect(queryManager.deleteRefreshToken).toHaveBeenCalledWith("expiredToken");
+            expect(queryManager.deleteRefreshToken).toHaveBeenCalledWith(hashToken("expiredToken"));
             expect(next).toHaveBeenCalledWith(
                 expect.objectContaining({
                     statusCode: 403,

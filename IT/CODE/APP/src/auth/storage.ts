@@ -103,15 +103,14 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     async logout() {
       const rt = get().refreshToken
+      clearSession()
+      await SecureStore.deleteItemAsync(USER_KEY)
+      set({ user: null, accessToken: null, refreshToken: null, loading: false })
       try {
         await logoutApi(rt)
       } catch (err) {
         console.warn("Failed to revoke refresh token", err)
       }
-
-      await SecureStore.deleteItemAsync(USER_KEY)
-      await get().setTokens(null)
-      set({ user: null, loading: false })
     },
 
     async fetchProfile() {

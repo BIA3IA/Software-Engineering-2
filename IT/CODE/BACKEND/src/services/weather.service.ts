@@ -1,8 +1,9 @@
-import { WeatherData, OpenMeteoWeather, Coordinates, PointWeatherData } from "../types/index";
-import { InternalServerError } from "../errors/index";
-import logger from "../utils/logger";
-import { getWeatherDescription } from "./wmo";
-import { haversineDistanceKm, polylineDistanceKm } from "../utils/geo";
+import { WeatherData, OpenMeteoWeather, Coordinates, PointWeatherData } from "../types/index.js";
+import { InternalServerError } from "../errors/index.js";
+import logger from "../utils/logger.js";
+import { getWeatherDescription } from "./wmo.js";
+import { haversineDistanceKm, polylineDistanceKm } from "../utils/geo.js";
+import { fetchWithTimeout } from "../utils/fetch.js";
 
 // This service must fetch weather data from OpenMeteo for given coordinates
 // and aggregate it to produce TripWeather data. The aggregation is made by taking
@@ -12,6 +13,7 @@ import { haversineDistanceKm, polylineDistanceKm } from "../utils/geo";
 // and taking the most frequent weather description (Sunny, Cloudy, Rainy...)
 
 const OPENMETEO_BASE_URL = "https://api.open-meteo.com/v1/forecast";
+const OPENMETEO_TIMEOUT_MS = Number(process.env.OPENMETEO_TIMEOUT_MS) || 8000;
 
 const SAMPLING_CONFIG = {
     SHORT_ROUTE_KM: 10,      // Short routes: start and end only
@@ -97,7 +99,7 @@ export async function fetchWeatherForCoordinates(coord: Coordinates): Promise<Po
     const url = `${OPENMETEO_BASE_URL}?${params}`;
 
     try {
-        const response = await fetch(url);
+        const response = await fetchWithTimeout(url, { timeoutMs: OPENMETEO_TIMEOUT_MS });
 
         if (!response.ok) {
             logger.error({ status: response.status, coord }, "OpenMeteo API error");
@@ -119,6 +121,10 @@ export async function fetchWeatherForCoordinates(coord: Coordinates): Promise<Po
         };
 
     } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+            logger.error({ coord }, "OpenMeteo request timed out");
+            throw new InternalServerError("Weather service timed out", "WEATHER_TIMEOUT");
+        }
         logger.error({ error, coord }, "Failed to fetch weather data");
         throw new InternalServerError("Failed to fetch weather data", "WEATHER_FETCH_ERROR");
     }

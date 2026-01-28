@@ -18,3 +18,7 @@ export const createTripSchema = Joi.object({
         })
     ).min(1).required(),
 });
+
+export const tripIdParamsSchema = Joi.object({
+    tripId: Joi.string().trim().min(1).required(),
+});

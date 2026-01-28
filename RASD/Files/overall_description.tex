@@ -65,7 +65,7 @@ Representative scenarios illustrate how different types of users interact with B
 
 	      Giulia is cycling along a local bike path. During her ride, she notices that a section of the path is partially blocked by some fallen branches.
 	      Since she wants to help other cyclists avoid potential issues, she decides to report the current condition of the path to the BBP community.
-	      From the app, Giulia selects the report button. Then, she selects the obstacle type, and chooses “requires maintenance” as the current status of that path.
+	      From the app, Giulia selects the report button. Then, she selects the obstacle type, and chooses "requires maintenance" as the current status of that path.
 	      After confirming the report, BBP stores the information and sends it for aggregation with other users' data about the same path.
 
 	\item \textbf{A logged-in user wants to confirm the condition of a bike path}:
@@ -289,7 +289,7 @@ The following points outline the main functionalities offered by the system from
 	\item \textbf{Manual Reporting of Bike Path Conditions}:
 
 	      BBP allows logged-in users to manually report the condition of a bike path only while they are on an active trip. This feature helps to keep path information accurate, especially when users encounter issues such as obstacles or partial closures.
-	      By selecting the report button during the ride, the user can choose the type of issue from a predefined list (e.g., obstacle, debris, surface damage). In addition, the user may assign an overall status to the affected path segment, such as “optimal,” “medium,” “requires maintenance,” or “closed.”
+	      By selecting the report button during the ride, the user can choose the type of issue from a predefined list (e.g., obstacle, debris, surface damage). In addition, the user may assign an overall status to the affected path segment, such as "optimal," "medium," "requires maintenance," or "closed."
 	      The system automatically retrieves the user's current GPS position and associates the report with the corresponding path segment, without requiring the user to manually indicate the affected location.
 
 	\item \textbf{Real Time Confirmation of Reported Path Conditions}:
@@ -410,6 +410,6 @@ This subsection lists the assumptions about the real world that are taken as tru
 	\item[\textbf{[D5]}] Manual input provided by logged-in users is assumed to be truthful, accurate, and sufficiently complete for a path/report entry.
 	\item[\textbf{[D6]}] A bike path is either a dedicated bicycle track or a low-traffic road where motor-vehicle speed limits are compatible with average cycling speed.
 	\item[\textbf{[D7]}] GPS position updates are received with sufficient frequency (e.g., at least 1 update per second) to detect movement, deviations, and trip progress.
-	\item[\textbf{[D8]}] Reported conditions may become obsolete over time; data “freshness” decays and is considered by the aggregation/ranking logic.
+	\item[\textbf{[D8]}] Reported conditions may become obsolete over time; data "freshness" decays and is considered by the aggregation/ranking logic.
 	\item[\textbf{[D9]}] The map service returns valid, connected, and navigable path segments for any origin/destination pair inside its coverage.
 \end{itemize}

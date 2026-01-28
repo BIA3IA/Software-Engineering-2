@@ -1,9 +1,11 @@
 import { Coordinates } from "../types/index";
 import { BadRequestError, InternalServerError } from "../errors/index";
 import logger from "../utils/logger";
+import { fetchWithTimeout } from "../utils/fetch";
 
 const OSRM_BASE_URL = process.env.OSRM_BASE_URL ?? "http://localhost:5000";
 const DEFAULT_PROFILE = "cycling";
+const OSRM_TIMEOUT_MS = Number(process.env.OSRM_TIMEOUT_MS) || 8000;
 
 type OsrmRouteResponse = {
     code: string;
@@ -34,7 +36,7 @@ export async function snapToRoad(coordinates: Coordinates[]): Promise<Coordinate
     const url = `${OSRM_BASE_URL}/route/v1/${DEFAULT_PROFILE}/${coordString}?${params.toString()}`;
 
     try {
-        const res = await fetch(url);
+        const res = await fetchWithTimeout(url, { timeoutMs: OSRM_TIMEOUT_MS });
         if (!res.ok) {
             logger.error({ status: res.status, url }, "OSRM route error");
             throw new InternalServerError("Failed to snap path", "OSRM_ERROR");
@@ -53,6 +55,10 @@ export async function snapToRoad(coordinates: Coordinates[]): Promise<Coordinate
 
         return coordinatesList.map(([lng, lat]) => ({ lat, lng }));
     } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+            logger.error({ url }, "OSRM request timed out");
+            throw new InternalServerError("OSRM service timed out", "OSRM_TIMEOUT");
+        }
         logger.error({ error }, "Failed to fetch OSRM route");
         if (error instanceof BadRequestError || error instanceof InternalServerError) {
             throw error;

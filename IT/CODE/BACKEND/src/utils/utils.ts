@@ -1,4 +1,4 @@
-import { PathWithSegments, TripSegments } from '../types/index';
+import { PathWithSegments, TripSegments, PATH_STATUS_SCORE_MAP } from '../types/index';
 
 // Utility function to get JWT secrets from environment variables
 export const getJwtSecrets = () => {
@@ -85,3 +85,77 @@ export function sortPathSegmentsByChain(segments: PathSegmentItem[]): PathSegmen
 
     return sortedSegments;
 }
+
+type PathSegmentStatusItem = { status: keyof typeof PATH_STATUS_SCORE_MAP };
+
+export function computePathStatusFromSegments(segments: PathSegmentStatusItem[]) {
+    if (segments.length === 0) {
+        return 'OPTIMAL';
+    }
+
+    const totalStatusScore = segments.reduce((sum, segment) => {
+        const statusScore = PATH_STATUS_SCORE_MAP[segment.status] || 0;
+        return sum + statusScore;
+    }, 0);
+
+    const averageStatusScore = totalStatusScore / segments.length;
+    return mapScoreToStatus(averageStatusScore);
+}
+
+export function clamp(value: number, min: number, max: number) {
+    return Math.max(min, Math.min(max, value));
+}
+
+export function mapScoreToStatus(score: number) {
+    if (score >= 4.5) {
+        return 'OPTIMAL';
+    }
+    if (score >= 3.5) {
+        return 'MEDIUM';
+    }
+    if (score >= 2.5) {
+        return 'SUFFICIENT';
+    }
+    if (score >= 1.5) {
+        return 'REQUIRES_MAINTENANCE';
+    }
+    return 'CLOSED';
+}
+
+
+const REPORT_ALPHA = 0.6; // weight for confirmed reports
+const REPORT_BETA = 0.8; // weight for rejected reports
+export const REPORT_MIN_RELIABILITY = 0.1; // minimum reliability threshold
+const REPORT_MAX_RELIABILITY = 2.5; // maximum reliability cap
+
+// Freshness parameters
+const REPORT_FRESHNESS_HALF_LIFE_MIN = (() => {
+    const rawValue = Number(process.env.REPORT_FRESHNESS_HALF_LIFE_MIN ?? 1440);
+    return Number.isFinite(rawValue) && rawValue > 0 ? rawValue : 1440;
+})();
+export const REPORT_ACTIVE_FRESHNESS_MIN = (() => {
+    const rawValue = Number(process.env.REPORT_ACTIVE_FRESHNESS_MIN ?? 0.1);
+    return Number.isFinite(rawValue) && rawValue > 0 ? rawValue : 0.1;
+})();
+
+const computeFreshness = (date: Date, now: Date) => {
+    const ageMinutes = Math.max(0, (now.getTime() - date.getTime()) / 60000);
+    return Math.pow(2, -ageMinutes / REPORT_FRESHNESS_HALF_LIFE_MIN);
+};
+
+export const computeReportSignals = (report: any, now: Date) => {
+    let confirmedScore = 0;
+    let rejectedScore = 0;
+
+    if (report.status === 'REJECTED') {
+        rejectedScore += computeFreshness(report.createdAt, now);
+    } else if (report.status === 'CREATED' || report.status === 'CONFIRMED') {
+        confirmedScore += computeFreshness(report.createdAt, now);
+    }
+
+    const rawReliability = 1 + REPORT_ALPHA * confirmedScore - REPORT_BETA * rejectedScore;
+    const reliability = clamp(rawReliability, REPORT_MIN_RELIABILITY, REPORT_MAX_RELIABILITY);
+    const freshness = computeFreshness(report.createdAt, now);
+
+    return { reliability, freshness };
+};

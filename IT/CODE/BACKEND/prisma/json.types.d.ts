@@ -3,10 +3,9 @@
 
 declare global {
   namespace PrismaJson {
-    type Coordinates = import("../src/types/index.js").Coordinates;
-    type TripStatistics = import("../src/types/index.js").TripStatistics;
-    type WeatherData = import("../src/types/index.js").WeatherData;
-    type PathSegments = import("../src/types/index.js").PathSegments;
+    type Coordinates = import("../src/types/index").Coordinates;
+    type TripStatistics = import("../src/types/index").TripStatistics;
+    type WeatherData = import("../src/types/index").WeatherData;
   }
 }
 

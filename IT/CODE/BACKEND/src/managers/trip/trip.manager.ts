@@ -1,10 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { queryManager } from '../query/index.js';
-import { weatherManager } from '../weather/index.js';
+import { fetchAndAggregateWeatherData } from '../../services/index.js';
+import { Coordinates, TripSegments, WeatherData } from '../../types/index.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import logger from '../../utils/logger';
+import { sortTripSegmentsByChain } from '../../utils/index.js';
 
 export class TripManager {
+
     async createTrip(req: Request, res: Response, next: NextFunction) {
         try {
             const { origin, destination, startedAt, finishedAt, tripSegments, title } = req.body;
@@ -79,7 +82,11 @@ export class TripManager {
             );
 
             try {
-                await weatherManager.enrichTripWithWeather(trip);
+                const tripWithSegments = await queryManager.getTripById(trip.tripId);
+                if (tripWithSegments) {
+                    tripWithSegments.tripSegments = sortTripSegmentsByChain(tripWithSegments.tripSegments);
+                    await this.enrichTripWithWeather(tripWithSegments);
+                }
             } catch (error) {
                 logger.warn({ err: error, tripId: trip.tripId }, 'Trip weather enrichment failed');
             }
@@ -109,14 +116,18 @@ export class TripManager {
             }
 
             const trips = await queryManager.getTripsByUserId(userId);
+            const sortedTrips = trips.map(trip => ({
+                ...trip,
+                tripSegments: sortTripSegmentsByChain(trip.tripSegments),
+            }));
 
             await Promise.allSettled(
-                trips.map(async trip => {
+                sortedTrips.map(async trip => {
                     if (trip.weather) {
                         return;
                     }
                     try {
-                        const weather = await weatherManager.enrichTripWithWeather(trip);
+                        const weather = await this.enrichTripWithWeather(trip);
                         trip.weather = weather;
                     } catch (error) {
                         logger.warn({ err: error, tripId: trip.tripId }, 'Trip weather enrichment failed');
@@ -124,11 +135,15 @@ export class TripManager {
                 })
             );
 
+            const tripReports = await Promise.all(
+                sortedTrips.map(trip => queryManager.getReportsByTripId(trip.tripId))
+            );
+
             res.json({
                 success: true,
                 data: {
-                    count: trips.length,
-                    trips: trips.map(trip => ({
+                    count: sortedTrips.length,
+                    trips: sortedTrips.map((trip, index) => ({
                         tripId: trip.tripId,
                         createdAt: trip.createdAt,
                         startedAt: trip.startedAt,
@@ -138,6 +153,7 @@ export class TripManager {
                         destination: trip.destination,
                         statistics: trip.statistics,
                         weather: trip.weather,
+                        reports: tripReports[index] ?? [],
                         segmentCount: trip.tripSegments.length,
                         tripSegments: trip.tripSegments.map(ts => ({
                             segmentId: ts.segmentId,
@@ -177,6 +193,97 @@ export class TripManager {
             await queryManager.deleteTripById(tripId);
 
             res.status(204).send();
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    private async enrichTripWithWeather(trip: TripSegments): Promise<WeatherData> {
+        const allCoordinates: Coordinates[] = [];
+
+        if (trip.origin) {
+            allCoordinates.push(trip.origin);
+        }
+
+        trip.tripSegments = sortTripSegmentsByChain(trip.tripSegments);
+
+        for (const tripSegment of trip.tripSegments) {
+            const polyline = tripSegment.segment.polylineCoordinates;
+            if (Array.isArray(polyline)) {
+                allCoordinates.push(...polyline);
+            }
+        }
+
+        if (trip.destination) {
+            allCoordinates.push(trip.destination);
+        }
+
+        if (allCoordinates.length === 0) {
+            throw new BadRequestError('Trip has no coordinates', 'NO_COORDINATES');
+        }
+
+        const tripWeather = await fetchAndAggregateWeatherData(allCoordinates);
+        await queryManager.updateTripWeather(trip.tripId, tripWeather);
+        return tripWeather;
+    }
+
+    async enrichTrip(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { tripId } = req.params;
+            const userId = req.user?.userId;
+
+            if (!tripId) {
+                return next(new BadRequestError('Trip ID is required', 'MISSING_TRIP_ID'));
+            }
+
+            const trip = await queryManager.getTripById(tripId);
+
+            if (!trip) {
+                return next(new NotFoundError('Trip not found', 'TRIP_NOT_FOUND'));
+            }
+
+            if (trip.userId !== userId) {
+                return next(new NotFoundError('Trip not found', 'TRIP_NOT_FOUND'));
+            }
+
+            const tripWeather = await this.enrichTripWithWeather(trip);
+
+            res.json({
+                success: true,
+                data: tripWeather,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getTripWeather(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { tripId } = req.params;
+            const userId = req.user?.userId;
+
+            if (!tripId) {
+                return next(new BadRequestError('Trip ID is required', 'MISSING_TRIP_ID'));
+            }
+
+            const trip = await queryManager.getTripById(tripId);
+
+            if (!trip) {
+                return next(new NotFoundError('Trip not found', 'TRIP_NOT_FOUND'));
+            }
+
+            if (trip.userId !== userId) {
+                return next(new NotFoundError('Trip not found', 'TRIP_NOT_FOUND'));
+            }
+
+            if (!trip.weather) {
+                return next(new NotFoundError('Weather data not available for this trip', 'WEATHER_NOT_FOUND'));
+            }
+
+            res.json({
+                success: true,
+                data: trip.weather,
+            });
         } catch (error) {
             next(error);
         }
