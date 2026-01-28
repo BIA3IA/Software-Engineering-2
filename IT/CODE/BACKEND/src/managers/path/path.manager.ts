@@ -8,7 +8,9 @@ import { haversineDistanceMeters, polylineDistanceKm } from '../../utils/geo.js'
 import {
     PATH_SEARCH_TOLERANCE_DEG,
     PATH_SEARCH_MAX_DISTANCE_METERS,
-    PATH_SEARCH_NEAR_DISTANCE_BUFFER_METERS
+    PATH_SEARCH_NEAR_DISTANCE_BUFFER_METERS,
+    PATH_STATUS_ALL_WEIGHT,
+    PATH_STATUS_REPORTED_WEIGHT
 } from '../../constants/appConfig.js';
 
 export class PathManager {
@@ -517,7 +519,7 @@ export class PathManager {
         if (segmentsToScore.length) {
             const reportedAverage = this.computeAverageStatusScore(segmentsToScore);
             const allAverage = this.computeAverageStatusScore(path.pathSegments);
-            const mixedScore = reportedAverage * 0.7 + allAverage * 0.3;
+            const mixedScore = reportedAverage * PATH_STATUS_REPORTED_WEIGHT + allAverage * PATH_STATUS_ALL_WEIGHT;
             status = mapScoreToStatus(mixedScore);
         }
         await queryManager.updatePathStatus(pathId, status);

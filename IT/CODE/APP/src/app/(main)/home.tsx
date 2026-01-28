@@ -35,6 +35,8 @@ import { haversineDistanceMetersLatLng, isNearOrigin, minDistanceToRouteMeters }
 import { getConditionLabel, getObstacleLabel } from "@/utils/reportOptions"
 import {
   AUTO_COMPLETE_DISTANCE_METERS,
+  OFF_ROUTE_MAX_CONSECUTIVE,
+  OFF_ROUTE_MAX_MS,
   OFF_ROUTE_DISTANCE_METERS,
   REPORT_CONFIRM_DISMISS_MS,
   REPORT_CONFIRM_DISTANCE_METERS,
@@ -79,8 +81,6 @@ export default function HomeScreen() {
     message: "",
   })
 
-  const OFF_ROUTE_MAX_CONSECUTIVE = 3
-  const OFF_ROUTE_MAX_MS = 15000
 
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const offRouteCountRef = React.useRef(0)
