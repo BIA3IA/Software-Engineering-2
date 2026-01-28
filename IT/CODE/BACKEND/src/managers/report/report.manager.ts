@@ -85,7 +85,7 @@ export class ReportManager {
     async confirmReport(req: Request, res: Response, next: NextFunction) {
         try {
             const { reportId } = req.params;
-            const { decision, tripId } = req.body ?? {};
+            const { decision, tripId, sessionId } = req.body ?? {};
             const userId = req.user?.userId;
 
             if (!userId) {
@@ -112,7 +112,7 @@ export class ReportManager {
                 userId,
                 pathSegmentId: report.pathSegmentId,
                 tripId: tripId ?? null,
-                sessionId: report.sessionId ?? null,
+                sessionId: sessionId ?? report.sessionId ?? null,
                 obstacleType: report.obstacleType,
                 pathStatus: report.pathStatus,
                 position: report.position,

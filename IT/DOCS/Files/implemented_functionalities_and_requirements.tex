@@ -143,11 +143,18 @@ no longer representative of the current path condition.
 \subsubsection*{Path Status Aggregation}
 \label{subsubsec:path_status_aggregation}
 
-The overall status score of a path is computed as a weighted average of the scores of all associated reports:
+Reports first update the status of the specific path segment they refer to. The segment-level status is derived
+from report scores weighted by reliability and freshness. The path status is then computed
+by combining segment statuses with a weighted mix:
 
 \[
-	PathStatusScore = \frac{\sum (statusScore_i \cdot reportReliability_i)}{\sum reportReliability_i}
+	PathStatusScore = 0.7 \cdot \overline{score}_{reportedSegments} + 0.3 \cdot \overline{score}_{allSegments}
 \]
+
+where $\overline{score}_{reportedSegments}$ is the average score of segments that have at least one valid report,
+and $\overline{score}_{allSegments}$ is the average score over all segments in the path. If no segments have valid
+reports, the path status defaults to the average over all segments. This approach avoids overly diluting short-path
+reports while still keeping long paths stable.
 
 \subsubsection*{Path Status Determination}
 \label{subsubsec:path_status}
@@ -304,4 +311,3 @@ performance data in relation to external factors.
 	\caption{Mapping between BBP Requirements and implemented functionalities}
 	\label{tab:R_MAP}
 \end{longtable}
-

@@ -482,8 +482,34 @@ export class PathManager {
             return;
         }
 
-        const status = computePathStatusFromSegments(path.pathSegments);
+        const reports = await queryManager.getReportsByPathId(pathId);
+        const reportedSegmentIds = new Set(
+            reports
+                .filter((report) => report.status !== 'IGNORED')
+                .map((report) => report.pathSegmentId)
+        );
+        const segmentsToScore = path.pathSegments.filter((segment) =>
+            reportedSegmentIds.has(segment.id)
+        );
+        let status = computePathStatusFromSegments(path.pathSegments);
+        if (segmentsToScore.length) {
+            const reportedAverage = this.computeAverageStatusScore(segmentsToScore);
+            const allAverage = this.computeAverageStatusScore(path.pathSegments);
+            const mixedScore = reportedAverage * 0.7 + allAverage * 0.3;
+            status = mapScoreToStatus(mixedScore);
+        }
         await queryManager.updatePathStatus(pathId, status);
+    }
+
+    private computeAverageStatusScore(segments: Array<{ status: keyof typeof PATH_STATUS_SCORE_MAP }>) {
+        if (!segments.length) {
+            return PATH_STATUS_SCORE_MAP.OPTIMAL;
+        }
+        const totalStatusScore = segments.reduce((sum, segment) => {
+            const statusScore = PATH_STATUS_SCORE_MAP[segment.status] || 0;
+            return sum + statusScore;
+        }, 0);
+        return totalStatusScore / segments.length;
     }
 
 }

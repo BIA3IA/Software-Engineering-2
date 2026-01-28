@@ -76,7 +76,7 @@ export default function HomeScreen() {
   const OFF_ROUTE_DISTANCE_METERS = 50
   const OFF_ROUTE_MAX_CONSECUTIVE = 3
   const OFF_ROUTE_MAX_MS = 15000
-  const REPORT_CONFIRM_DISTANCE_METERS = 35
+  const REPORT_CONFIRM_DISTANCE_METERS = 15
   const REPORT_CONFIRM_DISMISS_MS = 8000
 
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)

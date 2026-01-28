@@ -42,6 +42,7 @@ export const confirmReportParamsSchema = Joi.object({
 export const confirmReportSchema = Joi.object({
     decision: Joi.string().valid('CONFIRMED', 'REJECTED').required(),
     tripId: Joi.string().trim().min(1).optional(),
+    sessionId: Joi.string().trim().min(1).optional(),
 });
 
 export const getReportsByPathSchema = Joi.object({
