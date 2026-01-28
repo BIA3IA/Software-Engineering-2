@@ -6,8 +6,9 @@ import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
 import { radius, scale, verticalScale } from "@/theme/layout"
-import { Cloud } from "lucide-react-native"
+import { Bike, Cloud } from "lucide-react-native"
 import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
+import { MapIconMarker } from "@/components/ui/MapIconMarker"
 
 type LatLng = { latitude: number; longitude: number }
 
@@ -142,11 +143,13 @@ export function RouteMap({
             )}
 
             {end && (
-              <Marker
-                coordinate={end}
-                title="End"
-                pinColor={palette.brand.base}
-              />
+              <Marker coordinate={end} title="End">
+                <MapIconMarker
+                  color={palette.accent.green.base}
+                  borderColor={palette.text.onAccent}
+                  icon={<Bike size={iconSizes.md} color={palette.text.onAccent} strokeWidth={2.2} />}
+                />
+              </Marker>
             )}
           </MapView>
         </View>

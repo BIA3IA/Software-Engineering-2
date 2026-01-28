@@ -17,6 +17,15 @@ export type CreateReportPayload = {
   tripId?: string
 }
 
+export type ReportSummary = {
+  reportId: string
+  createdAt: string
+  obstacleType: string
+  pathStatus: string
+  status: string
+  position: { lat: number; lng: number }
+}
+
 type CreateReportResponse = {
   data: {
     reportId: string
@@ -35,6 +44,10 @@ type AttachReportsResponse = {
   }
 }
 
+type ReportsByPathResponse = {
+  data: ReportSummary[]
+}
+
 const REPORTS_BASE = "/reports"
 
 export async function createReportApi(payload: CreateReportPayload): Promise<string> {
@@ -45,4 +58,9 @@ export async function createReportApi(payload: CreateReportPayload): Promise<str
 export async function attachReportsToTripApi(payload: AttachReportsPayload): Promise<number> {
   const res = await api.post<AttachReportsResponse>(`${REPORTS_BASE}/attach`, payload)
   return res.data.data.updatedCount
+}
+
+export async function getReportsByPathApi(pathId: string): Promise<ReportSummary[]> {
+  const res = await api.get<ReportsByPathResponse>(`${REPORTS_BASE}`, { params: { pathId } })
+  return res.data.data
 }

@@ -13,10 +13,11 @@ import { iconSizes } from "@/theme/typography"
 import { PRIVACY_OPTIONS, type PrivacyPreference } from "@/constants/Privacy"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { AppButton } from "@/components/ui/AppButton"
-import { AlertTriangle, CheckCircle, Pencil, Undo2, X } from "lucide-react-native"
+import { AlertTriangle, Bike, CheckCircle, Pencil, Undo2, X } from "lucide-react-native"
 import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
 import { createPathApi, snapPathApi, type PathPoint, type PathSegment } from "@/api/paths"
 import { getApiErrorMessage } from "@/utils/apiError"
+import { MapIconMarker } from "@/components/ui/MapIconMarker"
 
 type LatLng = {
   latitude: number
@@ -363,11 +364,13 @@ export default function CreatePathScreen() {
           />
         )}
         {activeRoute[activeRoute.length - 1] && (
-          <Marker
-            coordinate={activeRoute[activeRoute.length - 1]}
-            title="Current"
-            pinColor={palette.brand.dark}
-          />
+          <Marker coordinate={activeRoute[activeRoute.length - 1]} title="Current">
+            <MapIconMarker
+              color={palette.accent.green.base}
+              borderColor={palette.text.onAccent}
+              icon={<Bike size={iconSizes.md} color={palette.text.onAccent} strokeWidth={2.2} />}
+            />
+          </Marker>
         )}
       </MapView>
 

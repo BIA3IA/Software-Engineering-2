@@ -1,11 +1,11 @@
 import React from "react"
-import { View, StyleSheet, Pressable } from "react-native"
+import { View, StyleSheet, Pressable, Text } from "react-native"
 import MapView, { Marker, Polyline, Circle } from "react-native-maps"
-import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle, X } from "lucide-react-native"
+import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle, X, Bike } from "lucide-react-native"
 import * as Location from "expo-location"
 
 import { layoutStyles, scale, verticalScale, radius } from "@/theme/layout"
-import { iconSizes } from "@/theme/typography"
+import { iconSizes, textStyles } from "@/theme/typography"
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { useAuthStore } from "@/auth/storage"
@@ -19,18 +19,20 @@ import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
 import { ReportIssueModal } from "@/components/modals/ReportIssueModal"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { AppButton } from "@/components/ui/AppButton"
+import { MapIconMarker } from "@/components/ui/MapIconMarker"
 import { useRouter } from "expo-router"
 import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
 import { type PrivacyPreference } from "@/constants/Privacy"
 import { searchPathsApi } from "@/api/paths"
 import { createTripApi } from "@/api/trips"
-import { attachReportsToTripApi, createReportApi } from "@/api/reports"
+import { attachReportsToTripApi, createReportApi, getReportsByPathApi, type ReportSummary } from "@/api/reports"
 import { getApiErrorMessage } from "@/utils/apiError"
 import { useTripLaunchSelection, useSetTripLaunchSelection } from "@/hooks/useTripLaunchSelection"
 import { buildRouteFromLatLngSegments } from "@/utils/routes"
 import { mapUserPathSummaryToSearchResult } from "@/utils/pathMappers"
 import { findClosestPointIndex, normalizeSearchResult, regionAroundPoint, regionCenteredOnDestination } from "@/utils/map"
 import { isNearOrigin, minDistanceToRouteMeters } from "@/utils/geo"
+import { getConditionLabel, getObstacleLabel } from "@/utils/reportOptions"
 
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -48,6 +50,7 @@ export default function HomeScreen() {
   const [destination, setDestination] = React.useState("")
   const [resultsVisible, setResultsVisible] = React.useState(false)
   const [results, setResults] = React.useState<SearchResult[]>([])
+  const [reportsByPathId, setReportsByPathId] = React.useState<Record<string, ReportSummary[]>>({})
   const [selectedResult, setSelectedResult] = React.useState<SearchResult | null>(null)
   const [activeTrip, setActiveTrip] = React.useState<SearchResult | null>(null)
   const [activeTripStartedAt, setActiveTripStartedAt] = React.useState<Date | null>(null)
@@ -157,6 +160,7 @@ export default function HomeScreen() {
         origin: originQuery,
         destination: destinationQuery,
       })
+      console.log("search paths response", response)
       setResults(response.map((path) => mapUserPathSummaryToSearchResult(path, palette)))
       setResultsVisible(true)
     } catch (error) {
@@ -178,6 +182,7 @@ export default function HomeScreen() {
     setSelectedResult(normalized)
     setActiveTrip(null)
     setActiveTripStartedAt(null)
+    void loadReportsForPath(normalized.id)
   }
 
   async function handleStartTrip(result: SearchResult) {
@@ -394,6 +399,23 @@ export default function HomeScreen() {
     }))
   }
 
+  async function loadReportsForPath(pathId: string) {
+    try {
+      const reports = await getReportsByPathApi(pathId)
+      setReportsByPathId((current) => ({
+        ...current,
+        [pathId]: reports,
+      }))
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to load reports for this path.")
+      setErrorPopup({
+        visible: true,
+        title: "Reports Error",
+        message,
+      })
+    }
+  }
+
   React.useEffect(() => {
     return () => {
       if (successTimerRef.current) {
@@ -408,6 +430,7 @@ export default function HomeScreen() {
     setSelectedResult(tripLaunchSelection)
     setActiveTrip(tripLaunchSelection)
     setActiveTripStartedAt(new Date())
+    void loadReportsForPath(tripLaunchSelection.id)
     resetOffRouteTracking()
     offRouteContinueUsedRef.current = false
     setOffRoutePopupVisible(false)
@@ -586,12 +609,29 @@ export default function HomeScreen() {
             />
           )}
           {destinationPoint && (
-            <Marker
-              coordinate={destinationPoint}
-              title="Destination"
-              pinColor={palette.brand.base}
-            />
+            <Marker coordinate={destinationPoint} title="Destination">
+              <MapIconMarker
+                color={palette.accent.green.base}
+                borderColor={palette.text.onAccent}
+                icon={<Bike size={iconSizes.md} color={palette.text.onAccent} strokeWidth={2.2} />}
+              />
+            </Marker>
           )}
+          {(activeTrip?.id ?? selectedResult?.id) &&
+            (reportsByPathId[activeTrip?.id ?? selectedResult?.id ?? ""] ?? []).map((report) => (
+              <Marker
+                key={`report-${report.reportId}`}
+                coordinate={{ latitude: report.position.lat, longitude: report.position.lng }}
+                title={getObstacleLabel(report.obstacleType)}
+                description={getConditionLabel(report.pathStatus)}
+              >
+                <MapIconMarker
+                  color={palette.status.danger}
+                  borderColor={palette.text.onAccent}
+                  icon={<AlertTriangle size={iconSizes.md} color={palette.text.onAccent} strokeWidth={2.2} />}
+                />
+              </Marker>
+            ))}
         </MapView>
 
         {!hasActiveNavigation && (
@@ -715,8 +755,6 @@ export default function HomeScreen() {
         visible={reportVisible}
         onClose={() => setReportVisible(false)}
         onSubmit={handleSubmitReport}
-        conditionOptions={ISSUE_CONDITION_OPTIONS}
-        obstacleOptions={OBSTACLE_TYPE_OPTIONS}
       />
 
       <AppPopup
@@ -855,23 +893,6 @@ function formatAddress(address?: Location.LocationGeocodedAddress) {
   const components = [streetLine, locality].filter((part) => part && part.trim().length)
   return components.join(", ")
 }
-
-
-const ISSUE_CONDITION_OPTIONS = [
-  // { key: "OPTIMAL", label: "Optimal" },
-  { key: "MEDIUM", label: "Medium" },
-  { key: "SUFFICIENT", label: "Sufficient" },
-  { key: "REQUIRES_MAINTENANCE", label: "Requires Maintenance" },
-  { key: "CLOSED", label: "Closed" },
-]
-
-const OBSTACLE_TYPE_OPTIONS = [
-  { key: "POTHOLE", label: "Pothole" },
-  { key: "WORK_IN_PROGRESS", label: "Work in Progress" },
-  { key: "FLOODING", label: "Flooding" },
-  { key: "OBSTACLE", label: "Obstacle" },
-  { key: "OTHER", label: "Other" },
-]
 
 const styles = StyleSheet.create({
   map: {
