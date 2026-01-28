@@ -26,6 +26,12 @@ export type ReportSummary = {
   position: { lat: number; lng: number }
 }
 
+type ConfirmReportPayload = {
+  decision: "CONFIRMED" | "REJECTED"
+  tripId?: string
+  sessionId?: string
+}
+
 type CreateReportResponse = {
   data: {
     reportId: string
@@ -58,6 +64,10 @@ export async function createReportApi(payload: CreateReportPayload): Promise<str
 export async function attachReportsToTripApi(payload: AttachReportsPayload): Promise<number> {
   const res = await api.post<AttachReportsResponse>(`${REPORTS_BASE}/attach`, payload)
   return res.data.data.updatedCount
+}
+
+export async function confirmReportApi(reportId: string, payload: ConfirmReportPayload): Promise<void> {
+  await api.post(`${REPORTS_BASE}/${reportId}/confirm`, payload)
 }
 
 export async function getReportsByPathApi(pathId: string): Promise<ReportSummary[]> {

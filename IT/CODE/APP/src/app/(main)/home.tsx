@@ -25,13 +25,13 @@ import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
 import { type PrivacyPreference } from "@/constants/Privacy"
 import { searchPathsApi } from "@/api/paths"
 import { createTripApi } from "@/api/trips"
-import { attachReportsToTripApi, createReportApi, getReportsByPathApi, type ReportSummary } from "@/api/reports"
+import { attachReportsToTripApi, confirmReportApi, createReportApi, getReportsByPathApi, type ReportSummary } from "@/api/reports"
 import { getApiErrorMessage } from "@/utils/apiError"
 import { useTripLaunchSelection, useSetTripLaunchSelection } from "@/hooks/useTripLaunchSelection"
 import { buildRouteFromLatLngSegments } from "@/utils/routes"
 import { mapUserPathSummaryToSearchResult } from "@/utils/pathMappers"
 import { findClosestPointIndex, normalizeSearchResult, regionAroundPoint, regionCenteredOnDestination } from "@/utils/map"
-import { isNearOrigin, minDistanceToRouteMeters } from "@/utils/geo"
+import { haversineDistanceMetersLatLng, isNearOrigin, minDistanceToRouteMeters } from "@/utils/geo"
 import { getConditionLabel, getObstacleLabel } from "@/utils/reportOptions"
 
 export default function HomeScreen() {
@@ -59,6 +59,7 @@ export default function HomeScreen() {
   const mapRef = React.useRef<MapView | null>(null)
   const locationWatcherRef = React.useRef<Location.LocationSubscription | null>(null)
   const [reportVisible, setReportVisible] = React.useState(false)
+  const [reportConfirmation, setReportConfirmation] = React.useState<ReportSummary | null>(null)
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
   const [isCompletedPopupVisible, setCompletedPopupVisible] = React.useState(false)
   const [isCreateModalVisible, setCreateModalVisible] = React.useState(false)
@@ -75,12 +76,16 @@ export default function HomeScreen() {
   const OFF_ROUTE_DISTANCE_METERS = 50
   const OFF_ROUTE_MAX_CONSECUTIVE = 3
   const OFF_ROUTE_MAX_MS = 15000
+  const REPORT_CONFIRM_DISTANCE_METERS = 35
+  const REPORT_CONFIRM_DISMISS_MS = 8000
 
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const offRouteCountRef = React.useRef(0)
   const offRouteStartedAtRef = React.useRef<number | null>(null)
   const offRouteContinueUsedRef = React.useRef(false)
   const reportSessionIdRef = React.useRef<string | null>(null)
+  const confirmationTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const promptedReportIdsRef = React.useRef(new Set<string>())
 
   const displayRoute = (activeTrip?.route ?? selectedResult?.route) ?? []
   const destinationPoint = displayRoute[displayRoute.length - 1]
@@ -160,7 +165,6 @@ export default function HomeScreen() {
         origin: originQuery,
         destination: destinationQuery,
       })
-      console.log("search paths response", response)
       setResults(response.map((path) => mapUserPathSummaryToSearchResult(path, palette)))
       setResultsVisible(true)
     } catch (error) {
@@ -399,6 +403,34 @@ export default function HomeScreen() {
     }))
   }
 
+  function clearReportConfirmation() {
+    if (confirmationTimerRef.current) {
+      clearTimeout(confirmationTimerRef.current)
+      confirmationTimerRef.current = null
+    }
+    setReportConfirmation(null)
+  }
+
+  async function handleConfirmReport(decision: "CONFIRMED" | "REJECTED") {
+    if (!reportConfirmation) return
+    try {
+      await confirmReportApi(reportConfirmation.reportId, {
+        decision,
+        tripId: activeTrip?.id,
+        sessionId: reportSessionIdRef.current ?? undefined,
+      })
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to submit the confirmation.")
+      setErrorPopup({
+        visible: true,
+        title: "Report Error",
+        message,
+      })
+    } finally {
+      clearReportConfirmation()
+    }
+  }
+
   async function loadReportsForPath(pathId: string) {
     try {
       const reports = await getReportsByPathApi(pathId)
@@ -420,6 +452,9 @@ export default function HomeScreen() {
     return () => {
       if (successTimerRef.current) {
         clearTimeout(successTimerRef.current)
+      }
+      if (confirmationTimerRef.current) {
+        clearTimeout(confirmationTimerRef.current)
       }
     }
   }, [])
@@ -463,6 +498,36 @@ export default function HomeScreen() {
       setOffRoutePopupVisible(true)
     }
   }, [activeTrip, hasActiveNavigation, isOffRoutePopupVisible, userLocation])
+
+  React.useEffect(() => {
+    if (!activeTrip || !userLocation || isGuest) return
+    if (reportConfirmation) return
+    const reports = reportsByPathId[activeTrip.id] ?? []
+    if (!reports.length) return
+
+    let closestReport: ReportSummary | null = null
+    let closestDistance = Number.POSITIVE_INFINITY
+    for (const report of reports) {
+      if (report.status === "IGNORED") continue
+      if (promptedReportIdsRef.current.has(report.reportId)) continue
+      const distance = haversineDistanceMetersLatLng(
+        { latitude: report.position.lat, longitude: report.position.lng },
+        userLocation
+      )
+      if (distance < closestDistance) {
+        closestDistance = distance
+        closestReport = report
+      }
+    }
+
+    if (!closestReport || closestDistance > REPORT_CONFIRM_DISTANCE_METERS) return
+
+    promptedReportIdsRef.current.add(closestReport.reportId)
+    setReportConfirmation(closestReport)
+    confirmationTimerRef.current = setTimeout(() => {
+      clearReportConfirmation()
+    }, REPORT_CONFIRM_DISMISS_MS)
+  }, [activeTrip, isGuest, reportConfirmation, reportsByPathId, userLocation])
 
   React.useEffect(() => {
     let cancelled = false
@@ -755,6 +820,28 @@ export default function HomeScreen() {
         visible={reportVisible}
         onClose={() => setReportVisible(false)}
         onSubmit={handleSubmitReport}
+      />
+      <AppPopup
+        visible={Boolean(reportConfirmation)}
+        title="Report check"
+        message={`Is the ${getObstacleLabel(reportConfirmation?.obstacleType)} still present?`}
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
+        onClose={clearReportConfirmation}
+        primaryButton={{
+          label: "Yes",
+          variant: "primary",
+          onPress: () => handleConfirmReport("CONFIRMED"),
+          buttonColor: palette.status.danger,
+          textColor: palette.text.onAccent,
+        }}
+        secondaryButton={{
+          label: "No",
+          variant: "outline",
+          onPress: () => handleConfirmReport("REJECTED"),
+          borderColor: palette.status.danger,
+          textColor: palette.status.danger,
+        }}
       />
 
       <AppPopup
