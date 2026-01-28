@@ -505,6 +505,92 @@ export class QueryManager {
 
         return result.count;
     }
+    async getStatByTripId(tripId: string) {
+        return await prisma.stat.findUnique({
+            where: { tripId }
+        });
+    }
+
+    /**
+     * UC20: Persists a newly computed per-trip metric
+     */
+    async createStatRecord(data: { 
+        tripId: string; 
+        userId: string; 
+        avgSpeed: number; 
+        duration: number; 
+        kilometers: number 
+    }) {
+        return await prisma.stat.create({
+            data: {
+                tripId: data.tripId,
+                userId: data.userId,
+                avgSpeed: data.avgSpeed,
+                duration: data.duration,
+                kilometers: data.kilometers
+            }
+        });
+    }
+
+    /**
+     * UC22: Fetches all individual stat records for a user to calculate averages
+     */
+    async getAllStatsByUserId(userId: string) {
+        return await prisma.stat.findMany({
+            where: { userId }
+        });
+    }
+
+    // --- OVERALL STAT METHODS (Aggregates) ---
+
+    /**
+     * UC22: State-aware trigger - gets current number of trips
+     */
+    async getTripCountByUserId(userId: string): Promise<number> {
+        return await prisma.trip.count({
+            where: { userId }
+        });
+    }
+
+    /**
+     * UC22: Retrieves the cached global averages
+     */
+    async getOverallStatsByUserId(userId: string) {
+        return await prisma.overallStat.findUnique({
+            where: { userId }
+        });
+    }
+
+    /**
+     * UC22: Updates or creates the global average record
+     */
+    async upsertOverallStats(
+        userId: string, 
+        data: { 
+            avgSpeed: number; 
+            avgDuration: number; 
+            avgKilometers: number; 
+            lastTripCount: number 
+        }
+    ) {
+        return await prisma.overallStat.upsert({
+            where: { userId },
+            update: {
+                avgSpeed: data.avgSpeed,
+                avgDuration: data.avgDuration,
+                avgKilometers: data.avgKilometers,
+                lastTripCount: data.lastTripCount,
+                updatedAt: new Date()
+            },
+            create: {
+                userId,
+                avgSpeed: data.avgSpeed,
+                avgDuration: data.avgDuration,
+                avgKilometers: data.avgKilometers,
+                lastTripCount: data.lastTripCount
+            }
+        });
+    }
 
 }
 

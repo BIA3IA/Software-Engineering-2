@@ -1,0 +1,145 @@
+import { Request, Response, NextFunction } from 'express';
+import { queryManager } from '../query/index.js';
+import { NotFoundError, BadRequestError } from '../../errors/index.js';
+import logger from '../../utils/logger';
+
+export class StatsManager {
+    /**
+     * UC22: View Overall Statistics
+     * State-aware recomputation: Only triggers full aggregation if trip count has changed.
+     */
+    async getOverallStats(req: Request, res: Response, next: NextFunction) {
+        try {
+            const userId = req.user?.userId;
+
+            if (!userId) {
+                throw new BadRequestError('User is not authenticated', 'UNAUTHORIZED');
+            }
+
+            // 1. Get current trip count and existing overall stats
+            const [currentTripCount, cachedOverall] = await Promise.all([
+                queryManager.getTripCountByUserId(userId),
+                queryManager.getOverallStatsByUserId(userId)
+            ]);
+
+            if (currentTripCount === 0) {
+                throw new NotFoundError('No trips found for this user', 'TRIPS_NOT_FOUND');
+            }
+
+            // 2. State-aware check: If trip count hasn't changed, return cached data
+            if (cachedOverall && cachedOverall.lastTripCount === currentTripCount) {
+                return res.status(200).json({
+                    success: true,
+                    data: cachedOverall
+                });
+            }
+
+            // 3. Recompute: Fetch all per-trip 'Stat' records to calculate averages
+            logger.info({ userId }, 'Recomputing overall averages due to trip count change');
+            const allTripStats = await queryManager.getAllStatsByUserId(userId);
+            
+            const overallAverages = this.calculateOverallAverages(allTripStats);
+
+            // 4. Persist updated overall stats through queryManager
+            const updatedOverall = await queryManager.upsertOverallStats(userId, {
+                ...overallAverages,
+                lastTripCount: currentTripCount
+            });
+
+            res.status(200).json({
+                success: true,
+                data: updatedOverall
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * UC20/UC16: Get or Compute Individual Trip Stats (Per-Trip)
+     * Lazy initialization: Returns existing record or computes/persists it for the first time.
+     */
+    async getTripStats(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { tripId } = req.params;
+
+            if (!tripId) {
+                throw new BadRequestError('Trip ID is required', 'MISSING_TRIP_ID');
+            }
+
+            // 1. Check if processed record already exists in 'Stat' model
+            const existingStat = await queryManager.getStatByTripId(tripId);
+            if (existingStat) {
+                return res.status(200).json({
+                    success: true,
+                    data: existingStat
+                });
+            }
+
+            // 2. Fetch trip data for computation
+            const trip = await queryManager.getTripById(tripId);
+            if (!trip) {
+                throw new NotFoundError('Trip not found', 'NOT_FOUND');
+            }
+
+            // 3. Compute metrics
+            const computedMetrics = this.computePerTripMetrics(trip);
+
+            // 4. Persist per-trip stat record
+            const newStat = await queryManager.createStatRecord({
+                tripId: trip.tripId,
+                userId: trip.userId,
+                ...computedMetrics
+            });
+
+            res.status(200).json({
+                success: true,
+                data: newStat
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Internal Logic: Computes metrics for a single trip
+     */
+    private computePerTripMetrics(trip: any) {
+        const start = new Date(trip.startedAt).getTime();
+        const end = new Date(trip.finishedAt).getTime();
+        const durationSeconds = Math.max(0, (end - start) / 1000);
+
+        // In a real scenario, distance is summed from tripSegments coordinates
+        // Here we use a placeholder or the distance stored in Trip if available
+        const kilometers = trip.statistics?.distance || 0; 
+        const avgSpeed = durationSeconds > 0 ? (kilometers / (durationSeconds / 3600)) : 0;
+
+        return {
+            avgSpeed: Number(avgSpeed.toFixed(2)),
+            duration: durationSeconds,
+            kilometers: Number(kilometers.toFixed(2))
+        };
+    }
+
+    /**
+     * Internal Logic: Computes averages of averages across all trips
+     */
+    private calculateOverallAverages(statsArray: any[]) {
+        const total = statsArray.reduce((acc, stat) => {
+            acc.speed += stat.avgSpeed;
+            acc.duration += stat.duration;
+            acc.km += stat.kilometers;
+            return acc;
+        }, { speed: 0, duration: 0, km: 0 });
+
+        const count = statsArray.length;
+
+        return {
+            avgSpeed: Number((total.speed / count).toFixed(2)),
+            avgDuration: Number((total.duration / count).toFixed(2)),
+            avgKilometers: Number((total.km / count).toFixed(2))
+        };
+    }
+}
+
+export const statsManager = new StatsManager();
