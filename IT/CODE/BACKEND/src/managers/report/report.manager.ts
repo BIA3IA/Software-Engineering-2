@@ -10,9 +10,8 @@ export class ReportManager {
             const {
                 pathSegmentId,
                 tripId,
-                obstacleType,
-                position,
-                reportMode,
+                obstacleType, 
+                position, 
                 pathStatus,
                 condition,
             } = req.body ?? {};
@@ -52,7 +51,6 @@ export class ReportManager {
                 obstacleType,
                 pathStatus: resolvedPathStatus,
                 position,
-                reportMode: reportMode || 'MANUAL',
                 status: 'CREATED'
             });
 
@@ -75,7 +73,7 @@ export class ReportManager {
     async confirmReport(req: Request, res: Response, next: NextFunction) {
         try {
             const { reportId } = req.params;
-            const { decision, tripId, position } = req.body ?? {};
+            const { decision, tripId } = req.body ?? {};
             const userId = req.user?.userId;
 
             if (!userId) {
@@ -94,9 +92,6 @@ export class ReportManager {
             if (!tripId) {
                 throw new BadRequestError('Trip ID is required', 'MISSING_TRIP_ID');
             }
-            if (!position) {
-                throw new BadRequestError('Position is required', 'MISSING_POSITION');
-            }
 
             // Verify report existence
             const report = await queryManager.getReportById(reportId);
@@ -110,8 +105,7 @@ export class ReportManager {
                 tripId,
                 obstacleType: report.obstacleType,
                 pathStatus: report.pathStatus,
-                position,
-                reportMode: 'MANUAL',
+                position: report.position,
                 status: decision
             });
 

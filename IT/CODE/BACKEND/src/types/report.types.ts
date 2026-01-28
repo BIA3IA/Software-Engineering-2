@@ -4,8 +4,6 @@ export type ObstacleType = 'POTHOLE' | 'WORK_IN_PROGRESS' | 'FLOODING' | 'OBSTAC
 
 export type ReportStatus = 'CONFIRMED' | 'REJECTED' | 'IGNORED' | 'CREATED';
 
-export type ReportMode = 'MANUAL' | 'AUTOMATIC';
-
 export interface Report {
     reportId: string;
     createdAt: Date;
@@ -15,7 +13,6 @@ export interface Report {
     pathSegmentId: string;
     obstacleType: ObstacleType;
     status: ReportStatus;
-    reportMode: ReportMode;
     position: Coordinates;
     pathStatus: string;
 }

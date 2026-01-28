@@ -6,7 +6,6 @@
   - You are about to drop the column `polylineCoordinates` on the `Report` table. All the data in the column will be lost.
   - You are about to drop the column `reportStatus` on the `Report` table. All the data in the column will be lost.
   - Added the required column `position` to the `Report` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `reportMode` to the `Report` table without a default value. This is not possible if the table is not empty.
   - Made the column `pathSegmentId` on table `Report` required. This step will fail if there are existing NULL values in that column.
 
 */
@@ -28,7 +27,6 @@ DROP COLUMN "path",
 DROP COLUMN "polylineCoordinates",
 DROP COLUMN "reportStatus",
 ADD COLUMN     "position" JSONB NOT NULL,
-ADD COLUMN     "reportMode" TEXT NOT NULL,
 ALTER COLUMN "status" SET DEFAULT 'CREATED',
 ALTER COLUMN "pathSegmentId" SET NOT NULL;
 

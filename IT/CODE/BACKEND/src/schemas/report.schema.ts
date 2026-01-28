@@ -21,14 +21,11 @@ const obstacleTypeSchema = Joi.string().valid(
     'OTHER'
 );
 
-const reportModeSchema = Joi.string().valid('MANUAL', 'AUTOMATIC');
-
 export const createReportSchema = Joi.object({
     pathSegmentId: Joi.string().trim().min(1).required(),
     tripId: Joi.string().trim().min(1).required(),
     obstacleType: obstacleTypeSchema.required(),
     position: coordinatesSchema.required(),
-    reportMode: reportModeSchema.optional(),
     pathStatus: pathStatusSchema.optional(),
     condition: pathStatusSchema.optional(),
 }).or('pathStatus', 'condition');
@@ -40,7 +37,6 @@ export const confirmReportParamsSchema = Joi.object({
 export const confirmReportSchema = Joi.object({
     decision: Joi.string().valid('CONFIRMED', 'REJECTED').required(),
     tripId: Joi.string().trim().min(1).required(),
-    position: coordinatesSchema.required(),
 });
 
 export const getReportsByPathSchema = Joi.object({

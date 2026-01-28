@@ -418,7 +418,6 @@ export class QueryManager {
         obstacleType: string;
         pathStatus: string;
         position: any; // Coordinates JSON
-        reportMode: string;
         status: string;
     }) {
         return await prisma.report.create({
@@ -429,7 +428,6 @@ export class QueryManager {
                 obstacleType: data.obstacleType,
                 pathStatus: data.pathStatus,
                 position: data.position,
-                reportMode: data.reportMode,
                 status: data.status,
             },
         });

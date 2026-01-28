@@ -125,6 +125,5 @@ model Report {
   obstacleType  String // Enum values: POTHOLE, WORK_IN_PROGRESS, FLOODING, OBSTACLE, OTHER
   pathStatus    String      @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
   status        String      @default("CREATED") // Enum values: CONFIRMED, REJECTED, IGNORED, CREATED
-  reportMode    String // Enum values: MANUAL, AUTOMATIC (Maps to 'creationMode')
   position      Json
 }
