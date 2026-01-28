@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../utils/index.js";
 import { TripSegments, TripStatistics, WeatherData, PathWithSegments, Coordinates } from "../../types/index.js";
+import { SEGMENT_MATCH_TOLERANCE_DEG } from "../../constants/appConfig.js";
 
 
 export class QueryManager {
@@ -394,7 +395,7 @@ export class QueryManager {
     }
 
     async getSegmentsByPolylineCoordinates(segments: Coordinates[][]) {
-        const tolerance = 0.00005; // ~5m
+        const tolerance = SEGMENT_MATCH_TOLERANCE_DEG;
         const result = new Map<string, string>();
 
         await Promise.all(
@@ -495,19 +496,6 @@ export class QueryManager {
         });
     }
 
-    // get reports by trip id
-    async getReportsByTripId(tripId: string) {
-        return await prisma.report.findMany({
-            where: { tripId },
-            include: {
-                user: {
-                    select: { username: true } // Identify reporter
-                }
-            },
-            orderBy: { createdAt: 'desc' },
-        });
-    }
-
     // get reports by path id
     async getReportsByPathId(pathId: string) {
         const pathSegments = await prisma.pathSegment.findMany({
@@ -541,7 +529,7 @@ export class QueryManager {
         });
     }
 
-    async getReportsBySegmentIds(segmentIds: string[]) {
+    async getReportsBySegmentIds(segmentIds: string[], statuses?: string[]) {
         if (!segmentIds.length) {
             return [];
         }
@@ -550,6 +538,13 @@ export class QueryManager {
                 segmentId: {
                     in: segmentIds,
                 },
+                ...(statuses?.length
+                    ? {
+                          status: {
+                              in: statuses,
+                          },
+                      }
+                    : {}),
             },
             orderBy: { createdAt: 'desc' },
         });

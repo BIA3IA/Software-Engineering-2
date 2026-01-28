@@ -1,4 +1,5 @@
 import { PathWithSegments, TripSegments, PATH_STATUS_SCORE_MAP } from '../types/index';
+import { REPORT_ALPHA, REPORT_BETA, REPORT_MIN_RELIABILITY, REPORT_MAX_RELIABILITY } from "../constants/appConfig.js";
 
 // Utility function to get JWT secrets from environment variables
 export const getJwtSecrets = () => {
@@ -123,10 +124,6 @@ export function mapScoreToStatus(score: number) {
 }
 
 
-const REPORT_ALPHA = 0.6; // weight for confirmed reports
-const REPORT_BETA = 0.8; // weight for rejected reports
-export const REPORT_MIN_RELIABILITY = 0.1; // minimum reliability threshold
-const REPORT_MAX_RELIABILITY = 2.5; // maximum reliability cap
 
 // Freshness parameters
 const REPORT_FRESHNESS_HALF_LIFE_MIN = (() => {

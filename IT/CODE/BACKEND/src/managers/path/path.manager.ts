@@ -5,6 +5,11 @@ import { sortPathSegmentsByChain, computeReportSignals, REPORT_MIN_RELIABILITY, 
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import { snapToRoad, geocodeAddress } from '../../services/index.js';
 import { haversineDistanceMeters, polylineDistanceKm } from '../../utils/geo.js';
+import {
+    PATH_SEARCH_TOLERANCE_DEG,
+    PATH_SEARCH_MAX_DISTANCE_METERS,
+    PATH_SEARCH_NEAR_DISTANCE_BUFFER_METERS
+} from '../../constants/appConfig.js';
 
 export class PathManager {
 
@@ -161,9 +166,9 @@ export class PathManager {
             }));
 
             // Tolerance radius in degrees (approximately 200m)
-            const tolerance = 0.002;
-            const maxDistanceMeters = 200;
-            const nearDistanceBufferMeters = 50;
+            const tolerance = PATH_SEARCH_TOLERANCE_DEG;
+            const maxDistanceMeters = PATH_SEARCH_MAX_DISTANCE_METERS;
+            const nearDistanceBufferMeters = PATH_SEARCH_NEAR_DISTANCE_BUFFER_METERS;
 
             const matchingPaths: Array<{ path: PathWithSegments; maxDistance: number }> = [];
 

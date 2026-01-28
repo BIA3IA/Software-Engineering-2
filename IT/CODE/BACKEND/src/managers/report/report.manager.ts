@@ -161,34 +161,6 @@ export class ReportManager {
         }
     }
 
-    // Get active reports by trip id
-    async getActiveReportsByTripId(tripId: string) {
-        const reports = await queryManager.getReportsByTripId(tripId);
-        return this.filterActiveOriginalReports(reports, new Date());
-    }
-
-    /**
-     * Retrieves all reports associated with a specific trip.
-     */
-    async getReportsByTrip(req: Request, res: Response, next: NextFunction) {
-        try {
-            const { tripId } = req.params;
-
-            if (!tripId) {
-                throw new BadRequestError('Trip ID is required', 'MISSING_TRIP_ID');
-            }
-
-            const reports = await queryManager.getReportsByTripId(tripId);
-
-            res.json({
-                success: true,
-                data: reports
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
-
     // Filter active original reports -> only created
     private filterActiveOriginalReports(reports: any[], now: Date) {
         return reports.filter(report => {
