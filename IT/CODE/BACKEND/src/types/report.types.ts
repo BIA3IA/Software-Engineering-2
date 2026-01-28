@@ -11,7 +11,6 @@ export interface Report {
     tripId: string | null;
     sessionId?: string | null;
     segmentId: string;
-    pathSegmentId: string;
     obstacleType: ObstacleType;
     status: ReportStatus;
     position: Coordinates;

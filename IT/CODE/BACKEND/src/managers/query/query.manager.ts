@@ -393,6 +393,50 @@ export class QueryManager {
         });
     }
 
+    async getSegmentsByPolylineCoordinates(segments: Coordinates[][]) {
+        const tolerance = 0.00005; // ~5m
+        const result = new Map<string, string>();
+
+        await Promise.all(
+            segments.map(async (polyline) => {
+                if (polyline.length < 2) {
+                    return;
+                }
+                const start = polyline[0];
+                const end = polyline[polyline.length - 1];
+                const rows = await prisma.$queryRaw<
+                    Array<{ segmentId: string; polylineCoordinates: Coordinates[] }>
+                >(Prisma.sql`
+                    SELECT "segmentId", "polylineCoordinates"
+                    FROM "Segment"
+                    WHERE jsonb_array_length("polylineCoordinates") = 2
+                      AND (
+                        (
+                          abs(("polylineCoordinates"->0->>'lat')::double precision - ${start.lat}) <= ${tolerance}
+                          AND abs(("polylineCoordinates"->0->>'lng')::double precision - ${start.lng}) <= ${tolerance}
+                          AND abs(("polylineCoordinates"->1->>'lat')::double precision - ${end.lat}) <= ${tolerance}
+                          AND abs(("polylineCoordinates"->1->>'lng')::double precision - ${end.lng}) <= ${tolerance}
+                        )
+                        OR
+                        (
+                          abs(("polylineCoordinates"->0->>'lat')::double precision - ${end.lat}) <= ${tolerance}
+                          AND abs(("polylineCoordinates"->0->>'lng')::double precision - ${end.lng}) <= ${tolerance}
+                          AND abs(("polylineCoordinates"->1->>'lat')::double precision - ${start.lat}) <= ${tolerance}
+                          AND abs(("polylineCoordinates"->1->>'lng')::double precision - ${start.lng}) <= ${tolerance}
+                        )
+                      )
+                    LIMIT 1
+                `);
+
+                if (rows[0]) {
+                    result.set(JSON.stringify(polyline), rows[0].segmentId);
+                }
+            })
+        );
+
+        return result;
+    }
+
     // get path segment by id
     async getPathSegmentById(pathSegmentId: string) {
         return await prisma.pathSegment.findUnique({
@@ -422,7 +466,7 @@ export class QueryManager {
     // create report
     async createReport(data: {
         userId: string;
-        pathSegmentId: string;
+        segmentId: string;
         tripId?: string | null;
         sessionId?: string | null;
         obstacleType: string;
@@ -433,7 +477,7 @@ export class QueryManager {
         return await prisma.report.create({
             data: {
                 userId: data.userId,
-                pathSegmentId: data.pathSegmentId,
+                segmentId: data.segmentId,
                 tripId: data.tripId ?? null,
                 sessionId: data.sessionId ?? null,
                 obstacleType: data.obstacleType,
@@ -466,29 +510,54 @@ export class QueryManager {
 
     // get reports by path id
     async getReportsByPathId(pathId: string) {
+        const pathSegments = await prisma.pathSegment.findMany({
+            where: { pathId },
+            select: { segmentId: true },
+        });
+        const segmentIds = pathSegments.map(ps => ps.segmentId);
+        if (!segmentIds.length) {
+            return [];
+        }
         return await prisma.report.findMany({
             where: {
-                pathSegment: {
-                    pathId,
+                segmentId: {
+                    in: segmentIds,
                 },
             },
             include: {
                 user: {
                     select: { username: true },
                 },
-                pathSegment: {
-                    select: { pathId: true },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+
+    // get reports by segment id
+    async getReportsBySegmentId(segmentId: string) {
+        return await prisma.report.findMany({
+            where: { segmentId },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+
+    async getReportsBySegmentIds(segmentIds: string[]) {
+        if (!segmentIds.length) {
+            return [];
+        }
+        return await prisma.report.findMany({
+            where: {
+                segmentId: {
+                    in: segmentIds,
                 },
             },
             orderBy: { createdAt: 'desc' },
         });
     }
 
-    // get reports by path segment id
-    async getReportsByPathSegmentId(pathSegmentId: string) {
-        return await prisma.report.findMany({
-            where: { pathSegmentId },
-            orderBy: { createdAt: 'desc' },
+    async getPathSegmentsBySegmentId(segmentId: string) {
+        return await prisma.pathSegment.findMany({
+            where: { segmentId },
         });
     }
 

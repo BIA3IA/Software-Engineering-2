@@ -43,12 +43,22 @@ export class PathManager {
                 const createdSegmentIds: string[] = [];
                 const allCoordinates: Coordinates[] = [];
                 
+                const existingSegments = await queryManager.getSegmentsByPolylineCoordinates(
+                    pathSegments.map((segment) => [segment.start, segment.end])
+                );
+
                 for (const segment of pathSegments) {
                     // Build polyline from start to end (add intermediate points if needed)
                     const polylineCoordinates: Coordinates[] = [segment.start, segment.end];
-                    
-                    const createdSegment = await queryManager.createSegment('OPTIMAL', polylineCoordinates);
-                    createdSegmentIds.push(createdSegment.segmentId);
+                    const segmentKey = JSON.stringify(polylineCoordinates);
+                    const existingSegmentId = existingSegments.get(segmentKey);
+
+                    if (existingSegmentId) {
+                        createdSegmentIds.push(existingSegmentId);
+                    } else {
+                        const createdSegment = await queryManager.createSegment('OPTIMAL', polylineCoordinates);
+                        createdSegmentIds.push(createdSegment.segmentId);
+                    }
                     allCoordinates.push(...polylineCoordinates);
                 }
 
@@ -253,7 +263,6 @@ export class PathManager {
                         createdAt: path.createdAt,
                         segmentCount: path.pathSegments.length,
                         pathSegments: path.pathSegments.map(ps => ({
-                            pathSegmentId: ps.id,
                             segmentId: ps.segmentId,
                             polylineCoordinates: ps.segment.polylineCoordinates,
                         })),
@@ -296,7 +305,6 @@ export class PathManager {
                         createdAt: path.createdAt,
                         segmentCount: path.pathSegments.length,
                         pathSegments: path.pathSegments.map(ps => ({
-                            pathSegmentId: ps.id,
                             segmentId: ps.segmentId,
                             polylineCoordinates: ps.segment.polylineCoordinates,
                         })),
@@ -415,22 +423,31 @@ export class PathManager {
     }
 
     async recalculatePathSegmentStatus(pathSegmentId: string) {
-        const segmentStatus = await this.calculatePathSegmentStatus(pathSegmentId);
-
-        if (segmentStatus) {
-            await queryManager.updatePathSegmentStatus(pathSegmentId, segmentStatus);
-        }
-
         const pathSegment = await queryManager.getPathSegmentById(pathSegmentId);
         if (!pathSegment) {
             return;
         }
-
-        await this.recalculatePathStatus(pathSegment.pathId);
+        await this.recalculateSegmentStatusForAllPaths(pathSegment.segmentId);
     }
 
-    private async calculatePathSegmentStatus(pathSegmentId: string) {
-        const reports = await queryManager.getReportsByPathSegmentId(pathSegmentId);
+    async recalculateSegmentStatusForAllPaths(segmentId: string) {
+        const segmentStatus = await this.calculateSegmentStatus(segmentId);
+        const pathSegments = await queryManager.getPathSegmentsBySegmentId(segmentId);
+
+        if (segmentStatus) {
+            await Promise.all(
+                pathSegments.map((segment) =>
+                    queryManager.updatePathSegmentStatus(segment.id, segmentStatus)
+                )
+            );
+        }
+
+        const pathIds = new Set(pathSegments.map((segment) => segment.pathId));
+        await Promise.all(Array.from(pathIds).map((pathId) => this.recalculatePathStatus(pathId)));
+    }
+
+    private async calculateSegmentStatus(segmentId: string) {
+        const reports = await queryManager.getReportsBySegmentId(segmentId);
 
         if (!reports.length) {
             return null;
@@ -486,10 +503,10 @@ export class PathManager {
         const reportedSegmentIds = new Set(
             reports
                 .filter((report) => report.status !== 'IGNORED')
-                .map((report) => report.pathSegmentId)
+                .map((report) => report.segmentId)
         );
         const segmentsToScore = path.pathSegments.filter((segment) =>
-            reportedSegmentIds.has(segment.id)
+            reportedSegmentIds.has(segment.segmentId)
         );
         let status = computePathStatusFromSegments(path.pathSegments);
         if (segmentsToScore.length) {
