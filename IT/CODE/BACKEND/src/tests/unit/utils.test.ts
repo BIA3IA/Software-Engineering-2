@@ -115,12 +115,14 @@ describe("Testing sortPathSegmentsByChain function", () => {
     test("Should return a single segment if there is only one segment", () => {
         const segments = [
             {
+                id: "ps1",
                 segmentId: "seg1",
                 nextSegmentId: null,
                 pathId: "path1",
+                status: "OPTIMAL" as const,
                 segment: {
                     segmentId: "seg1",
-                    status: "OPTIMAL",
+                    status: "OPTIMAL" as const,
                     polylineCoordinates: [],
                     createdAt: new Date(),
                 }
@@ -136,34 +138,40 @@ describe("Testing sortPathSegmentsByChain function", () => {
         const date = new Date();
         const segments = [
             {
+                id: "ps3",
                 segmentId: "seg3",
                 nextSegmentId: "seg1",
                 pathId: "path1",
+                status: "OPTIMAL" as const,
                 segment: {
                     segmentId: "seg3",
-                    status: "OPTIMAL",
+                    status: "OPTIMAL" as const,
                     polylineCoordinates: [],
                     createdAt: date,
                 }
             },
             {
+                id: "ps1",
                 segmentId: "seg1",
                 nextSegmentId: null,
                 pathId: "path1",
+                status: "OPTIMAL" as const,
                 segment: {
                     segmentId: "seg1",
-                    status: "OPTIMAL",
+                    status: "OPTIMAL" as const,
                     polylineCoordinates: [],
                     createdAt: date,
                 }
             },
             {
+                id: "ps2",
                 segmentId: "seg2",
                 nextSegmentId: "seg3",
                 pathId: "path1",
+                status: "OPTIMAL" as const,
                 segment: {
                     segmentId: "seg2",
-                    status: "OPTIMAL",
+                    status: "OPTIMAL" as const,
                     polylineCoordinates: [],
                     createdAt: date,
                 }

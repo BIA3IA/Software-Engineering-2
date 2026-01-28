@@ -33,6 +33,8 @@ jest.mock("../../utils/logger", () => ({
 
 import prisma from "../../utils/prisma-client";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
+import { generateTokens } from "../../middleware/jwt.auth";
 
 describe("Auth Routes Integration Tests", () => {
     
@@ -144,15 +146,26 @@ describe("Auth Routes Integration Tests", () => {
     describe("POST /api/v1/auth/logout", () => {
 
         test("should logout successfully with valid refresh token", async () => {
+            const { refreshToken } = generateTokens("cuid123");
+            const tokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
+
+            (prisma.refreshToken.findUnique as jest.Mock).mockResolvedValue({
+                userId: "cuid123",
+                token: tokenHash,
+                expiresAt: new Date(Date.now() + 3600000),
+            });
             (prisma.refreshToken.delete as jest.Mock).mockResolvedValue({});
 
             const response = await request(app)
                 .post("/api/v1/auth/logout")
-                .send({ refreshToken: "valid-refresh-token" });
+                .send({ refreshToken });
 
             expect(response.status).toBe(204);
+            expect(prisma.refreshToken.findUnique).toHaveBeenCalledWith({
+                where: { token: tokenHash },
+            });
             expect(prisma.refreshToken.delete).toHaveBeenCalledWith({
-                where: { token: "valid-refresh-token" },
+                where: { token: tokenHash },
             });
         });
 

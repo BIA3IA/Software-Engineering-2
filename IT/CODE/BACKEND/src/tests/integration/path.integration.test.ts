@@ -105,8 +105,6 @@ describe("Path Routes Integration Tests", () => {
                 visibility: true,
                 creationMode: "manual",
                 createdAt: new Date(),
-                status: "OPTIMAL",
-                score: null,
                 title: "Test Path",
                 description: "Test description",
                 distanceKm: 0.64,
@@ -123,16 +121,7 @@ describe("Path Routes Integration Tests", () => {
             // 3. createPath - creates the path
             (prisma.path.create as jest.Mock).mockResolvedValue(mockPath);
             
-            // 4. calculatePathStatus - calls getPathById (uses findUnique)
-            (prisma.path.findUnique as jest.Mock).mockResolvedValueOnce(mockPath);
-            
-            // 5. getSegmentStatistics - called during status calculation
-            (prisma.segment.findMany as jest.Mock).mockResolvedValue([mockSegment]);
-            
-            // 6. updatePathStatus - updates the path status
-            (prisma.path.update as jest.Mock).mockResolvedValue({ ...mockPath, status: "OPTIMAL" });
-            
-            // 7. getPathById - final call to get updated path
+            // 4. getPathById - final call to get updated path
             (prisma.path.findUnique as jest.Mock).mockResolvedValueOnce(mockPath);
 
             const response = await request(app)
@@ -151,7 +140,6 @@ describe("Path Routes Integration Tests", () => {
             expect(response.status).toBe(201);
             expect(response.body.success).toBe(true);
             expect(response.body.data).toHaveProperty("pathId");
-            expect(response.body.data.status).toBe("OPTIMAL");
         });
 
         test("Should return 401 for missing access token", async () => {
@@ -270,8 +258,6 @@ describe("Path Routes Integration Tests", () => {
                 userId: "user456",
                 title: "Public Route",
                 description: "A public cycling route",
-                status: "OPTIMAL",
-                score: null,
                 visibility: true,
                 origin: { lat: 45.4642, lng: 9.1900 },
                 destination: { lat: 45.4700, lng: 9.1950 },
@@ -281,6 +267,7 @@ describe("Path Routes Integration Tests", () => {
                     {
                         segmentId: "segment1",
                         nextSegmentId: null,
+                        status: "OPTIMAL",
                         segment: {
                             polylineCoordinates: [
                                 { lat: 45.4642, lng: 9.1900 },
@@ -377,8 +364,6 @@ describe("Path Routes Integration Tests", () => {
                     userId: "user123",
                     title: "My Route",
                     description: "My cycling route",
-                    status: "OPTIMAL",
-                    score: null,
                     visibility: true,
                     origin: { lat: 45.4642, lng: 9.1900 },
                     destination: { lat: 45.4700, lng: 9.1950 },
@@ -388,6 +373,7 @@ describe("Path Routes Integration Tests", () => {
                         {
                             segmentId: "segment1",
                             nextSegmentId: null,
+                            status: "OPTIMAL",
                             segment: {
                                 polylineCoordinates: [
                                     { lat: 45.4642, lng: 9.1900 },

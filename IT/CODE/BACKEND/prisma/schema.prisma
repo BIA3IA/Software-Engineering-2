@@ -29,6 +29,7 @@ model User {
   refreshTokens     RefreshToken[]
   trips             Trip[]
   paths             Path[]
+  reports           Report[]
 }
 
 model RefreshToken {
@@ -57,6 +58,7 @@ model Trip {
   /// [WeatherData]
   weather      Json?
   tripSegments TripSegment[]
+  reports      Report[]
 }
 
 model Segment {
@@ -86,27 +88,45 @@ model Path {
   user         User          @relation(fields: [userId], references: [userId], onDelete: Cascade)
   createdAt    DateTime      @default(now())
   pathSegments PathSegment[]
-  status       String        @default("OPTIMAL")
+  status       String        @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
   /// [Coordinates]
   origin       Json
   /// [Coordinates]
   destination  Json
   visibility   Boolean       @default(false)
   creationMode String        @default("MANUAL")
-  score        Float?
   title        String?
   description  String?
   distanceKm   Float?
 }
 
 model PathSegment {
-  id            String  @id @default(cuid())
+  id            String   @id @default(cuid())
   pathId        String
   segmentId     String
   nextSegmentId String?
-  status        String  @default("OPTIMAL")
-  path          Path    @relation(fields: [pathId], references: [pathId], onDelete: Cascade)
-  segment       Segment @relation(fields: [segmentId], references: [segmentId]) // No onDelete: Cascade here otherwise deleting a path would delete also the trip segments
+  status        String   @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
+  path          Path     @relation(fields: [pathId], references: [pathId], onDelete: Cascade)
+  segment       Segment  @relation(fields: [segmentId], references: [segmentId]) // No onDelete: Cascade here otherwise deleting a path would delete also the trip segments
+  reports       Report[]
 
   @@unique([pathId, segmentId])
+}
+
+model Report {
+  reportId      String      @id @default(cuid())
+  createdAt     DateTime    @default(now())
+  userId        String
+  user          User        @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  pathSegmentId String
+  pathSegment   PathSegment @relation(fields: [pathSegmentId], references: [id], onDelete: Cascade)
+  tripId        String?
+  trip          Trip?       @relation(fields: [tripId], references: [tripId], onDelete: Cascade)
+  sessionId     String?
+  obstacleType  String // Enum values: POTHOLE, WORK_IN_PROGRESS, FLOODING, OBSTACLE, OTHER
+  pathStatus    String      @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
+  status        String      @default("CREATED") // Enum values: CONFIRMED, REJECTED, IGNORED, CREATED
+  position      Json
+
+  @@index([sessionId])
 }

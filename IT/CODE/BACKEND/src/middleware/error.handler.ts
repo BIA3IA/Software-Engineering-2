@@ -24,6 +24,7 @@ export const errorHandler = (
     next: NextFunction
 ): void => {
     const { method, originalUrl, body, params, query } = req;
+    const safeBody = redactSensitive(body);
 
     // Log error details with Pino
     if (isAppError(err)) {
@@ -52,7 +53,7 @@ export const errorHandler = (
             name: err.name,
             stack: err.stack,
         },
-        request: { method, url: originalUrl, body, params, query },
+        request: { method, url: originalUrl, body: safeBody, params, query },
     }, 'Unexpected error');
 
     // Generic response, never expose internal details
@@ -83,3 +84,29 @@ export const notFoundHandler = (req: Request, res: Response): void => {
 
     res.status(HttpStatus.NOT_FOUND).json(response);
 };
+
+const SENSITIVE_KEYS = new Set([
+    'password',
+    'currentPassword',
+    'refreshToken',
+    'accessToken',
+    'token',
+    'authorization',
+]);
+
+function redactSensitive(value: unknown): unknown {
+    if (Array.isArray(value)) {
+        return value.map(redactSensitive);
+    }
+    if (value && typeof value === 'object') {
+        return Object.fromEntries(
+            Object.entries(value as Record<string, unknown>).map(([key, val]) => {
+                if (SENSITIVE_KEYS.has(key)) {
+                    return [key, '[REDACTED]'];
+                }
+                return [key, redactSensitive(val)];
+            })
+        );
+    }
+    return value;
+}

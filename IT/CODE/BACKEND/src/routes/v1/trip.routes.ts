@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { tripManager } from "../../managers/trip/index.js";
-import { createTripSchema } from "../../schemas/index.js";
+import { createTripSchema, tripIdParamsSchema } from "../../schemas/index.js";
 import { validate, verifyAccessToken } from "../../middleware/index.js";
 
 const tripRouter = Router();
@@ -21,6 +21,7 @@ tripRouter.get(
 tripRouter.delete(
     "/:tripId",
     verifyAccessToken,
+    validate(tripIdParamsSchema, "params"),
     tripManager.deleteTrip.bind(tripManager)
 );
 
