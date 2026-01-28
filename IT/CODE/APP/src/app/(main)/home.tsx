@@ -72,12 +72,13 @@ export default function HomeScreen() {
     message: "",
   })
 
-  const START_TRIP_DISTANCE_METERS = 100
-  const OFF_ROUTE_DISTANCE_METERS = 50
+  const START_TRIP_DISTANCE_METERS = 20
+  const OFF_ROUTE_DISTANCE_METERS = 20
   const OFF_ROUTE_MAX_CONSECUTIVE = 3
   const OFF_ROUTE_MAX_MS = 15000
   const REPORT_CONFIRM_DISTANCE_METERS = 15
   const REPORT_CONFIRM_DISMISS_MS = 8000
+  const AUTO_COMPLETE_DISTANCE_METERS = 10
 
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const offRouteCountRef = React.useRef(0)
@@ -86,6 +87,7 @@ export default function HomeScreen() {
   const reportSessionIdRef = React.useRef<string | null>(null)
   const confirmationTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const promptedReportIdsRef = React.useRef(new Set<string>())
+  const autoCompleteTriggeredRef = React.useRef(false)
 
   const displayRoute = (activeTrip?.route ?? selectedResult?.route) ?? []
   const destinationPoint = displayRoute[displayRoute.length - 1]
@@ -225,6 +227,7 @@ export default function HomeScreen() {
     setActiveTripStartedAt(null)
     setReportVisible(false)
     reportSessionIdRef.current = null
+    autoCompleteTriggeredRef.current = false
     setResultsVisible(false)
     setCancelTripPopupVisible(false)
   }
@@ -268,14 +271,10 @@ export default function HomeScreen() {
         return
       }
 
-      const tripSegments =
-        activeTrip.pathSegments?.map((segment) => ({
-          segmentId: segment.segmentId,
-          polylineCoordinates: segment.polylineCoordinates.map((point) => ({
-            lat: point.latitude,
-            lng: point.longitude,
-          })),
-        })) ?? []
+      const tripSegments = buildTraversedTripSegments(
+        activeTrip.pathSegments ?? [],
+        traversedRoute.length
+      )
 
       const hasInvalidSegment = tripSegments.some((segment) => segment.polylineCoordinates.length < 2)
 
@@ -283,7 +282,7 @@ export default function HomeScreen() {
         setErrorPopup({
           visible: true,
           title: "Trip Error",
-          message: "Trip segments are incomplete. Please try again.",
+          message: "Trip too short to be saved. Please ride a bit longer and try again.",
         })
         return
       }
@@ -334,6 +333,7 @@ export default function HomeScreen() {
     setActiveTripStartedAt(null)
     setReportVisible(false)
     reportSessionIdRef.current = null
+    autoCompleteTriggeredRef.current = false
     setCompletedPopupVisible(true)
   }
 
@@ -366,9 +366,7 @@ export default function HomeScreen() {
 
     try {
       await createReportApi({
-        pathSegmentId: closestSegment.pathSegmentId,
-        pathId: closestSegment.pathSegmentId ? undefined : activeTrip.id,
-        segmentId: closestSegment.pathSegmentId ? undefined : closestSegment.segmentId,
+        segmentId: closestSegment.segmentId,
         sessionId,
         obstacleType: values.obstacle,
         condition: values.condition,
@@ -416,7 +414,6 @@ export default function HomeScreen() {
     try {
       await confirmReportApi(reportConfirmation.reportId, {
         decision,
-        tripId: activeTrip?.id,
         sessionId: reportSessionIdRef.current ?? undefined,
       })
     } catch (error) {
@@ -498,6 +495,18 @@ export default function HomeScreen() {
       setOffRoutePopupVisible(true)
     }
   }, [activeTrip, hasActiveNavigation, isOffRoutePopupVisible, userLocation])
+
+  React.useEffect(() => {
+    if (!activeTrip || !userLocation || !destinationPoint) {
+      autoCompleteTriggeredRef.current = false
+      return
+    }
+    if (autoCompleteTriggeredRef.current) return
+    const distanceToDestination = haversineDistanceMetersLatLng(destinationPoint, userLocation)
+    if (distanceToDestination > AUTO_COMPLETE_DISTANCE_METERS) return
+    autoCompleteTriggeredRef.current = true
+    void handleCompleteTrip()
+  }, [activeTrip, destinationPoint, userLocation])
 
   React.useEffect(() => {
     if (!activeTrip || !userLocation || isGuest) return
@@ -947,27 +956,74 @@ function generateSessionId() {
 }
 
 function findClosestSegment(
-  segments: Array<{ pathSegmentId?: string; segmentId: string; polylineCoordinates: LatLng[] }>,
+  segments: Array<{ segmentId: string; polylineCoordinates: LatLng[] }>,
   position: LatLng
 ) {
-  let bestSegment: { pathSegmentId?: string; segmentId: string } | null = null
+  let bestSegment: { segmentId: string } | null = null
   let bestDistance = Number.POSITIVE_INFINITY
 
   for (const segment of segments) {
     if (!segment.polylineCoordinates.length && !bestSegment) {
       // Fallback when segment geometry is missing
-      bestSegment = { pathSegmentId: segment.pathSegmentId, segmentId: segment.segmentId }
+      bestSegment = { segmentId: segment.segmentId }
     }
     for (const point of segment.polylineCoordinates) {
       const distance = Math.hypot(point.latitude - position.latitude, point.longitude - position.longitude)
       if (distance < bestDistance) {
         bestDistance = distance
-        bestSegment = { pathSegmentId: segment.pathSegmentId, segmentId: segment.segmentId }
+        bestSegment = { segmentId: segment.segmentId }
       }
     }
   }
 
   return bestSegment
+}
+
+function buildTraversedTripSegments(
+  segments: Array<{ segmentId: string; polylineCoordinates: LatLng[] }>,
+  traversedPointCount: number
+) {
+  if (!segments.length) {
+    return []
+  }
+
+  // If we haven't traversed at least 2 points, don't send any segments
+  if (traversedPointCount < 2) {
+    return []
+  }
+
+  const traversed: Array<{ segmentId: string; polylineCoordinates: Array<{ lat: number; lng: number }> }> = []
+  let remainingUniquePoints = traversedPointCount
+  let lastPoint: LatLng | null = null
+
+  for (const segment of segments) {
+    if (remainingUniquePoints <= 0) break
+    if (!segment.polylineCoordinates.length) continue
+
+    const slicedPoints: LatLng[] = []
+    for (const point of segment.polylineCoordinates) {
+      if (remainingUniquePoints <= 0) break
+      const isUnique =
+        !lastPoint || lastPoint.latitude !== point.latitude || lastPoint.longitude !== point.longitude
+      if (isUnique) {
+        remainingUniquePoints -= 1
+      }
+      slicedPoints.push(point)
+      lastPoint = point
+    }
+
+    if (slicedPoints.length >= 2) {
+      traversed.push({
+        segmentId: segment.segmentId,
+        polylineCoordinates: slicedPoints.map((point) => ({
+          lat: point.latitude,
+          lng: point.longitude,
+        })),
+      })
+    }
+  }
+
+  return traversed
 }
 
 function formatAddress(address?: Location.LocationGeocodedAddress) {

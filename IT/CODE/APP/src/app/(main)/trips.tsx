@@ -305,6 +305,12 @@ function mapTripSummaryToRouteItem(trip: TripSummary): RouteItem {
       : undefined,
     showPerformanceMetrics: Boolean(statistics),
     route: route.length ? route : fallbackRoute,
+    reports: trip.reports?.map((report) => ({
+      reportId: report.reportId,
+      position: report.position,
+      obstacleType: report.obstacleType,
+      pathStatus: report.pathStatus,
+    })),
   }
 }
 

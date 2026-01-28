@@ -1,4 +1,5 @@
 import { api } from "./client"
+import type { ReportSummary } from "./reports"
 import type { PathPoint } from "./paths"
 
 export type TripSegmentPayload = {
@@ -28,6 +29,7 @@ export type TripSummary = {
     segmentId: string
     polylineCoordinates: PathPoint[]
   }>
+  reports?: ReportSummary[]
 }
 
 type TripsResponse = {

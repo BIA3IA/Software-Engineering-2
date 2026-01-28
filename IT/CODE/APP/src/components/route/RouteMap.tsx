@@ -6,9 +6,10 @@ import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
 import { radius, scale, verticalScale } from "@/theme/layout"
-import { Bike, Cloud } from "lucide-react-native"
+import { AlertTriangle, Bike, Cloud } from "lucide-react-native"
 import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
 import { MapIconMarker } from "@/components/ui/MapIconMarker"
+import { getConditionLabel, getObstacleLabel } from "@/utils/reportOptions"
 
 type LatLng = { latitude: number; longitude: number }
 
@@ -29,6 +30,7 @@ type RouteMapProps = {
   showWeatherBadge?: boolean
   title?: string
   showUserLocation?: boolean
+  reports?: Array<{ reportId: string; position: { lat: number; lng: number }; obstacleType?: string; pathStatus?: string }>
 }
 
 export function RouteMap({
@@ -44,6 +46,7 @@ export function RouteMap({
   showWeatherBadge = true,
   title = "Trip Map",
   showUserLocation = true,
+  reports = [],
 }: RouteMapProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
@@ -151,6 +154,20 @@ export function RouteMap({
                 />
               </Marker>
             )}
+            {reports.map((report) => (
+              <Marker
+                key={`report-${report.reportId}`}
+                coordinate={{ latitude: report.position.lat, longitude: report.position.lng }}
+                title={getObstacleLabel(report.obstacleType)}
+                description={getConditionLabel(report.pathStatus)}
+              >
+                <MapIconMarker
+                  color={palette.status.danger}
+                  borderColor={palette.text.onAccent}
+                  icon={<AlertTriangle size={iconSizes.md} color={palette.text.onAccent} strokeWidth={2.2} />}
+                />
+              </Marker>
+            ))}
           </MapView>
         </View>
 

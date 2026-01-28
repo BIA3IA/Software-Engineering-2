@@ -15,7 +15,6 @@ export type SearchResult = {
   tags: PathResultTag[]
   route: { latitude: number; longitude: number }[]
   pathSegments?: {
-    pathSegmentId?: string
     segmentId: string
     polylineCoordinates: { latitude: number; longitude: number }[]
   }[]

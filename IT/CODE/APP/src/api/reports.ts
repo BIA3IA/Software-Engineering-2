@@ -6,9 +6,7 @@ export type ReportPosition = {
 }
 
 export type CreateReportPayload = {
-  pathSegmentId?: string
-  pathId?: string
-  segmentId?: string
+  segmentId: string
   sessionId: string
   obstacleType: string
   position: ReportPosition
