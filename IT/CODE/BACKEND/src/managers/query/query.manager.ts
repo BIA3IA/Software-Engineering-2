@@ -400,6 +400,15 @@ export class QueryManager {
         });
     }
 
+    async getPathSegmentByPathAndSegment(pathId: string, segmentId: string) {
+        return await prisma.pathSegment.findFirst({
+            where: {
+                pathId,
+                segmentId,
+            },
+        });
+    }
+
     // update path segment status
     async updatePathSegmentStatus(pathSegmentId: string, status: string) {
         return await prisma.pathSegment.update({
@@ -414,7 +423,8 @@ export class QueryManager {
     async createReport(data: {
         userId: string;
         pathSegmentId: string;
-        tripId: string;
+        tripId?: string | null;
+        sessionId?: string | null;
         obstacleType: string;
         pathStatus: string;
         position: any; // Coordinates JSON
@@ -424,7 +434,8 @@ export class QueryManager {
             data: {
                 userId: data.userId,
                 pathSegmentId: data.pathSegmentId,
-                tripId: data.tripId,
+                tripId: data.tripId ?? null,
+                sessionId: data.sessionId ?? null,
                 obstacleType: data.obstacleType,
                 pathStatus: data.pathStatus,
                 position: data.position,
@@ -479,6 +490,20 @@ export class QueryManager {
             where: { pathSegmentId },
             orderBy: { createdAt: 'desc' },
         });
+    }
+
+    async attachReportsToTrip(userId: string, sessionId: string, tripId: string) {
+        const result = await prisma.report.updateMany({
+            where: {
+                userId,
+                sessionId,
+            },
+            data: {
+                tripId,
+            },
+        });
+
+        return result.count;
     }
 
 }

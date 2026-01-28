@@ -8,8 +8,11 @@ export class ReportManager {
     async createReport(req: Request, res: Response, next: NextFunction) {
         try {
             const {
-                pathSegmentId,
-                tripId,
+                pathSegmentId, 
+                pathId,
+                segmentId,
+                tripId, 
+                sessionId,
                 obstacleType, 
                 position, 
                 pathStatus,
@@ -24,11 +27,11 @@ export class ReportManager {
             }
 
             // Local validation aligned with other managers
-            if (!pathSegmentId) {
+            if (!pathSegmentId && !(pathId && segmentId)) {
                 throw new BadRequestError('Path Segment ID is required', 'MISSING_PATH_SEGMENT_ID');
             }
-            if (!tripId) {
-                throw new BadRequestError('Trip ID is required', 'MISSING_TRIP_ID');
+            if (!sessionId) {
+                throw new BadRequestError('Session ID is required', 'MISSING_SESSION_ID');
             }
             if (!obstacleType) {
                 throw new BadRequestError('Obstacle type is required', 'MISSING_OBSTACLE_TYPE');
@@ -38,7 +41,15 @@ export class ReportManager {
             }
 
             // Verify the segment exists before attaching a report
-            const pathSegment = await queryManager.getPathSegmentById(pathSegmentId);
+            let resolvedPathSegmentId = pathSegmentId;
+            if (!resolvedPathSegmentId && pathId && segmentId) {
+                const pathSegment = await queryManager.getPathSegmentByPathAndSegment(pathId, segmentId);
+                resolvedPathSegmentId = pathSegment?.id;
+            }
+
+            const pathSegment = resolvedPathSegmentId
+                ? await queryManager.getPathSegmentById(resolvedPathSegmentId)
+                : null;
             if (!pathSegment) {
                 throw new NotFoundError('Target segment not found', 'SEGMENT_NOT_FOUND');
             }
@@ -46,8 +57,9 @@ export class ReportManager {
             // Create report through Query Manager
             const report = await queryManager.createReport({
                 userId,
-                pathSegmentId,
+                pathSegmentId: resolvedPathSegmentId,
                 tripId,
+                sessionId,
                 obstacleType,
                 pathStatus: resolvedPathStatus,
                 position,
@@ -89,9 +101,6 @@ export class ReportManager {
             if (!['CONFIRMED', 'REJECTED'].includes(decision)) {
                 throw new BadRequestError('Invalid decision', 'INVALID_DECISION');
             }
-            if (!tripId) {
-                throw new BadRequestError('Trip ID is required', 'MISSING_TRIP_ID');
-            }
 
             // Verify report existence
             const report = await queryManager.getReportById(reportId);
@@ -102,7 +111,8 @@ export class ReportManager {
             const confirmationReport = await queryManager.createReport({
                 userId,
                 pathSegmentId: report.pathSegmentId,
-                tripId,
+                tripId: tripId ?? null,
+                sessionId: report.sessionId ?? null,
                 obstacleType: report.obstacleType,
                 pathStatus: report.pathStatus,
                 position: report.position,
@@ -207,6 +217,39 @@ export class ReportManager {
             res.json({
                 success: true,
                 data: reports
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async attachReportsToTrip(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { sessionId, tripId } = req.body ?? {};
+            const userId = req.user?.userId;
+
+            if (!userId) {
+                throw new BadRequestError('User is not authenticated', 'UNAUTHORIZED');
+            }
+            if (!sessionId) {
+                throw new BadRequestError('Session ID is required', 'MISSING_SESSION_ID');
+            }
+            if (!tripId) {
+                throw new BadRequestError('Trip ID is required', 'MISSING_TRIP_ID');
+            }
+
+            const trip = await queryManager.getTripById(tripId);
+            if (!trip || trip.userId !== userId) {
+                throw new NotFoundError('Trip not found', 'TRIP_NOT_FOUND');
+            }
+
+            const updatedCount = await queryManager.attachReportsToTrip(userId, sessionId, tripId);
+
+            res.json({
+                success: true,
+                data: {
+                    updatedCount,
+                },
             });
         } catch (error) {
             next(error);

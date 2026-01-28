@@ -30,6 +30,7 @@ export interface Path {
 // Base path segment without the joined Segment
 export interface PathSegment {
     status: PathStatus;
+    id: string;
     segmentId: string;
     nextSegmentId: string | null;
     pathId: string;

@@ -8,7 +8,8 @@ export interface Report {
     reportId: string;
     createdAt: Date;
     userId: string;
-    tripId: string;
+    tripId: string | null;
+    sessionId?: string | null;
     segmentId: string;
     pathSegmentId: string;
     obstacleType: ObstacleType;

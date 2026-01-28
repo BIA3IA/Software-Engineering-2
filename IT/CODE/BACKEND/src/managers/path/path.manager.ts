@@ -253,6 +253,7 @@ export class PathManager {
                         createdAt: path.createdAt,
                         segmentCount: path.pathSegments.length,
                         pathSegments: path.pathSegments.map(ps => ({
+                            pathSegmentId: ps.id,
                             segmentId: ps.segmentId,
                             polylineCoordinates: ps.segment.polylineCoordinates,
                         })),
@@ -295,6 +296,7 @@ export class PathManager {
                         createdAt: path.createdAt,
                         segmentCount: path.pathSegments.length,
                         pathSegments: path.pathSegments.map(ps => ({
+                            pathSegmentId: ps.id,
                             segmentId: ps.segmentId,
                             polylineCoordinates: ps.segment.polylineCoordinates,
                         })),

@@ -115,6 +115,7 @@ describe("Testing sortPathSegmentsByChain function", () => {
     test("Should return a single segment if there is only one segment", () => {
         const segments = [
             {
+                id: "ps1",
                 segmentId: "seg1",
                 nextSegmentId: null,
                 pathId: "path1",
@@ -137,6 +138,7 @@ describe("Testing sortPathSegmentsByChain function", () => {
         const date = new Date();
         const segments = [
             {
+                id: "ps3",
                 segmentId: "seg3",
                 nextSegmentId: "seg1",
                 pathId: "path1",
@@ -149,6 +151,7 @@ describe("Testing sortPathSegmentsByChain function", () => {
                 }
             },
             {
+                id: "ps1",
                 segmentId: "seg1",
                 nextSegmentId: null,
                 pathId: "path1",
@@ -161,6 +164,7 @@ describe("Testing sortPathSegmentsByChain function", () => {
                 }
             },
             {
+                id: "ps2",
                 segmentId: "seg2",
                 nextSegmentId: "seg3",
                 pathId: "path1",
