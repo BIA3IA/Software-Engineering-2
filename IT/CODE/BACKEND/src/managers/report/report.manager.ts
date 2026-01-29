@@ -1,9 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import { queryManager } from '../query/index.js';
-import { NotFoundError, BadRequestError } from '../../errors/index.js';
+import { NotFoundError, BadRequestError, TooManyRequestsError } from '../../errors/index.js';
 import { computeReportSignals } from '../../utils/index';
 import { pathManager } from '../path/path.manager.js';
-import { REPORT_ACTIVE_FRESHNESS_MIN, REPORT_MIN_RELIABILITY } from '../../constants/appConfig.js';
+import {
+    REPORT_ACTIVE_FRESHNESS_MIN,
+    REPORT_MIN_RELIABILITY,
+    REPORT_COOLDOWN_MIN,
+    REPORT_RATE_WINDOW_MIN,
+    REPORT_RATE_MAX_PER_WINDOW
+} from '../../constants/appConfig.js';
 
 export class ReportManager {
     async createReport(req: Request, res: Response, next: NextFunction) {
@@ -43,6 +49,24 @@ export class ReportManager {
             const segment = await queryManager.getSegmentById(segmentId);
             if (!segment) {
                 throw new NotFoundError('Target segment not found', 'SEGMENT_NOT_FOUND');
+            }
+
+            // Rate-limit: per-user per-segment cooldown
+            const cooldownSince = new Date(Date.now() - REPORT_COOLDOWN_MIN * 60_000);
+            const recentReport = await queryManager.getRecentReportByUserAndSegment(
+                userId,
+                segmentId,
+                cooldownSince
+            );
+            if (recentReport) {
+                throw new TooManyRequestsError('Report cooldown active', 'REPORT_COOLDOWN_ACTIVE');
+            }
+
+            // Rate-limit: per-user window
+            const windowSince = new Date(Date.now() - REPORT_RATE_WINDOW_MIN * 60_000);
+            const recentCount = await queryManager.countReportsByUserSince(userId, windowSince);
+            if (recentCount >= REPORT_RATE_MAX_PER_WINDOW) {
+                throw new TooManyRequestsError('Too many reports in a short time', 'REPORT_RATE_LIMIT');
             }
 
             // Create report through Query Manager

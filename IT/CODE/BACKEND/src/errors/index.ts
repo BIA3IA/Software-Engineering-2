@@ -8,4 +8,5 @@ export {
     NotFoundError,
     InternalServerError,
     ConflictError,
+    TooManyRequestsError,
 } from './app.errors.js';
