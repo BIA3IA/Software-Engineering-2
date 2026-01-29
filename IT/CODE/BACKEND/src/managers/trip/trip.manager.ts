@@ -6,6 +6,8 @@ import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/ind
 import logger from '../../utils/logger';
 import { sortTripSegmentsByChain } from '../../utils/index.js';
 import { polylineDistanceKm } from '../../utils/geo.js';
+import { incrementTripCount, decrementTripCount } from '../../utils/cache.js';
+import { statsManager } from '../stat/stat.manager.js';
 
 export class TripManager {
 
@@ -80,6 +82,7 @@ export class TripManager {
                 segments,
                 title
             );
+            await incrementTripCount(userId);
 
             try {
                 const tripWithSegments = await queryManager.getTripById(trip.tripId);
@@ -96,6 +99,7 @@ export class TripManager {
                     const distance = polylineDistanceKm(allCoordinates);
                     await queryManager.updateTripDistance(trip.tripId, distance);
 
+                    await statsManager.computeStats(trip.tripId);
                     await this.enrichTripWithWeather(tripWithSegments, allCoordinates);
                 }
             } catch (error) {
@@ -204,6 +208,7 @@ export class TripManager {
             }
 
             await queryManager.deleteTripById(tripId);
+            await decrementTripCount(userId);
 
             res.status(204).send();
         } catch (error) {

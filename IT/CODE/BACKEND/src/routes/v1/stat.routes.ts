@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { statsManager } from "../managers/stat/index.js";
-import { verifyAccessToken, validate } from "../middleware/index.js";
+import { statsManager } from "../../managers/stat/index.js";
+import { verifyAccessToken, validate } from "../../middleware/index.js";
+import { getTripStatsSchema } from "../../schemas/stat.schema.js";
 
 const statsRouter = Router();
 
@@ -23,7 +24,7 @@ statsRouter.get(
 statsRouter.get(
     "/trip/:tripId",
     verifyAccessToken,
-//  validate(getTripStatsSchema, "params"),
+    validate(getTripStatsSchema, "params"),
     statsManager.getTripStats.bind(statsManager)
 );
 

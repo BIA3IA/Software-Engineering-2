@@ -4,6 +4,7 @@ import { NotFoundError, BadRequestError } from '../../errors/index.js';
 import logger from '../../utils/logger';
 import { polylineDistanceKm } from '../../utils/geo.js';
 import { Coordinates } from '../../types/index.js';
+import { getCachedTripCount } from '../../utils/cache.js';
 
 export class StatsManager {
     /**
@@ -19,14 +20,17 @@ export class StatsManager {
             }
 
             // 1. Get current trip count and existing overall stats
-            const [currentTripCount, cachedOverall] = await Promise.all([
-                queryManager.getTripCountByUserId(userId),
-                queryManager.getOverallStatsByUserId(userId)
-            ]);
+
+            const currentTripCount = await getCachedTripCount(
+                userId,
+                () => queryManager.getTripCountByUserId(userId)
+            );
 
             if (currentTripCount === 0) {
                 throw new NotFoundError('No trips found for this user', 'TRIPS_NOT_FOUND');
             }
+
+            const cachedOverall = await queryManager.getOverallStatsByUserId(userId);
 
             // 2. State-aware check: If trip count hasn't changed, return cached data
             if (cachedOverall && cachedOverall.lastTripCount === currentTripCount) {
@@ -152,6 +156,36 @@ export class StatsManager {
             avgKilometers: Number((total.km / count).toFixed(2))
         };
     }
+
+    async computeStats(tripId: string): Promise<void> {
+        try {
+            const existingStat = await queryManager.getStatByTripId(tripId);
+            if (existingStat) {
+                logger.info({ tripId }, 'Statistics already exist for this trip');
+                return;
+            }
+
+            const trip = await queryManager.getTripById(tripId);
+            if (!trip) {
+                logger.warn({ tripId }, 'Trip not found, cannot compute statistics');
+                return;
+            }
+
+            const computedMetrics = this.computePerTripMetrics(trip);
+
+            await queryManager.createStatRecord({
+                tripId: trip.tripId,
+                userId: trip.userId,
+                ...computedMetrics
+            });
+
+            logger.info({ tripId, userId: trip.userId }, 'Trip statistics computed and persisted');
+        } catch (error) {
+            logger.error({ err: error, tripId }, 'Failed to compute trip statistics');
+            throw error;
+        }
+    }
+
 }
 
 export const statsManager = new StatsManager();

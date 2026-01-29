@@ -4,6 +4,7 @@ import routesV1 from "./routes/v1/index.js"
 import cookieParser from "cookie-parser"
 import { errorHandler, notFoundHandler, httpLogger } from "./middleware/index.js"
 import logger from "./utils/logger.js"
+import { closeRedis } from "./utils/cache.js"
 
 const app = express()
 
@@ -38,7 +39,24 @@ app.use(errorHandler)
 export { app };
 
 if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, () => {
-        logger.info(`Server is running on port ${PORT}`);
-    });
+  const server = app.listen(PORT, () => {
+    logger.info(`Server is running on port ${PORT}`);
+  });
+
+  const shutdown = async (signal: string) => {
+    logger.info({ signal }, "Shutting down gracefully...");
+
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+
+    try {
+      await closeRedis();
+    } catch (err) {
+      logger.warn({ err }, "Error while closing Redis");
+    }
+
+    process.exit(0);
+  };
+
+  process.on("SIGINT", () => void shutdown("SIGINT"));
+  process.on("SIGTERM", () => void shutdown("SIGTERM"));
 }

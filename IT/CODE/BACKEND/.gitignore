@@ -8,3 +8,4 @@ node_modules
 jest-storage
 
 prova.ts
+debug-redis.ts
