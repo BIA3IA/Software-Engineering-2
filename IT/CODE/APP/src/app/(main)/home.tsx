@@ -317,6 +317,7 @@ export default function HomeScreen() {
 
     if (!isGuest) {
       if (!activeTripStartedAt || !startRoutePoint || !destinationPoint) {
+        setOffRoutePopupVisible(false)
         setErrorPopup({
           visible: true,
           title: "Trip Error",
@@ -333,6 +334,7 @@ export default function HomeScreen() {
       const hasInvalidSegment = tripSegments.some((segment) => segment.polylineCoordinates.length < 2)
 
       if (!tripSegments.length || hasInvalidSegment) {
+        setOffRoutePopupVisible(false)
         setErrorPopup({
           visible: true,
           title: "Trip Error",
@@ -371,6 +373,7 @@ export default function HomeScreen() {
         }
       } catch (error) {
         const message = getApiErrorMessage(error, "Unable to save the trip. Please try again.")
+        setOffRoutePopupVisible(false)
         setErrorPopup({
           visible: true,
           title: "Trip Error",
@@ -531,6 +534,7 @@ export default function HomeScreen() {
       return
     }
 
+    if (errorPopup.visible) return
     if (isOffRoutePopupVisible) return
 
     const distance = minDistanceToRouteMeters(activeTrip.route ?? [], userLocation)
