@@ -6,7 +6,7 @@ import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/ind
 import logger from '../../utils/logger';
 import { sortTripSegmentsByChain } from '../../utils/index.js';
 import { polylineDistanceKm } from '../../utils/geo.js';
-import { incrementTripCount, decrementTripCount } from '../../utils/cache.js';
+import { incrementTripCount, decrementTripCount, getCachedTripStat, setCachedTripStat } from '../../utils/cache.js';
 import { statsManager } from '../stat/stat.manager.js';
 
 export class TripManager {
@@ -99,7 +99,17 @@ export class TripManager {
                     const distance = polylineDistanceKm(allCoordinates);
                     await queryManager.updateTripDistance(trip.tripId, distance);
 
+                    // Compute per-trip stats and cache them
                     await statsManager.computeStats(trip.tripId);
+                    
+                    const stat = await queryManager.getStatByTripId(trip.tripId);
+                    if (stat) {
+                        await setCachedTripStat(trip.tripId, stat);
+                    }
+                    
+                    // Compute overall stats (also cache them inside computeOverallStats)
+                    await statsManager.computeOverallStats(userId);
+
                     await this.enrichTripWithWeather(tripWithSegments, allCoordinates);
                 }
             } catch (error) {
@@ -150,12 +160,32 @@ export class TripManager {
                 })
             );
 
-            const tripReports = await Promise.all(
-                sortedTrips.map(trip => {
-                    const segmentIds = trip.tripSegments.map(segment => segment.segmentId);
-                    return queryManager.getReportsBySegmentIds(segmentIds, ['CREATED', 'CONFIRMED']);
-                })
-            );
+            const [tripReports, tripStats] = await Promise.all([
+                Promise.all(
+                    sortedTrips.map(trip => {
+                        const segmentIds = trip.tripSegments.map(segment => segment.segmentId);
+                        return queryManager.getReportsBySegmentIds(segmentIds);
+                    })
+                ),
+                Promise.all(
+                    sortedTrips.map(async trip => {
+                        // Try cache first
+                        let stat = await getCachedTripStat(trip.tripId);
+                        
+                        if (!stat) {
+                            // If cache miss fetch from DB
+                            stat = await queryManager.getStatByTripId(trip.tripId).catch(() => null);
+                            
+                            if (stat) {
+                                // Cache for the next time
+                                await setCachedTripStat(trip.tripId, stat);
+                            }
+                        }
+                        
+                        return stat;
+                    })
+                ),
+            ]);
 
             res.json({
                 success: true,
@@ -171,6 +201,7 @@ export class TripManager {
                         destination: trip.destination,
                         weather: trip.weather,
                         reports: tripReports[index] ?? [],
+                        stats: tripStats[index] ?? null,
                         segmentCount: trip.tripSegments.length,
                         tripSegments: trip.tripSegments.map(ts => ({
                             segmentId: ts.segmentId,

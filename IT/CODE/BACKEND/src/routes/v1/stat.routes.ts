@@ -16,16 +16,4 @@ statsRouter.get(
     statsManager.getOverallStats.bind(statsManager)
 );
 
-/**
- * UC20: View Trip Statistics
- * Retrieves or computes statistics for a specific trip (avg speed, duration, km).
- * Uses the lazy initialization pattern.
- */
-statsRouter.get(
-    "/trip/:tripId",
-    verifyAccessToken,
-    validate(getTripStatsSchema, "params"),
-    statsManager.getTripStats.bind(statsManager)
-);
-
 export { statsRouter };

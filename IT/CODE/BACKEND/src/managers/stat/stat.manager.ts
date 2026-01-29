@@ -4,7 +4,7 @@ import { NotFoundError, BadRequestError } from '../../errors/index.js';
 import logger from '../../utils/logger';
 import { polylineDistanceKm } from '../../utils/geo.js';
 import { Coordinates } from '../../types/index.js';
-import { getCachedTripCount } from '../../utils/cache.js';
+import { getCachedTripCount, getCachedOverallStat, setCachedOverallStat } from '../../utils/cache.js';
 
 export class StatsManager {
     /**
@@ -19,8 +19,7 @@ export class StatsManager {
                 throw new BadRequestError('User is not authenticated', 'UNAUTHORIZED');
             }
 
-            // 1. Get current trip count and existing overall stats
-
+            // 1. Get current trip count from Redis cache
             const currentTripCount = await getCachedTripCount(
                 userId,
                 () => queryManager.getTripCountByUserId(userId)
@@ -30,77 +29,50 @@ export class StatsManager {
                 throw new NotFoundError('No trips found for this user', 'TRIPS_NOT_FOUND');
             }
 
-            const cachedOverall = await queryManager.getOverallStatsByUserId(userId);
-
-            // 2. State-aware check: If trip count hasn't changed, return cached data
+            // 2. Try to get overall stats from Redis cache
+            const cachedOverall = await getCachedOverallStat(userId);
+            
             if (cachedOverall && cachedOverall.lastTripCount === currentTripCount) {
+                // Cache hit and trip count matches! Return immediately
+                logger.debug({ userId, tripCount: currentTripCount }, 'Overall stats cache hit (no DB query)');
                 return res.status(200).json({
                     success: true,
                     data: cachedOverall
                 });
             }
 
-            // 3. Recompute: Fetch all per-trip 'Stat' records to calculate averages
-            logger.info({ userId }, 'Recomputing overall averages due to trip count change');
+            // 3. Cache miss or trip count changed: fetch from DB
+            const dbOverall = await queryManager.getOverallStatsByUserId(userId);
+            
+            if (dbOverall && dbOverall.lastTripCount === currentTripCount) {
+                // DB has correct data, cache it
+                await setCachedOverallStat(userId, dbOverall);
+                
+                logger.debug({ userId, tripCount: currentTripCount }, 'Overall stats from DB (cached for next time)');
+                return res.status(200).json({
+                    success: true,
+                    data: dbOverall
+                });
+            }
+
+            // 4. Recompute: Trip count changed since last DB update
+            logger.info({ userId, currentTripCount, dbTripCount: dbOverall?.lastTripCount }, 'Recomputing overall stats');
             const allTripStats = await queryManager.getAllStatsByUserId(userId);
             
             const overallAverages = this.calculateOverallAverages(allTripStats);
 
-            // 4. Persist updated overall stats through queryManager
+            // 5. Update overall stats in DB
             const updatedOverall = await queryManager.upsertOverallStats(userId, {
                 ...overallAverages,
                 lastTripCount: currentTripCount
             });
 
+            // 6. Cache the newly computed stats
+            await setCachedOverallStat(userId, updatedOverall);
+
             res.status(200).json({
                 success: true,
                 data: updatedOverall
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    /**
-     * UC20/UC16: Get or Compute Individual Trip Stats (Per-Trip)
-     * Lazy initialization: Returns existing record or computes/persists it for the first time.
-     */
-    async getTripStats(req: Request, res: Response, next: NextFunction) {
-        try {
-            const { tripId } = req.params;
-
-            if (!tripId) {
-                throw new BadRequestError('Trip ID is required', 'MISSING_TRIP_ID');
-            }
-
-            // 1. Check if processed record already exists in 'Stat' model
-            const existingStat = await queryManager.getStatByTripId(tripId);
-            if (existingStat) {
-                return res.status(200).json({
-                    success: true,
-                    data: existingStat
-                });
-            }
-
-            // 2. Fetch trip data for computation
-            const trip = await queryManager.getTripById(tripId);
-            if (!trip) {
-                throw new NotFoundError('Trip not found', 'NOT_FOUND');
-            }
-
-            // 3. Compute metrics
-            const computedMetrics = this.computePerTripMetrics(trip);
-
-            // 4. Persist per-trip stat record
-            const newStat = await queryManager.createStatRecord({
-                tripId: trip.tripId,
-                userId: trip.userId,
-                ...computedMetrics
-            });
-
-            res.status(200).json({
-                success: true,
-                data: newStat
             });
         } catch (error) {
             next(error);
@@ -165,23 +137,62 @@ export class StatsManager {
                 return;
             }
 
+            // Fetch trip details
             const trip = await queryManager.getTripById(tripId);
             if (!trip) {
                 logger.warn({ tripId }, 'Trip not found, cannot compute statistics');
                 return;
             }
 
+            // Compute metrics
             const computedMetrics = this.computePerTripMetrics(trip);
 
+            // Update computed stats
             await queryManager.createStatRecord({
                 tripId: trip.tripId,
                 userId: trip.userId,
                 ...computedMetrics
             });
 
+            // Caching will be done on the trip manager (create trip flow), should be the same
+
             logger.info({ tripId, userId: trip.userId }, 'Trip statistics computed and persisted');
         } catch (error) {
             logger.error({ err: error, tripId }, 'Failed to compute trip statistics');
+            throw error;
+        }
+    }
+
+    async computeOverallStats(userId: string): Promise<void> {
+        try {
+            const currentTripCount = await getCachedTripCount(
+                userId,
+                () => queryManager.getTripCountByUserId(userId)
+            );
+
+            // Fetch all trip stats
+            const allTripStats = await queryManager.getAllStatsByUserId(userId);
+            
+            if (allTripStats.length === 0) {
+                logger.warn({ userId }, 'No trip stats found, cannot compute overall stats');
+                return;
+            }
+
+            // Calculate overall averages
+            const overallAverages = this.calculateOverallAverages(allTripStats);
+
+            // Update in DB
+            const updatedOverall = await queryManager.upsertOverallStats(userId, {
+                ...overallAverages,
+                lastTripCount: currentTripCount
+            });
+
+            // Cache the updated overall stats
+            await setCachedOverallStat(userId, updatedOverall);
+
+            logger.info({ userId, tripCount: currentTripCount }, 'Overall statistics computed and cached');
+        } catch (error) {
+            logger.error({ err: error, userId }, 'Failed to compute overall statistics');
             throw error;
         }
     }

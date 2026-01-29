@@ -18,9 +18,19 @@ redis.on('connect', () => {
 });
 
 const TRIP_COUNT_TTL = 600; // 10 minutes
+const TRIP_STAT_TTL = 86400; // 24 hours (?)
+const OVERALL_STAT_TTL = 600; // 10 minutes
 
 export function getTripCountCacheKey(userId: string): string {
     return `tripCount:${userId}`;
+}
+
+export function getTripStatCacheKey(tripId: string): string {
+    return `tripStat:${tripId}`;
+}
+
+export function getOverallStatCacheKey(userId: string): string {
+    return `overallStat:${userId}`;
 }
 
 export async function getCachedTripCount(
@@ -75,6 +85,9 @@ export async function incrementTripCount(userId: string): Promise<void> {
         } else {
             logger.debug({ userId }, 'Trip count not in cache, skip increment)');
         }
+        
+        // Invalidate overall stats because trip count changed
+        await invalidateOverallStat(userId);
     } catch (error) {
         logger.warn({ err: error, userId }, 'Failed to increment trip count cache');
         await redis.del(key).catch(() => {});
@@ -106,6 +119,9 @@ export async function decrementTripCount(userId: string): Promise<void> {
             await redis.expire(key, TRIP_COUNT_TTL);
             logger.debug({ userId, newCount: parsed - 1 }, 'Trip count decremented in cache');
         }
+        
+        // Invalidate overall stats because trip count changed
+        await invalidateOverallStat(userId);
     } catch (error) {
         logger.warn({ err: error, userId }, 'Failed to decrement trip count cache');
         await redis.del(key).catch(() => {});
@@ -114,4 +130,75 @@ export async function decrementTripCount(userId: string): Promise<void> {
 
 export async function closeRedis(): Promise<void> {
     await redis.quit();
+}
+
+// PER-TRIP STATS CACHING
+
+export async function getCachedTripStat(tripId: string): Promise<any | null> {
+    const key = getTripStatCacheKey(tripId);
+    
+    try {
+        const cached = await redis.get(key);
+        if (cached) {
+            logger.debug({ tripId }, 'Trip stat cache hit');
+            return JSON.parse(cached);
+        }
+        logger.debug({ tripId }, 'Trip stat cache miss');
+        return null;
+    } catch (error) {
+        logger.warn({ err: error, tripId }, 'Redis error fetching trip stat');
+        return null;
+    }
+}
+
+export async function setCachedTripStat(tripId: string, stat: any): Promise<void> {
+    const key = getTripStatCacheKey(tripId);
+    
+    try {
+        await redis.setex(key, TRIP_STAT_TTL, JSON.stringify(stat));
+        logger.debug({ tripId, ttl: TRIP_STAT_TTL }, 'Trip stat cached');
+    } catch (error) {
+        logger.warn({ err: error, tripId }, 'Failed to cache trip stat');
+    }
+}
+
+// OVERALL STATS CACHING
+
+export async function getCachedOverallStat(userId: string): Promise<any | null> {
+    const key = getOverallStatCacheKey(userId);
+    
+    try {
+        const cached = await redis.get(key);
+        if (cached) {
+            logger.debug({ userId }, 'Overall stat cache hit');
+            return JSON.parse(cached);
+        }
+        logger.debug({ userId }, 'Overall stat cache miss');
+        return null;
+    } catch (error) {
+        logger.warn({ err: error, userId }, 'Redis error fetching overall stat');
+        return null;
+    }
+}
+
+export async function setCachedOverallStat(userId: string, stat: any): Promise<void> {
+    const key = getOverallStatCacheKey(userId);
+    
+    try {
+        await redis.setex(key, OVERALL_STAT_TTL, JSON.stringify(stat));
+        logger.debug({ userId, ttl: OVERALL_STAT_TTL }, 'Overall stat cached');
+    } catch (error) {
+        logger.warn({ err: error, userId }, 'Failed to cache overall stat');
+    }
+}
+
+export async function invalidateOverallStat(userId: string): Promise<void> {
+    const key = getOverallStatCacheKey(userId);
+    
+    try {
+        await redis.del(key);
+        logger.debug({ userId }, 'Overall stat cache invalidated');
+    } catch (error) {
+        logger.warn({ err: error, userId }, 'Failed to invalidate overall stat');
+    }
 }
