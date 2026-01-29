@@ -57,6 +57,7 @@ model Trip {
   destination  Json
   /// [WeatherData]
   weather      Json?
+  distanceKm   Float?
   tripSegments TripSegment[]
   reports      Report[]
   stat         Stat?

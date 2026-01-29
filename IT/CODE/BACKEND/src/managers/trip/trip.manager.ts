@@ -5,6 +5,7 @@ import { Coordinates, TripSegments, WeatherData } from '../../types/index.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import logger from '../../utils/logger';
 import { sortTripSegmentsByChain } from '../../utils/index.js';
+import { polylineDistanceKm } from '../../utils/geo.js';
 
 export class TripManager {
 
@@ -84,7 +85,18 @@ export class TripManager {
                 const tripWithSegments = await queryManager.getTripById(trip.tripId);
                 if (tripWithSegments) {
                     tripWithSegments.tripSegments = sortTripSegmentsByChain(tripWithSegments.tripSegments);
-                    await this.enrichTripWithWeather(tripWithSegments);
+
+                    // Update trip distance based on segments' polylines
+                    const allCoordinates = [
+                        tripWithSegments.origin,
+                        ...tripWithSegments.tripSegments.flatMap(ts => ts.segment.polylineCoordinates),
+                        tripWithSegments.destination
+                    ].filter(Boolean);
+
+                    const distance = polylineDistanceKm(allCoordinates);
+                    await queryManager.updateTripDistance(trip.tripId, distance);
+
+                    await this.enrichTripWithWeather(tripWithSegments, allCoordinates);
                 }
             } catch (error) {
                 logger.warn({ err: error, tripId: trip.tripId }, 'Trip weather enrichment failed');
@@ -199,25 +211,12 @@ export class TripManager {
         }
     }
 
-    private async enrichTripWithWeather(trip: TripSegments): Promise<WeatherData> {
-        const allCoordinates: Coordinates[] = [];
-
-        if (trip.origin) {
-            allCoordinates.push(trip.origin);
-        }
-
-        trip.tripSegments = sortTripSegmentsByChain(trip.tripSegments);
-
-        for (const tripSegment of trip.tripSegments) {
-            const polyline = tripSegment.segment.polylineCoordinates;
-            if (Array.isArray(polyline)) {
-                allCoordinates.push(...polyline);
-            }
-        }
-
-        if (trip.destination) {
-            allCoordinates.push(trip.destination);
-        }
+    private async enrichTripWithWeather(trip: TripSegments, coordinates?: Coordinates[]): Promise<WeatherData> {
+        const allCoordinates = coordinates || [
+            trip.origin,
+            ...trip.tripSegments.flatMap(ts => ts.segment.polylineCoordinates),
+            trip.destination
+        ].filter(Boolean) as Coordinates[];
 
         if (allCoordinates.length === 0) {
             throw new BadRequestError('Trip has no coordinates', 'NO_COORDINATES');

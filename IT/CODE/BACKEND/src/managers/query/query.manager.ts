@@ -684,7 +684,15 @@ export class QueryManager {
         });
     }
 
+    async updateTripDistance(tripId: string, distanceKm: number): Promise<void> {
+        await prisma.trip.update({
+            where: { tripId },
+            data: { distanceKm },
+        });
+    }
+
 }
+
 
 
 export const queryManager = new QueryManager();

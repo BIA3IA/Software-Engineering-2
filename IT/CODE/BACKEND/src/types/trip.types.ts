@@ -17,6 +17,7 @@ export interface Trip {
     origin: Coordinates;
     destination: Coordinates;
     weather: WeatherData | null;
+    distanceKm: number | null;
 }
 
 export interface TripSegment {

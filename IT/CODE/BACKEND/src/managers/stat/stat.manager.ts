@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { queryManager } from '../query/index.js';
 import { NotFoundError, BadRequestError } from '../../errors/index.js';
 import logger from '../../utils/logger';
+import { polylineDistanceKm } from '../../utils/geo.js';
+import { Coordinates } from '../../types/index.js';
 
 export class StatsManager {
     /**
@@ -109,9 +111,19 @@ export class StatsManager {
         const end = new Date(trip.finishedAt).getTime();
         const durationSeconds = Math.max(0, (end - start) / 1000);
 
-        // In a real scenario, distance is summed from tripSegments coordinates
-        // Here we use a placeholder or the distance stored in Trip if available
-        const kilometers = trip.statistics?.distance || 0; 
+        let kilometers = trip.distanceKm;
+
+        if (kilometers == null) {
+            // Calculate distance from trip segments if not directly available
+            const allCoordinates: Coordinates[] = [
+                trip.origin,
+                ...(trip.tripSegments?.flatMap((ts: any) => ts.segment?.polylineCoordinates) || []),
+                trip.destination
+            ].filter(Boolean) as Coordinates[];
+            
+            kilometers = polylineDistanceKm(allCoordinates);
+        }
+
         const avgSpeed = durationSeconds > 0 ? (kilometers / (durationSeconds / 3600)) : 0;
 
         return {
