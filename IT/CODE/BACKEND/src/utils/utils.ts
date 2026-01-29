@@ -1,5 +1,11 @@
 import { PathWithSegments, TripSegments, PATH_STATUS_SCORE_MAP } from '../types/index';
-import { REPORT_ALPHA, REPORT_BETA, REPORT_MIN_RELIABILITY, REPORT_MAX_RELIABILITY } from "../constants/appConfig.js";
+import {
+    REPORT_ALPHA,
+    REPORT_BETA,
+    REPORT_MIN_RELIABILITY,
+    REPORT_MAX_RELIABILITY,
+    REPORT_FRESHNESS_HALF_LIFE_MIN
+} from "../constants/appConfig.js";
 
 // Utility function to get JWT secrets from environment variables
 export const getJwtSecrets = () => {
@@ -122,18 +128,6 @@ export function mapScoreToStatus(score: number) {
     }
     return 'CLOSED';
 }
-
-
-
-// Freshness parameters
-const REPORT_FRESHNESS_HALF_LIFE_MIN = (() => {
-    const rawValue = Number(process.env.REPORT_FRESHNESS_HALF_LIFE_MIN ?? 1440);
-    return Number.isFinite(rawValue) && rawValue > 0 ? rawValue : 1440;
-})();
-export const REPORT_ACTIVE_FRESHNESS_MIN = (() => {
-    const rawValue = Number(process.env.REPORT_ACTIVE_FRESHNESS_MIN ?? 0.1);
-    return Number.isFinite(rawValue) && rawValue > 0 ? rawValue : 0.1;
-})();
 
 const computeFreshness = (date: Date, now: Date) => {
     const ageMinutes = Math.max(0, (now.getTime() - date.getTime()) / 60000);

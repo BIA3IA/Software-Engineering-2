@@ -10,6 +10,7 @@ jest.mock('../../managers/query', () => ({
         getPathsByUserId: jest.fn(),
         deletePathById: jest.fn(),
         changePathVisibility: jest.fn(),
+        getSegmentsByPolylineCoordinates: jest.fn(),
     }
 }));
 
@@ -100,6 +101,7 @@ describe("Testing PathManager business logic", () => {
             };
 
             (queryManager.getPathByOriginDestination as jest.Mock).mockResolvedValue(null);
+            (queryManager.getSegmentsByPolylineCoordinates as jest.Mock).mockResolvedValue(new Map());
             (queryManager.createSegment as jest.Mock).mockResolvedValue(mockSegment);
             (queryManager.createPath as jest.Mock).mockResolvedValue(mockPath);
             (queryManager.getPathById as jest.Mock).mockResolvedValue(mockPath);
@@ -226,6 +228,7 @@ describe("Testing PathManager business logic", () => {
             };
 
             (queryManager.createSegment as jest.Mock).mockResolvedValue({ segmentId: "segment1" });
+            (queryManager.getSegmentsByPolylineCoordinates as jest.Mock).mockResolvedValue(new Map());
             (queryManager.getPathByOriginDestination as jest.Mock).mockResolvedValue(existingPath);
 
             const res = mockResponse();

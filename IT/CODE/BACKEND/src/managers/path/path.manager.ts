@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { queryManager } from '../query/index.js';
 import { Coordinates, PathWithSegments, PATH_STATUS_SCORE_MAP } from '../../types/index.js';
-import { sortPathSegmentsByChain, computeReportSignals, REPORT_MIN_RELIABILITY, computePathStatusFromSegments, mapScoreToStatus } from '../../utils/index.js';
+import { sortPathSegmentsByChain, computeReportSignals, computePathStatusFromSegments, mapScoreToStatus } from '../../utils/index.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import { snapToRoad, geocodeAddress } from '../../services/index.js';
 import { haversineDistanceMeters, polylineDistanceKm } from '../../utils/geo.js';
@@ -10,7 +10,8 @@ import {
     PATH_SEARCH_MAX_DISTANCE_METERS,
     PATH_SEARCH_NEAR_DISTANCE_BUFFER_METERS,
     PATH_STATUS_ALL_WEIGHT,
-    PATH_STATUS_REPORTED_WEIGHT
+    PATH_STATUS_REPORTED_WEIGHT,
+    REPORT_MIN_RELIABILITY
 } from '../../constants/appConfig.js';
 
 export class PathManager {

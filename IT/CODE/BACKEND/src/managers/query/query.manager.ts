@@ -521,6 +521,36 @@ export class QueryManager {
         });
     }
 
+    async getRecentReportByUserAndSegment(userId: string, segmentId: string, since: Date) {
+        return await prisma.report.findFirst({
+            where: {
+                userId,
+                segmentId,
+                createdAt: {
+                    gte: since,
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+            select: {
+                reportId: true,
+                createdAt: true,
+            },
+        });
+    }
+
+    async countReportsByUserSince(userId: string, since: Date) {
+        return await prisma.report.count({
+            where: {
+                userId,
+                createdAt: {
+                    gte: since,
+                },
+            },
+        });
+    }
+
     // get reports by segment id
     async getReportsBySegmentId(segmentId: string) {
         return await prisma.report.findMany({
