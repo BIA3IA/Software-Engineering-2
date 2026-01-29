@@ -20,6 +20,7 @@ import { ReportIssueModal } from "@/components/modals/ReportIssueModal"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { AppButton } from "@/components/ui/AppButton"
 import { MapIconMarker } from "@/components/ui/MapIconMarker"
+import { MapCallout } from "@/components/ui/MapCallout"
 import { useRouter } from "expo-router"
 import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
 import { type PrivacyPreference } from "@/constants/Privacy"
@@ -46,6 +47,7 @@ import {
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
+  const markerSize = scale(30)
   const user = useAuthStore((s) => s.user)
   const isGuest = user?.id === "guest"
   const router = useRouter()
@@ -80,6 +82,16 @@ export default function HomeScreen() {
     title: "",
     message: "",
   })
+  const [calloutState, setCalloutState] = React.useState<{
+    x: number
+    y: number
+    coord: { latitude: number; longitude: number }
+    items: Parameters<typeof MapCallout>[0]["items"]
+    variant: "purple" | "green" | "orange" | "red" | "blue"
+    visible: boolean
+  } | null>(null)
+  const [calloutSize, setCalloutSize] = React.useState({ width: 0, height: 0 })
+  const [mapLayout, setMapLayout] = React.useState({ x: 0, y: 0, width: 0, height: 0 })
 
 
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -130,6 +142,46 @@ export default function HomeScreen() {
     }
     return displayRoute
   }, [activeTrip, routeProgressIndex, displayRoute])
+
+  async function openMapCallout(
+    coordinate: { latitude: number; longitude: number },
+    items: Parameters<typeof MapCallout>[0]["items"],
+    variant: "purple" | "green" | "orange" | "red" | "blue"
+  ) {
+    try {
+      const point = await mapRef.current?.pointForCoordinate(coordinate)
+      if (!point) return
+      setCalloutState({ x: point.x, y: point.y, coord: coordinate, items, variant, visible: true })
+    } catch {
+      setCalloutState(null)
+    }
+  }
+
+  async function refreshCalloutPosition() {
+    if (!calloutState) return
+    try {
+      const point = await mapRef.current?.pointForCoordinate(calloutState.coord)
+      if (!point) return
+      setCalloutState((prev) => {
+        if (!prev) return prev
+        if (!prev.visible) return prev
+        const edgeMargin = scale(80)
+        const isInside =
+          point.x >= edgeMargin &&
+          point.y >= edgeMargin &&
+          point.x <= mapLayout.width - edgeMargin &&
+          point.y <= mapLayout.height - edgeMargin
+        return {
+          ...prev,
+          x: point.x,
+          y: point.y,
+          visible: isInside ? true : false,
+        }
+      })
+    } catch {
+      // no-op
+    }
+  }
 
   function handleCreatePath() {
     if (isGuest) {
@@ -669,6 +721,14 @@ export default function HomeScreen() {
           showsCompass={false}
           showsUserLocation
           showsMyLocationButton={false}
+          onPress={() => setCalloutState(null)}
+          onLayout={(event) => {
+            const { x, y, width, height } = event.nativeEvent.layout
+            setMapLayout({ x, y, width, height })
+          }}
+          onRegionChangeComplete={() => {
+            void refreshCalloutPosition()
+          }}
         >
           {hasActiveNavigation && traversedRoute.length > 1 && (
             <Polyline coordinates={traversedRoute} strokeColor={palette.border.default} strokeWidth={10} />
@@ -685,7 +745,17 @@ export default function HomeScreen() {
             />
           )}
           {destinationPoint && (
-            <Marker coordinate={destinationPoint} title="Destination">
+            <Marker
+              coordinate={destinationPoint}
+              onPress={() =>
+                  openMapCallout(destinationPoint, [
+                  {
+                    value: "Destination",
+                    tone: "green",
+                  },
+                ], "green")
+              }
+            >
               <MapIconMarker
                 color={palette.accent.green.base}
                 borderColor={palette.text.onAccent}
@@ -698,8 +768,25 @@ export default function HomeScreen() {
               <Marker
                 key={`report-${report.reportId}`}
                 coordinate={{ latitude: report.position.lat, longitude: report.position.lng }}
-                title={getObstacleLabel(report.obstacleType)}
-                description={getConditionLabel(report.pathStatus)}
+                onPress={() =>
+                  openMapCallout(
+                    { latitude: report.position.lat, longitude: report.position.lng },
+                    (() => {
+                      const toneKey = getConditionToneKey(report.pathStatus)
+                      return [
+                        {
+                          value: getObstacleLabel(report.obstacleType),
+                          tone: "orange",
+                        },
+                        {
+                          value: getConditionLabel(report.pathStatus),
+                          tone: toneKey,
+                        },
+                      ]
+                    })(),
+                    "red"
+                  )
+                }
               >
                 <MapIconMarker
                   color={palette.status.danger}
@@ -709,6 +796,36 @@ export default function HomeScreen() {
               </Marker>
             ))}
         </MapView>
+
+        {calloutState?.visible ? (
+          <View pointerEvents="box-none" style={styles.calloutOverlay}>
+                <View
+              onLayout={(event) => {
+                const { width, height } = event.nativeEvent.layout
+                if (width && height && (width !== calloutSize.width || height !== calloutSize.height)) {
+                  setCalloutSize({ width, height })
+                }
+              }}
+              style={[
+                styles.calloutAnchor,
+                {
+                  left: clamp(
+                    mapLayout.x + calloutState.x - calloutSize.width / 2 - scale(11),
+                    mapLayout.x + scale(8),
+                    mapLayout.x + mapLayout.width - calloutSize.width - scale(8)
+                  ),
+                  top: clamp(
+                    mapLayout.y + calloutState.y - calloutSize.height - verticalScale(26) - markerSize / 2,
+                    mapLayout.y + verticalScale(8),
+                    mapLayout.y + mapLayout.height - calloutSize.height - verticalScale(8)
+                  ),
+                },
+              ]}
+                >
+              <MapCallout items={calloutState.items} variant={calloutState.variant} />
+                </View>
+              </View>
+            ) : null}
 
         {!hasActiveNavigation && (
           <>
@@ -1039,6 +1156,27 @@ function formatAddress(address?: Location.LocationGeocodedAddress) {
   return components.join(", ")
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value))
+}
+
+type ToneKey = "purple" | "green" | "orange" | "red" | "blue"
+
+function getConditionToneKey(condition?: string): ToneKey {
+  switch (condition) {
+    case "SUFFICIENT":
+      return "green"
+    case "MEDIUM":
+      return "blue"
+    case "REQUIRES_MAINTENANCE":
+      return "orange"
+    case "CLOSED":
+      return "red"
+    default:
+      return "purple"
+  }
+}
+
 const styles = StyleSheet.create({
   map: {
     flex: 1,
@@ -1098,5 +1236,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 12,
     elevation: 6,
+  },
+  calloutOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  calloutAnchor: {
+    position: "absolute",
   },
 })
