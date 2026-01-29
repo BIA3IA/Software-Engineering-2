@@ -15,7 +15,16 @@ export function mapUserPathSummaryToSearchResult(
     const tags: SearchResult["tags"] = []
     const statusTag = buildStatusTag(path.status, palette)
     if (statusTag) {
-        tags.push(statusTag)
+        tags.push({ ...statusTag, kind: "status" })
+    }
+
+    if (path.distanceKm !== undefined && path.distanceKm !== null) {
+        tags.unshift({
+            kind: "metric",
+            label: `${path.distanceKm.toFixed(1)} km`,
+            color: palette.accent.blue.surface,
+            textColor: palette.accent.blue.base,
+        })
     }
 
     const pathSegments = path.pathSegments?.map((segment) => ({

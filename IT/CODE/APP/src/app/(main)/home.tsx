@@ -1,11 +1,11 @@
 import React from "react"
-import { View, StyleSheet, Pressable } from "react-native"
+import { View, StyleSheet, Pressable, Text } from "react-native"
 import MapView, { Marker, Polyline, Circle } from "react-native-maps"
-import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle, X } from "lucide-react-native"
+import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle, X, Bike } from "lucide-react-native"
 import * as Location from "expo-location"
 
 import { layoutStyles, scale, verticalScale, radius } from "@/theme/layout"
-import { iconSizes } from "@/theme/typography"
+import { iconSizes, textStyles } from "@/theme/typography"
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { useAuthStore } from "@/auth/storage"
@@ -19,17 +19,29 @@ import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
 import { ReportIssueModal } from "@/components/modals/ReportIssueModal"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { AppButton } from "@/components/ui/AppButton"
+import { MapIconMarker } from "@/components/ui/MapIconMarker"
 import { useRouter } from "expo-router"
 import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
 import { type PrivacyPreference } from "@/constants/Privacy"
 import { searchPathsApi } from "@/api/paths"
 import { createTripApi } from "@/api/trips"
+import { attachReportsToTripApi, confirmReportApi, createReportApi, getReportsByPathApi, type ReportSummary } from "@/api/reports"
 import { getApiErrorMessage } from "@/utils/apiError"
 import { useTripLaunchSelection, useSetTripLaunchSelection } from "@/hooks/useTripLaunchSelection"
 import { buildRouteFromLatLngSegments } from "@/utils/routes"
 import { mapUserPathSummaryToSearchResult } from "@/utils/pathMappers"
 import { findClosestPointIndex, normalizeSearchResult, regionAroundPoint, regionCenteredOnDestination } from "@/utils/map"
-import { isNearOrigin, minDistanceToRouteMeters } from "@/utils/geo"
+import { haversineDistanceMetersLatLng, isNearOrigin, minDistanceToRouteMeters } from "@/utils/geo"
+import { getConditionLabel, getObstacleLabel } from "@/utils/reportOptions"
+import {
+  AUTO_COMPLETE_DISTANCE_METERS,
+  OFF_ROUTE_MAX_CONSECUTIVE,
+  OFF_ROUTE_MAX_MS,
+  OFF_ROUTE_DISTANCE_METERS,
+  REPORT_CONFIRM_DISMISS_MS,
+  REPORT_CONFIRM_DISTANCE_METERS,
+  START_TRIP_DISTANCE_METERS,
+} from "@/constants/appConfig"
 
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -47,6 +59,7 @@ export default function HomeScreen() {
   const [destination, setDestination] = React.useState("")
   const [resultsVisible, setResultsVisible] = React.useState(false)
   const [results, setResults] = React.useState<SearchResult[]>([])
+  const [reportsByPathId, setReportsByPathId] = React.useState<Record<string, ReportSummary[]>>({})
   const [selectedResult, setSelectedResult] = React.useState<SearchResult | null>(null)
   const [activeTrip, setActiveTrip] = React.useState<SearchResult | null>(null)
   const [activeTripStartedAt, setActiveTripStartedAt] = React.useState<Date | null>(null)
@@ -55,6 +68,7 @@ export default function HomeScreen() {
   const mapRef = React.useRef<MapView | null>(null)
   const locationWatcherRef = React.useRef<Location.LocationSubscription | null>(null)
   const [reportVisible, setReportVisible] = React.useState(false)
+  const [reportConfirmation, setReportConfirmation] = React.useState<ReportSummary | null>(null)
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
   const [isCompletedPopupVisible, setCompletedPopupVisible] = React.useState(false)
   const [isCreateModalVisible, setCreateModalVisible] = React.useState(false)
@@ -67,15 +81,15 @@ export default function HomeScreen() {
     message: "",
   })
 
-  const START_TRIP_DISTANCE_METERS = 100
-  const OFF_ROUTE_DISTANCE_METERS = 50
-  const OFF_ROUTE_MAX_CONSECUTIVE = 3
-  const OFF_ROUTE_MAX_MS = 15000
 
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const offRouteCountRef = React.useRef(0)
   const offRouteStartedAtRef = React.useRef<number | null>(null)
   const offRouteContinueUsedRef = React.useRef(false)
+  const reportSessionIdRef = React.useRef<string | null>(null)
+  const confirmationTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const promptedReportIdsRef = React.useRef(new Set<string>())
+  const autoCompleteTriggeredRef = React.useRef(false)
 
   const displayRoute = (activeTrip?.route ?? selectedResult?.route) ?? []
   const destinationPoint = displayRoute[displayRoute.length - 1]
@@ -176,6 +190,7 @@ export default function HomeScreen() {
     setSelectedResult(normalized)
     setActiveTrip(null)
     setActiveTripStartedAt(null)
+    void loadReportsForPath(normalized.id)
   }
 
   async function handleStartTrip(result: SearchResult) {
@@ -183,6 +198,9 @@ export default function HomeScreen() {
     setSelectedResult(normalized)
     setActiveTrip(normalized)
     setActiveTripStartedAt(new Date())
+    if (!reportSessionIdRef.current) {
+      reportSessionIdRef.current = generateSessionId()
+    }
     resetOffRouteTracking()
     offRouteContinueUsedRef.current = false
     setOffRoutePopupVisible(false)
@@ -210,6 +228,8 @@ export default function HomeScreen() {
     setSelectedResult(null)
     setActiveTripStartedAt(null)
     setReportVisible(false)
+    reportSessionIdRef.current = null
+    autoCompleteTriggeredRef.current = false
     setResultsVisible(false)
     setCancelTripPopupVisible(false)
   }
@@ -253,14 +273,10 @@ export default function HomeScreen() {
         return
       }
 
-      const tripSegments =
-        activeTrip.pathSegments?.map((segment) => ({
-          segmentId: segment.segmentId,
-          polylineCoordinates: segment.polylineCoordinates.map((point) => ({
-            lat: point.latitude,
-            lng: point.longitude,
-          })),
-        })) ?? []
+      const tripSegments = buildTraversedTripSegments(
+        activeTrip.pathSegments ?? [],
+        traversedRoute.length
+      )
 
       const hasInvalidSegment = tripSegments.some((segment) => segment.polylineCoordinates.length < 2)
 
@@ -268,13 +284,13 @@ export default function HomeScreen() {
         setErrorPopup({
           visible: true,
           title: "Trip Error",
-          message: "Trip segments are incomplete. Please try again.",
+          message: "Trip too short to be saved. Please ride a bit longer and try again.",
         })
         return
       }
 
       try {
-        await createTripApi({
+        const tripId = await createTripApi({
           origin: { lat: startRoutePoint.latitude, lng: startRoutePoint.longitude },
           destination: { lat: destinationPoint.latitude, lng: destinationPoint.longitude },
           startedAt: activeTripStartedAt.toISOString(),
@@ -282,6 +298,25 @@ export default function HomeScreen() {
           title: activeTrip.title,
           tripSegments,
         })
+
+        if (reportSessionIdRef.current) {
+          try {
+            await attachReportsToTripApi({
+              sessionId: reportSessionIdRef.current,
+              tripId,
+            })
+          } catch (error) {
+            const message = getApiErrorMessage(
+              error,
+              "Unable to attach reports to the trip. Please try again."
+            )
+            setErrorPopup({
+              visible: true,
+              title: "Trip Error",
+              message,
+            })
+          }
+        }
       } catch (error) {
         const message = getApiErrorMessage(error, "Unable to save the trip. Please try again.")
         setErrorPopup({
@@ -299,6 +334,8 @@ export default function HomeScreen() {
     setSelectedResult(null)
     setActiveTripStartedAt(null)
     setReportVisible(false)
+    reportSessionIdRef.current = null
+    autoCompleteTriggeredRef.current = false
     setCompletedPopupVisible(true)
   }
 
@@ -306,7 +343,47 @@ export default function HomeScreen() {
     router.replace(to as any)
   }
 
-  function handleSubmitReport(values: { condition: string; obstacle: string }) {
+  async function handleSubmitReport(values: { condition: string; obstacle: string }) {
+    if (!activeTrip || !userLocation) {
+      setErrorPopup({
+        visible: true,
+        title: "Report Error",
+        message: "Trip details are missing. Please try again.",
+      })
+      return
+    }
+
+    const sessionId = reportSessionIdRef.current ?? generateSessionId()
+    reportSessionIdRef.current = sessionId
+
+    const closestSegment = findClosestSegment(activeTrip.pathSegments ?? [], userLocation)
+    if (!closestSegment) {
+      setErrorPopup({
+        visible: true,
+        title: "Report Error",
+        message: "Unable to determine the reported segment. Please try again.",
+      })
+      return
+    }
+
+    try {
+      await createReportApi({
+        segmentId: closestSegment.segmentId,
+        sessionId,
+        obstacleType: values.obstacle,
+        condition: values.condition,
+        position: { lat: userLocation.latitude, lng: userLocation.longitude },
+      })
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to submit the report. Please try again.")
+      setErrorPopup({
+        visible: true,
+        title: "Report Error",
+        message,
+      })
+      return
+    }
+
     setReportVisible(false)
     setSuccessPopupVisible(true)
 
@@ -326,10 +403,57 @@ export default function HomeScreen() {
     }))
   }
 
+  function clearReportConfirmation() {
+    if (confirmationTimerRef.current) {
+      clearTimeout(confirmationTimerRef.current)
+      confirmationTimerRef.current = null
+    }
+    setReportConfirmation(null)
+  }
+
+  async function handleConfirmReport(decision: "CONFIRMED" | "REJECTED") {
+    if (!reportConfirmation) return
+    try {
+      await confirmReportApi(reportConfirmation.reportId, {
+        decision,
+        sessionId: reportSessionIdRef.current ?? undefined,
+      })
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to submit the confirmation.")
+      setErrorPopup({
+        visible: true,
+        title: "Report Error",
+        message,
+      })
+    } finally {
+      clearReportConfirmation()
+    }
+  }
+
+  async function loadReportsForPath(pathId: string) {
+    try {
+      const reports = await getReportsByPathApi(pathId)
+      setReportsByPathId((current) => ({
+        ...current,
+        [pathId]: reports,
+      }))
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Unable to load reports for this path.")
+      setErrorPopup({
+        visible: true,
+        title: "Reports Error",
+        message,
+      })
+    }
+  }
+
   React.useEffect(() => {
     return () => {
       if (successTimerRef.current) {
         clearTimeout(successTimerRef.current)
+      }
+      if (confirmationTimerRef.current) {
+        clearTimeout(confirmationTimerRef.current)
       }
     }
   }, [])
@@ -340,6 +464,7 @@ export default function HomeScreen() {
     setSelectedResult(tripLaunchSelection)
     setActiveTrip(tripLaunchSelection)
     setActiveTripStartedAt(new Date())
+    void loadReportsForPath(tripLaunchSelection.id)
     resetOffRouteTracking()
     offRouteContinueUsedRef.current = false
     setOffRoutePopupVisible(false)
@@ -372,6 +497,48 @@ export default function HomeScreen() {
       setOffRoutePopupVisible(true)
     }
   }, [activeTrip, hasActiveNavigation, isOffRoutePopupVisible, userLocation])
+
+  React.useEffect(() => {
+    if (!activeTrip || !userLocation || !destinationPoint) {
+      autoCompleteTriggeredRef.current = false
+      return
+    }
+    if (autoCompleteTriggeredRef.current) return
+    const distanceToDestination = haversineDistanceMetersLatLng(destinationPoint, userLocation)
+    if (distanceToDestination > AUTO_COMPLETE_DISTANCE_METERS) return
+    autoCompleteTriggeredRef.current = true
+    void handleCompleteTrip()
+  }, [activeTrip, destinationPoint, userLocation])
+
+  React.useEffect(() => {
+    if (!activeTrip || !userLocation || isGuest) return
+    if (reportConfirmation) return
+    const reports = reportsByPathId[activeTrip.id] ?? []
+    if (!reports.length) return
+
+    let closestReport: ReportSummary | null = null
+    let closestDistance = Number.POSITIVE_INFINITY
+    for (const report of reports) {
+      if (report.status === "IGNORED") continue
+      if (promptedReportIdsRef.current.has(report.reportId)) continue
+      const distance = haversineDistanceMetersLatLng(
+        { latitude: report.position.lat, longitude: report.position.lng },
+        userLocation
+      )
+      if (distance < closestDistance) {
+        closestDistance = distance
+        closestReport = report
+      }
+    }
+
+    if (!closestReport || closestDistance > REPORT_CONFIRM_DISTANCE_METERS) return
+
+    promptedReportIdsRef.current.add(closestReport.reportId)
+    setReportConfirmation(closestReport)
+    confirmationTimerRef.current = setTimeout(() => {
+      clearReportConfirmation()
+    }, REPORT_CONFIRM_DISMISS_MS)
+  }, [activeTrip, isGuest, reportConfirmation, reportsByPathId, userLocation])
 
   React.useEffect(() => {
     let cancelled = false
@@ -518,12 +685,29 @@ export default function HomeScreen() {
             />
           )}
           {destinationPoint && (
-            <Marker
-              coordinate={destinationPoint}
-              title="Destination"
-              pinColor={palette.brand.base}
-            />
+            <Marker coordinate={destinationPoint} title="Destination">
+              <MapIconMarker
+                color={palette.accent.green.base}
+                borderColor={palette.text.onAccent}
+                icon={<Bike size={iconSizes.md} color={palette.text.onAccent} strokeWidth={2.2} />}
+              />
+            </Marker>
           )}
+          {(activeTrip?.id ?? selectedResult?.id) &&
+            (reportsByPathId[activeTrip?.id ?? selectedResult?.id ?? ""] ?? []).map((report) => (
+              <Marker
+                key={`report-${report.reportId}`}
+                coordinate={{ latitude: report.position.lat, longitude: report.position.lng }}
+                title={getObstacleLabel(report.obstacleType)}
+                description={getConditionLabel(report.pathStatus)}
+              >
+                <MapIconMarker
+                  color={palette.status.danger}
+                  borderColor={palette.text.onAccent}
+                  icon={<AlertTriangle size={iconSizes.md} color={palette.text.onAccent} strokeWidth={2.2} />}
+                />
+              </Marker>
+            ))}
         </MapView>
 
         {!hasActiveNavigation && (
@@ -647,8 +831,28 @@ export default function HomeScreen() {
         visible={reportVisible}
         onClose={() => setReportVisible(false)}
         onSubmit={handleSubmitReport}
-        conditionOptions={ISSUE_CONDITION_OPTIONS}
-        obstacleOptions={OBSTACLE_TYPE_OPTIONS}
+      />
+      <AppPopup
+        visible={Boolean(reportConfirmation)}
+        title="Report check"
+        message={`Is the ${getObstacleLabel(reportConfirmation?.obstacleType)} still present?`}
+        icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
+        iconBackgroundColor={`${palette.accent.red.surface}`}
+        onClose={clearReportConfirmation}
+        primaryButton={{
+          label: "Yes",
+          variant: "primary",
+          onPress: () => handleConfirmReport("CONFIRMED"),
+          buttonColor: palette.status.danger,
+          textColor: palette.text.onAccent,
+        }}
+        secondaryButton={{
+          label: "No",
+          variant: "outline",
+          onPress: () => handleConfirmReport("REJECTED"),
+          borderColor: palette.status.danger,
+          textColor: palette.status.danger,
+        }}
       />
 
       <AppPopup
@@ -749,6 +953,81 @@ export default function HomeScreen() {
 
 type LatLng = { latitude: number; longitude: number }
 
+function generateSessionId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function findClosestSegment(
+  segments: Array<{ segmentId: string; polylineCoordinates: LatLng[] }>,
+  position: LatLng
+) {
+  let bestSegment: { segmentId: string } | null = null
+  let bestDistance = Number.POSITIVE_INFINITY
+
+  for (const segment of segments) {
+    if (!segment.polylineCoordinates.length && !bestSegment) {
+      // Fallback when segment geometry is missing
+      bestSegment = { segmentId: segment.segmentId }
+    }
+    for (const point of segment.polylineCoordinates) {
+      const distance = Math.hypot(point.latitude - position.latitude, point.longitude - position.longitude)
+      if (distance < bestDistance) {
+        bestDistance = distance
+        bestSegment = { segmentId: segment.segmentId }
+      }
+    }
+  }
+
+  return bestSegment
+}
+
+function buildTraversedTripSegments(
+  segments: Array<{ segmentId: string; polylineCoordinates: LatLng[] }>,
+  traversedPointCount: number
+) {
+  if (!segments.length) {
+    return []
+  }
+
+  // If we haven't traversed at least 2 points, don't send any segments
+  if (traversedPointCount < 2) {
+    return []
+  }
+
+  const traversed: Array<{ segmentId: string; polylineCoordinates: Array<{ lat: number; lng: number }> }> = []
+  let remainingUniquePoints = traversedPointCount
+  let lastPoint: LatLng | null = null
+
+  for (const segment of segments) {
+    if (remainingUniquePoints <= 0) break
+    if (!segment.polylineCoordinates.length) continue
+
+    const slicedPoints: LatLng[] = []
+    for (const point of segment.polylineCoordinates) {
+      if (remainingUniquePoints <= 0) break
+      const isUnique =
+        !lastPoint || lastPoint.latitude !== point.latitude || lastPoint.longitude !== point.longitude
+      if (isUnique) {
+        remainingUniquePoints -= 1
+      }
+      slicedPoints.push(point)
+      lastPoint = point
+    }
+
+    if (slicedPoints.length >= 2) {
+      traversed.push({
+        segmentId: segment.segmentId,
+        polylineCoordinates: slicedPoints.map((point) => ({
+          lat: point.latitude,
+          lng: point.longitude,
+        })),
+      })
+    }
+  }
+
+  return traversed
+}
+
 function formatAddress(address?: Location.LocationGeocodedAddress) {
   if (!address) return ""
   const streetLine = [address.street ?? address.name, address.streetNumber]
@@ -759,23 +1038,6 @@ function formatAddress(address?: Location.LocationGeocodedAddress) {
   const components = [streetLine, locality].filter((part) => part && part.trim().length)
   return components.join(", ")
 }
-
-
-const ISSUE_CONDITION_OPTIONS = [
-  // { key: "OPTIMAL", label: "Optimal" },
-  { key: "MEDIUM", label: "Medium" },
-  { key: "SUFFICIENT", label: "Sufficient" },
-  { key: "REQUIRES_MAINTENANCE", label: "Requires Maintenance" },
-  { key: "CLOSED", label: "Closed" },
-]
-
-const OBSTACLE_TYPE_OPTIONS = [
-  { key: "POTHOLE", label: "Pothole" },
-  { key: "WORK_IN_PROGRESS", label: "Work in Progress" },
-  { key: "FLOODING", label: "Flooding" },
-  { key: "OBSTACLE", label: "Obstacle" },
-  { key: "OTHER", label: "Other" },
-]
 
 const styles = StyleSheet.create({
   map: {

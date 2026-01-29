@@ -5,6 +5,13 @@ import { sortPathSegmentsByChain, computeReportSignals, REPORT_MIN_RELIABILITY, 
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import { snapToRoad, geocodeAddress } from '../../services/index.js';
 import { haversineDistanceMeters, polylineDistanceKm } from '../../utils/geo.js';
+import {
+    PATH_SEARCH_TOLERANCE_DEG,
+    PATH_SEARCH_MAX_DISTANCE_METERS,
+    PATH_SEARCH_NEAR_DISTANCE_BUFFER_METERS,
+    PATH_STATUS_ALL_WEIGHT,
+    PATH_STATUS_REPORTED_WEIGHT
+} from '../../constants/appConfig.js';
 
 export class PathManager {
 
@@ -43,12 +50,22 @@ export class PathManager {
                 const createdSegmentIds: string[] = [];
                 const allCoordinates: Coordinates[] = [];
                 
+                const existingSegments = await queryManager.getSegmentsByPolylineCoordinates(
+                    pathSegments.map((segment) => [segment.start, segment.end])
+                );
+
                 for (const segment of pathSegments) {
                     // Build polyline from start to end (add intermediate points if needed)
                     const polylineCoordinates: Coordinates[] = [segment.start, segment.end];
-                    
-                    const createdSegment = await queryManager.createSegment('OPTIMAL', polylineCoordinates);
-                    createdSegmentIds.push(createdSegment.segmentId);
+                    const segmentKey = JSON.stringify(polylineCoordinates);
+                    const existingSegmentId = existingSegments.get(segmentKey);
+
+                    if (existingSegmentId) {
+                        createdSegmentIds.push(existingSegmentId);
+                    } else {
+                        const createdSegment = await queryManager.createSegment('OPTIMAL', polylineCoordinates);
+                        createdSegmentIds.push(createdSegment.segmentId);
+                    }
                     allCoordinates.push(...polylineCoordinates);
                 }
 
@@ -151,9 +168,9 @@ export class PathManager {
             }));
 
             // Tolerance radius in degrees (approximately 200m)
-            const tolerance = 0.002;
-            const maxDistanceMeters = 200;
-            const nearDistanceBufferMeters = 50;
+            const tolerance = PATH_SEARCH_TOLERANCE_DEG;
+            const maxDistanceMeters = PATH_SEARCH_MAX_DISTANCE_METERS;
+            const nearDistanceBufferMeters = PATH_SEARCH_NEAR_DISTANCE_BUFFER_METERS;
 
             const matchingPaths: Array<{ path: PathWithSegments; maxDistance: number }> = [];
 
@@ -253,7 +270,6 @@ export class PathManager {
                         createdAt: path.createdAt,
                         segmentCount: path.pathSegments.length,
                         pathSegments: path.pathSegments.map(ps => ({
-                            pathSegmentId: ps.id,
                             segmentId: ps.segmentId,
                             polylineCoordinates: ps.segment.polylineCoordinates,
                         })),
@@ -296,7 +312,6 @@ export class PathManager {
                         createdAt: path.createdAt,
                         segmentCount: path.pathSegments.length,
                         pathSegments: path.pathSegments.map(ps => ({
-                            pathSegmentId: ps.id,
                             segmentId: ps.segmentId,
                             polylineCoordinates: ps.segment.polylineCoordinates,
                         })),
@@ -415,22 +430,31 @@ export class PathManager {
     }
 
     async recalculatePathSegmentStatus(pathSegmentId: string) {
-        const segmentStatus = await this.calculatePathSegmentStatus(pathSegmentId);
-
-        if (segmentStatus) {
-            await queryManager.updatePathSegmentStatus(pathSegmentId, segmentStatus);
-        }
-
         const pathSegment = await queryManager.getPathSegmentById(pathSegmentId);
         if (!pathSegment) {
             return;
         }
-
-        await this.recalculatePathStatus(pathSegment.pathId);
+        await this.recalculateSegmentStatusForAllPaths(pathSegment.segmentId);
     }
 
-    private async calculatePathSegmentStatus(pathSegmentId: string) {
-        const reports = await queryManager.getReportsByPathSegmentId(pathSegmentId);
+    async recalculateSegmentStatusForAllPaths(segmentId: string) {
+        const segmentStatus = await this.calculateSegmentStatus(segmentId);
+        const pathSegments = await queryManager.getPathSegmentsBySegmentId(segmentId);
+
+        if (segmentStatus) {
+            await Promise.all(
+                pathSegments.map((segment) =>
+                    queryManager.updatePathSegmentStatus(segment.id, segmentStatus)
+                )
+            );
+        }
+
+        const pathIds = new Set(pathSegments.map((segment) => segment.pathId));
+        await Promise.all(Array.from(pathIds).map((pathId) => this.recalculatePathStatus(pathId)));
+    }
+
+    private async calculateSegmentStatus(segmentId: string) {
+        const reports = await queryManager.getReportsBySegmentId(segmentId);
 
         if (!reports.length) {
             return null;
@@ -482,8 +506,34 @@ export class PathManager {
             return;
         }
 
-        const status = computePathStatusFromSegments(path.pathSegments);
+        const reports = await queryManager.getReportsByPathId(pathId);
+        const reportedSegmentIds = new Set(
+            reports
+                .filter((report) => report.status !== 'IGNORED')
+                .map((report) => report.segmentId)
+        );
+        const segmentsToScore = path.pathSegments.filter((segment) =>
+            reportedSegmentIds.has(segment.segmentId)
+        );
+        let status = computePathStatusFromSegments(path.pathSegments);
+        if (segmentsToScore.length) {
+            const reportedAverage = this.computeAverageStatusScore(segmentsToScore);
+            const allAverage = this.computeAverageStatusScore(path.pathSegments);
+            const mixedScore = reportedAverage * PATH_STATUS_REPORTED_WEIGHT + allAverage * PATH_STATUS_ALL_WEIGHT;
+            status = mapScoreToStatus(mixedScore);
+        }
         await queryManager.updatePathStatus(pathId, status);
+    }
+
+    private computeAverageStatusScore(segments: Array<{ status: keyof typeof PATH_STATUS_SCORE_MAP }>) {
+        if (!segments.length) {
+            return PATH_STATUS_SCORE_MAP.OPTIMAL;
+        }
+        const totalStatusScore = segments.reduce((sum, segment) => {
+            const statusScore = PATH_STATUS_SCORE_MAP[segment.status] || 0;
+            return sum + statusScore;
+        }, 0);
+        return totalStatusScore / segments.length;
     }
 
 }

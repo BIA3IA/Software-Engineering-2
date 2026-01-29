@@ -69,6 +69,7 @@ model Segment {
   polylineCoordinates Json
   tripSegments        TripSegment[]
   pathSegments        PathSegment[]
+  reports             Report[]
 }
 
 model TripSegment {
@@ -108,9 +109,6 @@ model PathSegment {
   status        String   @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
   path          Path     @relation(fields: [pathId], references: [pathId], onDelete: Cascade)
   segment       Segment  @relation(fields: [segmentId], references: [segmentId]) // No onDelete: Cascade here otherwise deleting a path would delete also the trip segments
-  reports       Report[]
-
-  @@unique([pathId, segmentId])
 }
 
 model Report {
@@ -118,10 +116,10 @@ model Report {
   createdAt     DateTime    @default(now())
   userId        String
   user          User        @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  pathSegmentId String
-  pathSegment   PathSegment @relation(fields: [pathSegmentId], references: [id], onDelete: Cascade)
+  segmentId     String
+  segment       Segment     @relation(fields: [segmentId], references: [segmentId], onDelete: Cascade)
   tripId        String?
-  trip          Trip?       @relation(fields: [tripId], references: [tripId], onDelete: Cascade)
+  trip          Trip?       @relation(fields: [tripId], references: [tripId], onDelete: SetNull)
   sessionId     String?
   obstacleType  String // Enum values: POTHOLE, WORK_IN_PROGRESS, FLOODING, OBSTACLE, OTHER
   pathStatus    String      @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
@@ -129,4 +127,5 @@ model Report {
   position      Json
 
   @@index([sessionId])
+  @@index([segmentId])
 }

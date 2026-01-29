@@ -20,6 +20,7 @@ export type RouteItem = {
     durationMin: number
     date: string
     route: LatLng[]
+    reports?: Array<{ reportId: string; position: { lat: number; lng: number }; obstacleType?: string; pathStatus?: string }>
     avgSpeed: number
     maxSpeed: number
     elevation: number
@@ -141,6 +142,7 @@ export function RouteCard({
                 <View style={styles.expandedContent}>
                     <RouteMap
                         route={trip.route}
+                        reports={trip.reports}
                         temperatureLabel={trip.temperatureLabel}
                         weather={trip.weather}
                         showWeatherBadge={showWeatherBadge}

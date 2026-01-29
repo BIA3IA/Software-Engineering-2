@@ -8,8 +8,6 @@ export class ReportManager {
     async createReport(req: Request, res: Response, next: NextFunction) {
         try {
             const {
-                pathSegmentId, 
-                pathId,
                 segmentId,
                 tripId, 
                 sessionId,
@@ -27,8 +25,8 @@ export class ReportManager {
             }
 
             // Local validation aligned with other managers
-            if (!pathSegmentId && !(pathId && segmentId)) {
-                throw new BadRequestError('Path Segment ID is required', 'MISSING_PATH_SEGMENT_ID');
+            if (!segmentId) {
+                throw new BadRequestError('Segment ID is required', 'MISSING_SEGMENT_ID');
             }
             if (!sessionId) {
                 throw new BadRequestError('Session ID is required', 'MISSING_SESSION_ID');
@@ -40,24 +38,16 @@ export class ReportManager {
                 throw new BadRequestError('Position is required', 'MISSING_POSITION');
             }
 
-            // Verify the segment exists before attaching a report
-            let resolvedPathSegmentId = pathSegmentId;
-            if (!resolvedPathSegmentId && pathId && segmentId) {
-                const pathSegment = await queryManager.getPathSegmentByPathAndSegment(pathId, segmentId);
-                resolvedPathSegmentId = pathSegment?.id;
-            }
-
-            const pathSegment = resolvedPathSegmentId
-                ? await queryManager.getPathSegmentById(resolvedPathSegmentId)
-                : null;
-            if (!pathSegment) {
+            // Resolve and validate segment
+            const segment = await queryManager.getSegmentById(segmentId);
+            if (!segment) {
                 throw new NotFoundError('Target segment not found', 'SEGMENT_NOT_FOUND');
             }
 
             // Create report through Query Manager
             const report = await queryManager.createReport({
                 userId,
-                pathSegmentId: resolvedPathSegmentId,
+                segmentId,
                 tripId,
                 sessionId,
                 obstacleType,
@@ -66,7 +56,7 @@ export class ReportManager {
                 status: 'CREATED'
             });
 
-            await pathManager.recalculatePathSegmentStatus(pathSegmentId);
+            await pathManager.recalculateSegmentStatusForAllPaths(segmentId);
 
             // Return 201 Created as per sequence diagrams
             res.status(201).json({
@@ -85,7 +75,7 @@ export class ReportManager {
     async confirmReport(req: Request, res: Response, next: NextFunction) {
         try {
             const { reportId } = req.params;
-            const { decision, tripId } = req.body ?? {};
+            const { decision, tripId, sessionId } = req.body ?? {};
             const userId = req.user?.userId;
 
             if (!userId) {
@@ -108,18 +98,24 @@ export class ReportManager {
                 throw new NotFoundError('Report not found', 'NOT_FOUND');
             }
 
+            let resolvedTripId: string | null = tripId ?? null;
+            if (tripId) {
+                const trip = await queryManager.getTripById(tripId);
+                resolvedTripId = trip ? tripId : null;
+            }
+
             const confirmationReport = await queryManager.createReport({
                 userId,
-                pathSegmentId: report.pathSegmentId,
-                tripId: tripId ?? null,
-                sessionId: report.sessionId ?? null,
+                segmentId: report.segmentId,
+                tripId: resolvedTripId,
+                sessionId: sessionId ?? report.sessionId ?? null,
                 obstacleType: report.obstacleType,
                 pathStatus: report.pathStatus,
                 position: report.position,
                 status: decision
             });
 
-            await pathManager.recalculatePathSegmentStatus(report.pathSegmentId);
+            await pathManager.recalculateSegmentStatusForAllPaths(report.segmentId);
             res.status(201).json({
                 success: true,
                 message: 'Report submitted',
@@ -147,46 +143,18 @@ export class ReportManager {
 
             const activeReports = this.filterActiveOriginalReports(reports, now);
 
-            // Merge by pathSegmentId to avoid returning many reports for the same segment
+            // Merge by segmentId to avoid returning many reports for the same segment
             const mergedBySegment = new Map<string, typeof activeReports[number]>();
             for (const report of activeReports) {
-                const existing = mergedBySegment.get(report.pathSegmentId);
+                const existing = mergedBySegment.get(report.segmentId);
                 if (!existing || existing.createdAt < report.createdAt) {
-                    mergedBySegment.set(report.pathSegmentId, report);
+                    mergedBySegment.set(report.segmentId, report);
                 }
             }
 
             res.json({
                 success: true,
                 data: Array.from(mergedBySegment.values()),
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    // Get active reports by trip id
-    async getActiveReportsByTripId(tripId: string) {
-        const reports = await queryManager.getReportsByTripId(tripId);
-        return this.filterActiveOriginalReports(reports, new Date());
-    }
-
-    /**
-     * Retrieves all reports associated with a specific trip.
-     */
-    async getReportsByTrip(req: Request, res: Response, next: NextFunction) {
-        try {
-            const { tripId } = req.params;
-
-            if (!tripId) {
-                throw new BadRequestError('Trip ID is required', 'MISSING_TRIP_ID');
-            }
-
-            const reports = await queryManager.getReportsByTripId(tripId);
-
-            res.json({
-                success: true,
-                data: reports
             });
         } catch (error) {
             next(error);
@@ -206,13 +174,13 @@ export class ReportManager {
 
     async getReportsByPathSegment(req: Request, res: Response, next: NextFunction) {
         try {
-            const { pathSegmentId } = req.params;
+            const { segmentId } = req.params;
 
-            if (!pathSegmentId) {
-                throw new BadRequestError('Path Segment ID is required', 'MISSING_PATH_SEGMENT_ID');
+            if (!segmentId) {
+                throw new BadRequestError('Segment ID is required', 'MISSING_SEGMENT_ID');
             }
 
-            const reports = await queryManager.getReportsByPathSegmentId(pathSegmentId);
+            const reports = await queryManager.getReportsBySegmentId(segmentId);
 
             res.json({
                 success: true,

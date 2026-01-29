@@ -12,6 +12,7 @@ export type PathResultTag = {
   label: string
   color: string
   textColor?: string
+  kind?: "status" | "metric"
 }
 
 export type PathResultCardProps = {
@@ -59,7 +60,7 @@ export function PathResultCard({
         <View style={styles.tagsRow}>
           {tags.map((tag, index) => (
             <MetricPill
-              key={`${tag.label}-${index}`}
+              key={`${tag.kind ?? "tag"}-${tag.label}-${index}`}
               value={tag.label}
               backgroundColor={tag.color}
               textColor={tag.textColor}
