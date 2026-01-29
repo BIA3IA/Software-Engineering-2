@@ -11,8 +11,9 @@
     "dev": "tsc-watch --onSuccess \"node ./dist/server.js\"",
     "migration:create": "prisma migrate dev --create-only",
     "migration:apply": "prisma migrate dev",
+    "pretest": "npm run prisma:generate",
     "test": "NODE_OPTIONS='--localstorage-file=./jest-storage' jest",
-    "test:watch": "NODE_OPTIONS='--localstorage-file=./jest-storage' jest --watch"
+    "test:watch": "npm run prisma:generate && NODE_OPTIONS='--localstorage-file=./jest-storage' jest --watch"
   },
   "keywords": [],
   "author": "",

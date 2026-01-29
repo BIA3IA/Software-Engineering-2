@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { queryManager } from '../query/index.js';
 import { NotFoundError, BadRequestError } from '../../errors/index.js';
-import { computeReportSignals, REPORT_ACTIVE_FRESHNESS_MIN, REPORT_MIN_RELIABILITY } from '../../utils/index';
+import { computeReportSignals } from '../../utils/index';
 import { pathManager } from '../path/path.manager.js';
+import { REPORT_ACTIVE_FRESHNESS_MIN, REPORT_MIN_RELIABILITY } from '../../constants/appConfig.js';
 
 export class ReportManager {
     async createReport(req: Request, res: Response, next: NextFunction) {

@@ -3,6 +3,8 @@ export const REPORT_ALPHA = 0.6
 export const REPORT_BETA = 0.8
 export const REPORT_MIN_RELIABILITY = 0.1
 export const REPORT_MAX_RELIABILITY = 2.5
+export const REPORT_FRESHNESS_HALF_LIFE_MIN = 1440
+export const REPORT_ACTIVE_FRESHNESS_MIN = 0.1
 
 // Segment deduplication tolerance (~5m in degrees)
 export const SEGMENT_MATCH_TOLERANCE_DEG = 0.00005

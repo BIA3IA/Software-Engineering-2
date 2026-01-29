@@ -19,6 +19,7 @@ jest.mock("../../utils/prisma-client", () => ({
             update: jest.fn(),
             delete: jest.fn(),
         },
+        $queryRaw: jest.fn(),
     },
 }));
 
@@ -69,6 +70,7 @@ describe("Path Routes Integration Tests", () => {
         (prisma.path.delete as jest.Mock).mockReset();
         (prisma.segment.create as jest.Mock).mockReset();
         (prisma.segment.findMany as jest.Mock).mockReset();
+        (prisma.$queryRaw as jest.Mock).mockReset();
         geocodeAddressMock.mockReset();
         snapToRoadMock.mockReset();
     });
@@ -114,6 +116,7 @@ describe("Path Routes Integration Tests", () => {
             // Mock sequence for path creation flow:
             // 1. createSegment - called by path manager for each segment
             (prisma.segment.create as jest.Mock).mockResolvedValue(mockSegment);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
             
             // 2. getPathByOriginDestination - uses findMany to check existing paths
             (prisma.path.findMany as jest.Mock).mockResolvedValueOnce([]);
@@ -205,6 +208,7 @@ describe("Path Routes Integration Tests", () => {
             // Mock sequence:
             // 1. createSegment - called first
             (prisma.segment.create as jest.Mock).mockResolvedValue(mockSegment);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
             
             // 2. getPathByOriginDestination - uses findMany and should return existing path
             (prisma.path.findMany as jest.Mock).mockResolvedValue([existingPath]);
