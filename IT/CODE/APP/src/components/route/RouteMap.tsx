@@ -124,10 +124,27 @@ export function RouteMap({
   ) {
     try {
       const point = await mapRef.current?.pointForCoordinate(coordinate)
-      if (!point) return
+      if (!point) {
+        setCalloutState({
+          x: mapLayout.width / 2,
+          y: mapLayout.height / 2,
+          coord: coordinate,
+          items,
+          variant,
+          visible: true,
+        })
+        return
+      }
       setCalloutState({ x: point.x, y: point.y, coord: coordinate, items, variant, visible: true })
     } catch {
-      setCalloutState(null)
+      setCalloutState({
+        x: mapLayout.width / 2,
+        y: mapLayout.height / 2,
+        coord: coordinate,
+        items,
+        variant,
+        visible: true,
+      })
     }
   }
 
@@ -300,6 +317,7 @@ export function RouteMap({
               { backgroundColor: palette.surface.card, shadowColor: palette.border.muted },
               pressed && { opacity: 0.85 },
             ]}
+            testID="route-map-weather"
           >
             <Cloud size={badgeIconSize} color={palette.brand.dark} />
             <Text style={[textStyles.bodySmall, styles.weatherText, { color: palette.text.link }]}>

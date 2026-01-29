@@ -49,6 +49,46 @@ describe("guest access restrictions", () => {
         expect(mockRouter.replace).not.toHaveBeenCalled()
     })
 
+    test.each([
+        ["trips", "/trips"],
+        ["paths", "/paths"],
+        ["profile", "/profile"],
+    ])("guest tapping %s requests login and blocks navigation", (_label, route) => {
+        const onRequireLogin = jest.fn()
+        mockPathname.value = "/home"
+
+            ; (useAuthStore as unknown as jest.Mock).mockImplementation((selector: any) =>
+                selector({
+                    user: { id: "guest", username: "Guest", email: "" },
+                })
+            )
+
+        const { getByTestId } = render(<BottomNav onRequireLogin={onRequireLogin} />)
+
+        fireEvent.press(getByTestId(`nav-${_label}`))
+
+        expect(onRequireLogin).toHaveBeenCalledTimes(1)
+        expect(mockRouter.replace).not.toHaveBeenCalledWith(route)
+    })
+
+    test("guest can navigate to home without login prompt", () => {
+        const onRequireLogin = jest.fn()
+        mockPathname.value = "/trips"
+
+            ; (useAuthStore as unknown as jest.Mock).mockImplementation((selector: any) =>
+                selector({
+                    user: { id: "guest", username: "Guest", email: "" },
+                })
+            )
+
+        const { getByTestId } = render(<BottomNav onRequireLogin={onRequireLogin} />)
+
+        fireEvent.press(getByTestId("nav-home"))
+
+        expect(onRequireLogin).not.toHaveBeenCalled()
+        expect(mockRouter.replace).toHaveBeenCalledWith("/home")
+    })
+
     test("login prompt popup logs out guest and navigates to login", async () => {
         ; (useAuthStore as unknown as jest.Mock).mockImplementation((selector: any) =>
             selector({

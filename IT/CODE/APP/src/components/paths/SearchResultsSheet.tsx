@@ -94,6 +94,7 @@ export function SearchResultsSheet({
             },
             pressed && { opacity: 0.85 },
           ]}
+          testID="search-results-close"
         >
           <X size={iconSizes.sm} color={palette.text.onAccent} />
         </Pressable>

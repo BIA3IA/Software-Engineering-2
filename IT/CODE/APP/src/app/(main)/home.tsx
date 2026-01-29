@@ -866,6 +866,7 @@ export default function HomeScreen() {
                 title={isSearching ? "Searching..." : "Find Paths"}
                 onPress={handleFindPaths}
                 buttonColor={palette.brand.base}
+                testID="home-find-paths"
                 style={[
                   styles.findButton,
                   {
@@ -886,6 +887,7 @@ export default function HomeScreen() {
                   },
                 ]}
                 onPress={handleCreatePath}
+                testID="home-create-path"
               >
                 <Plus size={iconSizes.lg} color={palette.text.onAccent} strokeWidth={2} />
               </Pressable>
@@ -916,6 +918,7 @@ export default function HomeScreen() {
                 },
               ]}
               onPress={handleCancelTrip}
+              testID="home-cancel-trip"
             >
               <X size={iconSizes.lg} color={palette.text.primary} strokeWidth={2.2} />
             </Pressable>
@@ -929,6 +932,7 @@ export default function HomeScreen() {
                 },
               ]}
               onPress={handleReportIssue}
+              testID="home-report-issue"
             >
               <AlertTriangle size={iconSizes.lg} color={palette.text.onAccent} strokeWidth={2.2} />
             </Pressable>
@@ -937,6 +941,7 @@ export default function HomeScreen() {
               title="Complete Trip"
               onPress={handleCompleteTrip}
               buttonColor={palette.brand.base}
+              testID="home-complete-trip"
               style={[
                 styles.completeButton,
                 {
