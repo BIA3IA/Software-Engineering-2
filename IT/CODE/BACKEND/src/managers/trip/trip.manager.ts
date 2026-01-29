@@ -76,7 +76,6 @@ export class TripManager {
                 destination,
                 startedDate,
                 finishedDate,
-                null,
                 segments,
                 title
             );
@@ -154,7 +153,6 @@ export class TripManager {
                         title: trip.title,
                         origin: trip.origin,
                         destination: trip.destination,
-                        statistics: trip.statistics,
                         weather: trip.weather,
                         reports: tripReports[index] ?? [],
                         segmentCount: trip.tripSegments.length,

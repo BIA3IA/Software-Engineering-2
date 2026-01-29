@@ -160,7 +160,6 @@ describe("Testing TripManager business logic", () => {
                 req.body.destination,
                 expect.any(Date),
                 expect.any(Date),
-                null,
                 [
                     { segmentId: "segment1", nextSegmentId: "segment2" },
                     { segmentId: "segment2", nextSegmentId: null }

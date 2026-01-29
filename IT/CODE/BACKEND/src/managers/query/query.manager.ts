@@ -109,7 +109,6 @@ export class QueryManager {
         destination: Coordinates,
         startedAt: Date,
         finishedAt: Date,
-        statistics: TripStatistics | null,
         tripSegments: Array<{ segmentId: string; nextSegmentId: string | null }>,
         title?: string | null
     ) {
@@ -121,7 +120,6 @@ export class QueryManager {
                 startedAt,
                 finishedAt,
                 title,
-                statistics: statistics ?? Prisma.JsonNull,
                 tripSegments: {
                     create: tripSegments.map(seg => ({
                         segmentId: seg.segmentId,
