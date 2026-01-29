@@ -567,7 +567,7 @@ export default function HomeScreen() {
   }, [activeTrip, destinationPoint, userLocation])
 
   React.useEffect(() => {
-    if (!activeTrip || !userLocation || isGuest) return
+    if (!activeTrip || !userLocation) return
     if (reportConfirmation) return
     const reports = reportsByPathId[activeTrip.id] ?? []
     if (!reports.length) return
@@ -594,7 +594,7 @@ export default function HomeScreen() {
     confirmationTimerRef.current = setTimeout(() => {
       clearReportConfirmation()
     }, REPORT_CONFIRM_DISMISS_MS)
-  }, [activeTrip, isGuest, reportConfirmation, reportsByPathId, userLocation])
+  }, [activeTrip, reportConfirmation, reportsByPathId, userLocation])
 
   React.useEffect(() => {
     let cancelled = false
@@ -955,25 +955,43 @@ export default function HomeScreen() {
       />
       <AppPopup
         visible={Boolean(reportConfirmation)}
-        title="Report check"
-        message={`Is the ${getObstacleLabel(reportConfirmation?.obstacleType)} still present?`}
+        title={isGuest ? "Report nearby" : "Report check"}
+        message={
+          isGuest
+            ? `Attention: ${getObstacleLabel(reportConfirmation?.obstacleType)} ahead. Ride carefully.`
+            : `Is the ${getObstacleLabel(reportConfirmation?.obstacleType)} still present?`
+        }
         icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
         iconBackgroundColor={`${palette.accent.red.surface}`}
         onClose={clearReportConfirmation}
-        primaryButton={{
-          label: "Yes",
-          variant: "primary",
-          onPress: () => handleConfirmReport("CONFIRMED"),
-          buttonColor: palette.status.danger,
-          textColor: palette.text.onAccent,
-        }}
-        secondaryButton={{
-          label: "No",
-          variant: "outline",
-          onPress: () => handleConfirmReport("REJECTED"),
-          borderColor: palette.status.danger,
-          textColor: palette.status.danger,
-        }}
+        primaryButton={
+          isGuest
+            ? {
+                label: "Got it",
+                variant: "primary",
+                onPress: clearReportConfirmation,
+                buttonColor: palette.status.danger,
+                textColor: palette.text.onAccent,
+              }
+            : {
+                label: "Yes",
+                variant: "primary",
+                onPress: () => handleConfirmReport("CONFIRMED"),
+                buttonColor: palette.status.danger,
+                textColor: palette.text.onAccent,
+              }
+        }
+        secondaryButton={
+          isGuest
+            ? undefined
+            : {
+                label: "No",
+                variant: "outline",
+                onPress: () => handleConfirmReport("REJECTED"),
+                borderColor: palette.status.danger,
+                textColor: palette.status.danger,
+              }
+        }
       />
 
       <AppPopup
