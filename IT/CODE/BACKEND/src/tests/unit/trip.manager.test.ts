@@ -10,7 +10,7 @@ jest.mock('../../managers/query', () => ({
         getSegmentsByIds: jest.fn(),
         createSegmentWithId: jest.fn(),
         updateTripWeather: jest.fn(),
-        getReportsByTripId: jest.fn(),
+        getReportsBySegmentIds: jest.fn(),
     }
 }));
 
@@ -407,7 +407,7 @@ describe("Testing TripManager business logic", () => {
             ];
 
             (queryManager.getTripsByUserId as jest.Mock).mockResolvedValue(mockTrips);
-            (queryManager.getReportsByTripId as jest.Mock).mockResolvedValue([]);
+            (queryManager.getReportsBySegmentIds as jest.Mock).mockResolvedValue([]);
 
             const res = mockResponse();
             const next = jest.fn();
@@ -482,7 +482,7 @@ describe("Testing TripManager business logic", () => {
             (queryManager.getTripsByUserId as jest.Mock).mockResolvedValue(mockTrips);
             (fetchAndAggregateWeatherData as jest.Mock).mockResolvedValue(mockWeatherData);
             (queryManager.updateTripWeather as jest.Mock).mockResolvedValue({});
-            (queryManager.getReportsByTripId as jest.Mock).mockResolvedValue([]);
+            (queryManager.getReportsBySegmentIds as jest.Mock).mockResolvedValue([]);
 
             const res = mockResponse();
             const next = jest.fn();

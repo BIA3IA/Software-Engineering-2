@@ -9,26 +9,18 @@ import { AlertTriangle } from "lucide-react-native"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { SelectField } from "@/components/ui/SelectField"
 import { AppButton } from "@/components/ui/AppButton"
-
-export type ReportIssueOption = {
-  key: string
-  label: string
-}
+import { ISSUE_CONDITION_OPTIONS, OBSTACLE_TYPE_OPTIONS } from "@/utils/reportOptions"
 
 type ReportIssueModalProps = {
   visible: boolean
   onClose: () => void
   onSubmit: (payload: { condition: string; obstacle: string }) => void
-  conditionOptions: ReportIssueOption[]
-  obstacleOptions: ReportIssueOption[]
 }
 
 export function ReportIssueModal({
   visible,
   onClose,
   onSubmit,
-  conditionOptions,
-  obstacleOptions,
 }: ReportIssueModalProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
@@ -36,8 +28,8 @@ export function ReportIssueModal({
     scheme === "dark" ? palette.status.danger : palette.accent.red.surface
   const iconColor = scheme === "dark" ? palette.overlay.iconOnDark : palette.status.danger
 
-  const [conditionKey, setConditionKey] = React.useState(conditionOptions[0]?.key ?? "")
-  const [obstacleKey, setObstacleKey] = React.useState(obstacleOptions[0]?.key ?? "")
+  const [conditionKey, setConditionKey] = React.useState(ISSUE_CONDITION_OPTIONS[0]?.key ?? "")
+  const [obstacleKey, setObstacleKey] = React.useState(OBSTACLE_TYPE_OPTIONS[0]?.key ?? "")
   const [activeSelect, setActiveSelect] = React.useState<"condition" | "obstacle" | null>(null)
   const [overlayAnchor, setOverlayAnchor] = React.useState<{ top: number; right: number }>({
     top: verticalScale(120),
@@ -46,16 +38,16 @@ export function ReportIssueModal({
   const [overlayWidth, setOverlayWidth] = React.useState<number | undefined>(undefined)
 
   React.useEffect(() => {
-    if (conditionOptions.length && !conditionOptions.find((o) => o.key === conditionKey)) {
-      setConditionKey(conditionOptions[0]?.key ?? "")
+    if (ISSUE_CONDITION_OPTIONS.length && !ISSUE_CONDITION_OPTIONS.find((o) => o.key === conditionKey)) {
+      setConditionKey(ISSUE_CONDITION_OPTIONS[0]?.key ?? "")
     }
-  }, [conditionOptions, conditionKey])
+  }, [conditionKey])
 
   React.useEffect(() => {
-    if (obstacleOptions.length && !obstacleOptions.find((o) => o.key === obstacleKey)) {
-      setObstacleKey(obstacleOptions[0]?.key ?? "")
+    if (OBSTACLE_TYPE_OPTIONS.length && !OBSTACLE_TYPE_OPTIONS.find((o) => o.key === obstacleKey)) {
+      setObstacleKey(OBSTACLE_TYPE_OPTIONS[0]?.key ?? "")
     }
-  }, [obstacleOptions, obstacleKey])
+  }, [obstacleKey])
 
   function handleSubmit() {
     if (!conditionKey || !obstacleKey) return
@@ -84,8 +76,8 @@ export function ReportIssueModal({
     setActiveSelect(null)
   }
 
-  const conditionLabel = conditionOptions.find((o) => o.key === conditionKey)?.label ?? "Select option"
-  const obstacleLabel = obstacleOptions.find((o) => o.key === obstacleKey)?.label ?? "Select option"
+  const conditionLabel = ISSUE_CONDITION_OPTIONS.find((o) => o.key === conditionKey)?.label ?? "Select option"
+  const obstacleLabel = OBSTACLE_TYPE_OPTIONS.find((o) => o.key === obstacleKey)?.label ?? "Select option"
 
   return (
     <Modal
@@ -157,9 +149,9 @@ export function ReportIssueModal({
           visible
           options={
             activeSelect === "condition"
-              ? conditionOptions
+              ? ISSUE_CONDITION_OPTIONS
               : activeSelect === "obstacle"
-                ? obstacleOptions
+                ? OBSTACLE_TYPE_OPTIONS
                 : []
           }
           selectedKey={

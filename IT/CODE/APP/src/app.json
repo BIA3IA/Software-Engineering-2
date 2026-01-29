@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "BestBikePaths",
-    "slug": "best-bike-paths",
+    "slug": "APP",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -52,6 +52,7 @@
       "eas": {
         "projectId": "46e15fa3-8f05-45a5-9675-c817cf9c7ba0"
       }
-    }
+    },
+    "owner": "bia3ia"
   }
 }

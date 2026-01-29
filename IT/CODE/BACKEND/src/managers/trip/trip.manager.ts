@@ -136,7 +136,10 @@ export class TripManager {
             );
 
             const tripReports = await Promise.all(
-                sortedTrips.map(trip => queryManager.getReportsByTripId(trip.tripId))
+                sortedTrips.map(trip => {
+                    const segmentIds = trip.tripSegments.map(segment => segment.segmentId);
+                    return queryManager.getReportsBySegmentIds(segmentIds, ['CREATED', 'CONFIRMED']);
+                })
             );
 
             res.json({
