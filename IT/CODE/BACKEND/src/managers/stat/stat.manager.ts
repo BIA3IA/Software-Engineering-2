@@ -19,7 +19,6 @@ export class StatsManager {
                 throw new BadRequestError('User is not authenticated', 'UNAUTHORIZED');
             }
 
-            // 1. Get current trip count from Redis cache
             const currentTripCount = await getCachedTripCount(
                 userId,
                 () => queryManager.getTripCountByUserId(userId)
@@ -29,50 +28,54 @@ export class StatsManager {
                 throw new NotFoundError('No trips found for this user', 'TRIPS_NOT_FOUND');
             }
 
-            // 2. Try to get overall stats from Redis cache
-            const cachedOverall = await getCachedOverallStat(userId);
+            let overallStats = await getCachedOverallStat(userId);
             
-            if (cachedOverall && cachedOverall.lastTripCount === currentTripCount) {
-                // Cache hit and trip count matches! Return immediately
+            if (overallStats && overallStats.lastTripCount === currentTripCount) {
                 logger.debug({ userId, tripCount: currentTripCount }, 'Overall stats cache hit (no DB query)');
-                return res.status(200).json({
-                    success: true,
-                    data: cachedOverall
-                });
-            }
-
-            // 3. Cache miss or trip count changed: fetch from DB
-            const dbOverall = await queryManager.getOverallStatsByUserId(userId);
-            
-            if (dbOverall && dbOverall.lastTripCount === currentTripCount) {
-                // DB has correct data, cache it
-                await setCachedOverallStat(userId, dbOverall);
+            } else {
+                const dbOverall = await queryManager.getOverallStatsByUserId(userId);
                 
-                logger.debug({ userId, tripCount: currentTripCount }, 'Overall stats from DB (cached for next time)');
-                return res.status(200).json({
-                    success: true,
-                    data: dbOverall
-                });
+                if (dbOverall && dbOverall.lastTripCount === currentTripCount) {
+                    overallStats = dbOverall;
+                    await setCachedOverallStat(userId, dbOverall);
+                    logger.debug({ userId, tripCount: currentTripCount }, 'Overall stats from DB (cached for next time)');
+                } else {
+                    logger.info({ userId, currentTripCount, dbTripCount: dbOverall?.lastTripCount }, 'Recomputing overall stats');
+                    const allTripStats = await queryManager.getAllStatsByUserId(userId);
+                    
+                    const overallAverages = this.calculateOverallAverages(allTripStats);
+
+                    const [pathsCount, totals] = await Promise.all([
+                        queryManager.getPathCountByUserIdInRange(userId),
+                        queryManager.getStatTotalsByUserId(userId),
+                    ]);
+
+                    const totalKilometers = totals._sum.kilometers ?? 0;
+                    const totalTime = totals._sum.duration ?? 0;
+                    const longestKilometer = totals._max.kilometers ?? 0;
+                    const longestTime = totals._max.duration ?? 0;
+
+                    overallStats = await queryManager.upsertOverallStats(userId, {
+                        ...overallAverages,
+                        lastTripCount: currentTripCount,
+                        pathsCreated: pathsCount,
+                        totalKilometers: Number(totalKilometers.toFixed(2)),
+                        totalTime: Math.round(totalTime),
+                        longestKilometer: Number(longestKilometer.toFixed(2)),
+                        longestTime: Math.round(longestTime),
+                    });
+
+                    await setCachedOverallStat(userId, overallStats);
+                }
             }
 
-            // 4. Recompute: Trip count changed since last DB update
-            logger.info({ userId, currentTripCount, dbTripCount: dbOverall?.lastTripCount }, 'Recomputing overall stats');
-            const allTripStats = await queryManager.getAllStatsByUserId(userId);
-            
-            const overallAverages = this.calculateOverallAverages(allTripStats);
-
-            // 5. Update overall stats in DB
-            const updatedOverall = await queryManager.upsertOverallStats(userId, {
-                ...overallAverages,
-                lastTripCount: currentTripCount
-            });
-
-            // 6. Cache the newly computed stats
-            await setCachedOverallStat(userId, updatedOverall);
+            if (!overallStats) {
+                throw new NotFoundError('No overall statistics found for this user', 'STATS_NOT_FOUND');
+            }
 
             res.status(200).json({
                 success: true,
-                data: updatedOverall
+                data: overallStats,
             });
         } catch (error) {
             next(error);
@@ -113,6 +116,14 @@ export class StatsManager {
      * Internal Logic: Computes averages of averages across all trips
      */
     private calculateOverallAverages(statsArray: any[]) {
+        if (!statsArray.length) {
+            return {
+                avgSpeed: 0,
+                avgDuration: 0,
+                avgKilometers: 0,
+            };
+        }
+
         const total = statsArray.reduce((acc, stat) => {
             acc.speed += stat.avgSpeed;
             acc.duration += stat.duration;
@@ -128,6 +139,7 @@ export class StatsManager {
             avgKilometers: Number((total.km / count).toFixed(2))
         };
     }
+
 
     async computeStats(tripId: string): Promise<void> {
         try {
@@ -181,11 +193,28 @@ export class StatsManager {
             // Calculate overall averages
             const overallAverages = this.calculateOverallAverages(allTripStats);
 
-            // Update in DB
-            const updatedOverall = await queryManager.upsertOverallStats(userId, {
+            const [pathsCount, totals] = await Promise.all([
+                queryManager.getPathCountByUserIdInRange(userId),
+                queryManager.getStatTotalsByUserId(userId),
+            ]);
+
+            const totalKilometers = totals._sum.kilometers ?? 0;
+            const totalTime = totals._sum.duration ?? 0;
+            const longestKilometer = totals._max.kilometers ?? 0;
+            const longestTime = totals._max.duration ?? 0;
+
+            const extendedPayload = {
                 ...overallAverages,
-                lastTripCount: currentTripCount
-            });
+                lastTripCount: currentTripCount,
+                pathsCreated: pathsCount,
+                totalKilometers: Number(totalKilometers.toFixed(2)),
+                totalTime: Math.round(totalTime),
+                longestKilometer: Number(longestKilometer.toFixed(2)),
+                longestTime: Math.round(longestTime),
+            };
+
+            // Update in DB with full payload
+            const updatedOverall = await queryManager.upsertOverallStats(userId, extendedPayload);
 
             // Cache the updated overall stats
             await setCachedOverallStat(userId, updatedOverall);

@@ -13,6 +13,11 @@ export interface OverallStat {
     avgSpeed: number;
     avgDuration: number;
     avgKilometers: number;
+    totalKilometers: number;
+    totalTime: number;
+    longestKilometer: number;
+    longestTime: number;
+    pathsCreated: number;
     lastTripCount: number;
     updatedAt: Date;
 }

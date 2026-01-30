@@ -159,6 +159,11 @@ model OverallStat {
   avgSpeed      Float @default(0)
   avgDuration   Float @default(0)
   avgKilometers Float @default(0)
+  totalKilometers Float @default(0)
+  totalTime       Float @default(0)
+  longestKilometer Float @default(0)
+  longestTime      Float @default(0)
+  pathsCreated     Int   @default(0)
 
   // State-aware recomputation logic
   lastTripCount Int      @default(0)

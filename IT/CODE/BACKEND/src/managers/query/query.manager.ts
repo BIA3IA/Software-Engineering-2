@@ -633,6 +633,37 @@ export class QueryManager {
         });
     }
 
+    async getPathCountByUserIdInRange(userId: string, start?: Date, end?: Date) {
+        const createdAtFilter =
+            start || end
+                ? {
+                      ...(start ? { gte: start } : {}),
+                      ...(end ? { lt: end } : {}),
+                  }
+                : undefined;
+
+        return await prisma.path.count({
+            where: {
+                userId,
+                ...(createdAtFilter ? { createdAt: createdAtFilter } : {}),
+            },
+        });
+    }
+
+    async getStatTotalsByUserId(userId: string) {
+        return await prisma.stat.aggregate({
+            where: { userId },
+            _sum: {
+                kilometers: true,
+                duration: true,
+            },
+            _max: {
+                kilometers: true,
+                duration: true,
+            },
+        });
+    }
+
     // --- OVERALL STAT METHODS (Aggregates) ---
 
     /**
@@ -661,8 +692,13 @@ export class QueryManager {
         data: { 
             avgSpeed: number; 
             avgDuration: number; 
-            avgKilometers: number; 
-            lastTripCount: number 
+            avgKilometers: number;
+            totalKilometers: number;
+            totalTime: number;
+            longestKilometer: number;
+            longestTime: number;
+            pathsCreated: number;
+            lastTripCount: number;
         }
     ) {
         return await prisma.overallStat.upsert({
@@ -671,6 +707,11 @@ export class QueryManager {
                 avgSpeed: data.avgSpeed,
                 avgDuration: data.avgDuration,
                 avgKilometers: data.avgKilometers,
+                totalKilometers: data.totalKilometers,
+                totalTime: data.totalTime,
+                longestKilometer: data.longestKilometer,
+                longestTime: data.longestTime,
+                pathsCreated: data.pathsCreated,
                 lastTripCount: data.lastTripCount,
                 updatedAt: new Date()
             },
@@ -679,6 +720,11 @@ export class QueryManager {
                 avgSpeed: data.avgSpeed,
                 avgDuration: data.avgDuration,
                 avgKilometers: data.avgKilometers,
+                totalKilometers: data.totalKilometers,
+                totalTime: data.totalTime,
+                longestKilometer: data.longestKilometer,
+                longestTime: data.longestTime,
+                pathsCreated: data.pathsCreated,
                 lastTripCount: data.lastTripCount
             }
         });
