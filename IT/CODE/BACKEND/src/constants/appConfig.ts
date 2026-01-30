@@ -22,3 +22,8 @@ export const PATH_SEARCH_NEAR_DISTANCE_BUFFER_METERS = 50
 // Path status mix weights
 export const PATH_STATUS_REPORTED_WEIGHT = 0.7
 export const PATH_STATUS_ALL_WEIGHT = 0.3
+
+// Cache TTLs (seconds)
+export const TRIP_COUNT_TTL = 600 // 10 minutes
+export const TRIP_STATS_TTL = 86400 // 24 hours
+export const OVERALL_STATS_TTL = 600 // 10 minutes

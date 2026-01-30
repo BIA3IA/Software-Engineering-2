@@ -1,7 +1,6 @@
 import { Router } from "express";
-import { statsManager } from "../../managers/stat/index.js";
-import { verifyAccessToken, validate } from "../../middleware/index.js";
-import { getTripStatsSchema } from "../../schemas/stat.schema.js";
+import { statsManager } from "../../managers/stats/index.js";
+import { verifyAccessToken } from "../../middleware/index.js";
 
 const statsRouter = Router();
 
@@ -11,9 +10,9 @@ const statsRouter = Router();
  * Uses the state-aware recomputation strategy.
  */
 statsRouter.get(
-    "/overall",
+    "/",
     verifyAccessToken,
-    statsManager.getOverallStats.bind(statsManager)
+    statsManager.getAllStats.bind(statsManager)
 );
 
 export { statsRouter };
