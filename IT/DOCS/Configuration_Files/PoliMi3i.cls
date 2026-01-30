@@ -27,8 +27,8 @@
     \latexchapter{#1}
     \renewcommand{\headrulewidth}{0pt} %removing the horizontal line in the header
     %\addcontentsline{toc}{chapter}{#1} % Also adds the chapter name to the Contents
-    \fancyhead[LO, RE]{ \textbf{\textcolor{bluepoli}\thechapter\hsp\textcolor{bluepoli}{|   }\hsp \leftmark}}% Header
-    \fancyhead[LE, RO]{\thepage}
+    % \fancyhead[LO, RE]{ \textbf{\textcolor{bluepoli}\thechapter\hsp\textcolor{bluepoli}{|   }\hsp \leftmark}}% Header
+    % \fancyhead[LE, RO]{\thepage}
     \vspace{-1cm}
 }
 
@@ -38,8 +38,8 @@
     \latexchapter*{#1} 
    \renewcommand{\headrulewidth}{0pt} %removing the horizontal line in the header
     \addcontentsline{toc}{chapter}{#1} % Also adds the chapter name to the Contents
-    \fancyhead[LO, RE]{ \bfseries \textcolor{bluepoli}{|   } #1} % Header \textbf{\leftmark} \hspace{1mm}}
-    \fancyhead[LE, RO]{\thepage}
+    % \fancyhead[LO, RE]{ \bfseries \textcolor{bluepoli}{|   } #1} % Header \textbf{\leftmark} \hspace{1mm}}
+    % \fancyhead[LE, RO]{\thepage}
     \vspace{-1cm}
 }
 
