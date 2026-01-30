@@ -18,6 +18,13 @@ jest.mock('../../services/index', () => ({
     fetchAndAggregateWeatherData: jest.fn(),
 }));
 
+jest.mock('../../utils/cache', () => ({
+    incrementTripCount: jest.fn().mockResolvedValue(undefined),
+    decrementTripCount: jest.fn().mockResolvedValue(undefined),
+    getCachedTripStats: jest.fn().mockResolvedValue(null),
+    setCachedTripStats: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('../../utils/logger', () => ({
     __esModule: true,
     default: {

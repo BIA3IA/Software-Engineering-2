@@ -10,10 +10,11 @@ import { MetricCircle } from "@/components/ui/MetricCircle"
 import { useAuthStore } from "@/auth/storage"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { useRouter } from "expo-router"
-import { MapPin, Route, TrendingUp, Clock, Mountain, Target, Leaf, ChevronDown, Bike, AlertTriangle } from "lucide-react-native"
+import { MapPin, Route, TrendingUp, Timer, Clock, Mountain, Target, Leaf, ChevronDown, Bike, AlertTriangle, Ruler, Hourglass } from "lucide-react-native"
 import { ProfileHeroHeader } from "@/components/profile/ProfileHeroHeader"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { getApiErrorMessage } from "@/utils/apiError"
+import { getStatsApi, type StatsPeriodKey, type StatsPeriod } from "@/api/stats"
 
 type AccentName = "brand" | keyof (typeof Colors)["light"]["accent"]
 type IconType = React.ComponentType<{ size?: number; color?: string }>
@@ -38,89 +39,19 @@ type ActivityStat = {
 
 type ActivityPeriod = "day" | "week" | "month" | "year" | "overall"
 
-const OVERALL_STATS: OverallStat[] = [
-  {
-    id: "distance",
-    icon: MapPin,
-    value: "342.7",
-    label: "Total km",
-    accent: "brand",
-    background: "brand",
-  },
-  {
-    id: "trips",
-    icon: Bike,
-    value: "56",
-    label: "Trips",
-    accent: "purple",
-    background: "purple",
-  },
-  {
-    id: "paths",
-    icon: Route,
-    value: "8",
-    label: "Paths",
-    accent: "green",
-    background: "green",
-  },
-]
-
-const ACTIVITY_STATS: Record<ActivityPeriod, ActivityStat[]> = {
-  day: [
-    { id: "paths", icon: Bike, value: "1", label: "Paths", accent: "green", progress: 0.2 },
-    { id: "trip-count", icon: Route, value: "2", label: "Trips", accent: "purple", progress: 0.3 },
-    { id: "distance", icon: MapPin, value: "18.4 km", label: "Distance", accent: "brand", progress: 0.4 },
-    { id: "time", icon: Clock, value: "1h 20m", label: "Time", accent: "orange", progress: 0.32 },
-    { id: "avg-speed", icon: TrendingUp, value: "20.1 km/h", label: "Avg Speed", accent: "brand", progress: 0.52 },
-    { id: "longest", icon: Target, value: "12.3 km", label: "Longest", accent: "red", progress: 0.38 },
-    { id: "elevation", icon: Mountain, value: "210 m", label: "Elevation", accent: "green", progress: 0.28 },
-    { id: "max-speed", icon: TrendingUp, value: "38.2 km/h", label: "Max Speed", accent: "purple", progress: 0.45 },
-    { id: "co2", icon: Leaf, value: "4.1 kg", label: "CO₂ Saved", accent: "orange", progress: 0.33 },
-  ],
-  week: [
-    { id: "paths", icon: Route, value: "4", label: "Paths", accent: "green", progress: 0.38 },
-    { id: "trip-count", icon: Route, value: "7", label: "Trips", accent: "purple", progress: 0.52 },
-    { id: "distance", icon: MapPin, value: "98.7 km", label: "Distance", accent: "brand", progress: 0.61 },
-    { id: "time", icon: Clock, value: "6h 45m", label: "Time", accent: "orange", progress: 0.48 },
-    { id: "avg-speed", icon: TrendingUp, value: "19.2 km/h", label: "Avg Speed", accent: "brand", progress: 0.58 },
-    { id: "longest", icon: Target, value: "21.6 km", label: "Longest", accent: "red", progress: 0.46 },
-    { id: "elevation", icon: Mountain, value: "720 m", label: "Elevation", accent: "green", progress: 0.55 },
-    { id: "max-speed", icon: TrendingUp, value: "41.3 km/h", label: "Max Speed", accent: "purple", progress: 0.57 },
-    { id: "co2", icon: Leaf, value: "18.6 kg", label: "CO₂ Saved", accent: "orange", progress: 0.5 },
-  ],
-  month: [
-    { id: "paths", icon: Route, value: "9", label: "Paths", accent: "green", progress: 0.6 },
-    { id: "trip-count", icon: Route, value: "20", label: "Trips", accent: "purple", progress: 0.72 },
-    { id: "distance", icon: MapPin, value: "312.4 km", label: "Distance", accent: "brand", progress: 0.74 },
-    { id: "time", icon: Clock, value: "18h 30m", label: "Time", accent: "orange", progress: 0.68 },
-    { id: "avg-speed", icon: TrendingUp, value: "18.5 km/h", label: "Avg Speed", accent: "brand", progress: 0.66 },
-    { id: "longest", icon: Target, value: "24.8 km", label: "Longest", accent: "red", progress: 0.48 },
-    { id: "elevation", icon: Mountain, value: "1247 m", label: "Elevation", accent: "green", progress: 0.78 },
-    { id: "max-speed", icon: TrendingUp, value: "42.3 km/h", label: "Max Speed", accent: "purple", progress: 0.62 },
-    { id: "co2", icon: Leaf, value: "42.5 kg", label: "CO₂ Saved", accent: "orange", progress: 0.7 },
-  ],
-  year: [
-    { id: "paths", icon: Route, value: "42", label: "Paths", accent: "green", progress: 0.8 },
-    { id: "trip-count", icon: Route, value: "118", label: "Trips", accent: "purple", progress: 0.83 },
-    { id: "distance", icon: MapPin, value: "2,812 km", label: "Distance", accent: "brand", progress: 0.9 },
-    { id: "time", icon: Clock, value: "168h", label: "Time", accent: "orange", progress: 0.82 },
-    { id: "avg-speed", icon: TrendingUp, value: "19.1 km/h", label: "Avg Speed", accent: "brand", progress: 0.71 },
-    { id: "longest", icon: Target, value: "55.3 km", label: "Longest", accent: "red", progress: 0.64 },
-    { id: "elevation", icon: Mountain, value: "6,430 m", label: "Elevation", accent: "green", progress: 0.84 },
-    { id: "max-speed", icon: TrendingUp, value: "48.7 km/h", label: "Max Speed", accent: "purple", progress: 0.74 },
-    { id: "co2", icon: Leaf, value: "258 kg", label: "CO₂ Saved", accent: "orange", progress: 0.88 },
-  ],
-  overall: [
-    { id: "paths", icon: Route, value: "128", label: "Paths", accent: "green", progress: 0.95 },
-    { id: "trip-count", icon: Route, value: "420", label: "Trips", accent: "purple", progress: 0.96 },
-    { id: "distance", icon: MapPin, value: "6,957 km", label: "Distance", accent: "brand", progress: 0.98 },
-    { id: "time", icon: Clock, value: "488h", label: "Time", accent: "orange", progress: 0.94 },
-    { id: "avg-speed", icon: TrendingUp, value: "19.4 km/h", label: "Avg Speed", accent: "brand", progress: 0.82 },
-    { id: "longest", icon: Target, value: "78.4 km", label: "Longest", accent: "red", progress: 0.76 },
-    { id: "elevation", icon: Mountain, value: "12,874 m", label: "Elevation", accent: "green", progress: 0.91 },
-    { id: "max-speed", icon: TrendingUp, value: "52.9 km/h", label: "Max Speed", accent: "purple", progress: 0.8 },
-    { id: "co2", icon: Leaf, value: "612 kg", label: "CO₂ Saved", accent: "orange", progress: 0.94 },
-  ],
+const EMPTY_STATS: StatsPeriod = {
+  userId: "guest",
+  period: "OVERALL",
+  avgSpeed: 0,
+  avgDuration: 0,
+  avgKilometers: 0,
+  totalKilometers: 0,
+  totalTime: 0,
+  longestKilometer: 0,
+  longestTime: 0,
+  pathsCreated: 0,
+  tripCount: 0,
+  updatedAt: new Date().toISOString(),
 }
 
 const PERIOD_OPTIONS: { key: ActivityPeriod; label: string }[] = [
@@ -137,6 +68,37 @@ function getAccentFill(palette: (typeof Colors)["light"], accent: AccentName) {
 
 function getAccentSurface(palette: (typeof Colors)["light"], accent: AccentName) {
   return accent === "brand" ? palette.brand.surface : palette.accent[accent].surface
+}
+
+function formatKm(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return "0 km"
+  return `${value.toFixed(1)} km`
+}
+
+function formatSpeed(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return "0 km/h"
+  return `${value.toFixed(1)} km/h`
+}
+
+function formatCount(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return "0"
+  return `${Math.round(value)}`
+}
+
+function formatDuration(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "0m"
+  const minutes = Math.round(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const remaining = minutes % 60
+  if (hours > 0) {
+    return `${hours}h ${remaining}m`
+  }
+  return `${remaining}m`
+}
+
+function getProgress(value: number, total: number) {
+  if (!Number.isFinite(value) || !Number.isFinite(total) || total <= 0) return 0
+  return Math.min(1, Math.max(0, value / total))
 }
 
 export default function ProfileScreen() {
@@ -157,11 +119,13 @@ export default function ProfileScreen() {
   const periodButtonRef = React.useRef<View | null>(null)
   const periodLabel = PERIOD_OPTIONS.find((opt) => opt.key === activityPeriod)?.label ?? "Month"
   const lastFetchedUserId = React.useRef<string | null>(null)
+  const lastFetchedStatsUserId = React.useRef<string | null>(null)
   const [errorPopup, setErrorPopup] = React.useState({
     visible: false,
     title: "Profile error",
     message: "",
   })
+  const [statsByPeriod, setStatsByPeriod] = React.useState<Record<StatsPeriodKey, StatsPeriod> | null>(null)
 
   const closeProfileError = React.useCallback(() => {
     setErrorPopup((prev) => ({
@@ -181,6 +145,8 @@ export default function ProfileScreen() {
   React.useEffect(() => {
     if (!user || isGuest) {
       lastFetchedUserId.current = null
+      lastFetchedStatsUserId.current = null
+      setStatsByPeriod(null)
       return
     }
     if (lastFetchedUserId.current === user.id) {
@@ -192,6 +158,129 @@ export default function ProfileScreen() {
       showProfileError(message)
     })
   }, [user, isGuest, fetchProfile, showProfileError])
+
+  React.useEffect(() => {
+    if (!user || isGuest) {
+      return
+    }
+    if (lastFetchedStatsUserId.current === user.id) {
+      return
+    }
+    lastFetchedStatsUserId.current = user.id
+    void getStatsApi()
+      .then((stats) => {
+        setStatsByPeriod(stats)
+      })
+      .catch((error) => {
+        const message = getApiErrorMessage(error, "Unable to load statistics.")
+        showProfileError(message, "Statistics error")
+      })
+  }, [user, isGuest, showProfileError])
+
+  const currentStats = statsByPeriod?.[activityPeriod] ?? EMPTY_STATS
+  const overallStats = statsByPeriod?.overall ?? EMPTY_STATS
+
+  const overallCards: OverallStat[] = [
+    {
+      id: "distance",
+      icon: MapPin,
+      value: formatKm(overallStats.totalKilometers),
+      label: "Distance",
+      accent: "brand",
+      background: "brand",
+    },
+    {
+      id: "trips",
+      icon: Bike,
+      value: formatCount(overallStats.tripCount),
+      label: "Trips",
+      accent: "purple",
+      background: "purple",
+    },
+    {
+      id: "paths",
+      icon: Route,
+      value: formatCount(overallStats.pathsCreated),
+      label: "Paths",
+      accent: "green",
+      background: "green",
+    },
+  ]
+
+  const activityStats: ActivityStat[] = [
+    {
+      id: "total-distance",
+      icon: MapPin,
+      value: formatKm(currentStats.totalKilometers),
+      label: "Total Distance",
+      accent: "blue",
+      progress: getProgress(currentStats.totalKilometers, overallStats.totalKilometers),
+    },
+    {
+      id: "total-time",
+      icon: Clock,
+      value: formatDuration(currentStats.totalTime),
+      label: "Total Time",
+      accent: "purple",
+      progress: getProgress(currentStats.totalTime, overallStats.totalTime),
+    },
+    {
+      id: "paths",
+      icon: Route,
+      value: formatCount(currentStats.pathsCreated),
+      label: "Paths",
+      accent: "green",
+      progress: getProgress(currentStats.pathsCreated, overallStats.pathsCreated),
+    },
+    {
+      id: "longest-km",
+      icon: Mountain,
+      value: formatKm(currentStats.longestKilometer),
+      label: "Longest km",
+      accent: "green",
+      progress: getProgress(currentStats.longestKilometer, overallStats.longestKilometer),
+    },
+    {
+      id: "longest-time",
+      icon: Hourglass,
+      value: formatDuration(currentStats.longestTime),
+      label: "Longest time",
+      accent: "blue",
+      progress: getProgress(currentStats.longestTime, overallStats.longestTime),
+    },
+    {
+      id: "trip-count",
+      icon: Bike,
+      value: formatCount(currentStats.tripCount),
+      label: "Trips",
+      accent: "purple",
+      progress: getProgress(currentStats.tripCount, overallStats.tripCount),
+    },
+    {
+      id: "avg-km",
+      icon: Ruler,
+      value: formatKm(currentStats.avgKilometers),
+      label: "Avg Distance",
+      accent: "blue",
+      progress: getProgress(currentStats.avgKilometers, overallStats.avgKilometers),
+    },
+    {
+      id: "avg-duration",
+      icon: Timer,
+      value: formatDuration(currentStats.avgDuration),
+      label: "Avg Time",
+      accent: "purple",
+      progress: getProgress(currentStats.avgDuration, overallStats.avgDuration),
+    },
+    {
+      id: "avg-speed",
+      icon: TrendingUp,
+      value: formatSpeed(currentStats.avgSpeed),
+      label: "Avg Speed",
+      accent: "green",
+      progress: getProgress(currentStats.avgSpeed, overallStats.avgSpeed),
+    },
+  ]
 
   return (
     <>
@@ -213,16 +302,16 @@ export default function ProfileScreen() {
           <Text style={[textStyles.cardTitle, styles.cardTitle, { color: palette.text.link }]}>Overall Stats</Text>
 
           <View style={styles.overallRow}>
-            {OVERALL_STATS.map((stat) => {
-              const Icon = stat.icon
-              const accent = getAccentFill(palette, stat.accent)
-              const background = getAccentSurface(palette, stat.background)
+            {overallCards.map((stats) => {
+              const Icon = stats.icon
+              const accent = getAccentFill(palette, stats.accent)
+              const background = getAccentSurface(palette, stats.background)
               return (
                 <StatCard
-                  key={stat.id}
+                  key={stats.id}
                   icon={<Icon size={iconSizes.xl} color={accent} />}
-                  value={stat.value}
-                  label={stat.label}
+                  value={stats.value}
+                  label={stats.label}
                   backgroundColor={background}
                   valueColor={accent}
                 />
@@ -239,6 +328,7 @@ export default function ProfileScreen() {
               ref={(node) => {
                 periodButtonRef.current = node
               }}
+              testID="profile-period-selector"
               onPress={() => {
                 const button = periodButtonRef.current
                 if (button) {
@@ -272,17 +362,17 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.metricsGrid}>
-            {ACTIVITY_STATS[activityPeriod].map((stat) => {
-              const Icon = stat.icon
-              const accent = getAccentFill(palette, stat.accent)
+            {activityStats.map((stats) => {
+              const Icon = stats.icon
+              const accent = getAccentFill(palette, stats.accent)
               return (
                 <MetricCircle
-                  key={stat.id}
+                  key={stats.id}
                   icon={<Icon size={iconSizes.lg} color={accent} />}
-                  value={stat.value}
-                  label={stat.label}
+                  value={stats.value}
+                  label={stats.label}
                   accentColor={accent}
-                  progress={stat.progress}
+                  progress={stats.progress}
                   columns={3}
                 />
               )
