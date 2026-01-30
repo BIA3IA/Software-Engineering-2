@@ -1,8 +1,10 @@
 import { Coordinates } from "../types/index.js";
 import { BadRequestError, InternalServerError } from "../errors/index.js";
 import logger from "../utils/logger";
+import { fetchWithTimeout } from "../utils/fetch.js";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
+const GEOCODING_TIMEOUT_MS = Number(process.env.GEOCODING_TIMEOUT_MS) || 8000;
 
 type NominatimResult = {
     lat: string;
@@ -23,12 +25,13 @@ export async function geocodeAddress(query: string): Promise<Coordinates> {
     const url = `${NOMINATIM_URL}?${params.toString()}`;
 
     try {
-        const res = await fetch(url, {
+        const res = await fetchWithTimeout(url, {
             headers: {
                 Accept: "application/json",
                 "Accept-Language": "it",
                 "User-Agent": "bbp-backend",
             },
+            timeoutMs: GEOCODING_TIMEOUT_MS,
         });
 
         if (!res.ok) {
@@ -50,6 +53,10 @@ export async function geocodeAddress(query: string): Promise<Coordinates> {
 
         return { lat, lng };
     } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+            logger.error({ query }, "Geocoding request timed out");
+            throw new InternalServerError("Geocoding service timed out", "GEOCODE_TIMEOUT");
+        }
         logger.error({ error, query }, "Geocoding failed");
         if (error instanceof BadRequestError || error instanceof InternalServerError) {
             throw error;

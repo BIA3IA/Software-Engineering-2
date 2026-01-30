@@ -26,11 +26,11 @@ describe("login integration", () => {
     const { getByPlaceholderText, getByText, findByText } = render(<LogInScreen />)
 
     fireEvent.changeText(getByPlaceholderText("Enter your email"), "not-an-email")
-    fireEvent.changeText(getByPlaceholderText("Enter your password"), "")
+    fireEvent.changeText(getByPlaceholderText("Enter your password"), "123")
         fireEvent.press(getByText("Log In"))
 
         expect(await findByText("Please enter a valid email address.")).toBeTruthy()
-        expect(await findByText("Password is required.")).toBeTruthy()
+        expect(await findByText("Password must be at least 8 characters.")).toBeTruthy()
 
         expect(loginWithPassword).not.toHaveBeenCalled()
         expect(mockRouter.replace).not.toHaveBeenCalled()

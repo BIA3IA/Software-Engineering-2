@@ -1,4 +1,5 @@
 import { api } from "./client"
+import type { ReportSummary } from "./reports"
 import type { PathPoint } from "./paths"
 
 export type TripSegmentPayload = {
@@ -6,11 +7,10 @@ export type TripSegmentPayload = {
   polylineCoordinates: PathPoint[]
 }
 
-export type TripStatistics = {
-  speed: number
-  maxSpeed: number
-  distance: number
-  time: number
+export type TripStats = {
+  avgSpeed: number
+  kilometers: number
+  duration: number
 }
 
 export type TripSummary = {
@@ -21,13 +21,14 @@ export type TripSummary = {
   title?: string | null
   origin: PathPoint
   destination: PathPoint
-  statistics: TripStatistics | null
+  stats: TripStats | null
   weather: unknown | null
   segmentCount: number
   tripSegments?: Array<{
     segmentId: string
     polylineCoordinates: PathPoint[]
   }>
+  reports?: ReportSummary[]
 }
 
 type TripsResponse = {
@@ -46,14 +47,23 @@ export type CreateTripPayload = {
   tripSegments: TripSegmentPayload[]
 }
 
+type CreateTripResponse = {
+  data: {
+    tripId: string
+  }
+}
+
 const TRIPS_BASE = "/trips"
 
-export async function createTripApi(payload: CreateTripPayload): Promise<void> {
-  await api.post(`${TRIPS_BASE}/create`, payload)
+export async function createTripApi(payload: CreateTripPayload): Promise<string> {
+  const res = await api.post<CreateTripResponse>(`${TRIPS_BASE}`, payload)
+  return res.data.data.tripId
 }
 
 export async function getMyTripsApi(): Promise<TripSummary[]> {
-  const res = await api.get<TripsResponse>(`${TRIPS_BASE}/my-trips`)
+  const res = await api.get<TripsResponse>(`${TRIPS_BASE}`, {
+    params: { owner: "me" },
+  })
   return res.data.data.trips
 }
 

@@ -1,0 +1,253 @@
+import { Request, Response, NextFunction } from 'express';
+import { queryManager } from '../query/index.js';
+import { NotFoundError, BadRequestError, TooManyRequestsError } from '../../errors/index.js';
+import { computeReportSignals } from '../../utils/index';
+import { pathManager } from '../path/path.manager.js';
+import {
+    REPORT_ACTIVE_FRESHNESS_MIN,
+    REPORT_MIN_RELIABILITY,
+    REPORT_COOLDOWN_MIN,
+    REPORT_RATE_WINDOW_MIN,
+    REPORT_RATE_MAX_PER_WINDOW
+} from '../../constants/appConfig.js';
+
+export class ReportManager {
+    async createReport(req: Request, res: Response, next: NextFunction) {
+        try {
+            const {
+                segmentId,
+                tripId, 
+                sessionId,
+                obstacleType, 
+                position, 
+                pathStatus,
+                condition,
+            } = req.body ?? {};
+            const userId = req.user?.userId;
+            const resolvedPathStatus = pathStatus || condition;
+
+            // Authentication check
+            if (!userId) {
+                throw new BadRequestError('User is not authenticated', 'UNAUTHORIZED');
+            }
+
+            // Local validation aligned with other managers
+            if (!segmentId) {
+                throw new BadRequestError('Segment ID is required', 'MISSING_SEGMENT_ID');
+            }
+            if (!sessionId) {
+                throw new BadRequestError('Session ID is required', 'MISSING_SESSION_ID');
+            }
+            if (!obstacleType) {
+                throw new BadRequestError('Obstacle type is required', 'MISSING_OBSTACLE_TYPE');
+            }
+            if (!position) {
+                throw new BadRequestError('Position is required', 'MISSING_POSITION');
+            }
+
+            // Resolve and validate segment
+            const segment = await queryManager.getSegmentById(segmentId);
+            if (!segment) {
+                throw new NotFoundError('Target segment not found', 'SEGMENT_NOT_FOUND');
+            }
+
+            // Rate-limit: per-user per-segment cooldown
+            const cooldownSince = new Date(Date.now() - REPORT_COOLDOWN_MIN * 60_000);
+            const recentReport = await queryManager.getRecentReportByUserAndSegment(
+                userId,
+                segmentId,
+                cooldownSince
+            );
+            if (recentReport) {
+                throw new TooManyRequestsError('Report cooldown active', 'REPORT_COOLDOWN_ACTIVE');
+            }
+
+            // Rate-limit: per-user window
+            const windowSince = new Date(Date.now() - REPORT_RATE_WINDOW_MIN * 60_000);
+            const recentCount = await queryManager.countReportsByUserSince(userId, windowSince);
+            if (recentCount >= REPORT_RATE_MAX_PER_WINDOW) {
+                throw new TooManyRequestsError('Too many reports in a short time', 'REPORT_RATE_LIMIT');
+            }
+
+            // Create report through Query Manager
+            const report = await queryManager.createReport({
+                userId,
+                segmentId,
+                tripId,
+                sessionId,
+                obstacleType,
+                pathStatus: resolvedPathStatus,
+                position,
+                status: 'CREATED'
+            });
+
+            await pathManager.recalculateSegmentStatusForAllPaths(segmentId);
+
+            // Return 201 Created as per sequence diagrams
+            res.status(201).json({
+                success: true,
+                message: 'Report submitted successfully',
+                data: {
+                    reportId: report.reportId,
+                    createdAt: report.createdAt
+                }
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async confirmReport(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { reportId } = req.params;
+            const { decision, tripId, sessionId } = req.body ?? {};
+            const userId = req.user?.userId;
+
+            if (!userId) {
+                throw new BadRequestError('User is not authenticated', 'UNAUTHORIZED');
+            }
+
+            if (!reportId) {
+                throw new BadRequestError('Report ID is required', 'MISSING_REPORT_ID');
+            }
+            if (!decision) {
+                throw new BadRequestError('Decision is required', 'MISSING_DECISION');
+            }
+            if (!['CONFIRMED', 'REJECTED'].includes(decision)) {
+                throw new BadRequestError('Invalid decision', 'INVALID_DECISION');
+            }
+
+            // Verify report existence
+            const report = await queryManager.getReportById(reportId);
+            if (!report) {
+                throw new NotFoundError('Report not found', 'NOT_FOUND');
+            }
+
+            let resolvedTripId: string | null = tripId ?? null;
+            if (tripId) {
+                const trip = await queryManager.getTripById(tripId);
+                resolvedTripId = trip ? tripId : null;
+            }
+
+            const confirmationReport = await queryManager.createReport({
+                userId,
+                segmentId: report.segmentId,
+                tripId: resolvedTripId,
+                sessionId: sessionId ?? report.sessionId ?? null,
+                obstacleType: report.obstacleType,
+                pathStatus: report.pathStatus,
+                position: report.position,
+                status: decision
+            });
+
+            await pathManager.recalculateSegmentStatusForAllPaths(report.segmentId);
+            res.status(201).json({
+                success: true,
+                message: 'Report submitted',
+                data: {
+                    reportId: confirmationReport.reportId
+                }
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Get active reports by path id
+    async getReportsByPath(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { pathId } = req.query;
+            const pathIdValue = Array.isArray(pathId) ? pathId[0] : pathId;
+
+            if (!pathIdValue || typeof pathIdValue !== 'string') {
+                throw new BadRequestError('Path ID is required', 'MISSING_PATH_ID');
+            }
+
+            const reports = await queryManager.getReportsByPathId(pathIdValue);
+            const now = new Date();
+
+            const activeReports = this.filterActiveOriginalReports(reports, now);
+
+            // Merge by segmentId to avoid returning many reports for the same segment
+            const mergedBySegment = new Map<string, typeof activeReports[number]>();
+            for (const report of activeReports) {
+                const existing = mergedBySegment.get(report.segmentId);
+                if (!existing || existing.createdAt < report.createdAt) {
+                    mergedBySegment.set(report.segmentId, report);
+                }
+            }
+
+            res.json({
+                success: true,
+                data: Array.from(mergedBySegment.values()),
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Filter active original reports -> only created
+    private filterActiveOriginalReports(reports: any[], now: Date) {
+        return reports.filter(report => {
+            if (report.status !== 'CREATED') {
+                return false;
+            }
+            const { reliability, freshness } = computeReportSignals(report, now);
+            return reliability >= REPORT_MIN_RELIABILITY && freshness >= REPORT_ACTIVE_FRESHNESS_MIN;
+        });
+    }
+
+    async getReportsByPathSegment(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { segmentId } = req.params;
+
+            if (!segmentId) {
+                throw new BadRequestError('Segment ID is required', 'MISSING_SEGMENT_ID');
+            }
+
+            const reports = await queryManager.getReportsBySegmentId(segmentId);
+
+            res.json({
+                success: true,
+                data: reports
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async attachReportsToTrip(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { sessionId, tripId } = req.body ?? {};
+            const userId = req.user?.userId;
+
+            if (!userId) {
+                throw new BadRequestError('User is not authenticated', 'UNAUTHORIZED');
+            }
+            if (!sessionId) {
+                throw new BadRequestError('Session ID is required', 'MISSING_SESSION_ID');
+            }
+            if (!tripId) {
+                throw new BadRequestError('Trip ID is required', 'MISSING_TRIP_ID');
+            }
+
+            const trip = await queryManager.getTripById(tripId);
+            if (!trip || trip.userId !== userId) {
+                throw new NotFoundError('Trip not found', 'TRIP_NOT_FOUND');
+            }
+
+            const updatedCount = await queryManager.attachReportsToTrip(userId, sessionId, tripId);
+
+            res.json({
+                success: true,
+                data: {
+                    updatedCount,
+                },
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+}
+
+export const reportManager = new ReportManager();

@@ -67,6 +67,7 @@ src/
 |—— .npmrc                        # NPM configuration
 |—— app.json                      # Expo app configuration
 |—— babel.config.js               # Babel configuration
+|—— eas.json                      # Expo Application Services configuration
 |—— expo-env.d.ts                 # Expo TypeScript env definitions
 |—— jest.config.js                # Jest configuration
 |—— jest.setup.ts                 # Global test setup
@@ -125,10 +126,10 @@ backend/
 |   |—— types/                           # TypeScript type definitions
 |   |   |—— express/                     # Express-related types
 |   |   |   |—— index.d.ts               # Custom Express types
-|   |   |__ coordinates.types.ts         # Coordinate types
+|   |   |__ coordinate.types.ts         # Coordinate types
 |   |   |__ ...                          # Other type definitions
 |   |—— utils/                           # Utility functions
-|   |   |—— prismaclient.ts              # Prisma client instance
+|   |   |—— prisma-client.ts             # Prisma client instance
 |   |   |—— geo.ts                       # Geospatial utility functions
 |   |   |__ ...                          # Other utility functions
 |   |__ server.ts                        # Server entry point
@@ -137,7 +138,6 @@ backend/
 |—— docker-compose.yml                   # Docker Compose configuration
 |—— Dockerfile                           # Dockerfile for backend service
 |—— jest.config.mjs                      # Jest configuration
-|—— jest-storage/                        # Jest storage
 |—— node_modules/                        # Installed dependencies
 |—— notes.md                             # Project notes
 |—— package.json                         # Dependencies and scripts
@@ -159,22 +159,41 @@ application services on the target server.
 
 \begin{verbatim}
 /opt/
-|—— nginx/                      # NGINX reverse proxy configuration
-|   |—— conf.d/                 # Virtual host and routing configuration
-|   |   |—— site.conf           # Main site configuration
-|   |   |__ api.conf            # Backend API proxy configuration
-|   |—— ssl/                    # TLS certificates and private keys
-|   |   |—— bia3iaorigin.crt
-|   |   |—— bia3iaorigin.key
-|   |   |__ ...                 # Other certificate files
-|   |—— log/                    # NGINX log files
-|       |—— access.log          # Access logs
-|       |__ error.log           # Error logs
-|—— residenzaclasmarina/        # Additional hosted service
-|   |—— docker-compose.yml      # Docker Compose configuration
-|   |__ ...                     # Service source code and configuration
-|__ bbpbackend/                 # BestBikePaths backend service
-    |—— Dockerfile              # Backend container definition
-    |—— docker-compose.yml      # Backend service orchestration
-    |__ ...                     # Backend source code and configuration
+|—— nginx/                             # Shared NGINX reverse proxy
+|   |—— conf.d/                        # Virtual hosts and routing configuration
+|   |   |—— 00_cloudflare_realip.conf  # Cloudflare real IP handling
+|   |   |—— 00_globals.conf            # Global NGINX settings
+|   |   |—— 01_upstreams.conf          # Upstream definitions
+|   |   |—— api.conf                   # BBP backend API proxy rules
+|   |   |__site.conf                   # Additional hosted site configuration
+|   |—— ssl/                           # TLS certificates (Cloudflare Origin)
+|   |   |—— bia3ia-origin.crt
+|   |   |—— bia3ia-origin.key
+|   |   |—— origin.crt
+|   |   |__origin.key
+|   |—— log/                           # NGINX logs
+|   |   |—— access.log
+|   |   |__error.log
+|   |__update-cloudflare-ips.sh        # Script to update Cloudflare IP ranges
+|
+|—— bbp-backend/                       # BestBikePaths backend service
+|   |—— Dockerfile                     # Backend container definition
+|   |—— docker-compose.yml             # Backend service orchestration
+|   |—— .env                           # Environment configuration
+|   |__...
+|
+|—— osrm/                              # OSRM routing service
+|   |—— docker-compose.yml             # OSRM service orchestration
+|   |—— pavia-milano.osm.pbf           # OpenStreetMap extract
+|   |—— pavia-milano.osrm*             # Preprocessed routing datasets
+|   |__*.osrm.*                        # OSRM auxiliary data files
+|
+|—— residenza-clas-marina/             # Additional hosted application
+|   |—— docker-compose.yml             # Service orchestration
+|   |—— app/                           # Application source code
+|   |__nginx/                          # Service-specific NGINX config
+|
+|__containerd/                         # Container runtime (system-managed)
+    |—— bin/
+    |__lib/
 \end{verbatim}

@@ -1,5 +1,5 @@
 import React from "react"
-import { ScrollView, StyleSheet, View, Text, Pressable, Dimensions } from "react-native"
+import { ScrollView, StyleSheet, View, Text, Pressable, Dimensions, Linking } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useColorScheme, useThemePreference, useSetThemePreference, type AppearancePreference } from "@/hooks/useColorScheme"
 import { usePrivacyPreference, useSetPrivacyPreference } from "@/hooks/usePrivacyPreference"
@@ -34,7 +34,9 @@ export default function SettingsScreen() {
   const bottomNavVisibility = React.useContext(BottomNavVisibilityContext)
   const appearancePreference = useThemePreference()
   const setAppearancePreference = useSetThemePreference()
+  const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
+  const updateProfile = useAuthStore((s) => s.updateProfile)
   const defaultPrivacy = usePrivacyPreference()
   const setDefaultPrivacy = useSetPrivacyPreference()
   const [activePicker, setActivePicker] = React.useState<"appearance" | "privacy" | null>(null)
@@ -52,6 +54,22 @@ export default function SettingsScreen() {
       bottomNavVisibility?.setHidden(false)
     }
   }, [bottomNavVisibility])
+
+  React.useEffect(() => {
+    if (!user || user.id === "guest") return
+    const prefs = user.systemPreferences ?? []
+    const appearanceEntry = prefs.find((entry) => entry.startsWith("appearance:"))
+    const privacyEntry = prefs.find((entry) => entry.startsWith("privacy:"))
+    const nextAppearance = appearanceEntry?.split(":")[1] as AppearancePreference | undefined
+    const nextPrivacy = privacyEntry?.split(":")[1] as PrivacyPreference | undefined
+
+    if (nextAppearance && nextAppearance !== appearancePreference) {
+      setAppearancePreference(nextAppearance)
+    }
+    if (nextPrivacy && nextPrivacy !== defaultPrivacy) {
+      setDefaultPrivacy(nextPrivacy)
+    }
+  }, [user, appearancePreference, defaultPrivacy, setAppearancePreference, setDefaultPrivacy])
 
   function openPicker(type: "appearance" | "privacy") {
     const ref = type === "appearance" ? appearanceButtonRef.current : privacyButtonRef.current
@@ -74,12 +92,30 @@ export default function SettingsScreen() {
     setActivePicker(null)
   }
 
+  const syncSystemPreferences = React.useCallback(
+    (appearance: AppearancePreference, privacy: PrivacyPreference) => {
+      if (!user || user.id === "guest") return
+      void updateProfile({
+        systemPreferences: [`appearance:${appearance}`, `privacy:${privacy}`],
+      }).catch((error) => {
+        console.warn("Failed to update system preferences", error)
+      })
+    },
+    [user, updateProfile]
+  )
+
   function handleSelect(optionKey: string) {
+    const nextAppearance =
+      activePicker === "appearance" ? (optionKey as AppearancePreference) : appearancePreference
+    const nextPrivacy =
+      activePicker === "privacy" ? (optionKey as PrivacyPreference) : defaultPrivacy
+
     if (activePicker === "appearance") {
-      setAppearancePreference(optionKey as AppearancePreference)
+      setAppearancePreference(nextAppearance)
     } else if (activePicker === "privacy") {
-      setDefaultPrivacy(optionKey as PrivacyPreference)
+      setDefaultPrivacy(nextPrivacy)
     }
+    syncSystemPreferences(nextAppearance, nextPrivacy)
     closePicker()
   }
 
@@ -104,6 +140,33 @@ export default function SettingsScreen() {
     setIsLoggingOut(false)
   }
 
+  async function handleGetHelp() {
+    const fallbackEmails = [
+      "help@mail.polimi.it",
+    ]
+    const envEmails = process.env.EXPO_PUBLIC_SUPPORT_EMAILS
+    const to = (envEmails ? envEmails.split(",") : fallbackEmails)
+      .map((email) => email.trim())
+      .filter(Boolean)
+    const subject = "BestBikePaths support request"
+    const body = [
+      "Hi team,",
+      "",
+      "I need help with:",
+      "- Issue:",
+      "- Steps to reproduce:",
+      "- Device/OS:",
+      "",
+      "Thanks!",
+    ].join("\n")
+    const mailto = `mailto:${to.join(",")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    try {
+      await Linking.openURL(mailto)
+    } catch (error) {
+      console.warn("Failed to open mail client", error)
+    }
+  }
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: palette.surface.screen }}
@@ -121,6 +184,7 @@ export default function SettingsScreen() {
               { backgroundColor: palette.button.secondary.bg },
               pressed && { opacity: 0.9 },
             ]}
+            testID="settings-back"
           >
             <X size={iconSizes.md} color={palette.button.secondary.text} />
           </Pressable>
@@ -193,7 +257,11 @@ export default function SettingsScreen() {
         </View>
 
         <View style={[styles.card, { backgroundColor: palette.surface.card }]}>
-          <Pressable onPress={() => { }} style={({ pressed }) => [styles.simpleRow, pressed && { opacity: 0.85 }]}>
+          <Pressable
+            onPress={handleGetHelp}
+            style={({ pressed }) => [styles.simpleRow, pressed && { opacity: 0.85 }]}
+            testID="settings-help"
+          >
             <View style={[styles.iconBadge, { backgroundColor: palette.brand.surface }]}>
               <Mail size={iconSizes.md} color={palette.brand.base} />
             </View>
@@ -208,6 +276,7 @@ export default function SettingsScreen() {
           <Pressable
             onPress={handleLogoutPress}
             style={({ pressed }) => [styles.simpleRow, pressed && { opacity: 0.85 }]}
+            testID="settings-logout"
           >
             <View style={[styles.iconBadge, { backgroundColor: `${palette.accent.red.base}`, borderColor: palette.accent.red.base, borderWidth: 1 }]}>
               <LogOut size={iconSizes.md} color={palette.accent.red.surface} />

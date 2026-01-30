@@ -1,15 +1,48 @@
 services:
   api:
     build: .
-    container_name: bbp_api
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      - IS_DOCKER=true
+    # ports:
+    #   - "3000:3000"
     expose:
       - "3000"
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
+  migrate:
+    build: .
+    env_file:
+      - .env
+    command: ["npm", "run", "prisma:deploy"]
+    volumes:
+      - ./prisma:/app/prisma:ro
+    networks:
+      - proxy
+    restart: "no"
+    profiles: ["tools"]
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+     - proxy
+
+volumes:
+  redis-data:
+  
 networks:
   proxy:
     external: true

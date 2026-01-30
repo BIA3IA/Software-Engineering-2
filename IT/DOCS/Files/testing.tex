@@ -1,9 +1,106 @@
-
 \section{Unit Testing}
 \label{sec:unit_testing}
+
+Unit tests were used to validate the correctness of the backend \textit{business logic} in isolation, with the main goal of
+detecting defects early and keeping failures easy to debug. 
+
+We implemented unit tests using \textbf{Jest} (TypeScript support via \texttt{ts-jest}). Dependencies that would make tests
+slow were replaced with \textbf{mocks} through \texttt{jest.mock}.
+In particular, we mocked the persistence layer (\texttt{QueryManager} / DB access), external services
+(weather/geocoding/snapping functions), and sensitive utilities (\texttt{bcrypt} for password hashing, and the logger).
+This allowed us to test each method by controlling the returned values and by asserting the correctness of the output
+(HTTP status and JSON payload), the correctness of side effects (which mocked functions are called and with which
+parameters) and the correct propagation of errors (via Express \texttt{next()}).
+
+To keep unit tests close to the real execution environment, methods were invoked with mocked Express \texttt{Request}/\texttt{Response}
+objects and a mocked \texttt{next} callback. Test cases cover common edge cases such as missing fields,
+invalid inputs, unauthorized access, conflicts (duplicate resources), and not-found scenarios.
+
+\subsubsection{How to run unit tests}
+All tests are executed via Jest. In our repository, the test script is already configured in \texttt{package.json}:
+
+\begin{verbatim}
+npm install
+npm run test
+\end{verbatim}
+
+Optionally, tests can be executed in watch mode in order to re-run them automatically upon file changes:
+
+\begin{verbatim}
+npm run test:watch
+\end{verbatim}
+
+In general (independently from our setup), you can also run Jest directly, or target a single test file:
+
+\begin{verbatim}
+npm test path.manager.test.ts
+\end{verbatim}
+
+\subsubsection{Test coverage}
+Coverage reports help identify untested branches and edge cases, and they were used as a guidance tool to refine 
+the test suite during development.
+
+Coverage can be collected by running Jest with the \texttt{--coverage} flag. In our setup this can be done through NPM as follows:
+
+\begin{verbatim}
+npm run test -- --coverage
+\end{verbatim}
+
+It is also possible to collect coverage for a specific subset of tests:
+
+\begin{verbatim}
+npm run test -- path.manager.test.ts --coverage
+\end{verbatim}
+
+The command generates a textual summary in the terminal which can be inspected to identify uncovered lines, functions, and branches.
+
+\vspace{1cm}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../Images/iit/iit1.png} 
+    \caption{Example of coverage report (HTML view)}
+    \label{fig:coverage_report}
+\end{figure}
+
 
 \section{Integration Testing}
 \label{sec:integration_testing}
 
+Integration tests were used to validate the correctness of component interactions at the \textit{API boundary}, ensuring that
+routing, middleware, validation, authentication, error handling, and controller/manager orchestration work correctly when
+exercised through real HTTP calls. In our project, integration tests are implemented using \textbf{Supertest} as an HTTP test driver:
+instead of manually mocking \texttt{Request}/\texttt{Response}, Supertest performs requests against the Express application instance
+(\texttt{app}) and verifies the resulting behavior.
 
-In the notes, both of APP and BACKEND there is explanation.
+The focus of these tests is on verifying that each endpoint:
+\begin{itemize}
+    \item accepts and rejects payloads consistently (validation and error codes),
+    \item enforces authorization correctly (requests with missing/invalid tokens),
+    \item returns the expected HTTP status codes and response bodies, and
+    \item correctly maps internal failures to the public API error format.
+\end{itemize}
+
+To keep integration tests fast, we stubbed external dependencies where needed.
+In particular, we mocked the Prisma client layer so that endpoint-to-manager flows can be validated without requiring a real database
+instance for every test run. Authentication flows are tested by generating JWTs within the test suite (with test secrets configured
+in the environment \texttt{setup.test.ts}), thus simulating authenticated requests realistically while keeping the execution fully automated.
+
+\subsubsection{How to run integration tests}
+Integration tests are part of the standard Jest suite, therefore they can be executed with the same commands:
+
+\begin{verbatim}
+npm run test
+\end{verbatim}
+
+To run only integration tests, a common approach is filtering by filename pattern for example:
+
+\begin{verbatim}
+npm test integration
+\end{verbatim}
+
+or directly by specifying a single integration test file:
+
+\begin{verbatim}
+npm test user.integration.test.ts
+\end{verbatim}
+

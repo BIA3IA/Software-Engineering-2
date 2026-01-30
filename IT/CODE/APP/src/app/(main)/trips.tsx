@@ -59,12 +59,6 @@ export default function TripHistoryScreen() {
           setEmptyMessage(null)
         }
       } catch (error) {
-        const status = (error as { response?: { status?: number } })?.response?.status
-        if (status === 404) {
-          setTrips([])
-          setEmptyMessage("Your Trip History is empty.\nStart recording trips to see them here.")
-          return
-        }
         const message = getApiErrorMessage(error, "Unable to load your trips. Please try again.")
         setEmptyMessage(null)
         setErrorPopup({
@@ -262,7 +256,7 @@ function mapTripSummaryToRouteItem(trip: TripSummary): RouteItem {
     { latitude: trip.destination.lat, longitude: trip.destination.lng },
   ]
 
-  const statistics = trip.statistics
+  const stats = trip.stats
   const weather = trip.weather as
     | {
         dominantWeatherDescription?: string
@@ -279,12 +273,10 @@ function mapTripSummaryToRouteItem(trip: TripSummary): RouteItem {
     id: trip.tripId,
     name: trip.title ?? "Trip",
     description: undefined,
-    distanceKm: statistics?.distance ?? 0,
-    durationMin: statistics?.time ?? 0,
+    distanceKm: stats?.kilometers ?? 0,
+    durationMin: stats?.duration ? stats.duration / 60 : 0,
     date: formatDate(trip.startedAt ?? trip.createdAt),
-    avgSpeed: statistics?.speed ?? 0,
-    maxSpeed: statistics?.maxSpeed ?? 0,
-    elevation: 0,
+    avgSpeed: stats?.avgSpeed ?? 0,
     showWeatherBadge: Boolean(weather),
     temperatureLabel:
       weather?.averageTemperature !== undefined ? `${weather.averageTemperature.toFixed(1)}°` : undefined,
@@ -309,8 +301,14 @@ function mapTripSummaryToRouteItem(trip: TripSummary): RouteItem {
             weather.averagePressure !== undefined ? `${weather.averagePressure.toFixed(1)} hPa` : "N/A",
         }
       : undefined,
-    showPerformanceMetrics: Boolean(statistics),
+    showPerformanceMetrics: Boolean(stats),
     route: route.length ? route : fallbackRoute,
+    reports: trip.reports?.map((report) => ({
+      reportId: report.reportId,
+      position: report.position,
+      obstacleType: report.obstacleType,
+      pathStatus: report.pathStatus,
+    })),
   }
 }
 

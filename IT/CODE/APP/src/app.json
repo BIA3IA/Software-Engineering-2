@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "BestBikePaths",
-    "slug": "best-bike-paths",
+    "slug": "bestbikepaths",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#0ea5e9"
     },
     "ios": {
@@ -50,8 +50,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "46e15fa3-8f05-45a5-9675-c817cf9c7ba0"
+        "projectId": "946f5ffe-8077-4ef6-b2b5-6223971a3453"
       }
-    }
+    },
+    "owner": "bia3ia"
   }
 }

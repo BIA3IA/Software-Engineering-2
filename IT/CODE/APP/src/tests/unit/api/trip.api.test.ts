@@ -15,7 +15,7 @@ describe("api/trips", () => {
     })
 
     test("createTripApi posts payload", async () => {
-        ;(api.post as jest.Mock).mockResolvedValueOnce({ data: {} })
+        ;(api.post as jest.Mock).mockResolvedValueOnce({ data: { data: { tripId: "t1" } } })
 
         await createTripApi({
             origin: { lat: 45.0, lng: 9.0 },
@@ -34,7 +34,7 @@ describe("api/trips", () => {
             ],
         })
 
-        expect(api.post).toHaveBeenCalledWith("/trips/create", {
+        expect(api.post).toHaveBeenCalledWith("/trips", {
             origin: { lat: 45.0, lng: 9.0 },
             destination: { lat: 45.5, lng: 9.5 },
             startedAt: "2025-01-15T10:00:00Z",
@@ -53,7 +53,7 @@ describe("api/trips", () => {
     })
 
     test("createTripApi posts payload without optional title", async () => {
-        ;(api.post as jest.Mock).mockResolvedValueOnce({ data: {} })
+        ;(api.post as jest.Mock).mockResolvedValueOnce({ data: { data: { tripId: "t1" } } })
 
         await createTripApi({
             origin: { lat: 45.0, lng: 9.0 },
@@ -63,7 +63,7 @@ describe("api/trips", () => {
             tripSegments: [],
         })
 
-        expect(api.post).toHaveBeenCalledWith("/trips/create", {
+        expect(api.post).toHaveBeenCalledWith("/trips", {
             origin: { lat: 45.0, lng: 9.0 },
             destination: { lat: 45.5, lng: 9.5 },
             startedAt: "2025-01-15T10:00:00Z",
@@ -86,7 +86,7 @@ describe("api/trips", () => {
                             title: "Morning Ride",
                             origin: { lat: 45.0, lng: 9.0 },
                             destination: { lat: 45.5, lng: 9.5 },
-                            statistics: { speed: 25, maxSpeed: 35, distance: 15, time: 60 },
+                            stats: { avgSpeed: 25, kilometers: 15, duration: 60 },
                             weather: null,
                             segmentCount: 1,
                         },
@@ -97,11 +97,11 @@ describe("api/trips", () => {
 
         const out = await getMyTripsApi()
 
-        expect(api.get).toHaveBeenCalledWith("/trips/my-trips")
+        expect(api.get).toHaveBeenCalledWith("/trips", { params: { owner: "me" } })
         expect(out).toHaveLength(1)
         expect(out[0].tripId).toBe("t1")
         expect(out[0].title).toBe("Morning Ride")
-        expect(out[0].statistics).toEqual({ speed: 25, maxSpeed: 35, distance: 15, time: 60 })
+        expect(out[0].stats).toEqual({ avgSpeed: 25, kilometers: 15, duration: 60 })
     })
 
     test("getMyTripsApi returns empty array when no trips", async () => {
@@ -116,7 +116,7 @@ describe("api/trips", () => {
 
         const out = await getMyTripsApi()
 
-        expect(api.get).toHaveBeenCalledWith("/trips/my-trips")
+        expect(api.get).toHaveBeenCalledWith("/trips", { params: { owner: "me" } })
         expect(out).toEqual([])
     })
 

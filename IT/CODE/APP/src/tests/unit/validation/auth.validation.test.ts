@@ -14,14 +14,32 @@ describe("auth validation", () => {
     expect(res.success).toBe(false)
   })
 
+  test("loginSchema rejects email with only whitespace", () => {
+    const res = loginSchema.safeParse({ email: "   ", password: "12345678" })
+    expect(res.success).toBe(false)
+  })
+
   test("loginSchema rejects invalid email format", () => {
     const res = loginSchema.safeParse({ email: "not-an-email", password: "12345678" })
     expect(res.success).toBe(false)
   })
 
-  test("loginSchema rejects missing password", () => {
-    const res = loginSchema.safeParse({ email: "bianca@gmail.com", password: "" })
+  test("loginSchema rejects short password", () => {
+    const res = loginSchema.safeParse({ email: "bianca@gmail.com", password: "123" })
     expect(res.success).toBe(false)
+  })
+
+  test("loginSchema rejects password with only whitespace", () => {
+    const res = loginSchema.safeParse({ email: "bianca@gmail.com", password: "        " })
+    expect(res.success).toBe(false)
+  })
+
+  test("loginSchema trims email and accepts valid value", () => {
+    const res = loginSchema.safeParse({ email: "  bianca@gmail.com  ", password: "12345678" })
+    expect(res.success).toBe(true)
+    if (res.success) {
+      expect(res.data.email).toBe("bianca@gmail.com")
+    }
   })
 
   test("signupSchema accepts valid data", () => {
@@ -34,9 +52,33 @@ describe("auth validation", () => {
     expect(res.success).toBe(true)
   })
 
+  test("signupSchema trims username and email", () => {
+    const res = signupSchema.safeParse({
+      username: "  bianca  ",
+      email: "  bianca@gmail.com  ",
+      password: "12345678",
+      confirm: "12345678",
+    })
+    expect(res.success).toBe(true)
+    if (res.success) {
+      expect(res.data.username).toBe("bianca")
+      expect(res.data.email).toBe("bianca@gmail.com")
+    }
+  })
+
   test("signupSchema rejects short username", () => {
     const res = signupSchema.safeParse({
       username: "bi",
+      email: "bianca@gmail.com",
+      password: "12345678",
+      confirm: "12345678",
+    })
+    expect(res.success).toBe(false)
+  })
+
+  test("signupSchema rejects long username", () => {
+    const res = signupSchema.safeParse({
+      username: "a".repeat(21),
       email: "bianca@gmail.com",
       password: "12345678",
       confirm: "12345678",
@@ -107,7 +149,15 @@ describe("auth validation", () => {
 
   test("editProfileSchema rejects short username", () => {
     const res = editProfileSchema.safeParse({
-      username: "vaj",
+      username: "va",
+      email: "vajihe@gmail.com",
+    })
+    expect(res.success).toBe(false)
+  })
+
+  test("editProfileSchema rejects long username", () => {
+    const res = editProfileSchema.safeParse({
+      username: "a".repeat(21),
       email: "vajihe@gmail.com",
     })
     expect(res.success).toBe(false)

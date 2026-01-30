@@ -7,6 +7,7 @@ import { useColorScheme } from "@/hooks/useColorScheme"
 import { iconSizes, textStyles } from "@/theme/typography"
 import { radius, scale, verticalScale } from "@/theme/layout"
 import { PathResultCard, type PathResultTag } from "@/components/paths/PathResultCard"
+import { useAuthStore } from "@/auth/storage"
 
 export type SearchResult = {
   id: string
@@ -47,12 +48,19 @@ export function SearchResultsSheet({
 }: SearchResultsSheetProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
+  const user = useAuthStore((s) => s.user)
+  const isGuest = user?.id === "guest"
 
   if (!visible) {
     return null
   }
 
+  const isEmpty = results.length === 0
   const countLabel = `${results.length} ${results.length === 1 ? "path" : "paths"}`
+  const emptyHeight = maxHeight
+  const emptyHint = isGuest
+    ? "Create an account and a new path!"
+    : "Try creating one!"
 
   return (
     <View
@@ -64,6 +72,7 @@ export function SearchResultsSheet({
           borderColor: palette.border.muted,
           shadowColor: palette.border.muted,
         },
+        isEmpty ? { minHeight: emptyHeight } : null,
       ]}
     >
 
@@ -85,30 +94,42 @@ export function SearchResultsSheet({
             },
             pressed && { opacity: 0.85 },
           ]}
+          testID="search-results-close"
         >
           <X size={iconSizes.sm} color={palette.text.onAccent} />
         </Pressable>
       </View>
 
-      <ScrollView
-        style={[styles.list, { maxHeight }]}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {results.map((result) => (
-          <View key={result.id} style={styles.cardWrapper}>
-            <PathResultCard
-              title={result.title}
-              description={result.description}
-              tags={result.tags}
-              selected={selectedResultId === result.id}
-              actionLabel={actionLabel}
-              onActionPress={() => onActionPress?.(result)}
-              onPress={() => onSelectResult?.(result)}
-            />
-          </View>
-        ))}
-      </ScrollView>
+      {isEmpty ? (
+        <View style={styles.emptyState}>
+          <Text style={[textStyles.bodyBold, styles.emptyTitle, { color: palette.text.primary }]}>
+            Unfortunately there are no paths for the selected route.
+          </Text>
+          <Text style={[textStyles.bodySmall, styles.emptySubtitle, { color: palette.text.secondary }]}>
+            {emptyHint}
+          </Text>
+        </View>
+      ) : (
+        <ScrollView
+          style={[styles.list, { maxHeight }]}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {results.map((result) => (
+            <View key={result.id} style={styles.cardWrapper}>
+              <PathResultCard
+                title={result.title}
+                description={result.description}
+                tags={result.tags}
+                selected={selectedResultId === result.id}
+                actionLabel={actionLabel}
+                onActionPress={() => onActionPress?.(result)}
+                onPress={() => onSelectResult?.(result)}
+              />
+            </View>
+          ))}
+        </ScrollView>
+      )}
     </View>
   )
 }
@@ -162,5 +183,18 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     marginBottom: verticalScale(12),
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: scale(12),
+    gap: verticalScale(6),
+  },
+  emptyTitle: {
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    textAlign: "center",
   },
 })

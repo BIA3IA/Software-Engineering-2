@@ -60,13 +60,13 @@ jest.mock("@/components/ui/AppButton", () => {
   const React = require("react")
   const { Pressable, Text } = require("react-native")
   return {
-    AppButton: ({ title, onPress }: any) => {
+    AppButton: ({ title, onPress, testID }: any) => {
       const handlePress = () => {
         onPress?.()
       }
       return React.createElement(
         Pressable,
-        { onPress: handlePress },
+        { onPress: handlePress, testID },
         React.createElement(Text, { onPress: handlePress }, title)
       )
     },

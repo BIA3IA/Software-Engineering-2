@@ -411,7 +411,7 @@ See more at: https://open-meteo.com/en/docs to see the structure of the API and 
 
 Unit tests focus on testing individual functions or components in isolation. During these tests, we mock calls to external services and dependencies to isolate the functionality we're testing. This approach ensures that the tests are reliable and unaffected by external factors such as network issues, database status, or API changes. Furthermore, by mocking dependencies, the tests become much more performant as we avoid network latency and database operations. Another advantage is that we can easily simulate various scenarios and edge cases that might be difficult to reproduce with real service calls.
 
-Integration tests, on the other hand, verify the end-to-end functionality of the application, testing how the different components work together. In our project, we directly import the Express app instance and use Supertest to simulate real HTTP requests. This allows us to test the entire application stack, from API routes to controllers, services, and database interactions, without having to continuously start and stop the server during testing. Integration tests validate the complete flow of data and interactions between components, providing us with confidence that the system behaves correctly when all parts work together.
+Integration tests, on the other hand, verify the end-to-end functionality of the application, testing how the different components work together. In our project, we directly import the Express app instance and use Supertest to simulate real HTTP requests. This allows us to test the entire application stack, from API routes to managers, services, middleware, and database interactions, without having to continuously start and stop the server during testing. Integration tests validate the complete flow of data and interactions between components, providing us with confidence that the system behaves correctly when all parts work together.
 
 #### Testing Tools
 
@@ -421,7 +421,7 @@ For integration tests, we use Supertest, a popular library for testing HTTP serv
 
 ```typescript
 import request from "supertest";
-import app from "../app";
+import { app } from "../server";
 
 describe("POST /api/auth/register", () => {
   it("should register a new user", async () => {
@@ -460,7 +460,7 @@ This report helps us identify areas that may require additional testing. The rep
 If we want to run a single test file, we can specify the path:
 
 ```bash
-npm test path/to/test/file.test.ts
+npm test -- path/to/test/file.test.ts
 ```
 
 Or we can run tests that match a specific pattern:
@@ -469,11 +469,22 @@ Or we can run tests that match a specific pattern:
 npm test -- --testNamePattern="should register"
 ```
 
+#### Run Live Test
+
+We keep a "RUN LIVE TEST" step to validate the real integration with external services and environment wiring (OSRM, Nominatim/OpenStreetMap, Open-Meteo, etc.). Our unit and integration tests mock those dependencies, so they cannot catch issues like network errors, API changes, rate limits, or misconfigured environment variables. The live test is a quick sanity check that the deployed setup behaves as expected end-to-end.
+
+Suggested checks for a live run:
+
+- Start the API with real env vars and database.
+- Hit `/api/v1/paths/search` with valid origin/destination and verify a 200 or a meaningful 404 when no route exists.
+- Hit `/api/v1/paths/snap` with a small coordinate set and verify snapped coordinates are returned.
+- Trigger weather/geocoding usage (trip creation or direct service call path) and verify non-timeout responses.
+
 #### Test Configuration
 
 Jest is configurable via the `jest.config.mjs` file in the project root, where we can specify settings such as the test environment, file patterns, and coverage thresholds. In our case, we use the `ts-jest` preset for TypeScript support and set the environment to `node` since we are testing a backend API. We also define patterns to identify which files Jest should consider as tests, typically files ending in `.test.ts` or files in the `__tests__` directory.
 
-The `setupTest.ts` file is run before all tests and configures the environment variables needed for the test environment. In our case, we set `NODE_ENV` to `test` and define the JWT secrets for the tests:
+The `setup.test.ts` file is run before all tests and configures the environment variables needed for the test environment. In our case, we set `NODE_ENV` to `test` and define the JWT secrets for the tests:
 
 ```typescript
 process.env.NODE_ENV = "test";
@@ -497,19 +508,22 @@ https://api.bia3ia.com
 
 ## 1. Architecture Overview
 
-- Server: Hetzner VPS (Ubuntu)
-- Container runtime: Docker + Docker Compose
-- Reverse proxy: Shared Nginx container
-- TLS: Cloudflare Origin Certificates
-- Database: PostgreSQL via Prisma Accelerate
-- Backend: Node.js (Express) + Prisma
-- Main domain: bia3ia.com
-- API subdomain: api.bia3ia.com
+- **Server:** Hetzner VPS (Ubuntu)
+- **Container runtime:** Docker + Docker Compose
+- **Reverse proxy:** Shared NGINX container
+- **TLS termination:** Cloudflare Origin Certificates
+- **Database:** PostgreSQL via Prisma Accelerate
+- **Backend:** Node.js (Express) + Prisma
+- **Main domain:** bia3ia.com
+- **API subdomain:** api.bia3ia.com
 
-Key concepts:
-- Nginx is the only service exposing ports 80 and 443
-- The backend listens on port 3000 internally
-- Services communicate through a shared Docker network
+### Key Architectural Principles
+
+- NGINX is the **only component exposing ports 80 and 443**
+- The backend listens on **port 3000**, reachable only inside Docker
+- All internal services communicate over a **private Docker network (`proxy`)**
+- The backend is **stateless** and horizontally scalable
+- TLS is terminated at the reverse proxy; internal traffic is trusted and isolated
 
 ## 2. Server Directory Structure
 
@@ -518,7 +532,10 @@ Key concepts:
 ├── nginx
 │   ├── conf.d
 │   │   ├── site.conf
-│   │   └── api.conf
+│   │   ├── api.conf
+│   │   ├── 00_globals.conf
+│   │   ├── 01_upstreams.conf
+│   │   └── 00_cloudflare_realip.conf
 │   ├── ssl
 │   │   ├── residenzaclasmarina-origin.crt
 │   │   ├── residenzaclasmarina-origin.key
@@ -535,6 +552,9 @@ Key concepts:
 │   ├── Dockerfile
 │   ├── docker-compose.yml
 │   └── .env
+│
+├── osrm
+│   └── docker-compose.yml
 ```
 
 ## 3. Copying the Project to the Server
@@ -561,6 +581,10 @@ LOG_LEVEL=info
 JWT_SECRET= {{randomly_generated_secret}}
 JWT_REFRESH_SECRET= {{randomly_generated_refresh_secret}}
 DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key={{prisma_accelerate_api_key}}"
+OSRM_BASE_URL=http://osrm:5000
+OSRM_TIMEOUT_MS=8000
+GEOCODING_TIMEOUT_MS=8000
+OPENMETEO_TIMEOUT_MS=8000
 ```
 Secrets must never be committed to Git. 
 
@@ -569,26 +593,29 @@ Secrets must never be committed to Git.
 File: docker-compose.yml
 
 Notes:
-- expose makes port 3000 available only inside Docker
-- NODE_ENV=production avoids dev-only dependencies
-- proxy is a shared Docker network used by Nginx
+- The backend **does not expose public ports**
+- Port 3000 is exposed only inside Docker
+- The backend joins the shared `proxy` network
+- The service is designed to be **replicated horizontally**
 
 ## 6. Dockerfile
 
 File: Dockerfile
 
 Notes:
-- Multi-stage build to keep the final image small.
-- Certificates are required for TLS connections to Prisma Accelerate.
-- Migrations are applied at container startup.
+- The backend uses a **multi-stage Dockerfile**:
+- Build stage compiles TypeScript and generates Prisma client
+- Runtime stage contains only production dependencies
+- Database migrations are executed explicitly via a dedicated migration container
 
 ## 7. Logger Configuration (Production-safe)
 
 File: src/utils/logger.ts
 
 Notes:
-- pino-pretty must not be used in production
-- NODE_ENV=production is enforced via Docker Compose
+- `pino-pretty` is disabled in production
+- Log level is controlled via `LOG_LEVEL`
+- HTTP requests are logged via middleware
 
 ## 8. Docker Network Setup
 
@@ -604,10 +631,9 @@ Connect Containers:
 docker network connect proxy <nginx_container> || true
 ```
 
-In our specific case:
+In our specific case NGINX and backend containers are attached to this network:
 
 ```bash
-docker network connect proxy bbp_api || true
 docker network connect proxy shared_nginx || true
 ```
 
@@ -617,7 +643,18 @@ Then verify:
 docker network inspect proxy
 ```
 
-## 9. Nginx Configuration for the API
+
+## 9. NGINX Reverse Proxy Configuration
+
+NGINX acts as:
+
+- Single entry point
+- TLS termination layer
+- Reverse proxy
+- Load balancer
+- Rate limiting and request filtering layer
+
+Backend instances are resolved dynamically using Docker DNS and balanced by NGINX.
 
 Reverse proxy from api.bia3ia.com to bbp_api:3000
 TLS via Cloudflare Origin Certificate.
@@ -644,28 +681,60 @@ server {
     ssl_certificate     /etc/nginx/ssl/bia3ia-origin.crt;
     ssl_certificate_key /etc/nginx/ssl/bia3ia-origin.key;
 
-    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
 
     add_header Strict-Transport-Security "max-age=31536000" always;
 
-    location / {
-        proxy_pass http://bbp_api:3000;
+    # --------------------------------------------------
+    # Health endpoint (NO aggressive rate limit)
+    # --------------------------------------------------
+    location = /health {
+        proxy_pass http://bbp_api_upstream;
         proxy_http_version 1.1;
 
         proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
 
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 10s;
+    }
+
+    # --------------------------------------------------
+    # Main API
+    # --------------------------------------------------
+    location / {
+        proxy_pass http://bbp_api_upstream;
+        proxy_http_version 1.1;
+
+        # Rate limiting (per real client IP)
+        limit_req zone=api_ratelimit burst=20 nodelay;
+
+        # Standard forwarded headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        # WebSocket / Upgrade support
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
 
         proxy_connect_timeout 10s;
-        proxy_read_timeout 60s;
         proxy_send_timeout 60s;
+        proxy_read_timeout 120s;
 
         client_max_body_size 25m;
+
+        proxy_buffering off;
     }
 }
 ```
@@ -676,6 +745,62 @@ Reload Nginx:
 docker exec -it shared_nginx nginx -t
 docker exec -it shared_nginx nginx -s reload
 ```
+
+File: nano /opt/nginx/conf.d/api.conf
+
+```bash
+upstream bbp_api_upstream {
+  zone bbp_api_upstream 64k;
+  server api:3000 resolve;
+}
+```
+
+File: /opt/nginx/conf.d/00_globals.conf
+
+```bash
+# Needed for WebSocket/HTTP upgrade handling
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+
+# Basic rate limit zone (per-IP)
+limit_req_zone $binary_remote_addr zone=api_ratelimit:10m rate=10r/s;
+
+# Docker embedded DNS resolver
+resolver 127.0.0.11 ipv6=off valid=10s;
+resolver_timeout 2s;
+```
+
+Script to update NGINX conf with cloudflatre official endpoints (thereś a cron every sunday at 4)
+
+FILE: nano /opt/nginx/update-cloudflare-ips.sh
+
+```bash
+#!/bin/sh
+set -e
+
+OUT_FILE="/opt/nginx/conf.d/00_cloudflare_realip.conf"
+
+echo "# Auto-generated Cloudflare IP ranges" > "$OUT_FILE"
+echo "# DO NOT EDIT MANUALLY" >> "$OUT_FILE"
+echo "" >> "$OUT_FILE"
+
+echo "real_ip_header CF-Connecting-IP;" >> "$OUT_FILE"
+echo "real_ip_recursive on;" >> "$OUT_FILE"
+echo "" >> "$OUT_FILE"
+
+for ip in $(curl -fsSL https://www.cloudflare.com/ips-v4); do
+  echo "set_real_ip_from $ip;" >> "$OUT_FILE"
+done
+
+for ip in $(curl -fsSL https://www.cloudflare.com/ips-v6); do
+  echo "set_real_ip_from $ip;" >> "$OUT_FILE"
+done
+```
+
+chmod +x /opt/nginx/update-cloudflare-ips.sh
+
 
 ## 10. Cloudflare Configuration
 
@@ -695,6 +820,15 @@ Covers bia3ia.com and *.bia3ia.com
 Installed inside the Nginx container
 If SSL is misconfigured, Cloudflare returns error 526.
 
+Cloudflare is used as DNS provider, CDN, and additional security layer.
+
+- DNS: `api.bia3ia.com` → Hetzner VPS (proxied)
+- SSL/TLS mode: **Full (strict)**
+- TLS certificates: Cloudflare Origin Certificates
+
+Real client IPs are extracted using the `CF-Connecting-IP` header.
+Cloudflare IP ranges are automatically synchronized using official Cloudflare endpoints.
+
 ## 11. Starting the Backend
 
 From the server:
@@ -702,14 +836,24 @@ From the server:
 ```bash
 cd /opt/bbp-backend
 docker compose build --no-cache
-docker compose up -d
+docker compose --profile tools run --rm migrate
+docker compose up -d --scale api=3
+docker compose ps
 ```
+
+NB Migrations only when needed
 
 Check Status:
 
 ```bash
 docker compose ps
-docker logs -f bbp_api --tail=50
+docker logs -f bbp-backend-api-1 --tail=50
+```
+
+Health Check:
+
+```
+curl -i https://api.bia3ia.com/health
 ```
 
 ## 12. Testing the Deployment
@@ -723,7 +867,7 @@ curl -i -k -H "Host: api.bia3ia.com" https://127.0.0.1/
 From outside:
 
 ```bash
-curl -i https://api.bia3ia.com/api/v1/users/profile
+curl -i https://api.bia3ia.com/api/v1/users/me
 ```
 
 Should answer with ACCESS_TOKEN_MISSING because no token is provided
@@ -773,6 +917,17 @@ Because of this, Nginx is not included in the bbp-backend Docker Compose file.
 Instead, the backend is exposed through a shared Nginx reverse proxy, which acts as infrastructure and routes incoming requests to the correct internal service based on the requested domain.
 
 This separation keeps the backend lightweight, reusable, and independent from the HTTP/TLS layer.
+
+The system guarantees:
+
+- TLS termination at the reverse proxy
+- Stateless backend design
+- Horizontal scalability
+- Load balancing via NGINX
+- Rate limiting and request filtering
+- Real client IP extraction behind CDN
+- Isolated internal network
+- Safe database migration workflow
 
 ## OSRM Configuration & Deployment
 
@@ -873,6 +1028,9 @@ Add to `/opt/bbp-backend/.env`:
 
 ```bash
 OSRM_BASE_URL=http://osrm:5000
+OSRM_TIMEOUT_MS=8000
+GEOCODING_TIMEOUT_MS=8000
+OPENMETEO_TIMEOUT_MS=8000
 ```
 
 Rebuild backend:
@@ -921,3 +1079,14 @@ Why server-side geocoding:
 - keeps the app "dumb" (no provider logic in the client)
 - easier to swap geocoding provider later
 - allows future caching and rate limiting in one place
+
+Little explanation on how it works:
+When a client calls apis, the request first goes through cloudflare, which handles dns, https and some basic traffic filtering
+From there, the request reaches the nginx reverse proxy, which is the only component exposed to the internet.
+nginx terminates t;ls, applies rate limiting, extracts the real client ip (using cloudflare headers), and then forwards
+the request internally. The backend itself is not exposed and listens only on port 3000 inside a private Docker network.
+We run multiple backend replicas (3 to be precise) (it is stateless,  and jwt based), and nginx load balances requests across
+them using docker service discovery. Internal traffic between nginx and the backend happens over http on the isolated Docker network.
+And, to make IP handling correct over time, there’s athe script i mentioned that automatically fetches cloudflare’s official ips
+ranges and updates the config nginx config, so logs and rate limiting always use the real client IP without us that actually
+input them manually in the config

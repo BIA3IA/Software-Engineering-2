@@ -16,6 +16,14 @@ datasource db {
   provider = "postgresql"
 }
 
+enum StatsPeriod {
+  DAY
+  WEEK
+  MONTH
+  YEAR
+  OVERALL
+}
+
 // user table, use cuid for better indexing
 // @@map is used to map the model to an existing table name in the database (useful when you have legacy databases)
 model User {
@@ -29,6 +37,9 @@ model User {
   refreshTokens     RefreshToken[]
   trips             Trip[]
   paths             Path[]
+  reports           Report[]
+  stats             Stats[]
+  overallStatsPeriods OverallStatsPeriod[]
 }
 
 model RefreshToken {
@@ -52,11 +63,12 @@ model Trip {
   origin       Json
   /// [Coordinates]
   destination  Json
-  /// [TripStatistics]
-  statistics   Json
   /// [WeatherData]
   weather      Json?
+  distanceKm   Float?
   tripSegments TripSegment[]
+  reports      Report[]
+  tripStats    Stats?
 }
 
 model Segment {
@@ -67,6 +79,7 @@ model Segment {
   polylineCoordinates Json
   tripSegments        TripSegment[]
   pathSegments        PathSegment[]
+  reports             Report[]
 }
 
 model TripSegment {
@@ -86,14 +99,13 @@ model Path {
   user         User          @relation(fields: [userId], references: [userId], onDelete: Cascade)
   createdAt    DateTime      @default(now())
   pathSegments PathSegment[]
-  status       String        @default("OPTIMAL")
+  status       String        @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
   /// [Coordinates]
   origin       Json
   /// [Coordinates]
   destination  Json
   visibility   Boolean       @default(false)
   creationMode String        @default("MANUAL")
-  score        Float?
   title        String?
   description  String?
   distanceKm   Float?
@@ -104,9 +116,70 @@ model PathSegment {
   pathId        String
   segmentId     String
   nextSegmentId String?
-  status        String  @default("OPTIMAL")
+  status        String  @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
   path          Path    @relation(fields: [pathId], references: [pathId], onDelete: Cascade)
   segment       Segment @relation(fields: [segmentId], references: [segmentId]) // No onDelete: Cascade here otherwise deleting a path would delete also the trip segments
+}
 
-  @@unique([pathId, segmentId])
+model Report {
+  reportId     String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  userId       String
+  user         User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  segmentId    String
+  segment      Segment  @relation(fields: [segmentId], references: [segmentId], onDelete: Cascade)
+  tripId       String?
+  trip         Trip?    @relation(fields: [tripId], references: [tripId], onDelete: SetNull)
+  sessionId    String?
+  obstacleType String // Enum values: POTHOLE, WORK_IN_PROGRESS, FLOODING, OBSTACLE, OTHER
+  pathStatus   String   @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
+  status       String   @default("CREATED") // Enum values: CONFIRMED, REJECTED, IGNORED, CREATED
+  position     Json
+
+  @@index([sessionId])
+  @@index([segmentId])
+}
+
+model Stats {
+  statsId String @id @default(cuid()) @map("statsId")
+  tripId String @unique
+  userId String
+
+  // Per-trip metrics (Single trip performance)
+  avgSpeed   Float @default(0) // km/h
+  duration   Float @default(0) // seconds
+  kilometers Float @default(0) // distance
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  trip Trip @relation(fields: [tripId], references: [tripId], onDelete: Cascade)
+  // Ensure you add the back-relation to the User model as well
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("Stats")
+}
+
+model OverallStatsPeriod {
+  id String @id @default(cuid())
+  userId String
+  period StatsPeriod
+
+  avgSpeed        Float @default(0)
+  avgDuration     Float @default(0)
+  avgKilometers   Float @default(0)
+  totalKilometers Float @default(0)
+  totalTime       Float @default(0)
+  longestKilometer Float @default(0)
+  longestTime      Float @default(0)
+  pathsCreated     Int   @default(0)
+  tripCount        Int   @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([userId, period])
+  @@index([userId, period])
 }

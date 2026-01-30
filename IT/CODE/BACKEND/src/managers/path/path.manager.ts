@@ -1,18 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { queryManager } from '../query/index.js';
-import { Coordinates, PathWithSegments } from '../../types/index.js';
+import { Coordinates, PathWithSegments, PATH_STATUS_SCORE_MAP } from '../../types/index.js';
+import { sortPathSegmentsByChain, computeReportSignals, computePathStatusFromSegments, mapScoreToStatus } from '../../utils/index.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
-import logger from '../../utils/logger';
 import { snapToRoad, geocodeAddress } from '../../services/index.js';
-import { polylineDistanceKm } from '../../utils/geo.js';
-
-const STATUS_SCORE_MAP = {
-    OPTIMAL: 5,
-    MEDIUM: 4,
-    SUFFICIENT: 3,
-    REQUIRES_MAINTENANCE: 2,
-    CLOSED: 1,
-} as const;
+import { haversineDistanceMeters, polylineDistanceKm } from '../../utils/geo.js';
+import {
+    PATH_SEARCH_TOLERANCE_DEG,
+    PATH_SEARCH_MAX_DISTANCE_METERS,
+    PATH_SEARCH_NEAR_DISTANCE_BUFFER_METERS,
+    PATH_STATUS_ALL_WEIGHT,
+    PATH_STATUS_REPORTED_WEIGHT,
+    REPORT_MIN_RELIABILITY
+} from '../../constants/appConfig.js';
 
 export class PathManager {
 
@@ -36,7 +36,7 @@ export class PathManager {
             }
 
             // Create path based on the creation mode
-            if (creationMode === 'manual') {
+            if (creationMode === 'manual' || creationMode === 'automatic') {
                 for (const segment of pathSegments) {
                     if (!segment.start || !segment.end) {
                         throw new BadRequestError('Each segment must have start and end coordinates', 'INVALID_SEGMENT');
@@ -51,12 +51,22 @@ export class PathManager {
                 const createdSegmentIds: string[] = [];
                 const allCoordinates: Coordinates[] = [];
                 
+                const existingSegments = await queryManager.getSegmentsByPolylineCoordinates(
+                    pathSegments.map((segment) => [segment.start, segment.end])
+                );
+
                 for (const segment of pathSegments) {
                     // Build polyline from start to end (add intermediate points if needed)
                     const polylineCoordinates: Coordinates[] = [segment.start, segment.end];
-                    
-                    const createdSegment = await queryManager.createSegment('OPTIMAL', polylineCoordinates);
-                    createdSegmentIds.push(createdSegment.segmentId);
+                    const segmentKey = JSON.stringify(polylineCoordinates);
+                    const existingSegmentId = existingSegments.get(segmentKey);
+
+                    if (existingSegmentId) {
+                        createdSegmentIds.push(existingSegmentId);
+                    } else {
+                        const createdSegment = await queryManager.createSegment('OPTIMAL', polylineCoordinates);
+                        createdSegmentIds.push(createdSegment.segmentId);
+                    }
                     allCoordinates.push(...polylineCoordinates);
                 }
 
@@ -101,13 +111,6 @@ export class PathManager {
                     distanceKm
                 );
 
-                // Calculate and update path status
-                const score = await this.calculatePathStatus(path.pathId);
-
-                if (score !== null)  {
-                    queryManager.updatePathStatus(path.pathId, score);
-                }
-
                 const updatedPath = await queryManager.getPathById(path.pathId);
 
                 if (!updatedPath) {
@@ -120,106 +123,18 @@ export class PathManager {
                     data: {
                         pathId: updatedPath.pathId,
                         createdAt: updatedPath.createdAt,
-                        status: updatedPath.status,
                         visibility: updatedPath.visibility,
                         distanceKm: updatedPath.distanceKm,
                     },
                 });
 
-            } else if (creationMode === 'automatic') {
-                // Automatic path creation logic
-                throw new BadRequestError('Automatic path creation not yet implemented', 'NOT_IMPLEMENTED');
-                
             } else if (creationMode === undefined || creationMode === null) {
-                
                 throw new BadRequestError('Creation mode is required', 'MISSING_CREATION_MODE');
             } else {
                 throw new BadRequestError('Invalid creation mode', 'INVALID_CREATION_MODE');
             }
         } catch (error) {
             next(error);
-        }
-    }
-
-    /* Calculate path status based on segment status scores
-       Formula (without reports for now):
-       PathStatus = Σ(statusScore) / number_of_segments
-       
-       Then map to status:
-       - >= 4.5 -> OPTIMAL
-       - >= 3.5 -> MEDIUM
-       - >= 2.5 -> SUFFICIENT
-       - >= 1.5 -> REQUIRES_MAINTENANCE
-       - default -> CLOSED
-
-       TODO: consider background jobs or service to periodically recalculate path statuses based on reports and segment updates?
-    */
-    async calculatePathStatus(pathId: string): Promise<string> {
-        try {
-            const path = await queryManager.getPathById(pathId);
-
-            if (!path) {
-                throw new NotFoundError('Path not found', 'PATH_NOT_FOUND');
-            }
-
-            // Get all segment IDs from the path
-            const segmentIds = path.pathSegments.map(ps => ps.segmentId);
-
-            if (segmentIds.length === 0) {
-                //logger.warn({ pathId }, 'Path has no segments');
-                return 'CLOSED';
-            }
-
-            // Get segment statistics
-            const segments = await queryManager.getSegmentStatistics(segmentIds);
-
-            if (segments.length === 0) {
-                //logger.warn({ pathId, segmentIds }, 'No segments found for path');
-                return 'CLOSED';
-            }
-
-            // Calculate total status score
-            let totalStatusScore = 0;
-            
-            for (const segment of segments) {
-                const statusScore = STATUS_SCORE_MAP[segment.status as keyof typeof STATUS_SCORE_MAP] || 0;
-                totalStatusScore += statusScore;
-            }
-
-            // Calculate average status score
-            const averageStatusScore = totalStatusScore / segments.length;
-
-            //logger.debug({ 
-            //    pathId, 
-            //    totalStatusScore, 
-            //    segmentCount: segments.length, 
-            //    averageStatusScore 
-            //}, 'Calculated path status score');
-
-            // Determine path status based on average score
-            let pathStatus: string;
-
-            if (averageStatusScore >= 4.5) {
-                pathStatus = 'OPTIMAL';
-            } else if (averageStatusScore >= 3.5) {
-                pathStatus = 'MEDIUM';
-            } else if (averageStatusScore >= 2.5) {
-                pathStatus = 'SUFFICIENT';
-            } else if (averageStatusScore >= 1.5) {
-                pathStatus = 'REQUIRES_MAINTENANCE';
-            } else {
-                pathStatus = 'CLOSED';
-            }
-
-            // Update path status in database
-            await queryManager.updatePathStatus(pathId, pathStatus);
-
-            //logger.info({ pathId, pathStatus, averageStatusScore }, 'Path status updated');
-
-            return pathStatus;
-        } catch (error) {
-            //logger.error({ err: error, pathId }, 'Error calculating path status');
-            throw error;
         }
     }
 
@@ -230,25 +145,85 @@ export class PathManager {
             const { origin, destination } = req.query;
             const userId = req.user?.userId;
 
-            if (typeof origin !== 'string' || !origin.trim()) {
-                throw new BadRequestError('Origin address is required', 'MISSING_ORIGIN');
+            const originValue = Array.isArray(origin) ? origin[0] : origin;
+            const destinationValue = Array.isArray(destination) ? destination[0] : destination;
+            const originText =
+                typeof originValue === 'string' ? originValue : originValue ? String(originValue) : '';
+            const destinationText =
+                typeof destinationValue === 'string'
+                    ? destinationValue
+                    : destinationValue
+                      ? String(destinationValue)
+                      : '';
+
+            const originCoords = await geocodeAddress(originText);
+            const destinationCoords = await geocodeAddress(destinationText);
+
+            const paths = await queryManager.searchPathsByOriginDestination(userId);
+            const sortedPaths = paths.map(path => ({
+                ...path,
+                pathSegments: sortPathSegmentsByChain(path.pathSegments),
+            }));
+
+            // Tolerance radius in degrees (approximately 200m)
+            const tolerance = PATH_SEARCH_TOLERANCE_DEG;
+            const maxDistanceMeters = PATH_SEARCH_MAX_DISTANCE_METERS;
+            const nearDistanceBufferMeters = PATH_SEARCH_NEAR_DISTANCE_BUFFER_METERS;
+
+            const matchingPaths: Array<{ path: PathWithSegments; maxDistance: number }> = [];
+
+            for (const path of sortedPaths) {
+                const pathOrigin = path.origin;
+                const pathDestination = path.destination;
+
+                const originMatch =
+                    Math.abs(pathOrigin.lat - originCoords.lat) <= tolerance &&
+                    Math.abs(pathOrigin.lng - originCoords.lng) <= tolerance;
+
+                const destinationMatch =
+                    Math.abs(pathDestination.lat - destinationCoords.lat) <= tolerance &&
+                    Math.abs(pathDestination.lng - destinationCoords.lng) <= tolerance;
+
+                if (!originMatch || !destinationMatch) {
+                    continue;
+                }
+
+                const originDistance = haversineDistanceMeters(originCoords, pathOrigin);
+                const destinationDistance = haversineDistanceMeters(destinationCoords, pathDestination);
+                const maxDistance = Math.max(originDistance, destinationDistance);
+
+                matchingPaths.push({
+                    path,
+                    maxDistance,
+                });
             }
 
-            if (typeof destination !== 'string' || !destination.trim()) {
-                throw new BadRequestError('Destination address is required', 'MISSING_DESTINATION');
+            if (!matchingPaths.length) {
+                res.status(200).json({
+                    success: true,
+                    data: {
+                        count: 0,
+                        paths: [],
+                    },
+                });
+                return;
             }
 
-            const originCoords = await geocodeAddress(origin);
-            const destinationCoords = await geocodeAddress(destination);
+            const minDistance = Math.min(...matchingPaths.map(entry => entry.maxDistance));
+            const distanceCutoff = Math.min(maxDistanceMeters, minDistance + nearDistanceBufferMeters);
 
-            const paths = await queryManager.searchPathsByOriginDestination(originCoords, destinationCoords, userId);
+            const filteredByDistance = matchingPaths
+                .filter(entry => entry.maxDistance <= distanceCutoff)
+                .sort((a, b) => a.maxDistance - b.maxDistance)
+                .map(entry => entry.path);
 
-            if (paths.length === 0) {
-                throw new NotFoundError('No routes found for the specified origin and destination', 'NO_ROUTE');
-            }
+            const pathsWithComputedStatus = filteredByDistance.map(path => ({
+                ...path,
+                status: path.status ?? computePathStatusFromSegments(path.pathSegments),
+            }));
 
             // Compute optimal paths by filtering and sorting
-            const optimalPaths = paths
+            const optimalPaths = pathsWithComputedStatus
                 .filter(path => {
                     // Exclude CLOSED paths from suggestions
                     if (path.status === 'CLOSED'){
@@ -273,7 +248,13 @@ export class PathManager {
                         return statusA - statusB;
                     }
 
-                    // Sort by freshness??
+                    // If same status, prefer shorter
+                    const distanceA = a.distanceKm ?? Number.POSITIVE_INFINITY;
+                    const distanceB = b.distanceKm ?? Number.POSITIVE_INFINITY;
+                    if (distanceA !== distanceB) {
+                        return distanceA - distanceB;
+                    }
+
                     return b.createdAt.getTime() - a.createdAt.getTime();
                 });
 
@@ -287,7 +268,6 @@ export class PathManager {
                         title: path.title,
                         description: path.description,
                         status: path.status,
-                        score: path.score,
                         visibility: path.visibility,
                         origin: path.origin,
                         destination: path.destination,
@@ -316,18 +296,21 @@ export class PathManager {
             }
 
             const paths = await queryManager.getPathsByUserId(userId);
+            const sortedPaths = paths.map(path => ({
+                ...path,
+                pathSegments: sortPathSegmentsByChain(path.pathSegments),
+            }));
 
             res.json({
                 success: true,
                 data: {
-                    count: paths.length,
-                    paths: paths.map(path => ({
+                    count: sortedPaths.length,
+                    paths: sortedPaths.map(path => ({
                         pathId: path.pathId,
                         title: path.title,
                         description: path.description,
-                        status: path.status,
-                        score: path.score,
                         visibility: path.visibility,
+                        status: path.status,
                         origin: path.origin,
                         destination: path.destination,
                         distanceKm: path.distanceKm,
@@ -449,6 +432,113 @@ export class PathManager {
         } catch (error) {
             next(error);
         }
+    }
+
+    async recalculatePathSegmentStatus(pathSegmentId: string) {
+        const pathSegment = await queryManager.getPathSegmentById(pathSegmentId);
+        if (!pathSegment) {
+            return;
+        }
+        await this.recalculateSegmentStatusForAllPaths(pathSegment.segmentId);
+    }
+
+    async recalculateSegmentStatusForAllPaths(segmentId: string) {
+        const segmentStatus = await this.calculateSegmentStatus(segmentId);
+        const pathSegments = await queryManager.getPathSegmentsBySegmentId(segmentId);
+
+        if (segmentStatus) {
+            await Promise.all(
+                pathSegments.map((segment) =>
+                    queryManager.updatePathSegmentStatus(segment.id, segmentStatus)
+                )
+            );
+        }
+
+        const pathIds = new Set(pathSegments.map((segment) => segment.pathId));
+        await Promise.all(Array.from(pathIds).map((pathId) => this.recalculatePathStatus(pathId)));
+    }
+
+    private async calculateSegmentStatus(segmentId: string) {
+        const reports = await queryManager.getReportsBySegmentId(segmentId);
+
+        if (!reports.length) {
+            return null;
+        }
+
+        const now = new Date();
+        let weightedSum = 0;
+        let reliabilitySum = 0;
+
+        for (const report of reports) {
+            // Ignore if ignored
+            if (report.status === 'IGNORED') {
+                continue;
+            }
+
+            // Numerical score for the reported status
+            const statusScore =
+                PATH_STATUS_SCORE_MAP[report.pathStatus as keyof typeof PATH_STATUS_SCORE_MAP];
+            if (!statusScore) {
+                continue;
+            }
+
+            // Compute reliability
+            const { reliability } = computeReportSignals(report, now);
+            if (reliability < REPORT_MIN_RELIABILITY) {
+                continue;
+            }
+
+            const signedScore = report.status === 'REJECTED' ? -statusScore : statusScore;
+
+            // Accumulate weighted scores (rejected reports reduce the score)
+            weightedSum += signedScore * reliability;
+            reliabilitySum += reliability;
+        }
+
+        // No valid reports
+        if (reliabilitySum === 0) {
+            return null;
+        }
+
+        // Compute average score and map to status
+        const averageScore = weightedSum / reliabilitySum;
+        return mapScoreToStatus(averageScore);
+    }
+
+    private async recalculatePathStatus(pathId: string) {
+        const path = await queryManager.getPathById(pathId);
+        if (!path) {
+            return;
+        }
+
+        const reports = await queryManager.getReportsByPathId(pathId);
+        const reportedSegmentIds = new Set(
+            reports
+                .filter((report) => report.status !== 'IGNORED')
+                .map((report) => report.segmentId)
+        );
+        const segmentsToScore = path.pathSegments.filter((segment) =>
+            reportedSegmentIds.has(segment.segmentId)
+        );
+        let status = computePathStatusFromSegments(path.pathSegments);
+        if (segmentsToScore.length) {
+            const reportedAverage = this.computeAverageStatusScore(segmentsToScore);
+            const allAverage = this.computeAverageStatusScore(path.pathSegments);
+            const mixedScore = reportedAverage * PATH_STATUS_REPORTED_WEIGHT + allAverage * PATH_STATUS_ALL_WEIGHT;
+            status = mapScoreToStatus(mixedScore);
+        }
+        await queryManager.updatePathStatus(pathId, status);
+    }
+
+    private computeAverageStatusScore(segments: Array<{ status: keyof typeof PATH_STATUS_SCORE_MAP }>) {
+        if (!segments.length) {
+            return PATH_STATUS_SCORE_MAP.OPTIMAL;
+        }
+        const totalStatusScore = segments.reduce((sum, segment) => {
+            const statusScore = PATH_STATUS_SCORE_MAP[segment.status] || 0;
+            return sum + statusScore;
+        }, 0);
+        return totalStatusScore / segments.length;
     }
 
 }

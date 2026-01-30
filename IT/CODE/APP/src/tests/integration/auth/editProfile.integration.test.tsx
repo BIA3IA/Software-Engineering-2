@@ -2,6 +2,7 @@ import React from "react"
 import { render, fireEvent, waitFor } from "@testing-library/react-native"
 import EditProfileScreen from "@/app/(main)/edit-profile"
 import { useAuthStore } from "@/auth/storage"
+import { mockRouter } from "@/jest.setup"
 
 jest.mock("@/auth/storage", () => ({
     useAuthStore: jest.fn(),
@@ -10,6 +11,7 @@ jest.mock("@/auth/storage", () => ({
 describe("edit profile integration", () => {
     beforeEach(() => {
         jest.clearAllMocks()
+        mockRouter.back.mockClear()
     })
 
     test("validation blocks submit and shows field errors", async () => {
@@ -21,14 +23,14 @@ describe("edit profile integration", () => {
 
         const { getByPlaceholderText, getByText, findByText } = render(<EditProfileScreen />)
 
-        fireEvent.changeText(getByPlaceholderText("Enter your username"), "bia")
+        fireEvent.changeText(getByPlaceholderText("Enter your username"), "bi")
         fireEvent.changeText(getByPlaceholderText("Enter your email"), "not-an-email")
         fireEvent.changeText(getByPlaceholderText("Enter your current password"), "123")
         fireEvent.changeText(getByPlaceholderText("Create a new password"), "12345")
         fireEvent.changeText(getByPlaceholderText("Re-enter your new password"), "12345679")
         fireEvent.press(getByText("Save Changes"))
 
-        expect(await findByText("Username must be at least 5 characters.")).toBeTruthy()
+        expect(await findByText("Username must be at least 3 characters.")).toBeTruthy()
         expect(await findByText("Please enter a valid email address.")).toBeTruthy()
         expect(await findByText("Current password must be at least 8 characters.")).toBeTruthy()
         expect(await findByText("New password must be at least 8 characters.")).toBeTruthy()
@@ -79,5 +81,21 @@ describe("edit profile integration", () => {
 
         expect(await findByText("Update Failed")).toBeTruthy()
         expect(await findByText("API error")).toBeTruthy()
+    })
+
+    test("back and cancel buttons navigate back", async () => {
+        const updateProfile = jest.fn()
+        const user = { id: "u1", username: "bianca", email: "a@b.com" }
+
+            ; (useAuthStore as unknown as jest.Mock).mockImplementation((sel: any) =>
+                sel({ user, updateProfile })
+            )
+
+        const { getByTestId } = render(<EditProfileScreen />)
+
+        fireEvent.press(getByTestId("edit-profile-back"))
+        fireEvent.press(getByTestId("edit-profile-cancel"))
+
+        expect(mockRouter.back).toHaveBeenCalledTimes(2)
     })
 })

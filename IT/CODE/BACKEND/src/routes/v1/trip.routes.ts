@@ -1,19 +1,19 @@
 import { Router } from "express";
 import { tripManager } from "../../managers/trip/index.js";
-import { createTripSchema } from "../../schemas/index.js";
+import { createTripSchema, tripIdParamsSchema } from "../../schemas/index.js";
 import { validate, verifyAccessToken } from "../../middleware/index.js";
 
 const tripRouter = Router();
 
 tripRouter.post(
-    "/create",
+    "/",
     verifyAccessToken,
     validate(createTripSchema, "body"),
     tripManager.createTrip.bind(tripManager)
 );
 
 tripRouter.get(
-    "/my-trips",
+    "/",
     verifyAccessToken,
     tripManager.getTripsByUser.bind(tripManager)
 );
@@ -21,6 +21,7 @@ tripRouter.get(
 tripRouter.delete(
     "/:tripId",
     verifyAccessToken,
+    validate(tripIdParamsSchema, "params"),
     tripManager.deleteTrip.bind(tripManager)
 );
 

@@ -6,6 +6,7 @@ export const HttpStatus = {
     FORBIDDEN: 403,
     NOT_FOUND: 404,
     CONFLICT: 409,
+    TOO_MANY_REQUESTS: 429,
     INTERNAL_SERVER_ERROR: 500,
 } as const;
 
@@ -56,6 +57,13 @@ export class NotFoundError extends AppError {
 export class ConflictError extends AppError {
     constructor(message: string = 'Conflict', code?: string) {
         super(message, HttpStatus.CONFLICT, code || 'CONFLICT');
+    }
+}
+
+// 429 - Too Many Requests
+export class TooManyRequestsError extends AppError {
+    constructor(message: string = 'Too many requests', code?: string) {
+        super(message, HttpStatus.TOO_MANY_REQUESTS, code || 'TOO_MANY_REQUESTS');
     }
 }
 

@@ -13,6 +13,7 @@ interface AppButtonProps {
   onPress?: () => void
   loading?: boolean
   disabled?: boolean
+  testID?: string
   textColor?: string
   borderColor?: string
   buttonColor?: string
@@ -26,6 +27,7 @@ export function AppButton({
   onPress,
   loading = false,
   disabled = false,
+  testID,
   textColor,
   borderColor,
   buttonColor,
@@ -78,6 +80,7 @@ export function AppButton({
 
   return (
     <Button
+      testID={testID}
       mode={mode}
       onPress={handlePress}
       loading={loading}
