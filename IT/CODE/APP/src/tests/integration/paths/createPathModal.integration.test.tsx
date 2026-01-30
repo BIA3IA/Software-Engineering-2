@@ -2,9 +2,18 @@ import React from "react"
 import { render, fireEvent } from "@testing-library/react-native"
 import { CreatePathModal } from "@/components/modals/CreatePathModal"
 
-jest.mock("@/components/ui/SelectionOverlay", () => ({
-    SelectionOverlay: () => null,
-}))
+const mockSelectionOverlay = jest.fn()
+
+jest.mock("@/components/ui/SelectionOverlay", () => {
+    const React = require("react")
+    const { View } = require("react-native")
+    return {
+        SelectionOverlay: (props: any) => {
+            mockSelectionOverlay(props)
+            return React.createElement(View, null, props.children)
+        },
+    }
+})
 
 jest.mock("@/components/ui/SelectField", () => {
     const React = require("react")
@@ -26,6 +35,10 @@ jest.mock("@/components/ui/SelectField", () => {
 })
 
 describe("create path modal integration", () => {
+    beforeEach(() => {
+        mockSelectionOverlay.mockReset()
+    })
+
     test("validation blocks submit and shows field errors", async () => {
         const onSubmit = jest.fn()
 
@@ -69,6 +82,37 @@ describe("create path modal integration", () => {
             description: "Desc",
             visibility: "public",
             creationMode: "manual",
+        })
+    })
+
+    test("selects automatic mode and submits", async () => {
+        const onSubmit = jest.fn()
+
+        const { getByPlaceholderText, getByText } = render(
+            <CreatePathModal
+                visible
+                onClose={jest.fn()}
+                onSubmit={onSubmit}
+                initialVisibility="public"
+            />
+        )
+
+        fireEvent.changeText(getByPlaceholderText("Path name"), "My Path")
+        fireEvent.changeText(getByPlaceholderText("Describe the path"), "Desc")
+        fireEvent.press(getByText("Manual"))
+
+        await new Promise((resolve) => setTimeout(resolve, 0))
+        const lastOverlayProps = mockSelectionOverlay.mock.calls.at(-1)?.[0]
+        lastOverlayProps?.onSelect?.("automatic")
+        await new Promise((resolve) => setTimeout(resolve, 0))
+
+        fireEvent.press(getByText("Start Creating"))
+
+        expect(onSubmit).toHaveBeenCalledWith({
+            name: "My Path",
+            description: "Desc",
+            visibility: "public",
+            creationMode: "automatic",
         })
     })
 })
