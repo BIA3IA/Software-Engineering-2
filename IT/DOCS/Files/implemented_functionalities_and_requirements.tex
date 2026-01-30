@@ -15,7 +15,13 @@ or validate reports, and any data generated during their usage is not saved.
 Guest users can register at any time by providing basic identification information. After logging in, users gain
 access to the full set of functionalities, including viewing previously recorded trips, accessing personal
 statistics, managing created bike paths, and contributing to the system by submitting or validating reports.
-Authenticated users can also access and modify their personal profile information.
+
+Authenticated users can also access and modify their personal profile information and application preferences.
+They can update their profile information, including name, email address, and password.
+Users can also configure application-level preferences, such as the default visibility of newly created paths
+and the visual appearance of the app.
+
+The app also provides a help and support feature, allowing users to contact the development team directly.
 
 \subsection{Trip Recording and Management}
 \label{subsec:trip_recording_management}
@@ -29,6 +35,13 @@ Additional contextual information, such as weather conditions, may also be retri
 context to the recorded activity. When the trip ends, all collected data is saved and becomes part of the user’s
 trip history.
 
+The app continuously monitors the user’s movement during normal usage to detect potential cycling activity.
+Bike activity detection is based on movement speed and consistency over time.
+
+When the app detects that the user is biking without an active trip, it proactively suggests starting a trip.
+If the user is currently using the app as a guest, the system prompts them to log in or register in order to 
+enable trip monitoring and data persistence.
+
 \subsection{Path Discovery, Creation and Selection}
 \label{subsec:path_discovery_creation_selection}
 
@@ -38,8 +51,9 @@ are ordered according to their overall quality and suitability, based on the inf
 Users can select a specific path and view its details, including its condition, length, and any associated reports.
 
 Logged-in users can also create new bike paths to extend the set of available routes. Paths can be created
-by drawing the route directly on the map. When creating a path, users can choose whether it should remain private
-or be shared with the community. Either way, the created path is stored in the system and can be accessed by the user.
+in manual mode, by drawing the route directly on the map, or in automatic mode, by recording a cycling activity
+along the desired trajectory. When creating a path, users can choose whether it should remain private
+or be shared with the community. Either way, the created path is stored in the system and can be accessed.
 
 \subsection{Map-based Visualization and Navigation Support}
 \label{subsec:map_visualization_navigation}
@@ -63,13 +77,14 @@ To improve the reliability of the collected information, the app allows users to
 while cycling. User feedback helps reduce false positives and outdated data, making
 the reported information more accurate over time.
 
-\subsection{Path Condition Evaluation and Ranking} % TODO this may need to be reviewed after implementation
+\subsection{Path Condition Evaluation and Ranking}
 \label{subsec:path_condition_evaluation_ranking}
 
-The app evaluates the condition of bike paths by combining information collected from user reports and recorded trips.
-Each path is associated with indicators that describe its current condition, taking into account reported issues,
-detected obstacles, confirmations provided by multiple users over time and their freshness.
-This allows the app to keep an updated and reliable view of path quality.
+The app evaluates path conditions by combining information collected from user reports.
+Reports describe the condition of a specific segment and are used to compute both segment and path status.
+Confirmations and rejections are represented as additional reports and contribute to reliability, while report
+freshness reduces the influence of older observations. The resulting status is then used to rank paths
+returned by the search feature.
 
 \subsubsection*{Path Status Scoring Model}
 \label{subsubsec:path_status_scoring}
@@ -96,21 +111,22 @@ aggregation and quantitative reasoning, each status is mapped to a numerical sco
 \label{subsubsec:report_freshness}
 
 Since real-world path conditions evolve over time, the algorithm assigns a freshness weight to each report in order to
-prioritize recent information. For a report $i$, freshness is computed as:
+prioritize recent information. For a report $i$, freshness is computed from its creation time as:
 
 \[
 	fresh_i = 2^{-\frac{ageMin_i}{H_{min}}}
 \]
 
 where $ageMin_i$ represents the age of the report in minutes, computed as the difference between the current time and
-the report confirmation timestamp.
+the report creation timestamp.
 This exponential decay ensures that older reports progressively lose influence over the aggregation process.
 
 \subsubsection*{Report Validation Contribution}
 \label{subsubsec:report_validation_contribution}
 
-Reports may undergo validation by other users and can be confirmed or rejected. Only validated interactions contribute
-to the reliability of a report. For each report, two partial scores are computed:
+Reports may undergo validation by other users and can be confirmed or rejected. Each
+confirmation or rejection is stored as a new report on the same segment with status \emph{CONFIRMED} or
+\emph{REJECTED}. For each report, two partial scores are computed:
 
 \[
 	confirmedScore = \sum fresh_i \quad \text{for each confirmation}
@@ -120,8 +136,8 @@ to the reliability of a report. For each report, two partial scores are computed
 	rejectedScore = \sum fresh_i \quad \text{for each rejection}
 \]
 
-Reports in the \emph{IGNORED} state do not contribute to either score, while those in the \emph{CREATED} state contribute
-to the confirmed score.
+Reports in the \emph{CREATED} and \emph{CONFIRMED} states contribute to the confirmed score and those in
+\emph{REJECTED} contribute to the rejected score.
 
 \subsubsection*{Report Reliability Computation}
 \label{subsubsec:report_reliability}
@@ -144,8 +160,8 @@ no longer representative of the current path condition.
 \label{subsubsec:path_status_aggregation}
 
 Reports first update the status of the specific path segment they refer to. The segment-level status is derived
-from report scores weighted by reliability and freshness. The path status is then computed
-by combining segment statuses with a weighted mix:
+from report scores weighted by reliability. Rejected reports contribute a negative score to reduce the average.
+The path status is then computed by combining segment statuses with a weighted mix:
 
 \[
 	PathStatusScore = 0.7 \cdot \overline{score}_{reportedSegments} + 0.3 \cdot \overline{score}_{allSegments}
@@ -246,7 +262,7 @@ performance data in relation to external factors.
 
 	\textbf{R11} & The system shall automatically stop the active trip when the user's GPS position deviates from the selected path within a certain threshold.    & Yes                                     \\ \hline
 
-	\textbf{R12} & The system shall allow logged-in users to start a cycling trip in manual or automatic mode.                                                     & Partial - Only Manual Mode was required \\ \hline
+	\textbf{R12} & The system shall allow logged-in users to start a cycling trip in manual or automatic mode.                                                     & Partial - Only Manual Mode required \\ \hline
 
 	\textbf{R13} & The system shall allow logged-in users to stop a currently active trip and save the recorded data.                                              & Yes                                     \\ \hline
 

@@ -3,35 +3,38 @@ the user aims to simply run the application or to actively develop and test it.
 
 In particular, three main usage scenarios are supported:
 \begin{itemize}
-    \item \textbf{Remote backend with prebuilt mobile application}: the user installs a prebuilt APK and interacts with an already deployed backend instance.
-    \item \textbf{Fully local execution}: both the backend services and the mobile application are executed locally for development and testing purposes.
-    \item \textbf{Hybrid configuration}: the mobile application is run locally while relying on a remotely deployed backend.
+	\item \textbf{Remote backend with prebuilt mobile application}: the user installs a prebuilt APK and interacts with an already deployed backend instance.
+	\item \textbf{Fully local execution}: both the backend services and the mobile application are executed locally for development and testing purposes.
+	\item \textbf{Hybrid configuration}: the mobile application is run locally while relying on a remotely deployed backend.
 \end{itemize}
 
 \section{Prerequisites}
 \label{sec:prerequisites}
 
-To run the BBP platform locally, a set of prerequisites must be satisfied to ensure a consistent and 
+To run the BBP platform locally, a set of prerequisites must be satisfied to ensure a consistent and
 reproducible development environment.
 
 \begin{itemize}
-    \item \textbf{Node.js and npm}: required to manage dependencies and execute project scripts for both the
-    backend services and the mobile application. All build, test, and development workflows rely on the Node.js runtime.
-    
-    \item \textbf{Docker and Docker Compose}: required to run backend services and auxiliary components in isolated
-    containers. In the local setup, Docker Compose is used to start the BBP backend, the PostgreSQL database,
-    and the OSRM routing service, ensuring a configuration that closely mirrors the production environment without
-    requiring manual installation of these components on the host system.
-    
-    \item \textbf{Expo CLI}: required to run the mobile application locally during development. It is used to
-    start the Metro bundler and to enable live previews of the application on emulators or physical devices.
-    
-    \item \textbf{Expo Go}: required on a physical mobile device to preview the application during development
-    by connecting to the local Metro bundler started via Expo CLI. May be replaced with an emulator.
+	\item \textbf{Node.js and npm}: required to manage dependencies and execute project scripts for both the
+	      backend services and the mobile application. All build, test, and development workflows rely on the Node.js runtime.
+
+	\item \textbf{Docker and Docker Compose}: required to run backend services and auxiliary components in isolated
+	      containers. In the local setup, Docker Compose is used to start the BBP backend, the PostgreSQL database,
+	      and the OSRM routing service, ensuring a configuration that closely mirrors the production environment without
+	      requiring manual installation of these components on the host system.
+
+	\item \textbf{Expo CLI}: required to run the mobile application locally during development. It is used to
+	      start the Metro bundler and to enable live previews of the application on emulators or physical devices.
+
+	\item \textbf{Expo Go}: required on a physical mobile device to preview the application during development
+	      by connecting to the local Metro bundler started via Expo CLI. May be replaced with an emulator.
 \end{itemize}
 
 \section{Backend Setup}
 \label{sec:backend_setup}
+
+The BBP backend can be executed either as a remotely deployed service or as a locally running instance
+for development and testing purposes.
 
 \subsection{Production Deployment}
 \label{subsec:backend_production}
@@ -87,6 +90,11 @@ Persistent data storage is handled through \textbf{PostgreSQL} accessed via \tex
 allows the backend to rely on a \textbf{managed database connection layer} without hosting a database instance
 directly on the server, while still preserving transactional guarantees and schema consistency.
 
+Caching of data relies on \textbf{Redis}, which runs alongside the backend in the same
+server environment and is reachable only inside the internal Docker network. The backend connects using the
+environment variables \textbf{REDIS\_HOST} and \textbf{REDIS\_PORT}, and uses Redis as a cache layer while
+keeping the database as the source of truth.
+
 In addition to the core backend service, snapping-related functionalities are delegated to a separate
 \textbf{OSRM service}, which runs in its own container. OSRM is responsible for snapping user-defined paths to
 the OpenStreetMap road network using a cycling profile. The backend communicates with OSRM through an
@@ -96,7 +104,7 @@ After deployment, the backend can be verified by inspecting container status and
 
 \begin{verbatim}
 docker compose ps
-docker logs -f bbp_api --tail=50
+docker logs -f bbp-backend-api-1 --tail=50
 \end{verbatim}
 
 A dedicated \textbf{health endpoint} is exposed and can be used by the reverse proxy to verify service
@@ -130,14 +138,15 @@ To build and start the backend locally, the development override is applied on t
 configuration using Docker Compose:
 
 \begin{verbatim}
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+ --build
 \end{verbatim}
 
 Once the backend container is running, application logs can be inspected in real time to monitor startup
 and runtime behavior:
 
 \begin{verbatim}
-docker logs -f bbp_api --tail=50
+docker logs -f bbp-backend-api --tail=50
 \end{verbatim}
 
 A basic health check endpoint is exposed by the backend and can be used to verify that the service is
@@ -156,7 +165,8 @@ in the same environment as the application, without requiring local dependency i
 started with:
 
 \begin{verbatim}
-docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api npm run test:watch
+docker compose -f docker-compose.yml -f docker-compose.dev.yml 
+exec api npm run test
 \end{verbatim}
 
 When the local backend is no longer needed, all running services can be stopped and removed using Docker
@@ -177,6 +187,10 @@ entire runtime environment is isolated within containers.
 Some backend functionalities depend on external services. In a local
 development environment, these services behave differently depending on their availability and deployment
 model.
+
+Caching of trip and statistics data relies on \textbf{Redis}, which is required for the backend to operate
+correctly. In local development, Redis starts together with the backend using Docker Compose.
+Connection settings are controlled via \textbf{REDIS\_HOST} and \textbf{REDIS\_PORT}.
 
 Weather-related features rely on the \textbf{Open-Meteo} service. This integration works out of the box
 in local development, as Open-Meteo provides a public API that does not require authentication or API
@@ -199,8 +213,44 @@ and running the OSRM service inside a Docker container.
 \section{Frontend Setup}
 \label{sec:frontend_setup}
 
-Use Expo CLI to run the app locally on an emulator or a physical device.
-You can also build an APK for Android and install it directly.
+The BBP mobile application can be used either as a prebuilt artifact connected to the production backend
+or as a locally executed application for development and testing purposes.
 
-If you want to use a local server you should change the API URL in the .env file and build it or run it on the emulator,
-since the built app points to the production server.
+\subsection{Deployed Mobile Application}
+\label{subsec:frontend_deployed}
+
+The deployed version of the BBP mobile application is distributed as a prebuilt Android \textbf{APK}.
+This configuration is intended for demonstration, evaluation, and production usage scenarios where no
+local development environment is required.
+
+Users can install the APK directly on their Android device and immediately start using the application.
+In this setup, the mobile client connects to the remotely deployed backend instance exposed through the
+public API endpoint. All backend services, including authentication, path discovery, trip management, and
+report handling, are accessed through the production infrastructure.
+
+\subsection{Local Mobile Application Execution}
+\label{subsec:frontend_local}
+
+For development and testing purposes, the BBP mobile application can be executed locally using
+\textbf{Expo CLI}. This configuration enables rapid iteration, hot reload, and debugging during frontend
+development.
+
+The application can be run either on a physical mobile device using \textbf{Expo Go} or on an Android or
+iOS emulator. In both cases, Expo CLI starts the Metro bundler locally and serves the application bundle
+to the target device.
+
+Before starting the application, developers must ensure they are operating from the mobile application
+project directory. Dependencies are installed using npm, and the development server is started as follows:
+
+\begin{verbatim}
+npx expo start
+\end{verbatim}
+
+During local execution, the mobile application can be configured to target either the production backend
+or a locally running backend instance. This is controlled through environment variables defined in a
+\texttt{.env} file. In particular, the API base URL must be updated to point to the desired backend
+endpoint before starting the Expo development server.
+
+When connected to a locally running backend, this setup allows developers to test end-to-end flows,
+including authentication, path search, trip recording, and report submission.
+Unlike the prebuilt APK, the locally executed application fully supports configuration changes.
