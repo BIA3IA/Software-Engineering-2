@@ -6,12 +6,12 @@ services:
       - .env
     environment:
       - IS_DOCKER=true
-    # ports:
-    #   - "3000:3000"
-    expose:
-      - "3000"
-    networks:
-      - proxy
+    ports:
+      - "3000:3000"
+    # expose:
+    #   - "3000"
+    # networks:
+    #   - proxy
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
       interval: 10s
@@ -37,12 +37,12 @@ services:
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes
-    networks:
-     - proxy
+    #networks:
+    #  - proxy
 
 volumes:
   redis-data:
   
-networks:
-  proxy:
-    external: true
+# networks:
+#   proxy:
+#     external: true
