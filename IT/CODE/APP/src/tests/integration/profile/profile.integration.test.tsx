@@ -224,7 +224,7 @@ describe("profile integration", () => {
 
     expect(await findByText("Total Distance-244.0 km")).toBeTruthy()
     expect(await findByText("Total Time-13h 20m")).toBeTruthy()
-    expect(await findByText("Avg Speed-19.0 km/h")).toBeTruthy()
+    expect(await findByText("Average Speed-19.0 km/h")).toBeTruthy()
   })
 
   test("switches activity period and updates metrics", async () => {
@@ -237,7 +237,7 @@ describe("profile integration", () => {
 
     expect(await findByText("Total Distance-63.0 km")).toBeTruthy()
     expect(await findByText("Trips-6")).toBeTruthy()
-    expect(await findByText("Avg Speed-19.1 km/h")).toBeTruthy()
+    expect(await findByText("Average Speed-19.1 km/h")).toBeTruthy()
   })
 
   test("renders zeros when stats payload is empty", async () => {
