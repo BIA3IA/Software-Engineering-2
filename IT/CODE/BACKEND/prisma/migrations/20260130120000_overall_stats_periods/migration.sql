@@ -15,6 +15,20 @@ BEGIN
     END IF;
 END $$;
 
+-- Rename statId column to statsId if needed
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'Stats' AND column_name = 'statId'
+    ) AND NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'Stats' AND column_name = 'statsId'
+    ) THEN
+        ALTER TABLE "Stats" RENAME COLUMN "statId" TO "statsId";
+    END IF;
+END $$;
+
 -- Create table for period stats
 CREATE TABLE IF NOT EXISTS "OverallStatsPeriod" (
     "id" TEXT NOT NULL,

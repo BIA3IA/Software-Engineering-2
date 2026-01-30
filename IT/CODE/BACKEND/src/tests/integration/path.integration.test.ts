@@ -297,7 +297,7 @@ describe("Path Routes Integration Tests", () => {
             expect(response.body.data.paths[0]).toHaveProperty("pathId");
         });
 
-        test("Should return 404 when no paths found", async () => {
+        test("Should return 200 with empty list when no paths found", async () => {
             geocodeAddressMock.mockResolvedValueOnce({ lat: 45.4642, lng: 9.1900 });
             geocodeAddressMock.mockResolvedValueOnce({ lat: 45.4700, lng: 9.1950 });
             (prisma.path.findMany as jest.Mock).mockResolvedValue([]);
@@ -307,8 +307,10 @@ describe("Path Routes Integration Tests", () => {
             const response = await request(app)
                 .get(`/api/v1/paths/search?origin=${originQuery}&destination=${destinationQuery}`);
 
-            assertStatus(response, 404);
-            expect(response.body.error.code).toBe("NO_ROUTE");
+            assertStatus(response, 200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.count).toBe(0);
+            expect(response.body.data.paths).toEqual([]);
         });
 
     });

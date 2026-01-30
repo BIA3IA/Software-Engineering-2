@@ -202,7 +202,14 @@ export class PathManager {
             }
 
             if (!matchingPaths.length) {
-                throw new NotFoundError('No routes found for the specified origin and destination', 'NO_ROUTE');
+                res.status(200).json({
+                    success: true,
+                    data: {
+                        count: 0,
+                        paths: [],
+                    },
+                });
+                return;
             }
 
             const minDistance = Math.min(...matchingPaths.map(entry => entry.maxDistance));
