@@ -45,6 +45,7 @@ export function ProfileHeroHeader({
             { backgroundColor: palette.button.secondary.bg, shadowColor: palette.border.muted },
             pressed && { opacity: 0.85 },
           ]}
+          testID="profile-settings"
         >
           <Settings size={iconSizes.md} color={palette.button.secondary.text} />
         </Pressable>
@@ -58,6 +59,7 @@ export function ProfileHeroHeader({
             { backgroundColor: palette.brand.surface, borderColor: palette.brand.base },
             pressed && { opacity: 0.9 },
           ]}
+          testID="profile-edit-avatar"
         >
           <View style={[styles.avatar, { backgroundColor: palette.surface.card }] }>
             <Text style={[textStyles.cardTitle, { color: palette.brand.dark }]}>{initial}</Text>
@@ -71,6 +73,7 @@ export function ProfileHeroHeader({
             <Pressable
               onPress={onEditPress}
               style={({ pressed }) => [styles.editBtn, pressed && { opacity: 0.85 }]}
+              testID="profile-edit"
             >
               <Pencil size={iconSizes.sm} color={palette.text.onAccent} />
             </Pressable>

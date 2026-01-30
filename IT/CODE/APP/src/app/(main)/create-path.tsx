@@ -384,6 +384,7 @@ export default function CreatePathScreen() {
           },
         ]}
         onPress={handleCancelCreate}
+        testID="create-path-cancel"
       >
         <X size={iconSizes.lg} color={palette.text.primary} strokeWidth={2.2} />
       </Pressable>
@@ -398,6 +399,7 @@ export default function CreatePathScreen() {
           },
         ]}
         onPress={() => setIsDrawMode((current) => !current)}
+        testID="create-path-draw-toggle"
       >
         <Pencil size={iconSizes.lg} color={isDrawMode ? palette.text.onAccent : palette.text.primary} />
       </Pressable>
@@ -413,6 +415,7 @@ export default function CreatePathScreen() {
         ]}
         onPress={handleUndo}
         disabled={drawnRoute.length === 0}
+        testID="create-path-undo"
       >
         <Undo2
           size={iconSizes.lg}
@@ -425,6 +428,7 @@ export default function CreatePathScreen() {
         onPress={handleSavePath}
         buttonColor={palette.brand.base}
         textColor={palette.text.onAccent}
+        testID="create-path-save"
         style={[
           styles.saveButton,
           {

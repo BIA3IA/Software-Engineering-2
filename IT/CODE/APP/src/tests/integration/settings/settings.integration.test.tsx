@@ -62,4 +62,19 @@ describe("settings integration", () => {
       expect(mockRouter.replace).toHaveBeenCalledWith("/(auth)/welcome")
     })
   })
+
+  test("logout button works via testID", async () => {
+    const { getByTestId, findByText } = render(<SettingsScreen />)
+
+    fireEvent.press(getByTestId("settings-logout"))
+    expect(await findByText("Log Out?")).toBeTruthy()
+  })
+
+  test("back button calls router.back", () => {
+    const { getByTestId } = render(<SettingsScreen />)
+
+    fireEvent.press(getByTestId("settings-back"))
+
+    expect(mockRouter.back).toHaveBeenCalled()
+  })
 })

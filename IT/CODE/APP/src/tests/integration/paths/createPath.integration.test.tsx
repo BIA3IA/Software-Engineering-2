@@ -2,7 +2,7 @@ import React from "react"
 import { render, fireEvent, waitFor } from "@testing-library/react-native"
 import CreatePathScreen from "@/app/(main)/create-path"
 import { createPathApi, snapPathApi } from "@/api/paths"
-import { mockSearchParams } from "@/jest.setup"
+import { mockSearchParams, mockRouter } from "@/jest.setup"
 
 jest.mock("@/api/paths", () => ({
     createPathApi: jest.fn(),
@@ -49,6 +49,7 @@ describe("create-path integration", () => {
         jest.clearAllMocks()
             ; (createPathApi as jest.Mock).mockReset()
             ; (snapPathApi as jest.Mock).mockReset()
+        mockRouter.replace.mockClear()
         mockSearchParams.value = { name: "Test Path", description: "Desc", visibility: "public" }
     })
 
@@ -89,6 +90,32 @@ describe("create-path integration", () => {
                     { start: { lat: 1, lng: 2 }, end: { lat: 3, lng: 4 } },
                 ],
             })
+        })
+    })
+
+    test("success popup navigates to path library", async () => {
+        ; (snapPathApi as jest.Mock).mockResolvedValueOnce([
+            { lat: 1, lng: 2 },
+            { lat: 3, lng: 4 },
+        ])
+            ; (createPathApi as jest.Mock).mockResolvedValueOnce(undefined)
+
+        const { getByTestId, getByText, findByText } = render(<CreatePathScreen />)
+
+        fireEvent(getByTestId("map"), "press", { nativeEvent: { coordinate: { latitude: 1, longitude: 2 } } })
+        fireEvent(getByTestId("map"), "press", { nativeEvent: { coordinate: { latitude: 3, longitude: 4 } } })
+
+        await waitFor(() => {
+            expect(snapPathApi).toHaveBeenCalled()
+        })
+
+        fireEvent.press(getByText("Save Path"))
+
+        expect(await findByText("Path Creates!")).toBeTruthy()
+        fireEvent.press(getByText("Go To Path Library"))
+
+        await waitFor(() => {
+            expect(mockRouter.replace).toHaveBeenCalledWith("/paths")
         })
     })
 
@@ -203,5 +230,18 @@ describe("create-path integration", () => {
         expect(createPathApi).toHaveBeenCalledTimes(1)
 
         resolveSave?.(undefined)
+    })
+
+    test("discard path confirms and navigates home", async () => {
+        const { getByTestId, findByText } = render(<CreatePathScreen />)
+
+        fireEvent.press(getByTestId("create-path-cancel"))
+
+        expect(await findByText("Discard Path?")).toBeTruthy()
+        fireEvent.press(await findByText("Yes, Discard"))
+
+        await waitFor(() => {
+            expect(mockRouter.replace).toHaveBeenCalledWith("/(main)/home")
+        })
     })
 })
