@@ -3,6 +3,7 @@ import { render, fireEvent, waitFor } from "@testing-library/react-native"
 import PathsScreen from "@/app/(main)/paths"
 import { getMyPathsApi, deletePathApi, changePathVisibilityApi } from "@/api/paths"
 import { mockRouter } from "@/jest.setup"
+import * as Location from "expo-location"
 
 jest.mock("@/api/paths", () => ({
     getMyPathsApi: jest.fn(),
@@ -93,13 +94,17 @@ jest.mock("@/hooks/useTripLaunchSelection", () => ({
     useSetTripLaunchSelection: () => mockSetTripLaunchSelection,
 }))
 
+const mockIsNearOrigin = jest.fn()
+
 jest.mock("@/utils/geo", () => ({
-    isNearOrigin: () => true,
+    isNearOrigin: (...args: any[]) => mockIsNearOrigin(...args),
 }))
 
 describe("paths integration", () => {
     beforeEach(() => {
         jest.clearAllMocks()
+        mockIsNearOrigin.mockReset()
+        mockIsNearOrigin.mockReturnValue(true)
     })
 
     test("loads and renders paths on focus", async () => {
@@ -154,6 +159,7 @@ describe("paths integration", () => {
     })
 
     test("start trip sets selection and navigates home", async () => {
+        mockIsNearOrigin.mockReturnValue(true)
         ; (getMyPathsApi as jest.Mock).mockResolvedValueOnce([
             {
                 pathId: "p1",
@@ -176,6 +182,53 @@ describe("paths integration", () => {
 
         expect(mockSetTripLaunchSelection).toHaveBeenCalled()
         expect(mockRouter.replace).toHaveBeenCalledWith("/(main)/home")
+    })
+
+    test("start trip button hidden when not near origin", async () => {
+        mockIsNearOrigin.mockReturnValue(false)
+        ; (getMyPathsApi as jest.Mock).mockResolvedValueOnce([
+            {
+                pathId: "p1",
+                title: "My Path",
+                description: "desc",
+                status: "OPTIMAL",
+                score: 5,
+                visibility: true,
+                origin: { lat: 1, lng: 2 },
+                destination: { lat: 3, lng: 4 },
+                createdAt: new Date().toISOString(),
+                segmentCount: 2,
+            },
+        ])
+
+        const { findByText, queryByText } = render(<PathsScreen />)
+
+        await findByText("My Path")
+        expect(queryByText("Start Trip")).toBeNull()
+    })
+
+    test("start trip hidden when location permission denied", async () => {
+        mockIsNearOrigin.mockReturnValue(true)
+        ;(Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValueOnce({ status: "denied" })
+        ; (getMyPathsApi as jest.Mock).mockResolvedValueOnce([
+            {
+                pathId: "p1",
+                title: "My Path",
+                description: "desc",
+                status: "OPTIMAL",
+                score: 5,
+                visibility: true,
+                origin: { lat: 1, lng: 2 },
+                destination: { lat: 3, lng: 4 },
+                createdAt: new Date().toISOString(),
+                segmentCount: 2,
+            },
+        ])
+
+        const { findByText, queryByText } = render(<PathsScreen />)
+
+        await findByText("My Path")
+        expect(queryByText("Start Trip")).toBeNull()
     })
 
     test("visibility change calls api", async () => {

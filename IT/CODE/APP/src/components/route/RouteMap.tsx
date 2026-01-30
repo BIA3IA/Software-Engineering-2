@@ -9,6 +9,7 @@ import { radius, scale, verticalScale } from "@/theme/layout"
 import { AlertTriangle, Bike, Cloud } from "lucide-react-native"
 import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
 import { MapIconMarker } from "@/components/ui/MapIconMarker"
+import { MapCallout } from "@/components/ui/MapCallout"
 import { getConditionLabel, getObstacleLabel } from "@/utils/reportOptions"
 
 type LatLng = { latitude: number; longitude: number }
@@ -50,6 +51,7 @@ export function RouteMap({
 }: RouteMapProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
+  const markerSize = scale(30)
   const insets = useSafeAreaInsets()
   const badgeIconSize = iconSizes.sm
   const overlayIconSize = iconSizes.md
@@ -59,6 +61,16 @@ export function RouteMap({
   const [weatherOpen, setWeatherOpen] = useState(false)
   const [overlayPosition, setOverlayPosition] = useState<{ top: number; right: number } | null>(null)
   const [badgeHeight, setBadgeHeight] = useState(0)
+  const [calloutState, setCalloutState] = useState<{
+    x: number
+    y: number
+    coord: { latitude: number; longitude: number }
+    items: Parameters<typeof MapCallout>[0]["items"]
+    variant: "purple" | "green" | "orange" | "red" | "blue"
+    visible: boolean
+  } | null>(null)
+  const [calloutSize, setCalloutSize] = useState({ width: 0, height: 0 })
+  const [mapLayout, setMapLayout] = useState({ x: 0, y: 0, width: 0, height: 0 })
 
   const start = route[0]
   const end = route[route.length - 1]
@@ -105,6 +117,63 @@ export function RouteMap({
     }
   }
 
+  async function openMapCallout(
+    coordinate: { latitude: number; longitude: number },
+    items: Parameters<typeof MapCallout>[0]["items"],
+    variant: "purple" | "green" | "orange" | "red" | "blue"
+  ) {
+    try {
+      const point = await mapRef.current?.pointForCoordinate(coordinate)
+      if (!point) {
+        setCalloutState({
+          x: mapLayout.width / 2,
+          y: mapLayout.height / 2,
+          coord: coordinate,
+          items,
+          variant,
+          visible: true,
+        })
+        return
+      }
+      setCalloutState({ x: point.x, y: point.y, coord: coordinate, items, variant, visible: true })
+    } catch {
+      setCalloutState({
+        x: mapLayout.width / 2,
+        y: mapLayout.height / 2,
+        coord: coordinate,
+        items,
+        variant,
+        visible: true,
+      })
+    }
+  }
+
+  async function refreshCalloutPosition() {
+    if (!calloutState) return
+    try {
+      const point = await mapRef.current?.pointForCoordinate(calloutState.coord)
+      if (!point) return
+      setCalloutState((prev) => {
+        if (!prev) return prev
+        if (!prev.visible) return prev
+        const edgeMargin = scale(80)
+        const isInside =
+          point.x >= edgeMargin &&
+          point.y >= edgeMargin &&
+          point.x <= mapLayout.width - edgeMargin &&
+          point.y <= mapLayout.height - edgeMargin
+        return {
+          ...prev,
+          x: point.x,
+          y: point.y,
+          visible: isInside ? true : false,
+        }
+      })
+    } catch {
+      // no-op
+    }
+  }
+
   return (
     <View style={styles.section}>
       <Text style={[textStyles.cardTitle, { color: palette.text.link }]}>
@@ -127,6 +196,14 @@ export function RouteMap({
             showsCompass={false}
             showsUserLocation={showUserLocation}
             showsMyLocationButton={false}
+            onPress={() => setCalloutState(null)}
+            onLayout={(event) => {
+              const { x, y, width, height } = event.nativeEvent.layout
+              setMapLayout({ x, y, width, height })
+            }}
+            onRegionChangeComplete={() => {
+              void refreshCalloutPosition()
+            }}
           >
             {route.length > 1 && (
               <Polyline
@@ -146,7 +223,17 @@ export function RouteMap({
             )}
 
             {end && (
-              <Marker coordinate={end} title="End">
+              <Marker
+                coordinate={end}
+                onPress={() =>
+                  openMapCallout(end, [
+                    {
+                      value: "Destination",
+                      tone: "green",
+                    },
+                  ], "green")
+                }
+              >
                 <MapIconMarker
                   color={palette.accent.green.base}
                   borderColor={palette.text.onAccent}
@@ -158,8 +245,25 @@ export function RouteMap({
               <Marker
                 key={`report-${report.reportId}`}
                 coordinate={{ latitude: report.position.lat, longitude: report.position.lng }}
-                title={getObstacleLabel(report.obstacleType)}
-                description={getConditionLabel(report.pathStatus)}
+                onPress={() =>
+                  openMapCallout(
+                    { latitude: report.position.lat, longitude: report.position.lng },
+                    (() => {
+                      const toneKey = getConditionToneKey(report.pathStatus)
+                      return [
+                        {
+                          value: getObstacleLabel(report.obstacleType),
+                          tone: "orange",
+                        },
+                        {
+                          value: getConditionLabel(report.pathStatus),
+                          tone: toneKey,
+                        },
+                      ]
+                    })(),
+                    "red"
+                  )
+                }
               >
                 <MapIconMarker
                   color={palette.status.danger}
@@ -170,6 +274,36 @@ export function RouteMap({
             ))}
           </MapView>
         </View>
+
+        {calloutState?.visible ? (
+          <View pointerEvents="box-none" style={styles.calloutOverlay}>
+            <View
+              onLayout={(event) => {
+                const { width, height } = event.nativeEvent.layout
+                if (width && height && (width !== calloutSize.width || height !== calloutSize.height)) {
+                  setCalloutSize({ width, height })
+                }
+              }}
+              style={[
+                styles.calloutAnchor,
+                {
+                  left: clamp(
+                    mapLayout.x + calloutState.x - calloutSize.width / 2 - scale(11),
+                    mapLayout.x + scale(8),
+                    mapLayout.x + mapLayout.width - calloutSize.width - scale(8)
+                  ),
+                  top: clamp(
+                    mapLayout.y + calloutState.y - calloutSize.height - verticalScale(26) - markerSize / 2,
+                    mapLayout.y + verticalScale(8),
+                    mapLayout.y + mapLayout.height - calloutSize.height - verticalScale(8)
+                  ),
+                },
+              ]}
+            >
+              <MapCallout items={calloutState.items} variant={calloutState.variant} />
+            </View>
+          </View>
+        ) : null}
 
         {showWeatherBadge && (
           <Pressable
@@ -183,6 +317,7 @@ export function RouteMap({
               { backgroundColor: palette.surface.card, shadowColor: palette.border.muted },
               pressed && { opacity: 0.85 },
             ]}
+            testID="route-map-weather"
           >
             <Cloud size={badgeIconSize} color={palette.brand.dark} />
             <Text style={[textStyles.bodySmall, styles.weatherText, { color: palette.text.link }]}>
@@ -261,6 +396,27 @@ function WeatherRow({ label, value }: { label: string; value: string }) {
       </Text>
     </View>
   )
+}
+
+type ToneKey = "purple" | "green" | "orange" | "red" | "blue"
+
+function getConditionToneKey(condition?: string): ToneKey {
+  switch (condition) {
+    case "SUFFICIENT":
+      return "green"
+    case "MEDIUM":
+      return "blue"
+    case "REQUIRES_MAINTENANCE":
+      return "orange"
+    case "CLOSED":
+      return "red"
+    default:
+      return "purple"
+  }
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value))
 }
 
 function regionFromRoute(route: LatLng[]) {
@@ -367,5 +523,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: verticalScale(8),
     borderTopWidth: 1,
+  },
+  calloutOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  calloutAnchor: {
+    position: "absolute",
   },
 })

@@ -3,6 +3,8 @@ import { render, fireEvent, waitFor } from "@testing-library/react-native"
 import HomeScreen from "@/app/(main)/home"
 import { searchPathsApi } from "@/api/paths"
 import { createTripApi } from "@/api/trips"
+import { getReportsByPathApi } from "@/api/reports"
+import * as Location from "expo-location"
 
 jest.mock("@/api/paths", () => ({
     searchPathsApi: jest.fn(),
@@ -10,6 +12,10 @@ jest.mock("@/api/paths", () => ({
 
 jest.mock("@/api/trips", () => ({
     createTripApi: jest.fn(),
+}))
+
+jest.mock("@/api/reports", () => ({
+    getReportsByPathApi: jest.fn(),
 }))
 
 let mockCurrentUser = { id: "user-1" }
@@ -32,6 +38,11 @@ jest.mock("@/hooks/useLoginPrompt", () => ({
     useLoginPrompt: () => jest.fn(),
 }))
 
+jest.mock("@/constants/appConfig", () => ({
+    ...jest.requireActual("@/constants/appConfig"),
+    AUTO_COMPLETE_DISTANCE_METERS: 0,
+}))
+
 jest.mock("@/hooks/useBottomNavVisibility", () => ({
     useBottomNavVisibility: () => ({ setHidden: jest.fn() }),
 }))
@@ -48,12 +59,19 @@ jest.mock("@/components/modals/ReportIssueModal", () => ({
     ReportIssueModal: () => null,
 }))
 
+let mockLocation = { latitude: 45.0, longitude: 9.0, heading: 0 }
+let locationCallback: any = null
+
 jest.mock("expo-location", () => ({
     requestForegroundPermissionsAsync: jest.fn(async () => ({ status: "granted" })),
     getCurrentPositionAsync: jest.fn(async () => ({
-        coords: { latitude: 45.0, longitude: 9.0, heading: 0 },
+        coords: mockLocation,
     })),
-    watchPositionAsync: jest.fn(async () => ({ remove: jest.fn() })),
+    watchPositionAsync: jest.fn(async (_options: any, callback: any) => {
+        locationCallback = callback
+        callback?.({ coords: mockLocation })
+        return { remove: jest.fn() }
+    }),
     reverseGeocodeAsync: jest.fn(async () => []),
     LocationAccuracy: { Balanced: "balanced" },
 }))
@@ -76,7 +94,15 @@ describe("home paths integration", () => {
         jest.clearAllMocks()
         mockTripSelection = null
         mockCurrentUser = { id: "user-1" }
+        mockLocation = { latitude: 45.0, longitude: 9.0, heading: 0 }
+        locationCallback = null
+        ;(getReportsByPathApi as jest.Mock).mockResolvedValue([])
     })
+
+    function emitLocation(lat: number, lng: number) {
+        mockLocation = { latitude: lat, longitude: lng, heading: 0 }
+        locationCallback?.({ coords: mockLocation })
+    }
 
     test("search does not fire without origin or destination", () => {
         const { getByText } = render(<HomeScreen />)
@@ -120,6 +146,7 @@ describe("home paths integration", () => {
             route: [
                 { latitude: 45.0, longitude: 9.0 },
                 { latitude: 45.001, longitude: 9.001 },
+                { latitude: 45.002, longitude: 9.002 },
             ],
             pathSegments: [
                 {
@@ -127,13 +154,20 @@ describe("home paths integration", () => {
                     polylineCoordinates: [
                         { latitude: 45.0, longitude: 9.0 },
                         { latitude: 45.001, longitude: 9.001 },
+                        { latitude: 45.002, longitude: 9.002 },
                     ],
                 },
             ],
         }
-        ; (createTripApi as jest.Mock).mockResolvedValueOnce(undefined)
+        mockLocation = { latitude: 45.001, longitude: 9.001, heading: 0 }
+        ; (createTripApi as jest.Mock).mockResolvedValueOnce("trip-1")
 
         const { getByText, findByText } = render(<HomeScreen />)
+
+        await waitFor(() => {
+            expect(Location.getCurrentPositionAsync).toHaveBeenCalled()
+        })
+        emitLocation(45.001, 9.001)
 
         fireEvent.press(getByText("Complete Trip"))
 
@@ -141,7 +175,7 @@ describe("home paths integration", () => {
             expect(createTripApi).toHaveBeenCalledWith(
                 expect.objectContaining({
                     origin: { lat: 45.0, lng: 9.0 },
-                    destination: { lat: 45.001, lng: 9.001 },
+                    destination: { lat: 45.002, lng: 9.002 },
                     title: "Morning Loop",
                 })
             )
@@ -157,17 +191,24 @@ describe("home paths integration", () => {
             title: "Broken Path",
             route: [
                 { latitude: 45.0, longitude: 9.0 },
+                { latitude: 45.001, longitude: 9.001 },
                 { latitude: 45.002, longitude: 9.002 },
             ],
             pathSegments: [],
         }
+        mockLocation = { latitude: 45.001, longitude: 9.001, heading: 0 }
 
         const { getByText, findByText } = render(<HomeScreen />)
+
+        await waitFor(() => {
+            expect(Location.getCurrentPositionAsync).toHaveBeenCalled()
+        })
+        emitLocation(45.001, 9.001)
 
         fireEvent.press(getByText("Complete Trip"))
 
         expect(await findByText("Trip Error")).toBeTruthy()
-        expect(await findByText("Trip segments are incomplete. Please try again.")).toBeTruthy()
+        expect(await findByText("Trip too short to be saved. Please ride a bit longer and try again.")).toBeTruthy()
         expect(createTripApi).not.toHaveBeenCalled()
     })
 
@@ -177,6 +218,7 @@ describe("home paths integration", () => {
             title: "City Ride",
             route: [
                 { latitude: 45.0, longitude: 9.0 },
+                { latitude: 45.0015, longitude: 9.0015 },
                 { latitude: 45.003, longitude: 9.003 },
             ],
             pathSegments: [
@@ -184,18 +226,26 @@ describe("home paths integration", () => {
                     segmentId: "seg-2",
                     polylineCoordinates: [
                         { latitude: 45.0, longitude: 9.0 },
+                        { latitude: 45.0015, longitude: 9.0015 },
                         { latitude: 45.003, longitude: 9.003 },
                     ],
                 },
             ],
         }
+        mockLocation = { latitude: 45.0015, longitude: 9.0015, heading: 0 }
         ; (createTripApi as jest.Mock).mockRejectedValueOnce(new Error("fail"))
 
         const { getByText, findByText } = render(<HomeScreen />)
+
+        await waitFor(() => {
+            expect(Location.getCurrentPositionAsync).toHaveBeenCalled()
+        })
+        emitLocation(45.0015, 9.0015)
 
         fireEvent.press(getByText("Complete Trip"))
 
         expect(await findByText("Trip Error")).toBeTruthy()
         expect(await findByText("API error")).toBeTruthy()
     })
+
 })

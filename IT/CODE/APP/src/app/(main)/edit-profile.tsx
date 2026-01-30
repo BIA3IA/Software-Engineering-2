@@ -134,6 +134,7 @@ export default function EditProfileScreen() {
               { backgroundColor: palette.button.secondary.bg, shadowColor: palette.border.muted },
               pressed && { opacity: 0.9 },
             ]}
+            testID="edit-profile-back"
           >
             <X size={iconSizes.md} color={palette.button.secondary.text} />
           </Pressable>
@@ -244,10 +245,11 @@ export default function EditProfileScreen() {
               title={isSubmitting ? "Saving..." : "Save Changes"}
               onPress={handleSubmit(onSubmit)}
               variant="primary"
+              testID="edit-profile-save"
             />
           </View>
           <View style={styles.actionButton}>
-            <AppButton title="Cancel" variant="secondary" onPress={() => router.back()} />
+            <AppButton title="Cancel" variant="secondary" onPress={() => router.back()} testID="edit-profile-cancel" />
           </View>
         </View>
 

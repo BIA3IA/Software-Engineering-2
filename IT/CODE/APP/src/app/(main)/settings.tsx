@@ -121,6 +121,7 @@ export default function SettingsScreen() {
               { backgroundColor: palette.button.secondary.bg },
               pressed && { opacity: 0.9 },
             ]}
+            testID="settings-back"
           >
             <X size={iconSizes.md} color={palette.button.secondary.text} />
           </Pressable>
@@ -208,6 +209,7 @@ export default function SettingsScreen() {
           <Pressable
             onPress={handleLogoutPress}
             style={({ pressed }) => [styles.simpleRow, pressed && { opacity: 0.85 }]}
+            testID="settings-logout"
           >
             <View style={[styles.iconBadge, { backgroundColor: `${palette.accent.red.base}`, borderColor: palette.accent.red.base, borderWidth: 1 }]}>
               <LogOut size={iconSizes.md} color={palette.accent.red.surface} />
