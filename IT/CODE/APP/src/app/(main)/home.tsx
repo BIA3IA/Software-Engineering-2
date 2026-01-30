@@ -37,6 +37,9 @@ import { getConditionLabel, getObstacleLabel } from "@/utils/reportOptions"
 import { useFollowUserLocation } from "@/hooks/useFollowUserLocation"
 import {
   AUTO_COMPLETE_DISTANCE_METERS,
+  CYCLING_PROMPT_COOLDOWN_MS,
+  CYCLING_PROMPT_MIN_MS,
+  CYCLING_SPEED_KMH,
   OFF_ROUTE_MAX_CONSECUTIVE,
   OFF_ROUTE_MAX_MS,
   OFF_ROUTE_DISTANCE_METERS,
@@ -91,6 +94,7 @@ export default function HomeScreen() {
   const [isSearching, setIsSearching] = React.useState(false)
   const [isCancelTripPopupVisible, setCancelTripPopupVisible] = React.useState(false)
   const [isOffRoutePopupVisible, setOffRoutePopupVisible] = React.useState(false)
+  const [isCyclingPromptVisible, setCyclingPromptVisible] = React.useState(false)
   const [errorPopup, setErrorPopup] = React.useState({
     visible: false,
     title: "",
@@ -112,6 +116,11 @@ export default function HomeScreen() {
   const offRouteCountRef = React.useRef(0)
   const offRouteStartedAtRef = React.useRef<number | null>(null)
   const offRouteContinueUsedRef = React.useRef(false)
+  const cyclingPromptAtRef = React.useRef(0)
+  const cyclingStartAtRef = React.useRef<number | null>(null)
+  const cyclingPromptVisibleRef = React.useRef(false)
+  const lastSpeedSampleRef = React.useRef<LatLng | null>(null)
+  const lastSpeedAtRef = React.useRef(0)
   const reportSessionIdRef = React.useRef<string | null>(null)
   const confirmationTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const promptedReportIdsRef = React.useRef(new Set<string>())
@@ -484,6 +493,29 @@ export default function HomeScreen() {
     }, 2500)
   }
 
+  async function handleCyclingPromptPrimary() {
+    if (!userLocation) {
+      setCyclingPromptVisible(false)
+      return
+    }
+    try {
+      const reverse = await Location.reverseGeocodeAsync({
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+      })
+      const formatted = formatAddress(reverse[0])
+      if (formatted) {
+        setStartPoint(formatted)
+      } else {
+        setStartPoint(`${userLocation.latitude.toFixed(5)}, ${userLocation.longitude.toFixed(5)}`)
+      }
+    } catch {
+      setStartPoint(`${userLocation.latitude.toFixed(5)}, ${userLocation.longitude.toFixed(5)}`)
+    } finally {
+      setCyclingPromptVisible(false)
+    }
+  }
+
   function handleCloseErrorPopup() {
     setErrorPopup((prev) => ({
       ...prev,
@@ -600,6 +632,16 @@ export default function HomeScreen() {
   }, [activeTrip, destinationPoint, userLocation])
 
   React.useEffect(() => {
+    cyclingPromptVisibleRef.current = isCyclingPromptVisible
+  }, [isCyclingPromptVisible])
+
+  React.useEffect(() => {
+    if (hasActiveNavigation && isCyclingPromptVisible) {
+      setCyclingPromptVisible(false)
+    }
+  }, [hasActiveNavigation, isCyclingPromptVisible])
+
+  React.useEffect(() => {
     if (!activeTrip || !userLocation) return
     if (reportConfirmation) return
     const reports = reportsByPathId[activeTrip.id] ?? []
@@ -700,6 +742,41 @@ export default function HomeScreen() {
                 setUserHeading(heading)
                 lastHeadingRef.current = heading
                 lastHeadingAtRef.current = now
+              }
+            }
+
+            if (!hasActiveNavigation) {
+              let derivedKmh: number | null = null
+              const lastSpeedPoint = lastSpeedSampleRef.current
+              if (lastSpeedPoint && lastSpeedAtRef.current > 0) {
+                const deltaSeconds = (now - lastSpeedAtRef.current) / 1000
+                if (deltaSeconds > 0) {
+                  const meters = haversineDistanceMetersLatLng(lastSpeedPoint, next)
+                  derivedKmh = (meters / deltaSeconds) * 3.6
+                }
+              }
+              lastSpeedSampleRef.current = next
+              lastSpeedAtRef.current = now
+
+              const speedKmh = derivedKmh
+              if (speedKmh !== null && speedKmh >= CYCLING_SPEED_KMH) {
+                if (cyclingStartAtRef.current === null) {
+                  cyclingStartAtRef.current = now
+                }
+              } else {
+                cyclingStartAtRef.current = null
+              }
+
+              const cyclingElapsed =
+                cyclingStartAtRef.current !== null ? now - cyclingStartAtRef.current : 0
+
+              if (
+                cyclingElapsed >= CYCLING_PROMPT_MIN_MS &&
+                !cyclingPromptVisibleRef.current &&
+                now - cyclingPromptAtRef.current > CYCLING_PROMPT_COOLDOWN_MS
+              ) {
+                cyclingPromptAtRef.current = now
+                setCyclingPromptVisible(true)
               }
             }
           }
@@ -1047,6 +1124,41 @@ export default function HomeScreen() {
         visible={reportVisible}
         onClose={() => setReportVisible(false)}
         onSubmit={handleSubmitReport}
+      />
+      <AppPopup
+        visible={isCyclingPromptVisible}
+        title="Are you biking?"
+        message={
+          isGuest
+            ? "Don't forget to start a trip! Log in to track your progress."
+            : "Search for a path and start recording a trip or create your new path!"
+        }
+        icon={<Navigation size={iconSizes.xl} color={palette.brand.base} />}
+        iconBackgroundColor={`${palette.brand.surface}`}
+        onClose={() => setCyclingPromptVisible(false)}
+        primaryButton={{
+          label: isGuest ? "Log in" : "Got it",
+          variant: "primary",
+          onPress: () => {
+            if (isGuest) {
+              setCyclingPromptVisible(false)
+              router.replace("/(auth)/welcome")
+              return
+            }
+            void handleCyclingPromptPrimary()
+          },
+          buttonColor: palette.brand.base,
+          textColor: palette.text.onAccent,
+        }}
+        secondaryButton={
+          isGuest
+            ? {
+                label: "Not now",
+                variant: "secondary",
+                onPress: () => setCyclingPromptVisible(false),
+              }
+            : undefined
+        }
       />
       <AppPopup
         visible={Boolean(reportConfirmation)}

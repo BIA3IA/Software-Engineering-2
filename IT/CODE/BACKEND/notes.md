@@ -792,7 +792,7 @@ Check Status:
 
 ```bash
 docker compose ps
-docker logs -f bbp_api --tail=50
+docker logs -f bbp-backend-api-1 --tail=50
 ```
 
 Health Check:

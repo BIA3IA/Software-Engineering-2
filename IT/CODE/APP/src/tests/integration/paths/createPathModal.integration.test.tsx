@@ -1,5 +1,5 @@
 import React from "react"
-import { render, fireEvent } from "@testing-library/react-native"
+import { render, fireEvent, waitFor } from "@testing-library/react-native"
 import { CreatePathModal } from "@/components/modals/CreatePathModal"
 
 const mockSelectionOverlay = jest.fn()
@@ -101,10 +101,15 @@ describe("create path modal integration", () => {
         fireEvent.changeText(getByPlaceholderText("Describe the path"), "Desc")
         fireEvent.press(getByText("Manual"))
 
-        await new Promise((resolve) => setTimeout(resolve, 0))
+        await waitFor(() => {
+            expect(mockSelectionOverlay).toHaveBeenCalled()
+        })
         const lastOverlayProps = mockSelectionOverlay.mock.calls.at(-1)?.[0]
         lastOverlayProps?.onSelect?.("automatic")
-        await new Promise((resolve) => setTimeout(resolve, 0))
+
+        await waitFor(() => {
+            expect(getByText("Automatic")).toBeTruthy()
+        })
 
         fireEvent.press(getByText("Start Creating"))
 
