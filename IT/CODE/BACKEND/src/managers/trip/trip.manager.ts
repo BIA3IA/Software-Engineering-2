@@ -6,8 +6,8 @@ import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/ind
 import logger from '../../utils/logger';
 import { sortTripSegmentsByChain } from '../../utils/index.js';
 import { polylineDistanceKm } from '../../utils/geo.js';
-import { incrementTripCount, decrementTripCount, getCachedTripStat, setCachedTripStat } from '../../utils/cache.js';
-import { statsManager } from '../stat/stat.manager.js';
+import { incrementTripCount, decrementTripCount, getCachedTripStats, setCachedTripStats } from '../../utils/cache.js';
+import { statsManager } from '../stats/stats.manager.js';
 
 export class TripManager {
 
@@ -102,9 +102,9 @@ export class TripManager {
                     // Compute per-trip stats and cache them
                     await statsManager.computeStats(trip.tripId);
                     
-                    const stat = await queryManager.getStatByTripId(trip.tripId);
-                    if (stat) {
-                        await setCachedTripStat(trip.tripId, stat);
+                    const stats = await queryManager.getStatsByTripId(trip.tripId);
+                    if (stats) {
+                        await setCachedTripStats(trip.tripId, stats);
                     }
                     
                     // Compute overall stats (also cache them inside computeOverallStats)
@@ -170,20 +170,20 @@ export class TripManager {
                 Promise.all(
                     sortedTrips.map(async trip => {
                         // Try Redis cache first
-                        let stat = await getCachedTripStat(trip.tripId);
+                        let stats = await getCachedTripStats(trip.tripId);
                         
-                        if (stat) {
+                        if (stats) {
                             // Cache hit
-                            return stat;
+                            return stats;
                         }
 
                         // Cache miss, try DB
-                        stat = await queryManager.getStatByTripId(trip.tripId).catch(() => null);
+                        stats = await queryManager.getStatsByTripId(trip.tripId).catch(() => null);
                         
-                        if (stat) {
+                        if (stats) {
                             // Found in DB, cache for next time
-                            await setCachedTripStat(trip.tripId, stat);
-                            return stat;
+                            await setCachedTripStats(trip.tripId, stats);
+                            return stats;
                         }
 
                         // Not in DB either, compute on-the-fly                        
@@ -192,11 +192,11 @@ export class TripManager {
                             await statsManager.computeStats(trip.tripId);
                             
                             // Fetch the newly computed stats
-                            stat = await queryManager.getStatByTripId(trip.tripId).catch(() => null);
+                            stats = await queryManager.getStatsByTripId(trip.tripId).catch(() => null);
                             
-                            if (stat) {
+                            if (stats) {
                                 // Cache the newly computed stats
-                                await setCachedTripStat(trip.tripId, stat);
+                                await setCachedTripStats(trip.tripId, stats);
                             } else {
                                 logger.error({ tripId: trip.tripId }, 'Failed to retrieve stats after computation');
                             }
@@ -204,7 +204,7 @@ export class TripManager {
                             logger.error({ err: error, tripId: trip.tripId }, 'Failed to compute stats on-the-fly');
                         }
                         
-                        return stat;
+                        return stats;
                     })
                 ),
             ]);

@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, StatsPeriod } from "@prisma/client";
 import { prisma } from "../../utils/index.js";
-import { TripSegments, TripStatistics, WeatherData, PathWithSegments, Coordinates } from "../../types/index.js";
+import { TripSegments, WeatherData, PathWithSegments, Coordinates } from "../../types/index.js";
 import { SEGMENT_MATCH_TOLERANCE_DEG } from "../../constants/appConfig.js";
 
 
@@ -597,8 +597,8 @@ export class QueryManager {
 
         return result.count;
     }
-    async getStatByTripId(tripId: string) {
-        return await prisma.stat.findUnique({
+    async getStatsByTripId(tripId: string) {
+        return await prisma.stats.findUnique({
             where: { tripId }
         });
     }
@@ -606,14 +606,14 @@ export class QueryManager {
     /**
      * UC20: Persists a newly computed per-trip metric
      */
-    async createStatRecord(data: { 
+    async createStatsRecord(data: { 
         tripId: string; 
         userId: string; 
         avgSpeed: number; 
         duration: number; 
         kilometers: number 
     }) {
-        return await prisma.stat.create({
+        return await prisma.stats.create({
             data: {
                 tripId: data.tripId,
                 userId: data.userId,
@@ -625,15 +625,120 @@ export class QueryManager {
     }
 
     /**
-     * UC22: Fetches all individual stat records for a user to calculate averages
+     * UC22: Fetches all individual stats records for a user to calculate averages
      */
     async getAllStatsByUserId(userId: string) {
-        return await prisma.stat.findMany({
+        return await prisma.stats.findMany({
             where: { userId }
         });
     }
 
-    // --- OVERALL STAT METHODS (Aggregates) ---
+    async getPathCountByUserIdInRange(userId: string, start?: Date, end?: Date) {
+        const createdAtFilter =
+            start || end
+                ? {
+                      ...(start ? { gte: start } : {}),
+                      ...(end ? { lt: end } : {}),
+                  }
+                : undefined;
+
+        return await prisma.path.count({
+            where: {
+                userId,
+                ...(createdAtFilter ? { createdAt: createdAtFilter } : {}),
+            },
+        });
+    }
+
+    async getStatsTotalsByUserId(userId: string) {
+        return await prisma.stats.aggregate({
+            where: { userId },
+            _sum: {
+                kilometers: true,
+                duration: true,
+            },
+            _max: {
+                kilometers: true,
+                duration: true,
+            },
+        });
+    }
+
+    async upsertOverallStatsPeriod(
+        userId: string,
+        period: StatsPeriod,
+        data: {
+            avgSpeed: number;
+            avgDuration: number;
+            avgKilometers: number;
+            totalKilometers: number;
+            totalTime: number;
+            longestKilometer: number;
+            longestTime: number;
+            pathsCreated: number;
+            tripCount: number;
+        }
+    ) {
+        return await prisma.overallStatsPeriod.upsert({
+            where: {
+                userId_period: {
+                    userId,
+                    period,
+                },
+            },
+            update: {
+                avgSpeed: data.avgSpeed,
+                avgDuration: data.avgDuration,
+                avgKilometers: data.avgKilometers,
+                totalKilometers: data.totalKilometers,
+                totalTime: data.totalTime,
+                longestKilometer: data.longestKilometer,
+                longestTime: data.longestTime,
+                pathsCreated: data.pathsCreated,
+                tripCount: data.tripCount,
+                updatedAt: new Date(),
+            },
+            create: {
+                userId,
+                period,
+                avgSpeed: data.avgSpeed,
+                avgDuration: data.avgDuration,
+                avgKilometers: data.avgKilometers,
+                totalKilometers: data.totalKilometers,
+                totalTime: data.totalTime,
+                longestKilometer: data.longestKilometer,
+                longestTime: data.longestTime,
+                pathsCreated: data.pathsCreated,
+                tripCount: data.tripCount,
+            },
+        });
+    }
+
+    async getTripsForStatsByUserId(userId: string, start?: Date, end?: Date) {
+        const startedAtFilter =
+            start || end
+                ? {
+                      ...(start ? { gte: start } : {}),
+                      ...(end ? { lt: end } : {}),
+                  }
+                : undefined;
+
+        return await prisma.trip.findMany({
+            where: {
+                userId,
+                ...(startedAtFilter ? { startedAt: startedAtFilter } : {}),
+            },
+            select: {
+                tripId: true,
+                startedAt: true,
+                finishedAt: true,
+                distanceKm: true,
+                tripStats: true,
+            },
+        });
+    }
+
+    // --- OVERALL STATS METHODS (Aggregates) ---
 
     /**
      * UC22: State-aware trigger - gets current number of trips
@@ -644,43 +749,20 @@ export class QueryManager {
         });
     }
 
-    /**
-     * UC22: Retrieves the cached global averages
-     */
-    async getOverallStatsByUserId(userId: string) {
-        return await prisma.overallStat.findUnique({
-            where: { userId }
+    async getOverallStatsPeriodByUserId(userId: string, period: StatsPeriod) {
+        return await prisma.overallStatsPeriod.findUnique({
+            where: {
+                userId_period: {
+                    userId,
+                    period,
+                },
+            },
         });
     }
 
-    /**
-     * UC22: Updates or creates the global average record
-     */
-    async upsertOverallStats(
-        userId: string, 
-        data: { 
-            avgSpeed: number; 
-            avgDuration: number; 
-            avgKilometers: number; 
-            lastTripCount: number 
-        }
-    ) {
-        return await prisma.overallStat.upsert({
+    async getOverallStatsPeriodsByUserId(userId: string) {
+        return await prisma.overallStatsPeriod.findMany({
             where: { userId },
-            update: {
-                avgSpeed: data.avgSpeed,
-                avgDuration: data.avgDuration,
-                avgKilometers: data.avgKilometers,
-                lastTripCount: data.lastTripCount,
-                updatedAt: new Date()
-            },
-            create: {
-                userId,
-                avgSpeed: data.avgSpeed,
-                avgDuration: data.avgDuration,
-                avgKilometers: data.avgKilometers,
-                lastTripCount: data.lastTripCount
-            }
         });
     }
 
