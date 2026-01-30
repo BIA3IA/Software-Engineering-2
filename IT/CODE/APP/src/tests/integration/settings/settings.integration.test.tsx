@@ -1,6 +1,5 @@
 import React from "react"
 import { render, fireEvent, waitFor } from "@testing-library/react-native"
-import { Linking } from "react-native"
 import SettingsScreen from "@/app/(main)/settings"
 import { mockRouter } from "@/jest.setup"
 
@@ -97,6 +96,7 @@ describe("settings integration", () => {
     fireEvent.press(getByTestId("settings-help"))
 
     await waitFor(() => {
+      const Linking = require("react-native/Libraries/Linking/Linking")
       expect(Linking.openURL).toHaveBeenCalled()
     })
   })
