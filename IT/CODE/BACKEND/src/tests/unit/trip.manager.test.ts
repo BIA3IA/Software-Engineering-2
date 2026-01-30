@@ -11,6 +11,8 @@ jest.mock('../../managers/query', () => ({
         createSegmentWithId: jest.fn(),
         updateTripWeather: jest.fn(),
         getReportsBySegmentIds: jest.fn(),
+        updateTripDistance: jest.fn(),
+        getStatsByTripId: jest.fn(),
     }
 }));
 
@@ -35,10 +37,19 @@ jest.mock('../../utils/logger', () => ({
     },
 }));
 
+jest.mock('../../managers/stats/stats.manager', () => ({
+    statsManager: {
+        computeStats: jest.fn(),
+        computeOverallStats: jest.fn(),
+    },
+}));
+
 import { TripManager } from "../../managers/trip/trip.manager";
 import { queryManager } from "../../managers/query";
 import { fetchAndAggregateWeatherData } from "../../services/index";
 import logger from "../../utils/logger";
+import { incrementTripCount, decrementTripCount, getCachedTripStats, setCachedTripStats } from "../../utils/cache";
+import { statsManager } from "../../managers/stats/stats.manager";
 
 describe("Testing TripManager business logic", () => {
 
@@ -91,6 +102,23 @@ describe("Testing TripManager business logic", () => {
             (queryManager.getSegmentsByIds as jest.Mock).mockResolvedValue([]);
             (queryManager.createSegmentWithId as jest.Mock).mockResolvedValue({});
             (queryManager.createTrip as jest.Mock).mockResolvedValue(mockTrip);
+            (queryManager.getTripById as jest.Mock).mockResolvedValue({
+                ...mockTrip,
+                tripSegments: [{ segment: { polylineCoordinates: [] } }]
+            });
+            (queryManager.updateTripDistance as jest.Mock).mockResolvedValue({});
+            (statsManager.computeStats as jest.Mock).mockResolvedValue(undefined);
+            (queryManager.getStatsByTripId as jest.Mock).mockResolvedValue({
+                statsId: "stat1",
+                tripId: "trip1",
+                userId: "user123",
+                avgSpeed: 20,
+                duration: 3600,
+                kilometers: 15,
+            });
+            (setCachedTripStats as jest.Mock).mockResolvedValue(undefined);
+            (statsManager.computeOverallStats as jest.Mock).mockResolvedValue(undefined);
+            (incrementTripCount as jest.Mock).mockResolvedValue(undefined);
             (fetchAndAggregateWeatherData as jest.Mock).mockResolvedValue({});
             (queryManager.updateTripWeather as jest.Mock).mockResolvedValue({});
 
@@ -148,6 +176,19 @@ describe("Testing TripManager business logic", () => {
                     { segment: { polylineCoordinates: req.body.tripSegments[1].polylineCoordinates } }
                 ]
             });
+            (queryManager.updateTripDistance as jest.Mock).mockResolvedValue({});
+            (statsManager.computeStats as jest.Mock).mockResolvedValue(undefined);
+            (queryManager.getStatsByTripId as jest.Mock).mockResolvedValue({
+                statsId: "stat1",
+                tripId: "trip1",
+                userId: "user123",
+                avgSpeed: 20,
+                duration: 3600,
+                kilometers: 15,
+            });
+            (setCachedTripStats as jest.Mock).mockResolvedValue(undefined);
+            (statsManager.computeOverallStats as jest.Mock).mockResolvedValue(undefined);
+            (incrementTripCount as jest.Mock).mockResolvedValue(undefined);
             (fetchAndAggregateWeatherData as jest.Mock).mockResolvedValue({ averageTemperature: 20 });
             (queryManager.updateTripWeather as jest.Mock).mockResolvedValue({});
 
@@ -207,6 +248,19 @@ describe("Testing TripManager business logic", () => {
                     { segment: { polylineCoordinates: req.body.tripSegments[0].polylineCoordinates } }
                 ]
             });
+            (queryManager.updateTripDistance as jest.Mock).mockResolvedValue({});
+            (statsManager.computeStats as jest.Mock).mockResolvedValue(undefined);
+            (queryManager.getStatsByTripId as jest.Mock).mockResolvedValue({
+                statsId: "stat1",
+                tripId: "trip1",
+                userId: "user123",
+                avgSpeed: 20,
+                duration: 3600,
+                kilometers: 15,
+            });
+            (setCachedTripStats as jest.Mock).mockResolvedValue(undefined);
+            (statsManager.computeOverallStats as jest.Mock).mockResolvedValue(undefined);
+            (incrementTripCount as jest.Mock).mockResolvedValue(undefined);
             (fetchAndAggregateWeatherData as jest.Mock).mockRejectedValue(new Error("Weather error"));
 
             const res = mockResponse();
@@ -414,6 +468,14 @@ describe("Testing TripManager business logic", () => {
 
             (queryManager.getTripsByUserId as jest.Mock).mockResolvedValue(mockTrips);
             (queryManager.getReportsBySegmentIds as jest.Mock).mockResolvedValue([]);
+            (getCachedTripStats as jest.Mock).mockResolvedValue({
+                statsId: "stat1",
+                tripId: "trip1",
+                userId: "user123",
+                avgSpeed: 20,
+                duration: 3600,
+                kilometers: 15,
+            });
 
             const res = mockResponse();
             const next = jest.fn();
@@ -426,7 +488,14 @@ describe("Testing TripManager business logic", () => {
                 data: expect.objectContaining({
                     count: 1,
                     trips: expect.arrayContaining([
-                        expect.objectContaining({ tripId: "trip1" })
+                        expect.objectContaining({ 
+                            tripId: "trip1",
+                            stats: expect.objectContaining({
+                                avgSpeed: 20,
+                                duration: 3600,
+                                kilometers: 15,
+                            })
+                        })
                     ])
                 })
             });
@@ -489,6 +558,14 @@ describe("Testing TripManager business logic", () => {
             (fetchAndAggregateWeatherData as jest.Mock).mockResolvedValue(mockWeatherData);
             (queryManager.updateTripWeather as jest.Mock).mockResolvedValue({});
             (queryManager.getReportsBySegmentIds as jest.Mock).mockResolvedValue([]);
+            (getCachedTripStats as jest.Mock).mockResolvedValue({
+                statsId: "stat1",
+                tripId: "trip1",
+                userId: "user123",
+                avgSpeed: 20,
+                duration: 3600,
+                kilometers: 15,
+            });
 
             const res = mockResponse();
             const next = jest.fn();
@@ -527,6 +604,7 @@ describe("Testing TripManager business logic", () => {
 
             (queryManager.getTripById as jest.Mock).mockResolvedValue(mockTrip);
             (queryManager.deleteTripById as jest.Mock).mockResolvedValue({});
+            (decrementTripCount as jest.Mock).mockResolvedValue(undefined);
 
             const res = mockResponse();
             const next = jest.fn();

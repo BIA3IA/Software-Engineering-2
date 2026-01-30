@@ -35,8 +35,32 @@ jest.mock("../../services/index", () => ({
     fetchAndAggregateWeatherData: jest.fn().mockRejectedValue(new Error("skip weather")),
 }));
 
+jest.mock("../../managers/query/query.manager", () => ({
+    queryManager: {
+        getTripById: jest.fn(),
+        deleteTripById: jest.fn(),
+        getSegmentsByIds: jest.fn(),
+        createSegmentWithId: jest.fn(),
+        createTrip: jest.fn(),
+        updateTripDistance: jest.fn(),
+        getStatsByTripId: jest.fn(),
+        getTripsByUserId: jest.fn(),
+        getReportsBySegmentIds: jest.fn(),
+        updateTripWeather: jest.fn(),
+    },
+}));
+
+jest.mock("../../utils/cache", () => ({
+    incrementTripCount: jest.fn(),
+    decrementTripCount: jest.fn(),
+    getCachedTripStats: jest.fn(),
+    setCachedTripStats: jest.fn(),
+}));
+
 import { app } from "../../server";
 import prisma from "../../utils/prisma-client";
+import { queryManager } from "../../managers/query/query.manager";
+import { decrementTripCount, incrementTripCount, getCachedTripStats, setCachedTripStats } from "../../utils/cache";
 
 describe("Trip Routes Integration Tests", () => {
 
@@ -75,9 +99,21 @@ describe("Trip Routes Integration Tests", () => {
                 ]
             };
 
-            (prisma.segment.findMany as jest.Mock).mockResolvedValue([]);
-            (prisma.segment.create as jest.Mock).mockResolvedValue({ segmentId: "segment1" });
-            (prisma.trip.create as jest.Mock).mockResolvedValue(mockTrip);
+            (queryManager.getSegmentsByIds as jest.Mock).mockResolvedValue([]);
+            (queryManager.createSegmentWithId as jest.Mock).mockResolvedValue({ segmentId: "segment1" });
+            (queryManager.createTrip as jest.Mock).mockResolvedValue({ 
+                tripId: "trip1", 
+                createdAt: new Date(),
+                startedAt: new Date("2025-01-15T10:00:00Z"),
+                finishedAt: new Date("2025-01-15T11:00:00Z"),
+                title: "Morning Ride"
+            });
+            (queryManager.getTripById as jest.Mock).mockResolvedValue(mockTrip);
+            (queryManager.updateTripDistance as jest.Mock).mockResolvedValue(undefined);
+            (queryManager.getStatsByTripId as jest.Mock).mockResolvedValue(null);
+            (incrementTripCount as jest.Mock).mockResolvedValue(undefined);
+            (getCachedTripStats as jest.Mock).mockResolvedValue(null);
+            (setCachedTripStats as jest.Mock).mockResolvedValue(undefined);
 
             const response = await request(app)
                 .post("/api/v1/trips")
@@ -177,8 +213,11 @@ describe("Trip Routes Integration Tests", () => {
                 }
             ];
 
-            (prisma.trip.findMany as jest.Mock).mockResolvedValue(mockTrips);
-            (prisma.report.findMany as jest.Mock).mockResolvedValue([]);
+            (queryManager.getTripsByUserId as jest.Mock).mockResolvedValue(mockTrips);
+            (queryManager.getReportsBySegmentIds as jest.Mock).mockResolvedValue([]);
+            (queryManager.getStatsByTripId as jest.Mock).mockResolvedValue(mockTrips[0].statistics);
+            (getCachedTripStats as jest.Mock).mockResolvedValue(null);
+            (setCachedTripStats as jest.Mock).mockResolvedValue(undefined);
 
             const response = await request(app)
                 .get("/api/v1/trips?owner=me")
@@ -195,8 +234,7 @@ describe("Trip Routes Integration Tests", () => {
         test("Should return empty array when user has no trips", async () => {
             const accessToken = generateValidAccessToken("user123");
 
-            (prisma.trip.findMany as jest.Mock).mockResolvedValue([]);
-            (prisma.report.findMany as jest.Mock).mockResolvedValue([]);
+            (queryManager.getTripsByUserId as jest.Mock).mockResolvedValue([]);
 
             const response = await request(app)
                 .get("/api/v1/trips?owner=me")
@@ -237,8 +275,9 @@ describe("Trip Routes Integration Tests", () => {
                 tripSegments: []
             };
 
-            (prisma.trip.findUnique as jest.Mock).mockResolvedValue(mockTrip);
-            (prisma.trip.delete as jest.Mock).mockResolvedValue({});
+            (queryManager.getTripById as jest.Mock).mockResolvedValue(mockTrip);
+            (queryManager.deleteTripById as jest.Mock).mockResolvedValue({});
+            (decrementTripCount as jest.Mock).mockResolvedValue(undefined);
 
             const response = await request(app)
                 .delete("/api/v1/trips/trip1")
@@ -256,7 +295,7 @@ describe("Trip Routes Integration Tests", () => {
                 tripSegments: []
             };
 
-            (prisma.trip.findUnique as jest.Mock).mockResolvedValue(mockTrip);
+            (queryManager.getTripById as jest.Mock).mockResolvedValue(mockTrip);
 
             const response = await request(app)
                 .delete("/api/v1/trips/trip1")
@@ -269,7 +308,7 @@ describe("Trip Routes Integration Tests", () => {
         test("Should return 404 when trip does not exist", async () => {
             const accessToken = generateValidAccessToken("user123");
 
-            (prisma.trip.findUnique as jest.Mock).mockResolvedValue(null);
+            (queryManager.getTripById as jest.Mock).mockResolvedValue(null);
 
             const response = await request(app)
                 .delete("/api/v1/trips/nonexistent123!")
