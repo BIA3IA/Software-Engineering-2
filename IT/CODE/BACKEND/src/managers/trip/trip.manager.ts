@@ -169,17 +169,39 @@ export class TripManager {
                 ),
                 Promise.all(
                     sortedTrips.map(async trip => {
-                        // Try cache first
+                        // Try Redis cache first
                         let stat = await getCachedTripStat(trip.tripId);
                         
-                        if (!stat) {
-                            // If cache miss fetch from DB
+                        if (stat) {
+                            // Cache hit
+                            return stat;
+                        }
+
+                        // Cache miss, try DB
+                        stat = await queryManager.getStatByTripId(trip.tripId).catch(() => null);
+                        
+                        if (stat) {
+                            // Found in DB, cache for next time
+                            await setCachedTripStat(trip.tripId, stat);
+                            return stat;
+                        }
+
+                        // Not in DB either, compute on-the-fly                        
+                        try {
+                            // Compute stats 
+                            await statsManager.computeStats(trip.tripId);
+                            
+                            // Fetch the newly computed stats
                             stat = await queryManager.getStatByTripId(trip.tripId).catch(() => null);
                             
                             if (stat) {
-                                // Cache for the next time
+                                // Cache the newly computed stats
                                 await setCachedTripStat(trip.tripId, stat);
+                            } else {
+                                logger.error({ tripId: trip.tripId }, 'Failed to retrieve stats after computation');
                             }
+                        } catch (error) {
+                            logger.error({ err: error, tripId: trip.tripId }, 'Failed to compute stats on-the-fly');
                         }
                         
                         return stat;
