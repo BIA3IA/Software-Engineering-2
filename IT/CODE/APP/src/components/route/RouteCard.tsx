@@ -22,8 +22,6 @@ export type RouteItem = {
     route: LatLng[]
     reports?: Array<{ reportId: string; position: { lat: number; lng: number }; obstacleType?: string; pathStatus?: string }>
     avgSpeed: number
-    maxSpeed: number
-    elevation: number
     temperatureLabel?: string
     weather?: WeatherDetails
     description?: string
@@ -151,10 +149,8 @@ export function RouteCard({
 
                     {showPerformanceMetrics && (
                         <PerformanceMetric
-                            duration={`${trip.durationMin} min`}
-                            avgSpeed={`${trip.avgSpeed.toFixed(1)} km/h`}
-                            maxSpeed={`${trip.maxSpeed.toFixed(1)} km/h`}
-                            elevation={`${trip.elevation} m`}
+                            durationSeconds={trip.durationMin * 60}
+                            avgSpeed={trip.avgSpeed}
                         />
                     )}
 

@@ -14,6 +14,7 @@ import { MapPin, Route, TrendingUp, Timer, Clock, Mountain, Target, Leaf, Chevro
 import { ProfileHeroHeader } from "@/components/profile/ProfileHeroHeader"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { getApiErrorMessage } from "@/utils/apiError"
+import { formatCount, formatDuration, formatKm, formatSpeed } from "@/utils/statsFormat"
 import { getStatsApi, type StatsPeriodKey, type StatsPeriod } from "@/api/stats"
 
 type AccentName = "brand" | keyof (typeof Colors)["light"]["accent"]
@@ -68,32 +69,6 @@ function getAccentFill(palette: (typeof Colors)["light"], accent: AccentName) {
 
 function getAccentSurface(palette: (typeof Colors)["light"], accent: AccentName) {
   return accent === "brand" ? palette.brand.surface : palette.accent[accent].surface
-}
-
-function formatKm(value: number) {
-  if (!Number.isFinite(value) || value <= 0) return "0 km"
-  return `${value.toFixed(1)} km`
-}
-
-function formatSpeed(value: number) {
-  if (!Number.isFinite(value) || value <= 0) return "0 km/h"
-  return `${value.toFixed(1)} km/h`
-}
-
-function formatCount(value: number) {
-  if (!Number.isFinite(value) || value <= 0) return "0"
-  return `${Math.round(value)}`
-}
-
-function formatDuration(seconds: number) {
-  if (!Number.isFinite(seconds) || seconds <= 0) return "0m"
-  const minutes = Math.round(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-  const remaining = minutes % 60
-  if (hours > 0) {
-    return `${hours}h ${remaining}m`
-  }
-  return `${remaining}m`
 }
 
 function getProgress(value: number, total: number) {
@@ -236,7 +211,7 @@ export default function ProfileScreen() {
       id: "longest-km",
       icon: Mountain,
       value: formatKm(currentStats.longestKilometer),
-      label: "Longest km",
+      label: "Longest Distance",
       accent: "green",
       progress: getProgress(currentStats.longestKilometer, overallStats.longestKilometer),
     },
@@ -260,7 +235,7 @@ export default function ProfileScreen() {
       id: "avg-km",
       icon: Ruler,
       value: formatKm(currentStats.avgKilometers),
-      label: "Avg Distance",
+      label: "Average Distance",
       accent: "blue",
       progress: getProgress(currentStats.avgKilometers, overallStats.avgKilometers),
     },
@@ -268,7 +243,7 @@ export default function ProfileScreen() {
       id: "avg-duration",
       icon: Timer,
       value: formatDuration(currentStats.avgDuration),
-      label: "Avg Time",
+      label: "Average Time",
       accent: "purple",
       progress: getProgress(currentStats.avgDuration, overallStats.avgDuration),
     },
@@ -276,7 +251,7 @@ export default function ProfileScreen() {
       id: "avg-speed",
       icon: TrendingUp,
       value: formatSpeed(currentStats.avgSpeed),
-      label: "Avg Speed",
+      label: "Average Speed",
       accent: "green",
       progress: getProgress(currentStats.avgSpeed, overallStats.avgSpeed),
     },

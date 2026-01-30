@@ -34,8 +34,6 @@ const baseTrip: RouteItem = {
         { latitude: 45.01, longitude: 9.01 },
     ],
     avgSpeed: 25,
-    maxSpeed: 32,
-    elevation: 120,
     temperatureLabel: "22°",
     weather: {
         condition: "Sunny",
@@ -111,5 +109,21 @@ describe("route card integration", () => {
         )
 
         expect(queryByText("22°")).toBeNull()
+    })
+
+    test("shows duration and average speed metrics only", () => {
+        const { getByText, queryByText } = render(
+            <RouteCard
+                trip={baseTrip}
+                isExpanded
+                onToggle={jest.fn()}
+                onDeletePress={jest.fn()}
+            />
+        )
+
+        expect(getByText("Duration")).toBeTruthy()
+        expect(getByText("Average Speed")).toBeTruthy()
+        expect(queryByText("Max Speed")).toBeNull()
+        expect(queryByText("Elevation")).toBeNull()
     })
 })
