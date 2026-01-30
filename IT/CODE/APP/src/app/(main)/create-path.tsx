@@ -1,5 +1,5 @@
 import React from "react"
-import { View, StyleSheet, Text, Pressable } from "react-native"
+import { View, StyleSheet, Pressable } from "react-native"
 import MapView, { Marker, Polyline, Circle } from "react-native-maps"
 import * as Location from "expo-location"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -11,6 +11,7 @@ import Colors from "@/constants/Colors"
 import { radius, scale, verticalScale } from "@/theme/layout"
 import { iconSizes } from "@/theme/typography"
 import { PRIVACY_OPTIONS, type PrivacyPreference } from "@/constants/Privacy"
+import { FOLLOW_ZOOM } from "@/constants/appConfig"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { AppButton } from "@/components/ui/AppButton"
 import { AlertTriangle, Bike, CheckCircle, Pencil, Undo2, X } from "lucide-react-native"
@@ -18,6 +19,8 @@ import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
 import { createPathApi, snapPathApi, type PathPoint, type PathSegment } from "@/api/paths"
 import { getApiErrorMessage } from "@/utils/apiError"
 import { MapIconMarker } from "@/components/ui/MapIconMarker"
+import { haversineDistanceMetersLatLng } from "@/utils/geo"
+import { useFollowUserLocation } from "@/hooks/useFollowUserLocation"
 
 type LatLng = {
   latitude: number
@@ -30,6 +33,8 @@ const DEFAULT_REGION = {
   latitudeDelta: 0.01,
   longitudeDelta: 0.01,
 }
+
+const AUTO_MIN_DISTANCE_METERS = 4
 
 export default function CreatePathScreen() {
   const scheme = useColorScheme() ?? "light"
@@ -45,10 +50,15 @@ export default function CreatePathScreen() {
   const drawnRouteRef = React.useRef<LatLng[]>([])
   const [snappedSegments, setSnappedSegments] = React.useState<LatLng[][]>([])
   const [userLocation, setUserLocation] = React.useState<LatLng | null>(null)
+  const [isMapReady, setMapReady] = React.useState(false)
+  const creationModeParam = typeof searchParams.creationMode === "string" ? searchParams.creationMode : undefined
+  const initialCreationMode = creationModeParam === "automatic" ? "automatic" : "manual"
+  const [creationMode, setCreationMode] = React.useState<"manual" | "automatic">(initialCreationMode)
+  const creationModeRef = React.useRef<"manual" | "automatic">(initialCreationMode)
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
   const [isSaving, setIsSaving] = React.useState(false)
   const [isSnapping, setIsSnapping] = React.useState(false)
-  const [isDrawMode, setIsDrawMode] = React.useState(true)
+  const [isDrawMode, setIsDrawMode] = React.useState(initialCreationMode === "manual")
   const [isCancelPopupVisible, setCancelPopupVisible] = React.useState(false)
   const [errorPopup, setErrorPopup] = React.useState({
     visible: false,
@@ -63,9 +73,23 @@ export default function CreatePathScreen() {
   const snapVersionRef = React.useRef(0)
   const strokeStartRef = React.useRef<number | null>(null)
   const strokeBreaksRef = React.useRef<number[]>([])
-  const mapKey = userLocation
-    ? `user-${userLocation.latitude.toFixed(5)}-${userLocation.longitude.toFixed(5)}`
-    : "default"
+  const lastAutoPointRef = React.useRef<LatLng | null>(null)
+  const lastAutoAtRef = React.useRef(0)
+  const hasCenteredRef = React.useRef(false)
+  const lastLocationRef = React.useRef<LatLng | null>(null)
+  const lastLocationAtRef = React.useRef(0)
+
+  const { followsUserLocation, gesturesDisabled } = useFollowUserLocation({
+    enabled: creationMode === "automatic",
+    mapRef,
+    target: userLocation,
+    ready: isMapReady,
+    zoom: FOLLOW_ZOOM,
+    minDistanceMeters: 6,
+    minIntervalMs: 300,
+    durationMs: 220,
+    disableGestures: true,
+  })
 
   React.useEffect(() => {
     setNavHidden(true)
@@ -77,6 +101,30 @@ export default function CreatePathScreen() {
   React.useEffect(() => {
     drawnRouteRef.current = drawnRoute
   }, [drawnRoute])
+
+  React.useEffect(() => {
+    creationModeRef.current = creationMode
+  }, [creationMode])
+
+  React.useEffect(() => {
+    const nextMode = creationModeParam === "automatic" ? "automatic" : "manual"
+    setCreationMode(nextMode)
+    setIsDrawMode(nextMode === "manual")
+    resetRouteState()
+  }, [creationModeParam])
+
+  function resetRouteState() {
+    snapVersionRef.current += 1
+    pendingSnapRef.current = null
+    lastSnappedIndexRef.current = 0
+    strokeStartRef.current = null
+    strokeBreaksRef.current = []
+    lastAutoPointRef.current = null
+    lastAutoAtRef.current = 0
+    setDrawnRoute([])
+    setSnappedSegments([])
+    setIsSnapping(false)
+  }
 
   React.useEffect(() => {
     let cancelled = false
@@ -97,6 +145,8 @@ export default function CreatePathScreen() {
           longitude: current.coords.longitude,
         }
         setUserLocation(coords)
+        lastLocationRef.current = coords
+        lastLocationAtRef.current = Date.now()
 
         watcher = await Location.watchPositionAsync(
           {
@@ -105,10 +155,33 @@ export default function CreatePathScreen() {
           },
           (location) => {
             if (cancelled) return
-            setUserLocation({
+            const next = {
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
-            })
+            }
+            const now = Date.now()
+            const lastLocation = lastLocationRef.current
+            const locationDistance =
+              lastLocation ? haversineDistanceMetersLatLng(lastLocation, next) : Number.POSITIVE_INFINITY
+            if (!lastLocation || locationDistance > 3 || now - lastLocationAtRef.current > 1000) {
+              setUserLocation(next)
+              lastLocationRef.current = next
+              lastLocationAtRef.current = now
+            }
+
+            if (creationModeRef.current !== "automatic") return
+            const lastPoint = lastAutoPointRef.current
+            if (!lastPoint) {
+              lastAutoPointRef.current = next
+              lastAutoAtRef.current = now
+              setDrawnRoute([next])
+              return
+            }
+            const autoDistance = haversineDistanceMetersLatLng(lastPoint, next)
+            if (autoDistance < AUTO_MIN_DISTANCE_METERS) return
+            lastAutoPointRef.current = next
+            lastAutoAtRef.current = now
+            setDrawnRoute((prev) => [...prev, next])
           }
         )
       } catch (error) {
@@ -127,12 +200,13 @@ export default function CreatePathScreen() {
   }, [])
 
   React.useEffect(() => {
-    if (!mapRef.current || !userLocation) return
+    if (!mapRef.current || !userLocation || hasCenteredRef.current) return
+    hasCenteredRef.current = true
     mapRef.current.animateToRegion(regionAroundPoint(userLocation, 0.008), 400)
   }, [userLocation])
 
   function handleMapPress(event: any) {
-    if (!isDrawMode) return
+    if (!isDrawMode || creationModeRef.current !== "manual") return
     const coordinate = event?.nativeEvent?.coordinate
     if (!coordinate) return
     setDrawnRoute((prev) => {
@@ -143,7 +217,7 @@ export default function CreatePathScreen() {
   }
 
   function handlePanDrag(event: any) {
-    if (!isDrawMode) return
+    if (!isDrawMode || creationModeRef.current !== "manual") return
     const coordinate = event?.nativeEvent?.coordinate
     if (!coordinate) return
     setDrawnRoute((prev) => {
@@ -157,7 +231,12 @@ export default function CreatePathScreen() {
     })
   }
 
-  const activeRoute = snappedSegments.length ? flattenSnappedSegments(snappedSegments) : drawnRoute
+  const activeRoute =
+    creationMode === "manual"
+      ? snappedSegments.length
+        ? flattenSnappedSegments(snappedSegments)
+        : drawnRoute
+      : drawnRoute
   const canSave = activeRoute.length > 1
 
   async function handleSavePath() {
@@ -171,7 +250,7 @@ export default function CreatePathScreen() {
     try {
       await createPathApi({
         visibility: visibilityPreference === "public",
-        creationMode: "manual", // only manual for now
+        creationMode,
         title,
         description,
         pathSegments,
@@ -213,14 +292,14 @@ export default function CreatePathScreen() {
   }
 
   function beginStroke() {
-    if (!isDrawMode) return
+    if (!isDrawMode || creationModeRef.current !== "manual") return
     if (strokeStartRef.current === null) {
       strokeStartRef.current = drawnRouteRef.current.length
     }
   }
 
   function endStroke() {
-    if (!isDrawMode) return
+    if (!isDrawMode || creationModeRef.current !== "manual") return
     if (strokeStartRef.current === null) return
     const startIndex = strokeStartRef.current
     strokeStartRef.current = null
@@ -300,6 +379,7 @@ export default function CreatePathScreen() {
   }
 
   React.useEffect(() => {
+    if (creationMode !== "manual") return
     if (drawnRoute.length <= 1) {
       setSnappedSegments([])
       lastSnappedIndexRef.current = drawnRoute.length
@@ -339,18 +419,19 @@ export default function CreatePathScreen() {
         style={styles.map}
         initialRegion={userLocation ? regionAroundPoint(userLocation, 0.008) : DEFAULT_REGION}
         customMapStyle={scheme === "dark" ? darkMapStyle : lightMapStyle}
-        key={mapKey}
         showsUserLocation
+        followsUserLocation={followsUserLocation}
         showsMyLocationButton={false}
+        onMapReady={() => setMapReady(true)}
         onPress={handleMapPress}
         onPanDrag={handlePanDrag}
         onTouchStart={beginStroke}
         onTouchEnd={endStroke}
         onTouchCancel={endStroke}
-        scrollEnabled={!isDrawMode}
-        zoomEnabled={!isDrawMode}
-        rotateEnabled={!isDrawMode}
-        pitchEnabled={!isDrawMode}
+        scrollEnabled={gesturesDisabled ? false : !isDrawMode}
+        zoomEnabled={gesturesDisabled ? false : !isDrawMode}
+        rotateEnabled={gesturesDisabled ? false : !isDrawMode}
+        pitchEnabled={gesturesDisabled ? false : !isDrawMode}
       >
         {activeRoute.length > 1 && (
           <Polyline coordinates={activeRoute} strokeColor={palette.brand.base} strokeWidth={10} />
@@ -389,39 +470,43 @@ export default function CreatePathScreen() {
         <X size={iconSizes.lg} color={palette.text.primary} strokeWidth={2.2} />
       </Pressable>
 
-      <Pressable
-        style={[
-          styles.drawFab,
-          {
-            backgroundColor: isDrawMode ? palette.brand.base : palette.surface.muted,
-            shadowColor: palette.border.muted,
-            bottom: verticalScale(90) + insets.bottom,
-          },
-        ]}
-        onPress={() => setIsDrawMode((current) => !current)}
-        testID="create-path-draw-toggle"
-      >
-        <Pencil size={iconSizes.lg} color={isDrawMode ? palette.text.onAccent : palette.text.primary} />
-      </Pressable>
+      {creationMode === "manual" && (
+        <>
+          <Pressable
+            style={[
+              styles.drawFab,
+              {
+                backgroundColor: isDrawMode ? palette.brand.base : palette.surface.muted,
+                shadowColor: palette.border.muted,
+                bottom: verticalScale(90) + insets.bottom,
+              },
+            ]}
+            onPress={() => setIsDrawMode((current) => !current)}
+            testID="create-path-draw-toggle"
+          >
+            <Pencil size={iconSizes.lg} color={isDrawMode ? palette.text.onAccent : palette.text.primary} />
+          </Pressable>
 
-      <Pressable
-        style={[
-          styles.undoFab,
-          {
-            backgroundColor: drawnRoute.length > 0 ? palette.surface.card : palette.surface.muted,
-            shadowColor: palette.border.muted,
-            bottom: verticalScale(90) + insets.bottom + scale(64),
-          },
-        ]}
-        onPress={handleUndo}
-        disabled={drawnRoute.length === 0}
-        testID="create-path-undo"
-      >
-        <Undo2
-          size={iconSizes.lg}
-          color={drawnRoute.length > 0 ? palette.text.primary : palette.text.muted}
-        />
-      </Pressable>
+          <Pressable
+            style={[
+              styles.undoFab,
+              {
+                backgroundColor: drawnRoute.length > 0 ? palette.surface.card : palette.surface.muted,
+                shadowColor: palette.border.muted,
+                bottom: verticalScale(90) + insets.bottom + scale(64),
+              },
+            ]}
+            onPress={handleUndo}
+            disabled={drawnRoute.length === 0}
+            testID="create-path-undo"
+          >
+            <Undo2
+              size={iconSizes.lg}
+              color={drawnRoute.length > 0 ? palette.text.primary : palette.text.muted}
+            />
+          </Pressable>
+        </>
+      )}
 
       <AppButton
         title={isSaving ? "Saving Path..." : isSnapping ? "Snapping..." : "Save Path"}

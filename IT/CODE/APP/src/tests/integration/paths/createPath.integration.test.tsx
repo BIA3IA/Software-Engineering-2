@@ -22,7 +22,11 @@ jest.mock("expo-location", () => ({
     getCurrentPositionAsync: jest.fn(async () => ({
         coords: { latitude: 45.0, longitude: 9.0 },
     })),
-    watchPositionAsync: jest.fn(async () => ({ remove: jest.fn() })),
+    watchPositionAsync: jest.fn(async (_options: any, callback: any) => {
+        callback?.({ coords: { latitude: 45.0, longitude: 9.0 } })
+        callback?.({ coords: { latitude: 45.002, longitude: 9.002 } })
+        return { remove: jest.fn() }
+    }),
     LocationAccuracy: { Balanced: "balanced" },
 }))
 
@@ -242,6 +246,38 @@ describe("create-path integration", () => {
 
         await waitFor(() => {
             expect(mockRouter.replace).toHaveBeenCalledWith("/(main)/home")
+        })
+    })
+
+    test("automatic mode records gps points and skips snapping", async () => {
+        mockSearchParams.value = {
+            name: "Auto Path",
+            description: "Desc",
+            visibility: "public",
+            creationMode: "automatic",
+        }
+
+        ; (createPathApi as jest.Mock).mockResolvedValueOnce(undefined)
+
+        const { getByText } = render(<CreatePathScreen />)
+
+        await waitFor(() => {
+            expect(getByText("Save Path")).toBeTruthy()
+        })
+
+        fireEvent.press(getByText(/Save Path/))
+
+        await waitFor(() => {
+            expect(snapPathApi).not.toHaveBeenCalled()
+            expect(createPathApi).toHaveBeenCalledWith({
+                visibility: true,
+                creationMode: "automatic",
+                title: "Auto Path",
+                description: "Desc",
+                pathSegments: [
+                    { start: { lat: 45.0, lng: 9.0 }, end: { lat: 45.002, lng: 9.002 } },
+                ],
+            })
         })
     })
 })

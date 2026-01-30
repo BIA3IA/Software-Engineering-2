@@ -36,7 +36,7 @@ export class PathManager {
             }
 
             // Create path based on the creation mode
-            if (creationMode === 'manual') {
+            if (creationMode === 'manual' || creationMode === 'automatic') {
                 for (const segment of pathSegments) {
                     if (!segment.start || !segment.end) {
                         throw new BadRequestError('Each segment must have start and end coordinates', 'INVALID_SEGMENT');
@@ -128,9 +128,6 @@ export class PathManager {
                     },
                 });
 
-            } else if (creationMode === 'automatic') {
-                // Automatic path creation logic
-                throw new BadRequestError('Automatic path creation not yet implemented', 'NOT_IMPLEMENTED');
             } else if (creationMode === undefined || creationMode === null) {
                 throw new BadRequestError('Creation mode is required', 'MISSING_CREATION_MODE');
             } else {

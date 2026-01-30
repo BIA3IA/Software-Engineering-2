@@ -16,7 +16,12 @@ import { createPathSchema } from "@/validation"
 type CreatePathModalProps = {
   visible: boolean
   onClose: () => void
-  onSubmit: (payload: { name: string; description: string; visibility: PrivacyPreference }) => void
+  onSubmit: (payload: {
+    name: string
+    description: string
+    visibility: PrivacyPreference
+    creationMode: "manual" | "automatic"
+  }) => void
   initialVisibility: PrivacyPreference
 }
 
@@ -25,6 +30,11 @@ type SelectAnchor = {
   right: number
   width: number
 }
+
+const MODE_OPTIONS = [
+  { key: "manual", label: "Manual" },
+  { key: "automatic", label: "Automatic" },
+]
 
 export function CreatePathModal({
   visible,
@@ -39,15 +49,24 @@ export function CreatePathModal({
   const [name, setName] = React.useState("")
   const [description, setDescription] = React.useState("")
   const [visibility, setVisibility] = React.useState(initialVisibility)
+  const [creationMode, setCreationMode] = React.useState<"manual" | "automatic">("manual")
   const [selectAnchor, setSelectAnchor] = React.useState<SelectAnchor | null>(null)
-  const [errors, setErrors] = React.useState<{ name?: string; description?: string; visibility?: string }>({})
+  const [modeAnchor, setModeAnchor] = React.useState<SelectAnchor | null>(null)
+  const [errors, setErrors] = React.useState<{
+    name?: string
+    description?: string
+    visibility?: string
+    creationMode?: string
+  }>({})
 
   React.useEffect(() => {
     if (visible) {
       setName("")
       setDescription("")
       setVisibility(initialVisibility)
+      setCreationMode("manual")
       setSelectAnchor(null)
+      setModeAnchor(null)
       setErrors({})
     }
   }, [visible, initialVisibility])
@@ -57,6 +76,7 @@ export function CreatePathModal({
       name,
       description,
       visibility,
+      creationMode,
     })
 
     if (!result.success) {
@@ -65,6 +85,7 @@ export function CreatePathModal({
         name: fieldErrors.name?.[0],
         description: fieldErrors.description?.[0],
         visibility: fieldErrors.visibility?.[0],
+        creationMode: fieldErrors.creationMode?.[0],
       })
       return
     }
@@ -74,6 +95,7 @@ export function CreatePathModal({
       name: result.data.name.trim(),
       description: (result.data.description ?? "").trim(),
       visibility: result.data.visibility as PrivacyPreference,
+      creationMode: result.data.creationMode as "manual" | "automatic",
     })
   }
 
@@ -82,6 +104,7 @@ export function CreatePathModal({
   }
 
   const visibilityLabel = PRIVACY_OPTIONS.find((option) => option.key === visibility)?.label ?? "Select visibility"
+  const modeLabel = MODE_OPTIONS.find((option) => option.key === creationMode)?.label ?? "Select mode"
 
   function handleNameChange(text: string) {
     setName(text)
@@ -101,6 +124,13 @@ export function CreatePathModal({
     setSelectAnchor(anchor)
     if (errors.visibility) {
       setErrors((prev) => ({ ...prev, visibility: undefined }))
+    }
+  }
+
+  function handleSelectMode(anchor: SelectAnchor) {
+    setModeAnchor(anchor)
+    if (errors.creationMode) {
+      setErrors((prev) => ({ ...prev, creationMode: undefined }))
     }
   }
 
@@ -161,6 +191,13 @@ export function CreatePathModal({
                 errorMessage={errors.description}
               />
               <SelectField
+                label="Mode"
+                valueLabel={modeLabel}
+                onOpen={handleSelectMode}
+                active={Boolean(modeAnchor)}
+                errorMessage={errors.creationMode}
+              />
+              <SelectField
                 label="Visibility"
                 valueLabel={visibilityLabel}
                 onOpen={handleSelectVisibility}
@@ -198,6 +235,22 @@ export function CreatePathModal({
           absoluteTop={selectAnchor.top}
           rightOffset={selectAnchor.right}
           width={selectAnchor.width}
+        />
+      )}
+      {modeAnchor && (
+        <SelectionOverlay
+          visible
+          options={MODE_OPTIONS}
+          selectedKey={creationMode}
+          onClose={() => setModeAnchor(null)}
+          onSelect={(key) => {
+            setCreationMode(key as "manual" | "automatic")
+            setErrors((prev) => ({ ...prev, creationMode: undefined }))
+            setModeAnchor(null)
+          }}
+          absoluteTop={modeAnchor.top}
+          rightOffset={modeAnchor.right}
+          width={modeAnchor.width}
         />
       )}
     </Modal>

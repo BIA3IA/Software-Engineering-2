@@ -22,7 +22,7 @@ type SnapPathResponse = {
 
 export type CreatePathPayload = {
   visibility: boolean
-  creationMode: "manual"
+  creationMode: "manual" | "automatic"
   title: string
   description?: string
   pathSegments: PathSegment[]

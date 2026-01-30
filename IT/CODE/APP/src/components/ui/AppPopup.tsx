@@ -72,7 +72,10 @@ export function AppPopup({
 
   let renderedIcon = icon
   if (shouldOverrideIconColor && icon && React.isValidElement(icon)) {
-    renderedIcon = React.cloneElement(icon, { color: iconColor })
+    renderedIcon = React.cloneElement(
+      icon as React.ReactElement<{ color?: string }>,
+      { color: iconColor }
+    )
   }
 
   function handleBackdropPress() {
