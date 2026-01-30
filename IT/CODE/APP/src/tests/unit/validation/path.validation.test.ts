@@ -6,6 +6,7 @@ describe("validation/path", () => {
       name: "My Path",
       description: "desc",
       visibility: "private",
+      creationMode: "manual",
     })
 
     expect(result.success).toBe(true)
@@ -16,6 +17,7 @@ describe("validation/path", () => {
       name: "",
       description: "desc",
       visibility: "public",
+      creationMode: "manual",
     })
 
     expect(result.success).toBe(false)
@@ -26,6 +28,7 @@ describe("validation/path", () => {
       name: "ab",
       description: "desc",
       visibility: "public",
+      creationMode: "manual",
     })
 
     expect(result.success).toBe(false)
@@ -36,6 +39,7 @@ describe("validation/path", () => {
       name: "  ab ",
       description: "desc",
       visibility: "public",
+      creationMode: "manual",
     })
 
     expect(result.success).toBe(false)
@@ -46,6 +50,7 @@ describe("validation/path", () => {
       name: "My Path",
       description: "",
       visibility: "public",
+      creationMode: "manual",
     })
 
     expect(result.success).toBe(false)
@@ -55,6 +60,7 @@ describe("validation/path", () => {
     const result = createPathSchema.safeParse({
       name: "My Path",
       visibility: "public",
+      creationMode: "manual",
     })
 
     expect(result.success).toBe(false)
@@ -65,6 +71,7 @@ describe("validation/path", () => {
       name: "My Path",
       description: `${"a".repeat(279)}  `,
       visibility: "public",
+      creationMode: "manual",
     })
 
     expect(result.success).toBe(true)
@@ -75,6 +82,7 @@ describe("validation/path", () => {
       name: "My Path",
       description: "a".repeat(281),
       visibility: "public",
+      creationMode: "manual",
     })
 
     expect(result.success).toBe(false)
@@ -85,6 +93,7 @@ describe("validation/path", () => {
       name: "My Path",
       description: "desc",
       visibility: "",
+      creationMode: "manual",
     })
 
     expect(result.success).toBe(false)
@@ -95,6 +104,7 @@ describe("validation/path", () => {
       name: "My Path",
       description: "desc",
       visibility: "   ",
+      creationMode: "manual",
     })
 
     expect(result.success).toBe(false)

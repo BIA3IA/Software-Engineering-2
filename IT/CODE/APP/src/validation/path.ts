@@ -14,6 +14,9 @@ export const createPathSchema = z.object({
         .string()
         .trim()
         .min(1, "Please choose who can see this path."),
+    creationMode: z.enum(["manual", "automatic"], {
+        message: "Please choose a creation mode.",
+    }),
 })
 
 export type CreatePathFormValues = z.infer<typeof createPathSchema>

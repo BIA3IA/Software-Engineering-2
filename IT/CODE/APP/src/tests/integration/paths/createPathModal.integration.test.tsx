@@ -68,6 +68,7 @@ describe("create path modal integration", () => {
             name: "My Path",
             description: "Desc",
             visibility: "public",
+            creationMode: "manual",
         })
     })
 })
