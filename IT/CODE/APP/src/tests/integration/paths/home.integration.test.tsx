@@ -24,6 +24,11 @@ jest.mock("@/auth/storage", () => ({
     useAuthStore: (selector: any) => selector({ user: mockCurrentUser }),
 }))
 
+const mockRouterReplace = jest.fn()
+jest.mock("expo-router", () => ({
+    useRouter: () => ({ replace: mockRouterReplace }),
+}))
+
 let mockTripSelection: any = null
 const mockSetTripLaunchSelection = jest.fn((value) => {
     mockTripSelection = value
@@ -41,6 +46,9 @@ jest.mock("@/hooks/useLoginPrompt", () => ({
 jest.mock("@/constants/appConfig", () => ({
     ...jest.requireActual("@/constants/appConfig"),
     AUTO_COMPLETE_DISTANCE_METERS: 0,
+    CYCLING_SPEED_KMH: 2,
+    CYCLING_PROMPT_MIN_MS: 1000,
+    CYCLING_PROMPT_COOLDOWN_MS: 5000,
 }))
 
 jest.mock("@/hooks/useBottomNavVisibility", () => ({
@@ -61,6 +69,11 @@ jest.mock("@/components/modals/ReportIssueModal", () => ({
 
 let mockLocation = { latitude: 45.0, longitude: 9.0, heading: 0 }
 let locationCallback: any = null
+
+function emitSpeedKmh(kmh: number) {
+    const speed = kmh / 3.6
+    locationCallback?.({ coords: { ...mockLocation, speed } })
+}
 
 jest.mock("expo-location", () => ({
     requestForegroundPermissionsAsync: jest.fn(async () => ({ status: "granted" })),
@@ -96,6 +109,7 @@ describe("home paths integration", () => {
         mockCurrentUser = { id: "user-1" }
         mockLocation = { latitude: 45.0, longitude: 9.0, heading: 0 }
         locationCallback = null
+        mockRouterReplace.mockClear()
         ;(getReportsByPathApi as jest.Mock).mockResolvedValue([])
     })
 
@@ -246,6 +260,44 @@ describe("home paths integration", () => {
 
         expect(await findByText("Trip Error")).toBeTruthy()
         expect(await findByText("API error")).toBeTruthy()
+    })
+
+    test("shows cycling prompt for logged-in user", async () => {
+        const { findByText, getByText, queryByText } = render(<HomeScreen />)
+
+        await waitFor(() => {
+            expect(Location.getCurrentPositionAsync).toHaveBeenCalled()
+        })
+
+        emitLocation(45.0, 9.0)
+        await new Promise((resolve) => setTimeout(resolve, 1100))
+        emitLocation(45.001, 9.001)
+        await new Promise((resolve) => setTimeout(resolve, 1100))
+        emitLocation(45.002, 9.002)
+
+        expect(await findByText("Are you biking?")).toBeTruthy()
+        expect(await findByText("Got it")).toBeTruthy()
+    })
+
+    test("guest sees login prompt and navigates to welcome", async () => {
+        mockCurrentUser = { id: "guest" }
+        const { findByText, getByText } = render(<HomeScreen />)
+
+        await waitFor(() => {
+            expect(Location.getCurrentPositionAsync).toHaveBeenCalled()
+        })
+
+        emitLocation(45.0, 9.0)
+        await new Promise((resolve) => setTimeout(resolve, 1100))
+        emitLocation(45.001, 9.001)
+        await new Promise((resolve) => setTimeout(resolve, 1100))
+        emitLocation(45.002, 9.002)
+
+        expect(await findByText("Are you biking?")).toBeTruthy()
+        expect(await findByText("Log in")).toBeTruthy()
+
+        fireEvent.press(getByText("Log in"))
+        expect(mockRouterReplace).toHaveBeenCalledWith("/(auth)/welcome")
     })
 
 })

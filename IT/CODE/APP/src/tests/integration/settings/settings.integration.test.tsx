@@ -6,6 +6,8 @@ import { mockRouter } from "@/jest.setup"
 const mockSetThemePreference = jest.fn()
 const mockSetPrivacyPreference = jest.fn()
 const mockLogout = jest.fn().mockResolvedValue(undefined)
+const mockUpdateProfile = jest.fn().mockResolvedValue("ok")
+let mockUser: { id: string; systemPreferences?: string[] } | null = { id: "user-1" }
 
 jest.mock("@/hooks/useColorScheme", () => ({
   useColorScheme: () => "light",
@@ -19,7 +21,12 @@ jest.mock("@/hooks/usePrivacyPreference", () => ({
 }))
 
 jest.mock("@/auth/storage", () => ({
-  useAuthStore: (selector: any) => selector({ logout: mockLogout }),
+  useAuthStore: (selector: any) =>
+    selector({
+      user: mockUser,
+      logout: mockLogout,
+      updateProfile: mockUpdateProfile,
+    }),
 }))
 
 jest.mock("@/components/ui/SelectionOverlay", () => {
@@ -43,9 +50,14 @@ jest.mock("@/components/ui/SelectionOverlay", () => {
   }
 })
 
+jest.mock("react-native/Libraries/Linking/Linking", () => ({
+  openURL: jest.fn(),
+}))
+
 describe("settings integration", () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockUser = { id: "user-1" }
   })
 
   test("logout confirms and navigates to welcome", async () => {
@@ -76,5 +88,30 @@ describe("settings integration", () => {
     fireEvent.press(getByTestId("settings-back"))
 
     expect(mockRouter.back).toHaveBeenCalled()
+  })
+
+  test("get help opens mail client", async () => {
+    const { getByTestId } = render(<SettingsScreen />)
+
+    fireEvent.press(getByTestId("settings-help"))
+
+    await waitFor(() => {
+      const Linking = require("react-native/Libraries/Linking/Linking")
+      expect(Linking.openURL).toHaveBeenCalled()
+    })
+  })
+
+  test("loads preferences from user systemPreferences", async () => {
+    mockUser = {
+      id: "user-1",
+      systemPreferences: ["appearance:dark", "privacy:private"],
+    }
+
+    render(<SettingsScreen />)
+
+    await waitFor(() => {
+      expect(mockSetThemePreference).toHaveBeenCalledWith("dark")
+      expect(mockSetPrivacyPreference).toHaveBeenCalledWith("private")
+    })
   })
 })

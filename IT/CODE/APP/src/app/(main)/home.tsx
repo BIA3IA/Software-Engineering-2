@@ -34,14 +34,19 @@ import { mapUserPathSummaryToSearchResult } from "@/utils/pathMappers"
 import { findClosestPointIndex, normalizeSearchResult, regionAroundPoint, regionCenteredOnDestination } from "@/utils/map"
 import { haversineDistanceMetersLatLng, isNearOrigin, minDistanceToRouteMeters } from "@/utils/geo"
 import { getConditionLabel, getObstacleLabel } from "@/utils/reportOptions"
+import { useFollowUserLocation } from "@/hooks/useFollowUserLocation"
 import {
   AUTO_COMPLETE_DISTANCE_METERS,
+  CYCLING_PROMPT_COOLDOWN_MS,
+  CYCLING_PROMPT_MIN_MS,
+  CYCLING_SPEED_KMH,
   OFF_ROUTE_MAX_CONSECUTIVE,
   OFF_ROUTE_MAX_MS,
   OFF_ROUTE_DISTANCE_METERS,
   REPORT_CONFIRM_DISMISS_MS,
   REPORT_CONFIRM_DISTANCE_METERS,
   START_TRIP_DISTANCE_METERS,
+  FOLLOW_ZOOM,
 } from "@/constants/appConfig"
 
 export default function HomeScreen() {
@@ -67,7 +72,19 @@ export default function HomeScreen() {
   const [activeTripStartedAt, setActiveTripStartedAt] = React.useState<Date | null>(null)
   const [userLocation, setUserLocation] = React.useState<LatLng | null>(null)
   const [userHeading, setUserHeading] = React.useState<number | null>(null)
+  const [isMapReady, setMapReady] = React.useState(false)
   const mapRef = React.useRef<MapView | null>(null)
+  const lastCameraStateRef = React.useRef<{
+    at: number
+    center: LatLng | null
+    heading: number | null
+    mode: "nav" | "route" | "user" | null
+    routeKey: string | null
+  }>({ at: 0, center: null, heading: null, mode: null, routeKey: null })
+  const lastLocationRef = React.useRef<LatLng | null>(null)
+  const lastLocationAtRef = React.useRef(0)
+  const lastHeadingRef = React.useRef<number | null>(null)
+  const lastHeadingAtRef = React.useRef(0)
   const locationWatcherRef = React.useRef<Location.LocationSubscription | null>(null)
   const [reportVisible, setReportVisible] = React.useState(false)
   const [reportConfirmation, setReportConfirmation] = React.useState<ReportSummary | null>(null)
@@ -77,6 +94,7 @@ export default function HomeScreen() {
   const [isSearching, setIsSearching] = React.useState(false)
   const [isCancelTripPopupVisible, setCancelTripPopupVisible] = React.useState(false)
   const [isOffRoutePopupVisible, setOffRoutePopupVisible] = React.useState(false)
+  const [isCyclingPromptVisible, setCyclingPromptVisible] = React.useState(false)
   const [errorPopup, setErrorPopup] = React.useState({
     visible: false,
     title: "",
@@ -98,6 +116,11 @@ export default function HomeScreen() {
   const offRouteCountRef = React.useRef(0)
   const offRouteStartedAtRef = React.useRef<number | null>(null)
   const offRouteContinueUsedRef = React.useRef(false)
+  const cyclingPromptAtRef = React.useRef(0)
+  const cyclingStartAtRef = React.useRef<number | null>(null)
+  const cyclingPromptVisibleRef = React.useRef(false)
+  const lastSpeedSampleRef = React.useRef<LatLng | null>(null)
+  const lastSpeedAtRef = React.useRef(0)
   const reportSessionIdRef = React.useRef<string | null>(null)
   const confirmationTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const promptedReportIdsRef = React.useRef(new Set<string>())
@@ -123,6 +146,20 @@ export default function HomeScreen() {
   const offRouteMessage = canContinueOffRoute
     ? "You are too far from the path. End the trip?"
     : "You are too far from the path and have already continued once. End the trip?"
+
+  const { followsUserLocation, gesturesDisabled } = useFollowUserLocation({
+    enabled: hasActiveNavigation,
+    mapRef,
+    target: userLocation,
+    ready: isMapReady,
+    heading: userHeading,
+    zoom: FOLLOW_ZOOM,
+    pitch: 20,
+    minDistanceMeters: 6,
+    minIntervalMs: 300,
+    durationMs: 300,
+    disableGestures: true,
+  })
 
   const routeProgressIndex = React.useMemo(() => {
     if (!activeTrip || !userLocation) return null
@@ -191,9 +228,14 @@ export default function HomeScreen() {
     setCreateModalVisible(true)
   }
 
-  function handleStartCreating(values: { name: string; description: string; visibility: PrivacyPreference }) {
+  function handleStartCreating(values: {
+    name: string
+    description: string
+    visibility: PrivacyPreference
+    creationMode: "manual" | "automatic"
+  }) {
     setCreateModalVisible(false)
-    const query = `?name=${encodeURIComponent(values.name)}&description=${encodeURIComponent(values.description)}&visibility=${values.visibility}`
+    const query = `?name=${encodeURIComponent(values.name)}&description=${encodeURIComponent(values.description)}&visibility=${values.visibility}&creationMode=${values.creationMode}`
     router.push(`/create-path${query}` as any)
   }
 
@@ -451,6 +493,29 @@ export default function HomeScreen() {
     }, 2500)
   }
 
+  async function handleCyclingPromptPrimary() {
+    if (!userLocation) {
+      setCyclingPromptVisible(false)
+      return
+    }
+    try {
+      const reverse = await Location.reverseGeocodeAsync({
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+      })
+      const formatted = formatAddress(reverse[0])
+      if (formatted) {
+        setStartPoint(formatted)
+      } else {
+        setStartPoint(`${userLocation.latitude.toFixed(5)}, ${userLocation.longitude.toFixed(5)}`)
+      }
+    } catch {
+      setStartPoint(`${userLocation.latitude.toFixed(5)}, ${userLocation.longitude.toFixed(5)}`)
+    } finally {
+      setCyclingPromptVisible(false)
+    }
+  }
+
   function handleCloseErrorPopup() {
     setErrorPopup((prev) => ({
       ...prev,
@@ -567,6 +632,16 @@ export default function HomeScreen() {
   }, [activeTrip, destinationPoint, userLocation])
 
   React.useEffect(() => {
+    cyclingPromptVisibleRef.current = isCyclingPromptVisible
+  }, [isCyclingPromptVisible])
+
+  React.useEffect(() => {
+    if (hasActiveNavigation && isCyclingPromptVisible) {
+      setCyclingPromptVisible(false)
+    }
+  }, [hasActiveNavigation, isCyclingPromptVisible])
+
+  React.useEffect(() => {
     if (!activeTrip || !userLocation) return
     if (reportConfirmation) return
     const reports = reportsByPathId[activeTrip.id] ?? []
@@ -591,10 +666,12 @@ export default function HomeScreen() {
 
     promptedReportIdsRef.current.add(closestReport.reportId)
     setReportConfirmation(closestReport)
-    confirmationTimerRef.current = setTimeout(() => {
-      clearReportConfirmation()
-    }, REPORT_CONFIRM_DISMISS_MS)
-  }, [activeTrip, reportConfirmation, reportsByPathId, userLocation])
+    if (!isGuest) {
+      confirmationTimerRef.current = setTimeout(() => {
+        clearReportConfirmation()
+      }, REPORT_CONFIRM_DISMISS_MS)
+    }
+  }, [activeTrip, reportConfirmation, reportsByPathId, userLocation, isGuest])
 
   React.useEffect(() => {
     let cancelled = false
@@ -609,12 +686,17 @@ export default function HomeScreen() {
           accuracy: Location.LocationAccuracy.Balanced,
         })
         if (cancelled) return
-        setUserLocation({
+        const initialLocation = {
           latitude: current.coords.latitude,
           longitude: current.coords.longitude,
-        })
+        }
+        setUserLocation(initialLocation)
+        lastLocationRef.current = initialLocation
+        lastLocationAtRef.current = Date.now()
         if (current.coords.heading != null && Number.isFinite(current.coords.heading) && current.coords.heading >= 0) {
           setUserHeading(current.coords.heading)
+          lastHeadingRef.current = current.coords.heading
+          lastHeadingAtRef.current = Date.now()
         }
 
         try {
@@ -638,12 +720,64 @@ export default function HomeScreen() {
           },
           (location) => {
             if (cancelled) return
-            setUserLocation({
+            const next = {
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
-            })
+            }
+            const now = Date.now()
+            const lastLocation = lastLocationRef.current
+            const distance =
+              lastLocation ? haversineDistanceMetersLatLng(lastLocation, next) : Number.POSITIVE_INFINITY
+            if (!lastLocation || distance > 3 || now - lastLocationAtRef.current > 1000) {
+              setUserLocation(next)
+              lastLocationRef.current = next
+              lastLocationAtRef.current = now
+            }
+
             if (location.coords.heading != null && Number.isFinite(location.coords.heading) && location.coords.heading >= 0) {
-              setUserHeading(location.coords.heading)
+              const heading = location.coords.heading
+              const lastHeading = lastHeadingRef.current
+              const headingDiff = lastHeading !== null ? Math.abs(lastHeading - heading) : Number.POSITIVE_INFINITY
+              if (lastHeading === null || headingDiff > 5 || now - lastHeadingAtRef.current > 1000) {
+                setUserHeading(heading)
+                lastHeadingRef.current = heading
+                lastHeadingAtRef.current = now
+              }
+            }
+
+            if (!hasActiveNavigation) {
+              let derivedKmh: number | null = null
+              const lastSpeedPoint = lastSpeedSampleRef.current
+              if (lastSpeedPoint && lastSpeedAtRef.current > 0) {
+                const deltaSeconds = (now - lastSpeedAtRef.current) / 1000
+                if (deltaSeconds > 0) {
+                  const meters = haversineDistanceMetersLatLng(lastSpeedPoint, next)
+                  derivedKmh = (meters / deltaSeconds) * 3.6
+                }
+              }
+              lastSpeedSampleRef.current = next
+              lastSpeedAtRef.current = now
+
+              const speedKmh = derivedKmh
+              if (speedKmh !== null && speedKmh >= CYCLING_SPEED_KMH) {
+                if (cyclingStartAtRef.current === null) {
+                  cyclingStartAtRef.current = now
+                }
+              } else {
+                cyclingStartAtRef.current = null
+              }
+
+              const cyclingElapsed =
+                cyclingStartAtRef.current !== null ? now - cyclingStartAtRef.current : 0
+
+              if (
+                cyclingElapsed >= CYCLING_PROMPT_MIN_MS &&
+                !cyclingPromptVisibleRef.current &&
+                now - cyclingPromptAtRef.current > CYCLING_PROMPT_COOLDOWN_MS
+              ) {
+                cyclingPromptAtRef.current = now
+                setCyclingPromptVisible(true)
+              }
             }
           }
         )
@@ -675,37 +809,64 @@ export default function HomeScreen() {
   React.useEffect(() => {
     if (!mapRef.current) return
 
-    if (hasActiveNavigation && userLocation) {
-      requestAnimationFrame(() => {
-        mapRef.current?.animateCamera(
-          {
-            center: userLocation,
-            heading: userHeading ?? 0,
-            pitch: 20,
-            zoom: 18,
-            altitude: 500,
-          },
-          { duration: 350 }
-        )
-      })
-      return
-    }
+    if (hasActiveNavigation) return
 
     if (displayRoute.length) {
       const region = regionCenteredOnDestination(displayRoute)
-      requestAnimationFrame(() => {
-        mapRef.current?.animateToRegion(region, 600)
-      })
+      const routeKey = selectedResult?.id ?? activeTrip?.id ?? "route"
+      const now = Date.now()
+      const last = lastCameraStateRef.current
+      const shouldAnimate = last.mode !== "route" || last.routeKey !== routeKey || now - last.at > 2000
+      if (shouldAnimate) {
+        lastCameraStateRef.current = {
+          at: now,
+          center: { latitude: region.latitude, longitude: region.longitude },
+          heading: null,
+          mode: "route",
+          routeKey,
+        }
+        requestAnimationFrame(() => {
+          mapRef.current?.animateToRegion(region, 600)
+        })
+      }
       return
     }
 
     if (userLocation) {
       const region = regionAroundPoint(userLocation, 0.008)
-      requestAnimationFrame(() => {
-        mapRef.current?.animateToRegion(region, 600)
-      })
+      const now = Date.now()
+      const last = lastCameraStateRef.current
+      const distance =
+        last.center && userLocation ? haversineDistanceMetersLatLng(last.center, userLocation) : Number.POSITIVE_INFINITY
+      const shouldAnimate = last.mode !== "user" || now - last.at > 1000 || distance > 10
+      if (shouldAnimate) {
+        lastCameraStateRef.current = {
+          at: now,
+          center: userLocation,
+          heading: null,
+          mode: "user",
+          routeKey: null,
+        }
+        requestAnimationFrame(() => {
+          mapRef.current?.animateToRegion(region, 600)
+        })
+      }
     }
-  }, [selectedResult?.id, displayRoute, userLocation, hasActiveNavigation, userHeading])
+  }, [selectedResult?.id, displayRoute, userLocation, hasActiveNavigation])
+
+  React.useEffect(() => {
+    if (!hasActiveNavigation || !userLocation || !mapRef.current || !isMapReady) return
+    mapRef.current.animateCamera(
+      {
+        center: userLocation,
+        heading: userHeading ?? 0,
+        pitch: 20,
+        zoom: FOLLOW_ZOOM,
+        altitude: 500,
+      },
+      { duration: 300 }
+    )
+  }, [hasActiveNavigation, userLocation, userHeading, isMapReady])
 
   return (
     <>
@@ -721,11 +882,17 @@ export default function HomeScreen() {
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
           }}
-          customMapStyle={scheme === "dark" ? darkMapStyle : lightMapStyle}
-          showsCompass={false}
-          showsUserLocation
-          showsMyLocationButton={false}
-          onPress={() => setCalloutState(null)}
+        customMapStyle={scheme === "dark" ? darkMapStyle : lightMapStyle}
+        showsCompass={false}
+        showsUserLocation
+        showsMyLocationButton={false}
+        onMapReady={() => setMapReady(true)}
+        followsUserLocation={followsUserLocation}
+        scrollEnabled={gesturesDisabled ? false : true}
+        zoomEnabled={gesturesDisabled ? false : true}
+        rotateEnabled={gesturesDisabled ? false : true}
+        pitchEnabled={gesturesDisabled ? false : true}
+        onPress={() => setCalloutState(null)}
           onLayout={(event) => {
             const { x, y, width, height } = event.nativeEvent.layout
             setMapLayout({ x, y, width, height })
@@ -957,6 +1124,41 @@ export default function HomeScreen() {
         visible={reportVisible}
         onClose={() => setReportVisible(false)}
         onSubmit={handleSubmitReport}
+      />
+      <AppPopup
+        visible={isCyclingPromptVisible}
+        title="Are you biking?"
+        message={
+          isGuest
+            ? "Don't forget to start a trip! Log in to track your progress."
+            : "Search for a path and start recording a trip or create your new path!"
+        }
+        icon={<Navigation size={iconSizes.xl} color={palette.brand.base} />}
+        iconBackgroundColor={`${palette.brand.surface}`}
+        onClose={() => setCyclingPromptVisible(false)}
+        primaryButton={{
+          label: isGuest ? "Log in" : "Got it",
+          variant: "primary",
+          onPress: () => {
+            if (isGuest) {
+              setCyclingPromptVisible(false)
+              router.replace("/(auth)/welcome")
+              return
+            }
+            void handleCyclingPromptPrimary()
+          },
+          buttonColor: palette.brand.base,
+          textColor: palette.text.onAccent,
+        }}
+        secondaryButton={
+          isGuest
+            ? {
+                label: "Not now",
+                variant: "secondary",
+                onPress: () => setCyclingPromptVisible(false),
+              }
+            : undefined
+        }
       />
       <AppPopup
         visible={Boolean(reportConfirmation)}
