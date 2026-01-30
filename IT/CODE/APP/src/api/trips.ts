@@ -7,11 +7,10 @@ export type TripSegmentPayload = {
   polylineCoordinates: PathPoint[]
 }
 
-export type TripStatistics = {
-  speed: number
-  maxSpeed: number
-  distance: number
-  time: number
+export type TripStats = {
+  avgSpeed: number
+  kilometers: number
+  duration: number
 }
 
 export type TripSummary = {
@@ -22,7 +21,7 @@ export type TripSummary = {
   title?: string | null
   origin: PathPoint
   destination: PathPoint
-  statistics: TripStatistics | null
+  stats: TripStats | null
   weather: unknown | null
   segmentCount: number
   tripSegments?: Array<{

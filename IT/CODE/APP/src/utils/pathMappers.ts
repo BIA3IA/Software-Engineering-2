@@ -68,8 +68,6 @@ export function mapUserPathSummaryToRouteItem(path: UserPathSummary): RouteItem 
         durationMin: 0,
         date: formatDate(path.createdAt),
         avgSpeed: 0,
-        maxSpeed: 0,
-        elevation: 0,
         visibility: path.visibility ? "public" : "private",
         showWeatherBadge: false,
         showPerformanceMetrics: false,

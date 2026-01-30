@@ -1,5 +1,6 @@
 import Redis from 'ioredis';
 import logger from './logger.js';
+import { TRIP_COUNT_TTL, TRIP_STATS_TTL, OVERALL_STATS_TTL } from '../constants/appConfig.js';
 
 const redis = new Redis({
     host: process.env.REDIS_HOST || 'localhost',
@@ -17,20 +18,17 @@ redis.on('connect', () => {
     logger.info('Redis connected');
 });
 
-const TRIP_COUNT_TTL = 600; // 10 minutes
-const TRIP_STAT_TTL = 86400; // 24 hours (?)
-const OVERALL_STAT_TTL = 600; // 10 minutes
 
 export function getTripCountCacheKey(userId: string): string {
     return `tripCount:${userId}`;
 }
 
-export function getTripStatCacheKey(tripId: string): string {
-    return `tripStat:${tripId}`;
+export function getTripStatsCacheKey(tripId: string): string {
+    return `tripStats:${tripId}`;
 }
 
-export function getOverallStatCacheKey(userId: string): string {
-    return `overallStat:${userId}`;
+export function getOverallStatsCacheKey(userId: string, period: string): string {
+    return `overallStats:${userId}:${period}`;
 }
 
 export async function getCachedTripCount(
@@ -87,7 +85,7 @@ export async function incrementTripCount(userId: string): Promise<void> {
         }
         
         // Invalidate overall stats because trip count changed
-        await invalidateOverallStat(userId);
+        await invalidateOverallStats(userId);
     } catch (error) {
         logger.warn({ err: error, userId }, 'Failed to increment trip count cache');
         await redis.del(key).catch(() => {});
@@ -121,7 +119,7 @@ export async function decrementTripCount(userId: string): Promise<void> {
         }
         
         // Invalidate overall stats because trip count changed
-        await invalidateOverallStat(userId);
+        await invalidateOverallStats(userId);
     } catch (error) {
         logger.warn({ err: error, userId }, 'Failed to decrement trip count cache');
         await redis.del(key).catch(() => {});
@@ -134,71 +132,76 @@ export async function closeRedis(): Promise<void> {
 
 // PER-TRIP STATS CACHING
 
-export async function getCachedTripStat(tripId: string): Promise<any | null> {
-    const key = getTripStatCacheKey(tripId);
+export async function getCachedTripStats(tripId: string): Promise<any | null> {
+    const key = getTripStatsCacheKey(tripId);
     
     try {
         const cached = await redis.get(key);
         if (cached) {
-            logger.debug({ tripId }, 'Trip stat cache hit');
-            return JSON.parse(cached);
-        }
-        logger.debug({ tripId }, 'Trip stat cache miss');
+        logger.debug({ tripId }, 'Trip stats cache hit');
+        return JSON.parse(cached);
+    }
+        logger.debug({ tripId }, 'Trip stats cache miss');
         return null;
     } catch (error) {
-        logger.warn({ err: error, tripId }, 'Redis error fetching trip stat');
+        logger.warn({ err: error, tripId }, 'Redis error fetching trip stats');
         return null;
     }
 }
 
-export async function setCachedTripStat(tripId: string, stat: any): Promise<void> {
-    const key = getTripStatCacheKey(tripId);
+export async function setCachedTripStats(tripId: string, stats: any): Promise<void> {
+    const key = getTripStatsCacheKey(tripId);
     
     try {
-        await redis.setex(key, TRIP_STAT_TTL, JSON.stringify(stat));
-        logger.debug({ tripId, ttl: TRIP_STAT_TTL }, 'Trip stat cached');
+        await redis.setex(key, TRIP_STATS_TTL, JSON.stringify(stats));
+        logger.debug({ tripId, ttl: TRIP_STATS_TTL }, 'Trip stats cached');
     } catch (error) {
-        logger.warn({ err: error, tripId }, 'Failed to cache trip stat');
+        logger.warn({ err: error, tripId }, 'Failed to cache trip stats');
     }
 }
 
 // OVERALL STATS CACHING
 
-export async function getCachedOverallStat(userId: string): Promise<any | null> {
-    const key = getOverallStatCacheKey(userId);
+export async function getCachedOverallStats(userId: string, period: string): Promise<any | null> {
+    const key = getOverallStatsCacheKey(userId, period);
     
     try {
         const cached = await redis.get(key);
         if (cached) {
-            logger.debug({ userId }, 'Overall stat cache hit');
+            logger.debug({ userId }, 'Overall stats cache hit');
             return JSON.parse(cached);
         }
-        logger.debug({ userId }, 'Overall stat cache miss');
+        logger.debug({ userId }, 'Overall stats cache miss');
         return null;
     } catch (error) {
-        logger.warn({ err: error, userId }, 'Redis error fetching overall stat');
+        logger.warn({ err: error, userId }, 'Redis error fetching overall stats');
         return null;
     }
 }
 
-export async function setCachedOverallStat(userId: string, stat: any): Promise<void> {
-    const key = getOverallStatCacheKey(userId);
+export async function setCachedOverallStats(userId: string, period: string, stats: any): Promise<void> {
+    const key = getOverallStatsCacheKey(userId, period);
     
     try {
-        await redis.setex(key, OVERALL_STAT_TTL, JSON.stringify(stat));
-        logger.debug({ userId, ttl: OVERALL_STAT_TTL }, 'Overall stat cached');
+        await redis.setex(key, OVERALL_STATS_TTL, JSON.stringify(stats));
+        logger.debug({ userId, ttl: OVERALL_STATS_TTL }, 'Overall stats cached');
     } catch (error) {
-        logger.warn({ err: error, userId }, 'Failed to cache overall stat');
+        logger.warn({ err: error, userId }, 'Failed to cache overall stats');
     }
 }
 
-export async function invalidateOverallStat(userId: string): Promise<void> {
-    const key = getOverallStatCacheKey(userId);
+export async function invalidateOverallStatsPeriod(userId: string, period: string): Promise<void> {
+    const key = getOverallStatsCacheKey(userId, period);
     
     try {
         await redis.del(key);
-        logger.debug({ userId }, 'Overall stat cache invalidated');
+        logger.debug({ userId, period }, 'Overall stats cache invalidated');
     } catch (error) {
-        logger.warn({ err: error, userId }, 'Failed to invalidate overall stat');
+        logger.warn({ err: error, userId, period }, 'Failed to invalidate overall stats');
     }
+}
+
+export async function invalidateOverallStats(userId: string): Promise<void> {
+    const periods = ["DAY", "WEEK", "MONTH", "YEAR", "OVERALL"];
+    await Promise.all(periods.map((period) => invalidateOverallStatsPeriod(userId, period)));
 }

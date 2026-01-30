@@ -86,7 +86,7 @@ describe("api/trips", () => {
                             title: "Morning Ride",
                             origin: { lat: 45.0, lng: 9.0 },
                             destination: { lat: 45.5, lng: 9.5 },
-                            statistics: { speed: 25, maxSpeed: 35, distance: 15, time: 60 },
+                            stats: { avgSpeed: 25, kilometers: 15, duration: 60 },
                             weather: null,
                             segmentCount: 1,
                         },
@@ -101,7 +101,7 @@ describe("api/trips", () => {
         expect(out).toHaveLength(1)
         expect(out[0].tripId).toBe("t1")
         expect(out[0].title).toBe("Morning Ride")
-        expect(out[0].statistics).toEqual({ speed: 25, maxSpeed: 35, distance: 15, time: 60 })
+        expect(out[0].stats).toEqual({ avgSpeed: 25, kilometers: 15, duration: 60 })
     })
 
     test("getMyTripsApi returns empty array when no trips", async () => {

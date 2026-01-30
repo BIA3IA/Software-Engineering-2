@@ -92,7 +92,7 @@ const createMockTrip = (overrides: Partial<any> = {}) => ({
     title: "Morning Ride",
     origin: { lat: 45.0, lng: 9.0 },
     destination: { lat: 45.5, lng: 9.5 },
-    statistics: { speed: 25, maxSpeed: 35, distance: 15, time: 60 },
+    stats: { avgSpeed: 25, kilometers: 15, duration: 60 },
     weather: null,
     segmentCount: 1,
     tripSegments: [],
@@ -211,12 +211,12 @@ describe("trips integration", () => {
             createMockTrip({
                 tripId: "t1",
                 title: "Short",
-                statistics: { speed: 25, maxSpeed: 35, distance: 5, time: 30 },
+                stats: { avgSpeed: 25, kilometers: 5, duration: 30 },
             }),
             createMockTrip({
                 tripId: "t2",
                 title: "Long",
-                statistics: { speed: 25, maxSpeed: 35, distance: 50, time: 120 },
+                stats: { avgSpeed: 25, kilometers: 50, duration: 120 },
             }),
         ])
 
@@ -235,12 +235,12 @@ describe("trips integration", () => {
             createMockTrip({
                 tripId: "t1",
                 title: "Quick",
-                statistics: { speed: 25, maxSpeed: 35, distance: 10, time: 20 },
+                stats: { avgSpeed: 25, kilometers: 10, duration: 20 },
             }),
             createMockTrip({
                 tripId: "t2",
                 title: "Slow",
-                statistics: { speed: 25, maxSpeed: 35, distance: 10, time: 120 },
+                stats: { avgSpeed: 25, kilometers: 10, duration: 120 },
             }),
         ])
 

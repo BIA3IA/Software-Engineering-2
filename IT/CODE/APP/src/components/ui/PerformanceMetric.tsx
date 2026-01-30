@@ -5,21 +5,15 @@ import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
 import { scale, verticalScale } from "@/theme/layout"
 import { MetricCircle } from "@/components/ui/MetricCircle"
-import { MapPin, TrendingUp, Mountain } from "lucide-react-native"
+import { formatDuration, formatSpeed } from "@/utils/statsFormat"
+import { Timer, TrendingUp } from "lucide-react-native"
 
 type PerformanceMetricProps = {
-  duration: string
-  avgSpeed: string
-  maxSpeed: string
-  elevation: string
+  durationSeconds: number
+  avgSpeed: number
 }
 
-export function PerformanceMetric({
-  duration,
-  avgSpeed,
-  maxSpeed,
-  elevation,
-}: PerformanceMetricProps) {
+export function PerformanceMetric({ durationSeconds, avgSpeed }: PerformanceMetricProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
   return (
@@ -36,28 +30,16 @@ export function PerformanceMetric({
       >
         <View style={styles.grid}>
           <MetricCircle
-            icon={<MapPin size={iconSizes.lg} color={palette.accent.purple.base} />}
-            value={duration}
+            icon={<Timer size={iconSizes.lg} color={palette.accent.purple.base} />}
+            value={formatDuration(durationSeconds)}
             label="Duration"
             accentColor={palette.accent.purple.base}
           />
           <MetricCircle
             icon={<TrendingUp size={iconSizes.lg} color={palette.brand.base} />}
-            value={avgSpeed}
-            label="Avg Speed"
+            value={formatSpeed(avgSpeed)}
+            label="Average Speed"
             accentColor={palette.brand.base}
-          />
-          <MetricCircle
-            icon={<TrendingUp size={iconSizes.lg} color={palette.accent.orange.base} />}
-            value={maxSpeed}
-            label="Max Speed"
-            accentColor={palette.accent.orange.base}
-          />
-          <MetricCircle
-            icon={<Mountain size={iconSizes.lg} color={palette.accent.green.base} />}
-            value={elevation}
-            label="Elevation"
-            accentColor={palette.accent.green.base}
           />
         </View>
       </View>
@@ -70,9 +52,8 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(12),
   },
   card: {
-    marginTop: verticalScale(10),
+    marginTop: verticalScale(6),
     paddingHorizontal: scale(12),
-    paddingVertical: verticalScale(10),
   },
   grid: {
     flexDirection: "row",

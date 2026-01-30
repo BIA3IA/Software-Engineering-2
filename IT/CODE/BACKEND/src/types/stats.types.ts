@@ -1,5 +1,5 @@
-export interface Stat {
-    statId: string;
+export interface Stats {
+    statsId: string;
     tripId: string;
     userId: string;
     avgSpeed: number;    // km/h
@@ -8,19 +8,27 @@ export interface Stat {
     createdAt: Date;
 }
 
-export interface OverallStat {
+export type StatsPeriod = "DAY" | "WEEK" | "MONTH" | "YEAR" | "OVERALL";
+
+export interface OverallStatsPeriod {
     userId: string;
+    period: StatsPeriod;
     avgSpeed: number;
     avgDuration: number;
     avgKilometers: number;
-    lastTripCount: number;
+    totalKilometers: number;
+    totalTime: number;
+    longestKilometer: number;
+    longestTime: number;
+    pathsCreated: number;
+    tripCount: number;
     updatedAt: Date;
 }
 
 /**
  * Payload used when creating or computing new statistics
  */
-export interface StatCalculationPayload {
+export interface StatsCalculationPayload {
     avgSpeed: number;
     duration: number;
     kilometers: number;

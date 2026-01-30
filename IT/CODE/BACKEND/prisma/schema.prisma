@@ -16,6 +16,14 @@ datasource db {
   provider = "postgresql"
 }
 
+enum StatsPeriod {
+  DAY
+  WEEK
+  MONTH
+  YEAR
+  OVERALL
+}
+
 // user table, use cuid for better indexing
 // @@map is used to map the model to an existing table name in the database (useful when you have legacy databases)
 model User {
@@ -30,8 +38,8 @@ model User {
   trips             Trip[]
   paths             Path[]
   reports           Report[]
-  stats             Stat[]
-  overallStat       OverallStat?
+  stats             Stats[]
+  overallStatsPeriods OverallStatsPeriod[]
 }
 
 model RefreshToken {
@@ -60,7 +68,7 @@ model Trip {
   distanceKm   Float?
   tripSegments TripSegment[]
   reports      Report[]
-  stat         Stat?
+  tripStats    Stats?
 }
 
 model Segment {
@@ -132,8 +140,8 @@ model Report {
   @@index([segmentId])
 }
 
-model Stat {
-  statId String @id @default(cuid())
+model Stats {
+  statsId String @id @default(cuid()) @map("statsId")
   tripId String @unique
   userId String
 
@@ -150,20 +158,28 @@ model Stat {
   user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@index([userId])
+  @@map("Stats")
 }
 
-model OverallStat {
-  userId String @id
+model OverallStatsPeriod {
+  id String @id @default(cuid())
+  userId String
+  period StatsPeriod
 
-  // Aggregated averages across all user trips
-  avgSpeed      Float @default(0)
-  avgDuration   Float @default(0)
-  avgKilometers Float @default(0)
+  avgSpeed        Float @default(0)
+  avgDuration     Float @default(0)
+  avgKilometers   Float @default(0)
+  totalKilometers Float @default(0)
+  totalTime       Float @default(0)
+  longestKilometer Float @default(0)
+  longestTime      Float @default(0)
+  pathsCreated     Int   @default(0)
+  tripCount        Int   @default(0)
 
-  // State-aware recomputation logic
-  lastTripCount Int      @default(0)
-  updatedAt     DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
-  // Relation
   user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([userId, period])
+  @@index([userId, period])
 }
