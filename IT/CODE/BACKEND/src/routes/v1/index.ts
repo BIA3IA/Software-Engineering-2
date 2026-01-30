@@ -4,6 +4,7 @@ import { authRouter } from './auth.routes.js';
 import { pathRouter } from './path.routes.js';
 import { tripRouter } from './trip.routes.js';
 import { reportRouter } from './report.routes.js';
+import { statsRouter } from './stat.routes.js';
 
 // central router for v1 API
 
@@ -14,6 +15,7 @@ router.use('/users', userRouter);
 router.use('/paths', pathRouter);
 router.use('/trips', tripRouter);
 router.use('/reports', reportRouter);
+router.use('/stats', statsRouter);
 // add more routes here as needed
 
 export default router;

@@ -4,8 +4,9 @@ import pino from 'pino';
 // This is pretty useful for both development and production environments. 
 // In development: pretty print with colors and human-readable timestamps.
 const isProd = process.env.NODE_ENV === 'production';
+const isDocker = process.env.IS_DOCKER === 'true';
 
-export const logger = isProd
+export const logger = isProd || isDocker
   ? pino({
       level: process.env.LOG_LEVEL || 'info',
     })

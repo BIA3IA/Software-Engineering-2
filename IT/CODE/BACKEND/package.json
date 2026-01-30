@@ -25,6 +25,7 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/ioredis": "^4.28.10",
     "@types/jest": "^30.0.0",
     "@types/joi": "^17.2.2",
     "@types/jsonwebtoken": "^9.0.10",
@@ -47,6 +48,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "ioredis": "^5.9.2",
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "pino": "^10.1.0"

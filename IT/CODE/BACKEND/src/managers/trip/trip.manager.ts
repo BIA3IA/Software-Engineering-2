@@ -5,6 +5,9 @@ import { Coordinates, TripSegments, WeatherData } from '../../types/index.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import logger from '../../utils/logger';
 import { sortTripSegmentsByChain } from '../../utils/index.js';
+import { polylineDistanceKm } from '../../utils/geo.js';
+import { incrementTripCount, decrementTripCount, getCachedTripStat, setCachedTripStat } from '../../utils/cache.js';
+import { statsManager } from '../stat/stat.manager.js';
 
 export class TripManager {
 
@@ -76,16 +79,38 @@ export class TripManager {
                 destination,
                 startedDate,
                 finishedDate,
-                null,
                 segments,
                 title
             );
+            await incrementTripCount(userId);
 
             try {
                 const tripWithSegments = await queryManager.getTripById(trip.tripId);
                 if (tripWithSegments) {
                     tripWithSegments.tripSegments = sortTripSegmentsByChain(tripWithSegments.tripSegments);
-                    await this.enrichTripWithWeather(tripWithSegments);
+
+                    // Update trip distance based on segments' polylines
+                    const allCoordinates = [
+                        tripWithSegments.origin,
+                        ...tripWithSegments.tripSegments.flatMap(ts => ts.segment.polylineCoordinates),
+                        tripWithSegments.destination
+                    ].filter(Boolean);
+
+                    const distance = polylineDistanceKm(allCoordinates);
+                    await queryManager.updateTripDistance(trip.tripId, distance);
+
+                    // Compute per-trip stats and cache them
+                    await statsManager.computeStats(trip.tripId);
+                    
+                    const stat = await queryManager.getStatByTripId(trip.tripId);
+                    if (stat) {
+                        await setCachedTripStat(trip.tripId, stat);
+                    }
+                    
+                    // Compute overall stats (also cache them inside computeOverallStats)
+                    await statsManager.computeOverallStats(userId);
+
+                    await this.enrichTripWithWeather(tripWithSegments, allCoordinates);
                 }
             } catch (error) {
                 logger.warn({ err: error, tripId: trip.tripId }, 'Trip weather enrichment failed');
@@ -135,12 +160,32 @@ export class TripManager {
                 })
             );
 
-            const tripReports = await Promise.all(
-                sortedTrips.map(trip => {
-                    const segmentIds = trip.tripSegments.map(segment => segment.segmentId);
-                    return queryManager.getReportsBySegmentIds(segmentIds, ['CREATED', 'CONFIRMED']);
-                })
-            );
+            const [tripReports, tripStats] = await Promise.all([
+                Promise.all(
+                    sortedTrips.map(trip => {
+                        const segmentIds = trip.tripSegments.map(segment => segment.segmentId);
+                        return queryManager.getReportsBySegmentIds(segmentIds);
+                    })
+                ),
+                Promise.all(
+                    sortedTrips.map(async trip => {
+                        // Try cache first
+                        let stat = await getCachedTripStat(trip.tripId);
+                        
+                        if (!stat) {
+                            // If cache miss fetch from DB
+                            stat = await queryManager.getStatByTripId(trip.tripId).catch(() => null);
+                            
+                            if (stat) {
+                                // Cache for the next time
+                                await setCachedTripStat(trip.tripId, stat);
+                            }
+                        }
+                        
+                        return stat;
+                    })
+                ),
+            ]);
 
             res.json({
                 success: true,
@@ -154,9 +199,9 @@ export class TripManager {
                         title: trip.title,
                         origin: trip.origin,
                         destination: trip.destination,
-                        statistics: trip.statistics,
                         weather: trip.weather,
                         reports: tripReports[index] ?? [],
+                        stats: tripStats[index] ?? null,
                         segmentCount: trip.tripSegments.length,
                         tripSegments: trip.tripSegments.map(ts => ({
                             segmentId: ts.segmentId,
@@ -194,6 +239,7 @@ export class TripManager {
             }
 
             await queryManager.deleteTripById(tripId);
+            await decrementTripCount(userId);
 
             res.status(204).send();
         } catch (error) {
@@ -201,25 +247,12 @@ export class TripManager {
         }
     }
 
-    private async enrichTripWithWeather(trip: TripSegments): Promise<WeatherData> {
-        const allCoordinates: Coordinates[] = [];
-
-        if (trip.origin) {
-            allCoordinates.push(trip.origin);
-        }
-
-        trip.tripSegments = sortTripSegmentsByChain(trip.tripSegments);
-
-        for (const tripSegment of trip.tripSegments) {
-            const polyline = tripSegment.segment.polylineCoordinates;
-            if (Array.isArray(polyline)) {
-                allCoordinates.push(...polyline);
-            }
-        }
-
-        if (trip.destination) {
-            allCoordinates.push(trip.destination);
-        }
+    private async enrichTripWithWeather(trip: TripSegments, coordinates?: Coordinates[]): Promise<WeatherData> {
+        const allCoordinates = coordinates || [
+            trip.origin,
+            ...trip.tripSegments.flatMap(ts => ts.segment.polylineCoordinates),
+            trip.destination
+        ].filter(Boolean) as Coordinates[];
 
         if (allCoordinates.length === 0) {
             throw new BadRequestError('Trip has no coordinates', 'NO_COORDINATES');

@@ -30,6 +30,8 @@ model User {
   trips             Trip[]
   paths             Path[]
   reports           Report[]
+  stats             Stat[]
+  overallStat       OverallStat?
 }
 
 model RefreshToken {
@@ -53,12 +55,12 @@ model Trip {
   origin       Json
   /// [Coordinates]
   destination  Json
-  /// [TripStatistics]
-  statistics   Json
   /// [WeatherData]
   weather      Json?
+  distanceKm   Float?
   tripSegments TripSegment[]
   reports      Report[]
+  stat         Stat?
 }
 
 model Segment {
@@ -102,30 +104,66 @@ model Path {
 }
 
 model PathSegment {
-  id            String   @id @default(cuid())
+  id            String  @id @default(cuid())
   pathId        String
   segmentId     String
   nextSegmentId String?
-  status        String   @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
-  path          Path     @relation(fields: [pathId], references: [pathId], onDelete: Cascade)
-  segment       Segment  @relation(fields: [segmentId], references: [segmentId]) // No onDelete: Cascade here otherwise deleting a path would delete also the trip segments
+  status        String  @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
+  path          Path    @relation(fields: [pathId], references: [pathId], onDelete: Cascade)
+  segment       Segment @relation(fields: [segmentId], references: [segmentId]) // No onDelete: Cascade here otherwise deleting a path would delete also the trip segments
 }
 
 model Report {
-  reportId      String      @id @default(cuid())
-  createdAt     DateTime    @default(now())
-  userId        String
-  user          User        @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  segmentId     String
-  segment       Segment     @relation(fields: [segmentId], references: [segmentId], onDelete: Cascade)
-  tripId        String?
-  trip          Trip?       @relation(fields: [tripId], references: [tripId], onDelete: SetNull)
-  sessionId     String?
-  obstacleType  String // Enum values: POTHOLE, WORK_IN_PROGRESS, FLOODING, OBSTACLE, OTHER
-  pathStatus    String      @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
-  status        String      @default("CREATED") // Enum values: CONFIRMED, REJECTED, IGNORED, CREATED
-  position      Json
+  reportId     String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  userId       String
+  user         User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  segmentId    String
+  segment      Segment  @relation(fields: [segmentId], references: [segmentId], onDelete: Cascade)
+  tripId       String?
+  trip         Trip?    @relation(fields: [tripId], references: [tripId], onDelete: SetNull)
+  sessionId    String?
+  obstacleType String // Enum values: POTHOLE, WORK_IN_PROGRESS, FLOODING, OBSTACLE, OTHER
+  pathStatus   String   @default("OPTIMAL") // Enum values: OPTIMAL, MEDIUM, SUFFICIENT, REQUIRES_MAINTENANCE, CLOSED
+  status       String   @default("CREATED") // Enum values: CONFIRMED, REJECTED, IGNORED, CREATED
+  position     Json
 
   @@index([sessionId])
   @@index([segmentId])
+}
+
+model Stat {
+  statId String @id @default(cuid())
+  tripId String @unique
+  userId String
+
+  // Per-trip metrics (Single trip performance)
+  avgSpeed   Float @default(0) // km/h
+  duration   Float @default(0) // seconds
+  kilometers Float @default(0) // distance
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  trip Trip @relation(fields: [tripId], references: [tripId], onDelete: Cascade)
+  // Ensure you add the back-relation to the User model as well
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model OverallStat {
+  userId String @id
+
+  // Aggregated averages across all user trips
+  avgSpeed      Float @default(0)
+  avgDuration   Float @default(0)
+  avgKilometers Float @default(0)
+
+  // State-aware recomputation logic
+  lastTripCount Int      @default(0)
+  updatedAt     DateTime @updatedAt
+
+  // Relation
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
