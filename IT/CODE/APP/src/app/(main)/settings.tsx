@@ -1,5 +1,5 @@
 import React from "react"
-import { ScrollView, StyleSheet, View, Text, Pressable, Dimensions } from "react-native"
+import { ScrollView, StyleSheet, View, Text, Pressable, Dimensions, Linking } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useColorScheme, useThemePreference, useSetThemePreference, type AppearancePreference } from "@/hooks/useColorScheme"
 import { usePrivacyPreference, useSetPrivacyPreference } from "@/hooks/usePrivacyPreference"
@@ -140,6 +140,33 @@ export default function SettingsScreen() {
     setIsLoggingOut(false)
   }
 
+  async function handleGetHelp() {
+    const fallbackEmails = [
+      "help@mail.polimi.it",
+    ]
+    const envEmails = process.env.EXPO_PUBLIC_SUPPORT_EMAILS
+    const to = (envEmails ? envEmails.split(",") : fallbackEmails)
+      .map((email) => email.trim())
+      .filter(Boolean)
+    const subject = "BestBikePaths support request"
+    const body = [
+      "Hi team,",
+      "",
+      "I need help with:",
+      "- Issue:",
+      "- Steps to reproduce:",
+      "- Device/OS:",
+      "",
+      "Thanks!",
+    ].join("\n")
+    const mailto = `mailto:${to.join(",")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    try {
+      await Linking.openURL(mailto)
+    } catch (error) {
+      console.warn("Failed to open mail client", error)
+    }
+  }
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: palette.surface.screen }}
@@ -230,7 +257,11 @@ export default function SettingsScreen() {
         </View>
 
         <View style={[styles.card, { backgroundColor: palette.surface.card }]}>
-          <Pressable onPress={() => { }} style={({ pressed }) => [styles.simpleRow, pressed && { opacity: 0.85 }]}>
+          <Pressable
+            onPress={handleGetHelp}
+            style={({ pressed }) => [styles.simpleRow, pressed && { opacity: 0.85 }]}
+            testID="settings-help"
+          >
             <View style={[styles.iconBadge, { backgroundColor: palette.brand.surface }]}>
               <Mail size={iconSizes.md} color={palette.brand.base} />
             </View>

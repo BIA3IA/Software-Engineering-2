@@ -1,5 +1,6 @@
 import React from "react"
 import { render, fireEvent, waitFor } from "@testing-library/react-native"
+import { Linking } from "react-native"
 import SettingsScreen from "@/app/(main)/settings"
 import { mockRouter } from "@/jest.setup"
 
@@ -50,6 +51,10 @@ jest.mock("@/components/ui/SelectionOverlay", () => {
   }
 })
 
+jest.mock("react-native/Libraries/Linking/Linking", () => ({
+  openURL: jest.fn(),
+}))
+
 describe("settings integration", () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -84,6 +89,16 @@ describe("settings integration", () => {
     fireEvent.press(getByTestId("settings-back"))
 
     expect(mockRouter.back).toHaveBeenCalled()
+  })
+
+  test("get help opens mail client", async () => {
+    const { getByTestId } = render(<SettingsScreen />)
+
+    fireEvent.press(getByTestId("settings-help"))
+
+    await waitFor(() => {
+      expect(Linking.openURL).toHaveBeenCalled()
+    })
   })
 
   test("loads preferences from user systemPreferences", async () => {
