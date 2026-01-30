@@ -37,16 +37,16 @@ jest.mock("../../utils/logger", () => ({
 
 jest.mock("../../managers/path/path.manager", () => ({
     pathManager: {
-        recalculateSegmentStatusForAllPaths: jest.fn(),
-        createPath: jest.fn(),
-        getPathById: jest.fn(),
-        getPaths: jest.fn(),
-        searchPath: jest.fn(),
-        recalculatePathSegmentStatuses: jest.fn(),
-        snapPath: jest.fn(),
-        getUserPaths: jest.fn(),
-        deletePath: jest.fn(),
-        changePathVisibility: jest.fn(),
+        recalculateSegmentStatusForAllPaths: jest.fn().mockResolvedValue(undefined),
+        createPath: jest.fn().mockResolvedValue({}),
+        getPathById: jest.fn().mockResolvedValue(null),
+        getPaths: jest.fn().mockResolvedValue([]),
+        searchPath: jest.fn().mockResolvedValue([]),
+        recalculatePathSegmentStatuses: jest.fn().mockResolvedValue(undefined),
+        snapPath: jest.fn().mockResolvedValue({}),
+        getUserPaths: jest.fn().mockResolvedValue([]),
+        deletePath: jest.fn().mockResolvedValue(undefined),
+        changePathVisibility: jest.fn().mockResolvedValue(undefined),
     },
 }));
 

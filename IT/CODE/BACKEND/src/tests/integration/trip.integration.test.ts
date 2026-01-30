@@ -43,7 +43,7 @@ jest.mock("../../managers/query/query.manager", () => ({
         createSegmentWithId: jest.fn(),
         createTrip: jest.fn(),
         updateTripDistance: jest.fn(),
-        getStatByTripId: jest.fn(),
+        getStatsByTripId: jest.fn(),
         getTripsByUserId: jest.fn(),
         getReportsBySegmentIds: jest.fn(),
         updateTripWeather: jest.fn(),
@@ -53,14 +53,14 @@ jest.mock("../../managers/query/query.manager", () => ({
 jest.mock("../../utils/cache", () => ({
     incrementTripCount: jest.fn(),
     decrementTripCount: jest.fn(),
-    getCachedTripStat: jest.fn(),
-    setCachedTripStat: jest.fn(),
+    getCachedTripStats: jest.fn(),
+    setCachedTripStats: jest.fn(),
 }));
 
 import { app } from "../../server";
 import prisma from "../../utils/prisma-client";
 import { queryManager } from "../../managers/query/query.manager";
-import { decrementTripCount, incrementTripCount, getCachedTripStat, setCachedTripStat } from "../../utils/cache";
+import { decrementTripCount, incrementTripCount, getCachedTripStats, setCachedTripStats } from "../../utils/cache";
 
 describe("Trip Routes Integration Tests", () => {
 
@@ -110,10 +110,10 @@ describe("Trip Routes Integration Tests", () => {
             });
             (queryManager.getTripById as jest.Mock).mockResolvedValue(mockTrip);
             (queryManager.updateTripDistance as jest.Mock).mockResolvedValue(undefined);
-            (queryManager.getStatByTripId as jest.Mock).mockResolvedValue(null);
+            (queryManager.getStatsByTripId as jest.Mock).mockResolvedValue(null);
             (incrementTripCount as jest.Mock).mockResolvedValue(undefined);
-            (getCachedTripStat as jest.Mock).mockResolvedValue(null);
-            (setCachedTripStat as jest.Mock).mockResolvedValue(undefined);
+            (getCachedTripStats as jest.Mock).mockResolvedValue(null);
+            (setCachedTripStats as jest.Mock).mockResolvedValue(undefined);
 
             const response = await request(app)
                 .post("/api/v1/trips")
@@ -215,9 +215,9 @@ describe("Trip Routes Integration Tests", () => {
 
             (queryManager.getTripsByUserId as jest.Mock).mockResolvedValue(mockTrips);
             (queryManager.getReportsBySegmentIds as jest.Mock).mockResolvedValue([]);
-            (queryManager.getStatByTripId as jest.Mock).mockResolvedValue(mockTrips[0].statistics);
-            (getCachedTripStat as jest.Mock).mockResolvedValue(null);
-            (setCachedTripStat as jest.Mock).mockResolvedValue(undefined);
+            (queryManager.getStatsByTripId as jest.Mock).mockResolvedValue(mockTrips[0].statistics);
+            (getCachedTripStats as jest.Mock).mockResolvedValue(null);
+            (setCachedTripStats as jest.Mock).mockResolvedValue(undefined);
 
             const response = await request(app)
                 .get("/api/v1/trips?owner=me")

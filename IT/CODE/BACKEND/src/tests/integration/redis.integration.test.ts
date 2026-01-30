@@ -32,14 +32,14 @@ import {
     getCachedTripCount,
     incrementTripCount,
     decrementTripCount,
-    getCachedTripStat,
-    setCachedTripStat,
-    getCachedOverallStat,
-    setCachedOverallStat,
-    invalidateOverallStat,
+    getCachedTripStats,
+    setCachedTripStats,
+    getCachedOverallStats,
+    setCachedOverallStats,
+    invalidateOverallStats,
     getTripCountCacheKey,
-    getTripStatCacheKey,
-    getOverallStatCacheKey,
+    getTripStatsCacheKey,
+    getOverallStatsCacheKey,
 } from "../../utils/cache";
 
 describe("Cache Utilities Integration Tests", () => {
@@ -55,14 +55,14 @@ describe("Cache Utilities Integration Tests", () => {
             expect(key).toBe("tripCount:user123");
         });
 
-        test("Should generate correct trip stat cache key", () => {
-            const key = getTripStatCacheKey("trip123");
-            expect(key).toBe("tripStat:trip123");
+        test("Should generate correct trip stats cache key", () => {
+            const key = getTripStatsCacheKey("trip123");
+            expect(key).toBe("tripStats:trip123");
         });
 
-        test("Should generate correct overall stat cache key", () => {
-            const key = getOverallStatCacheKey("user123");
-            expect(key).toBe("overallStat:user123");
+        test("Should generate correct overall stats cache key", () => {
+            const key = getOverallStatsCacheKey("user123", "WEEK");
+            expect(key).toBe("overallStats:user123:WEEK");
         });
     });
 
@@ -126,7 +126,12 @@ describe("Cache Utilities Integration Tests", () => {
             expect(mockRedisInstance.exists).toHaveBeenCalledWith("tripCount:user123");
             expect(mockRedisInstance.incr).toHaveBeenCalledWith("tripCount:user123");
             expect(mockRedisInstance.expire).toHaveBeenCalledWith("tripCount:user123", 600);
-            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStat:user123");
+            
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:DAY");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:WEEK");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:MONTH");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:YEAR");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:OVERALL");
         });
 
         test("Should skip increment when key does not exist", async () => {
@@ -136,7 +141,13 @@ describe("Cache Utilities Integration Tests", () => {
             await incrementTripCount("user123");
 
             expect(mockRedisInstance.incr).not.toHaveBeenCalled();
-            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStat:user123");
+            
+
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:DAY");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:WEEK");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:MONTH");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:YEAR");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:OVERALL");
         });
 
         test("Should handle Redis errors gracefully", async () => {
@@ -162,7 +173,12 @@ describe("Cache Utilities Integration Tests", () => {
 
             expect(mockRedisInstance.decr).toHaveBeenCalledWith("tripCount:user123");
             expect(mockRedisInstance.expire).toHaveBeenCalledWith("tripCount:user123", 600);
-            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStat:user123");
+            
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:DAY");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:WEEK");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:MONTH");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:YEAR");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:OVERALL");
         });
 
         test("Should skip decrement when key does not exist", async () => {
@@ -184,11 +200,11 @@ describe("Cache Utilities Integration Tests", () => {
         });
     });
 
-    describe("Testing trip stat caching", () => {
+    describe("Testing trip stats caching", () => {
 
-        test("Should return cached trip stat when available", async () => {
+        test("Should return cached trip stats when available", async () => {
             const mockStat = {
-                statId: "stat1",
+                statsId: "stat1",
                 tripId: "trip123",
                 avgSpeed: 20.5,
                 duration: 3600,
@@ -197,23 +213,23 @@ describe("Cache Utilities Integration Tests", () => {
 
             mockRedisInstance.get.mockResolvedValue(JSON.stringify(mockStat));
 
-            const stat = await getCachedTripStat("trip123");
+            const stat = await getCachedTripStats("trip123");
 
             expect(stat).toEqual(mockStat);
-            expect(mockRedisInstance.get).toHaveBeenCalledWith("tripStat:trip123");
+            expect(mockRedisInstance.get).toHaveBeenCalledWith("tripStats:trip123");
         });
 
         test("Should return null when cache miss", async () => {
             mockRedisInstance.get.mockResolvedValue(null);
 
-            const stat = await getCachedTripStat("trip123");
+            const stat = await getCachedTripStats("trip123");
 
             expect(stat).toBeNull();
         });
 
-        test("Should cache trip stat successfully", async () => {
+        test("Should cache trip stats successfully", async () => {
             const mockStat = {
-                statId: "stat1",
+                statsId: "stat1",
                 tripId: "trip123",
                 avgSpeed: 20.5,
                 duration: 3600,
@@ -222,10 +238,10 @@ describe("Cache Utilities Integration Tests", () => {
 
             mockRedisInstance.setex.mockResolvedValue("OK");
 
-            await setCachedTripStat("trip123", mockStat);
+            await setCachedTripStats("trip123", mockStat);
 
             expect(mockRedisInstance.setex).toHaveBeenCalledWith(
-                "tripStat:trip123",
+                "tripStats:trip123",
                 86400,
                 JSON.stringify(mockStat)
             );
@@ -234,63 +250,79 @@ describe("Cache Utilities Integration Tests", () => {
         test("Should handle Redis errors gracefully", async () => {
             mockRedisInstance.get.mockRejectedValue(new Error("Redis error"));
 
-            const stat = await getCachedTripStat("trip123");
+            const stat = await getCachedTripStats("trip123");
 
             expect(stat).toBeNull();
         });
     });
 
-    describe("Testing overall stat caching", () => {
+    describe("Testing overall stats caching", () => {
 
-        test("Should return cached overall stat when available", async () => {
+        test("Should return cached overall stats when available", async () => {
             const mockStat = {
                 userId: "user123",
+                period: "WEEK",
                 avgSpeed: 20.5,
                 avgDuration: 3600,
                 avgKilometers: 15.2,
-                lastTripCount: 5,
+                totalKilometers: 76.0,
+                totalTime: 18000,
+                longestKilometer: 18.5,
+                longestTime: 4200,
+                pathsCreated: 2,
+                tripCount: 5,
             };
 
             mockRedisInstance.get.mockResolvedValue(JSON.stringify(mockStat));
 
-            const stat = await getCachedOverallStat("user123");
+            const stat = await getCachedOverallStats("user123", "WEEK");
 
             expect(stat).toEqual(mockStat);
-            expect(mockRedisInstance.get).toHaveBeenCalledWith("overallStat:user123");
+            expect(mockRedisInstance.get).toHaveBeenCalledWith("overallStats:user123:WEEK");
         });
 
-        test("Should cache overall stat successfully", async () => {
+        test("Should cache overall stats successfully", async () => {
             const mockStat = {
                 userId: "user123",
+                period: "WEEK",
                 avgSpeed: 20.5,
                 avgDuration: 3600,
                 avgKilometers: 15.2,
-                lastTripCount: 5,
+                totalKilometers: 76.0,
+                totalTime: 18000,
+                longestKilometer: 18.5,
+                longestTime: 4200,
+                pathsCreated: 2,
+                tripCount: 5,
             };
 
             mockRedisInstance.setex.mockResolvedValue("OK");
 
-            await setCachedOverallStat("user123", mockStat);
+            await setCachedOverallStats("user123", "WEEK", mockStat);
 
             expect(mockRedisInstance.setex).toHaveBeenCalledWith(
-                "overallStat:user123",
+                "overallStats:user123:WEEK",
                 600,
                 JSON.stringify(mockStat)
             );
         });
 
-        test("Should invalidate overall stat successfully", async () => {
+        test("Should invalidate overall stats successfully", async () => {
             mockRedisInstance.del.mockResolvedValue(1);
 
-            await invalidateOverallStat("user123");
+            await invalidateOverallStats("user123");
 
-            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStat:user123");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:DAY");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:WEEK");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:MONTH");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:YEAR");
+            expect(mockRedisInstance.del).toHaveBeenCalledWith("overallStats:user123:OVERALL");
         });
 
         test("Should handle Redis errors on invalidation", async () => {
             mockRedisInstance.del.mockRejectedValue(new Error("Redis error"));
 
-            await expect(invalidateOverallStat("user123")).resolves.not.toThrow();
+            await expect(invalidateOverallStats("user123")).resolves.not.toThrow();
         });
     });
 });
