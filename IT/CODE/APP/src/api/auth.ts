@@ -4,6 +4,7 @@ export type User = {
   id: string
   username: string
   email: string
+  systemPreferences?: string[]
 }
 
 export type AuthTokens = {
@@ -15,6 +16,7 @@ type UserResponse = {
   userId: string
   username: string
   email: string
+  systemPreferences?: string[]
 }
 
 type ProfileResponse = {
@@ -39,6 +41,7 @@ export type UpdateProfilePayload = {
   email?: string
   currentPassword?: string
   password?: string
+  systemPreferences?: string[]
 }
 
 const AUTH_BASE = "/auth"
@@ -49,6 +52,7 @@ function mapUser(user: UserResponse): User {
     id: user.userId,
     username: user.username,
     email: user.email,
+    systemPreferences: user.systemPreferences ?? [],
   }
 }
 

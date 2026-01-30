@@ -34,7 +34,9 @@ export default function SettingsScreen() {
   const bottomNavVisibility = React.useContext(BottomNavVisibilityContext)
   const appearancePreference = useThemePreference()
   const setAppearancePreference = useSetThemePreference()
+  const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
+  const updateProfile = useAuthStore((s) => s.updateProfile)
   const defaultPrivacy = usePrivacyPreference()
   const setDefaultPrivacy = useSetPrivacyPreference()
   const [activePicker, setActivePicker] = React.useState<"appearance" | "privacy" | null>(null)
@@ -52,6 +54,22 @@ export default function SettingsScreen() {
       bottomNavVisibility?.setHidden(false)
     }
   }, [bottomNavVisibility])
+
+  React.useEffect(() => {
+    if (!user || user.id === "guest") return
+    const prefs = user.systemPreferences ?? []
+    const appearanceEntry = prefs.find((entry) => entry.startsWith("appearance:"))
+    const privacyEntry = prefs.find((entry) => entry.startsWith("privacy:"))
+    const nextAppearance = appearanceEntry?.split(":")[1] as AppearancePreference | undefined
+    const nextPrivacy = privacyEntry?.split(":")[1] as PrivacyPreference | undefined
+
+    if (nextAppearance && nextAppearance !== appearancePreference) {
+      setAppearancePreference(nextAppearance)
+    }
+    if (nextPrivacy && nextPrivacy !== defaultPrivacy) {
+      setDefaultPrivacy(nextPrivacy)
+    }
+  }, [user, appearancePreference, defaultPrivacy, setAppearancePreference, setDefaultPrivacy])
 
   function openPicker(type: "appearance" | "privacy") {
     const ref = type === "appearance" ? appearanceButtonRef.current : privacyButtonRef.current
@@ -74,12 +92,30 @@ export default function SettingsScreen() {
     setActivePicker(null)
   }
 
+  const syncSystemPreferences = React.useCallback(
+    (appearance: AppearancePreference, privacy: PrivacyPreference) => {
+      if (!user || user.id === "guest") return
+      void updateProfile({
+        systemPreferences: [`appearance:${appearance}`, `privacy:${privacy}`],
+      }).catch((error) => {
+        console.warn("Failed to update system preferences", error)
+      })
+    },
+    [user, updateProfile]
+  )
+
   function handleSelect(optionKey: string) {
+    const nextAppearance =
+      activePicker === "appearance" ? (optionKey as AppearancePreference) : appearancePreference
+    const nextPrivacy =
+      activePicker === "privacy" ? (optionKey as PrivacyPreference) : defaultPrivacy
+
     if (activePicker === "appearance") {
-      setAppearancePreference(optionKey as AppearancePreference)
+      setAppearancePreference(nextAppearance)
     } else if (activePicker === "privacy") {
-      setDefaultPrivacy(optionKey as PrivacyPreference)
+      setDefaultPrivacy(nextPrivacy)
     }
+    syncSystemPreferences(nextAppearance, nextPrivacy)
     closePicker()
   }
 

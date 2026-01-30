@@ -25,7 +25,7 @@ describe("api/auth", () => {
         const out = await loginApi("bianca@gmail.com", "password")
 
         expect(api.post).toHaveBeenCalledWith("/auth/login", { email: "bianca@gmail.com", password: "password" })
-        expect(out.user).toEqual({ id: "u1", username: "bianca", email: "bianca@gmail.com" })
+        expect(out.user).toEqual({ id: "u1", username: "bianca", email: "bianca@gmail.com", systemPreferences: [] })
         expect(out.tokens).toEqual({ accessToken: "a", refreshToken: "r" })
     })
 
@@ -64,7 +64,7 @@ describe("api/auth", () => {
         const out = await getProfileApi()
 
         expect(api.get).toHaveBeenCalledWith("/users/me")
-        expect(out).toEqual({ id: "u9", username: "simone", email: "simone@gmail.com" })
+        expect(out).toEqual({ id: "u9", username: "simone", email: "simone@gmail.com", systemPreferences: [] })
     })
 
     test("updateProfileApi returns message", async () => {
