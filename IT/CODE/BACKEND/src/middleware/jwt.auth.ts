@@ -2,17 +2,18 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { JwtPayload, } from '../types/index.js';
 import { getJwtSecrets } from '../utils/utils.js'
+import { ACCESS_TOKEN_TTL, REFRESH_TOKEN_TTL } from '../constants/appConfig.js'
 import { UnauthorizedError, ForbiddenError } from '../errors/index.js';
 
-// Function to generate access and refresh tokens. Set expiration times as needed, here 15 minutes for access and 1 hour for refresh.
+// Function to generate access and refresh tokens.
 // The sign method creates a JWT token by encoding the payload (userId) with the secret key. 
 // Automatically includes iat and exp fields (exp field is defined in the options).
 export const generateTokens = (userId: string) => {
     const { accessTokenSecret, refreshTokenSecret } = getJwtSecrets();
 
-    const accessToken = jwt.sign( { userId }, accessTokenSecret, { expiresIn: '15m' } );
+    const accessToken = jwt.sign( { userId }, accessTokenSecret, { expiresIn: ACCESS_TOKEN_TTL } );
 
-    const refreshToken = jwt.sign( { userId }, refreshTokenSecret, { expiresIn: '1h' } );
+    const refreshToken = jwt.sign( { userId }, refreshTokenSecret, { expiresIn: REFRESH_TOKEN_TTL } );
     
     return { accessToken, refreshToken };
 };

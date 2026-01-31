@@ -11,13 +11,13 @@ export const REPORT_COOLDOWN_MIN = 5
 export const REPORT_RATE_WINDOW_MIN = 10
 export const REPORT_RATE_MAX_PER_WINDOW = 5
 
-// Segment deduplication tolerance (~5m in degrees)
-export const SEGMENT_MATCH_TOLERANCE_DEG = 0.00005
+// Segment deduplication tolerance (~8m in degrees)
+export const SEGMENT_MATCH_TOLERANCE_DEG = 0.00008
 
 // Path search tolerances
-export const PATH_SEARCH_TOLERANCE_DEG = 0.002
-export const PATH_SEARCH_MAX_DISTANCE_METERS = 200
-export const PATH_SEARCH_NEAR_DISTANCE_BUFFER_METERS = 50
+export const PATH_SEARCH_TOLERANCE_DEG = 0.003
+export const PATH_SEARCH_MAX_DISTANCE_METERS = 300
+export const PATH_SEARCH_NEAR_DISTANCE_BUFFER_METERS = 100
 
 // Path status mix weights
 export const PATH_STATUS_REPORTED_WEIGHT = 0.7
@@ -27,3 +27,8 @@ export const PATH_STATUS_ALL_WEIGHT = 0.3
 export const TRIP_COUNT_TTL = 600 // 10 minutes
 export const TRIP_STATS_TTL = 86400 // 24 hours
 export const OVERALL_STATS_TTL = 600 // 10 minutes
+
+// Auth token TTLs
+export const ACCESS_TOKEN_TTL = "15m"
+export const REFRESH_TOKEN_TTL = "30d"
+export const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000
