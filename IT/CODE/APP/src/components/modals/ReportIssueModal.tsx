@@ -15,12 +15,14 @@ type ReportIssueModalProps = {
   visible: boolean
   onClose: () => void
   onSubmit: (payload: { condition: string; obstacle: string }) => void
+  submitting?: boolean
 }
 
 export function ReportIssueModal({
   visible,
   onClose,
   onSubmit,
+  submitting = false,
 }: ReportIssueModalProps) {
   const scheme = useColorScheme() ?? "light"
   const palette = Colors[scheme]
@@ -132,8 +134,9 @@ export function ReportIssueModal({
             />
 
             <AppButton
-              title="Submit Report"
+              title={submitting ? "Submitting..." : "Submit Report"}
               onPress={handleSubmit}
+              loading={submitting}
               buttonColor={palette.status.danger}
               style={[
                 styles.submitButton,

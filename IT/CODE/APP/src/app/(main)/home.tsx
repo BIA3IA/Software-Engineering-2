@@ -90,6 +90,8 @@ export default function HomeScreen() {
   const [reportConfirmation, setReportConfirmation] = React.useState<ReportSummary | null>(null)
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
   const [isCompletedPopupVisible, setCompletedPopupVisible] = React.useState(false)
+  const [isSubmittingReport, setIsSubmittingReport] = React.useState(false)
+  const [isCompletingTrip, setIsCompletingTrip] = React.useState(false)
   const [isCreateModalVisible, setCreateModalVisible] = React.useState(false)
   const [isSearching, setIsSearching] = React.useState(false)
   const [isCancelTripPopupVisible, setCancelTripPopupVisible] = React.useState(false)
@@ -385,6 +387,7 @@ export default function HomeScreen() {
         return
       }
 
+      setIsCompletingTrip(true)
       try {
         const tripId = await createTripApi({
           origin: { lat: startRoutePoint.latitude, lng: startRoutePoint.longitude },
@@ -422,6 +425,8 @@ export default function HomeScreen() {
           message,
         })
         return
+      } finally {
+        setIsCompletingTrip(false)
       }
     }
 
@@ -441,12 +446,18 @@ export default function HomeScreen() {
   }
 
   async function handleSubmitReport(values: { condition: string; obstacle: string }) {
-    if (!activeTrip || !userLocation) {
+    function showReportError(message: string) {
+      setReportVisible(false)
+      clearReportConfirmation()
       setErrorPopup({
         visible: true,
         title: "Report Error",
-        message: "Trip details are missing. Please try again.",
+        message,
       })
+    }
+
+    if (!activeTrip || !userLocation) {
+      showReportError("Trip details are missing. Please try again.")
       return
     }
 
@@ -455,14 +466,11 @@ export default function HomeScreen() {
 
     const closestSegment = findClosestSegment(activeTrip.pathSegments ?? [], userLocation)
     if (!closestSegment) {
-      setErrorPopup({
-        visible: true,
-        title: "Report Error",
-        message: "Unable to determine the reported segment. Please try again.",
-      })
+      showReportError("Unable to determine the reported segment. Please try again.")
       return
     }
 
+    setIsSubmittingReport(true)
     try {
       await createReportApi({
         segmentId: closestSegment.segmentId,
@@ -473,12 +481,10 @@ export default function HomeScreen() {
       })
     } catch (error) {
       const message = getApiErrorMessage(error, "Unable to submit the report. Please try again.")
-      setErrorPopup({
-        visible: true,
-        title: "Report Error",
-        message,
-      })
+      showReportError(message)
       return
+    } finally {
+      setIsSubmittingReport(false)
     }
 
     setReportVisible(false)
@@ -545,6 +551,7 @@ export default function HomeScreen() {
         title: "Report Error",
         message,
       })
+      setReportVisible(false)
     } finally {
       clearReportConfirmation()
     }
@@ -1105,8 +1112,9 @@ export default function HomeScreen() {
             </Pressable>
 
             <AppButton
-              title="Complete Trip"
+              title={isCompletingTrip ? "Completing..." : "Complete Trip"}
               onPress={handleCompleteTrip}
+              loading={isCompletingTrip}
               buttonColor={palette.brand.base}
               testID="home-complete-trip"
               style={[
@@ -1124,6 +1132,7 @@ export default function HomeScreen() {
         visible={reportVisible}
         onClose={() => setReportVisible(false)}
         onSubmit={handleSubmitReport}
+        submitting={isSubmittingReport}
       />
       <AppPopup
         visible={isCyclingPromptVisible}
@@ -1256,6 +1265,7 @@ export default function HomeScreen() {
         message={offRouteMessage}
         icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
         iconBackgroundColor={`${palette.accent.red.surface}`}
+        dismissible={false}
         onClose={handleContinueOffRoute}
         primaryButton={{
           label: "End Trip",

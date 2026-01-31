@@ -290,17 +290,17 @@ export default function PathsScreen() {
     : ""
 
   const visibilityIconColor =
-    pendingVisibilityChange?.target === "private" ? palette.accent.blue.surface : palette.accent.green.base
+    pendingVisibilityChange?.target === "private" ? palette.accent.blue.surface : palette.accent.green.surface
 
   const visibilityIconBackground =
     pendingVisibilityChange?.target === "private"
       ? `${palette.border.strong}`
-      : `${palette.accent.green.surface}`
+      : `${palette.accent.green.base}`
 
   const visibilityPrimaryButtonColor = visibilityIconBackground
-  const visibilityPrimaryTextColor = palette.accent.blue.surface
+  const visibilityPrimaryTextColor = visibilityIconColor
 
-  const visibilitySecondaryButtonColor = palette.accent.blue.surface
+  const visibilitySecondaryButtonColor = visibilityIconColor
   const visibilitySecondaryTextColor =  visibilityIconBackground
 
   return (

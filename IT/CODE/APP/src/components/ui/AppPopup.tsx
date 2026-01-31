@@ -29,6 +29,7 @@ type AppPopupProps = {
   icon?: React.ReactNode
   iconBackgroundColor?: string
   onClose?: () => void
+  dismissible?: boolean
   primaryButton: PopupButtonConfig
   secondaryButton?: PopupButtonConfig
   destructiveButton?: PopupButtonConfig
@@ -41,6 +42,7 @@ export function AppPopup({
   icon,
   iconBackgroundColor,
   onClose,
+  dismissible = true,
   primaryButton,
   secondaryButton,
   destructiveButton,
@@ -80,6 +82,7 @@ export function AppPopup({
   }
 
   function handleBackdropPress() {
+    if (!dismissible) return
     onClose?.()
   }
 
@@ -87,7 +90,13 @@ export function AppPopup({
   const hasDestructive = Boolean(destructiveButton)
 
   return (
-    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={dismissible ? onClose : undefined}
+    >
       <View style={[styles.backdrop, { backgroundColor: palette.overlay.scrim }]}>
         <Pressable style={styles.dismissArea} onPress={handleBackdropPress} />
         <View style={styles.centerWrapper} pointerEvents="box-none">
