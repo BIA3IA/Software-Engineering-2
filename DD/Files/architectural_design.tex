@@ -118,7 +118,7 @@ HTTP responses.
 
 The API Entrypoint exposes the following logical sub-APIs:
 \begin{itemize}
-	\item \textbf{AuthAPI}: endpoints for login, token refresh, and token validation.
+	\item \textbf{AuthAPI}: endpoints for login, logout, and token refresh.
 	\item \textbf{UserAPI}: endpoints for registration and profile retrieval.
 	\item \textbf{TripAPI}: endpoints for creating, listing, and deleting trips.
 	\item \textbf{PathAPI}: endpoints for route computation and retrieval of path metadata.
@@ -289,10 +289,10 @@ and fills in the required details: username, email, and password.
 A first \textbf{local validation} step checks for malformed inputs before contacting the \textbf{backend}.
 
 If the data is valid, the mobile app sends a registration request to the \textbf{API Entrypoint}, which forwards it to the \textbf{UserManager}.
-The \textbf{UserManager} checks whether the email is already in use by querying the DBMS through the \textbf{QueryManager}.
-If the email already exists, the system returns an error and the mobile app notifies the user.
+The \textbf{UserManager} checks whether the email and username are already in use by querying the DBMS through the \textbf{QueryManager}.
+If the email or username already exists, the system returns an error and the mobile app notifies the user.
 
-If the email is not already in use, the \textbf{UserManager} stores the new user in the database (with the password handled securely).
+When both are unique, the \textbf{UserManager} stores the new user in the database.
 The flow ends successfully with a new user created.
 
 \begin{figure}[H]
@@ -352,14 +352,15 @@ If the operation succeeds, the server returns a \textbf{204 NO\_CONTENT} respons
 
 \subsubsection*{[UC4] - Edit Personal Profile}
 
-After the logged-in user opens the edit form, the mobile app
-locally validates the submitted fields. If the data is incomplete or invalid,
+A logged-in user wants to edit his personal profile. 
+After the logged-in user submits the edited data, the mobile app
+locally validates it. If the data is incomplete or invalid,
 the app immediately notifies the user. If the input is valid, the updated payload
 is sent with a \textbf{PATCH} request to the \textbf{API Entrypoint},
 which delegates the request to the \textbf{UserManager}. The diagram illustrates
 the email update flow, but the same sequence applies to username changes as well.
-Before applying the update, the \textbf{UserManager} checks for duplicate
-email or username values to prevent conflicts.
+Before applying the update, the \textbf{UserManager} checks for duplicates
+to prevent conflicts.
 
 The update is forwarded to the \textbf{QueryManager}, which issues the corresponding \textbf{UPDATE} operation on the database.
 If the update succeeds, the backend returns a confirmation message.
@@ -378,7 +379,7 @@ In case of network or server errors during the request, the mobile app shows an 
 
 A user searches for bike paths between two locations by providing a starting point and a destination
 through the mobile app. Before contacting the backend, the app performs a \textbf{local validation}
-to ensure that both fields are not empty. If the validation fails, the user is immediately notified.
+to ensure that both fields are not empty. 
 
 When the input is valid, the mobile app sends a search request to the backend through the
 \textbf{API Entrypoint}. The API Entrypoint forwards the request to the \textbf{PathManager}, which is
@@ -392,9 +393,8 @@ the best path or set of paths according to the system criteria and user constrai
 If one or more valid routes are found, the \textbf{PathManager} returns the results to the
 \textbf{API Entrypoint}, which responds to the mobile app with a \textbf{200 OK} message containing
 the suggested paths. The app then displays the available routes to the user.
-If no suitable route can be computed, the \textbf{PathManager} signals a \textbf{NO\_ROUTE}
-condition, resulting in a \textbf{404} response that is propagated back to the mobile app,
-which notifies the user accordingly.
+If no suitable route can be computed, the \textbf{PathManager} returns an empty list,
+with a  \textbf{200 OK} response.
 
 In the event of network failures or server-side errors, the interaction is interrupted and
 the mobile app shows a generic "Network unavailable" error message.
@@ -480,7 +480,7 @@ preliminary \textbf{local validation}. If the validation fails, the user is imme
 notified.
 
 If the input is valid, the \textbf{GPS module} continuously provides
-location samples (latitude, longitude, speed, timestamp) while the user is moving.
+location samples while the user is moving.
 The mobile app locally stores these samples throughout the tracking session.
 
 If a GPS signal error occurs during movement, the app detects the issue, interrupts
@@ -693,9 +693,11 @@ The \textbf{TripManager} processes the request.
 When the trip is valid and the external service is reachable, the
 \textbf{TripManager} retrieves a weather snapshot through the
 \textbf{WeatherService} based on the trip samples. It also invokes the
-\textbf{StatsManager} to compute and aggregate trip statistics, which are stored
-together with the trip data. The complete trip summary is persisted through the
-\textbf{QueryManager}.
+\textbf{StatsManager} to compute and aggregate trip statistics and update user's overall statistics,
+which are then stored in the database through the \textbf{QueryManager}.
+
+Finally, the \textbf{TripManager} creates the trip record by sending the complete
+trip payload, including weather data, to the \textbf{QueryManager}.
 
 Upon successful completion, the backend responds with a \textbf{201 Created}
 status. The mobile app displays a success message to the user.
@@ -715,8 +717,6 @@ alternative flows.
 When a logged-in user wants to manually report an issue encountered on a path,
 the user opens the report creation form on  the mobile application.
 The app retrieves the current position from the \textbf{GPS module}.
-If the position cannot be retrieved, the app immediately displays an error message
-and the reporting process is interrupted.
 
 The user fills in the report form by providing report details,
 then submits the report. Before contacting the backend, the mobile app performs
@@ -876,13 +876,13 @@ through the \textbf{QueryManager}.
 
 If valid statistics already exist, they are loaded from the database and
 returned to the mobile app with a \textbf{200 OK} response.
-If the stored data is missing or outdated, the \textbf{StatsManager} retrieves
+If the stored data is outdated, the \textbf{StatsManager} retrieves
 all trip records from the \textbf{DBMS}, computes the aggregated metrics
 (e.g., total distance, total duration, average speed), stores the updated
 statistics, and returns the results to the client.
 
 If no trips exist for the user, the backend responds with a
-\textbf{404 NOT\_FOUND} status, which is propagated to the mobile app.
+\textbf{200} status, and an empty statistics object is returned.
 Any network or server-side failure results in a timeout and an error message
 displayed on the client.
 
@@ -925,7 +925,6 @@ It exposes the following operations:
 \begin{itemize}
 	\item \textbf{loginUser(email, password)}: verifies the supplied credentials and, if valid, issues fresh access and refresh
 	      tokens and persists the new refresh token.
-	\item \textbf{refreshToken(refreshToken)}: validates and rotates the refresh token, issuing a new access/refresh token pair.
 	\item \textbf{logout(refreshToken)}: invalidates the provided refresh token and terminates the associated session in the DBMS.
 \end{itemize}
 
@@ -936,7 +935,6 @@ It uses the \textbf{QueryManager} for persistence and exposes:
 
 \begin{itemize}
 	\item \textbf{registerUser(profilePayload)}: validates registration data, checks for duplicate email/username, stores the user profile, and returns the created user.
-	\item \textbf{getProfile(userId)}: retrieves the stored profile for the authenticated user.
 	\item \textbf{updateProfile(userId, profilePayload)}: validates editable fields, prevents duplicate emails/usernames, applies the update, and returns a confirmation message.
 \end{itemize}
 
@@ -953,7 +951,7 @@ exposes a dedicated snapping endpoint that forwards coordinates to this componen
 The public operations are:
 
 \begin{itemize}
-	\item \textbf{searchPath(origin, destination, userId?)}: geocodes origin/destination, filters existing paths by visibility and proximity, and returns matching routes.
+	\item \textbf{findPath(origin, destination, userId?)}: geocodes origin/destination, filters existing paths by visibility and proximity, and returns matching routes.
 	\item \textbf{createPath(pathPayload, userId)}: validates metadata and path segments (manual or automatic mode), persists the new path, and associates it with the creator.
 	\item \textbf{snapPath(coordinates)}: forwards coordinates to the \textbf{SnappingService} and returns the adjusted polyline.
 	\item \textbf{getPathsByUser(userId)}: retrieves all paths created by the authenticated user.
@@ -971,10 +969,9 @@ persists it through the \textbf{QueryManager}. Weather enrichment is performed v
 The component exposes the following methods:
 
 \begin{itemize}
-	\item \textbf{createTrip(tripPayload, userId)}: stores a completed trip and triggers weather/statistics enrichment when required.
+	\item \textbf{finalizeTrip(tripPayload, userId)}: stores a completed trip and triggers weather/statistics enrichment when required.
 	\item \textbf{getTripsByUser(userId)}: returns the complete list of trips owned by the authenticated user, ordered by time, enriching missing weather, statistics, and reports when needed.
 	\item \textbf{deleteTrip(tripId, userId)}: deletes the specified trip after verifying ownership.
-
 \end{itemize}
 
 \subsection*{ReportManager}
@@ -985,9 +982,8 @@ when trip summaries need to be enriched with associated reports.
 All persistence is delegated to the \textbf{QueryManager}.
 
 \begin{itemize}
-	\item \textbf{getReportsByPath(pathId)}: retrieves reports associated with a selected path.
+	\item \textbf{getPathReports(pathId)}: retrieves reports associated with a selected path.
 	\item \textbf{createReport(reportPayload, userId)}: stores a new report, either manual or automatic.
-	\item \textbf{confirmReport(reportId, decisionPayload, userId)}: creates a confirmation or rejection entry for an existing report.
 \end{itemize}
 
 \subsection*{StatsManager}
@@ -998,8 +994,7 @@ and also during trip retrieval when statistics are missing and need to be comput
 
 \begin{itemize}
 	\item \textbf{getOverallStats(userId)}: returns cached overall statistics if valid, otherwise recomputes and stores them.
-	\item \textbf{getTripStats(tripId)}: returns cached trip statistics or computes them on demand.
-	\item \textbf{computeTripStats(tripPayload)}: derives metrics (distance, duration, avg speed) from trip samples.
+	\item \textbf{generateStats(tripPayload)}: calculates per-trip and updates the user's overall statistics based on the provided trip data.
 \end{itemize}
 
 \subsection*{WeatherService}
@@ -1009,7 +1004,7 @@ The \textbf{WeatherService} interfaces with an external weather provider and is 
 and again during trip retrieval if stored weather data is missing.
 
 \begin{itemize}
-	\item \textbf{fetchAndAggregateWeatherData(coordinates)}: samples coordinates along the trip route, fetches point data, and returns an aggregated snapshot.
+	\item \textbf{fetchAndAggregateWeatherData(tripPayload)}: samples coordinates along the trip route, fetches point data, and returns an aggregated snapshot.
 \end{itemize}
 
 \subsection*{GeocodingService}
@@ -1018,7 +1013,7 @@ The \textbf{GeocodingService} resolves user-provided location strings to coordin
 used by the \textbf{PathManager}.
 
 \begin{itemize}
-	\item \textbf{geocodeLocation(locationString)}: returns coordinates for a textual location.
+	\item \textbf{geocode(locationString)}: returns coordinates for a textual location.
 \end{itemize}
 
 \subsection*{SnappingService}
@@ -1027,7 +1022,7 @@ The \textbf{SnappingService} aligns user-drawn segments to the road network and 
 the adjusted polyline to the \textbf{PathManager}.
 
 \begin{itemize}
-	\item \textbf{snapCoordinates(coordinates)}: snaps a list of coordinates to the road network.
+	\item \textbf{snapToRoad(segment)}: snaps a path segment to the road network.
 \end{itemize}
 
 \subsection*{QueryManager}
@@ -1039,268 +1034,248 @@ separation between domain logic and data storage.
 It exposes:
 
 \begin{itemize}
-	\item \textbf{createUser(email, password, username, systemPreferences)}: creates a new user record.
-	\item \textbf{getUserByEmail(email)}: retrieves a user by email.
-	\item \textbf{getUserById(userId)}: retrieves a user by identifier.
-	\item \textbf{getUserByUsername(username)}: retrieves a user by username.
-	\item \textbf{updateUserProfile(userId, profilePayload)}: stores changes to user profile fields.
-	\item \textbf{createRefreshToken(userId, token, expiresAt)}: persists a refresh token.
-	\item \textbf{getRefreshToken(token)}: retrieves a refresh token.
-	\item \textbf{deleteRefreshToken(token)}: removes a refresh token.
-	\item \textbf{getTripById(tripId)}: retrieves a trip and its ordered segments.
-	\item \textbf{createTrip(userId, origin, destination, startedAt, finishedAt, statistics, tripSegments, title)}: stores a completed trip.
-	\item \textbf{getTripsByUserId(userId)}: retrieves all trips for a user, ordered by date.
-	\item \textbf{deleteTripById(tripId)}: deletes a trip.
-	\item \textbf{updateTripWeather(tripId, weather)}: stores aggregated weather data for a trip.
-	\item \textbf{createPath(userId, origin, destination, pathSegments, visibility, creationMode, title, description, distanceKm)}: stores a new path.
-	\item \textbf{getPathById(pathId)}: retrieves a path and its ordered segments.
-	\item \textbf{getPathsByUserId(userId)}: retrieves all paths for a user.
-	\item \textbf{getPathByOriginDestination(userId, origin, destination)}: finds a user path by origin/destination.
-	\item \textbf{searchPathsByOriginDestination(origin, destination, userId?)}: returns matching paths by proximity and visibility.
-	\item \textbf{updatePathScore(pathId, score)}: updates the stored path score.
-	\item \textbf{updatePathStatus(pathId, status)}: updates the stored path status.
-	\item \textbf{deletePathById(pathId)}: deletes a path.
-	\item \textbf{changePathVisibility(pathId, visibility)}: updates path visibility.
-	\item \textbf{createReport(userId, pathId, position, payload)}: inserts a new obstacle report.
-	\item \textbf{getReportsByPathId(pathId)}: retrieves reports for a path.
-	\item \textbf{createReportConfirmation(userId, reportId, decision)}: inserts a confirmation or rejection.
-	\item \textbf{getOverallStatsByUserId(userId)}: retrieves cached overall statistics.
-	\item \textbf{upsertOverallStats(userId, statsPayload)}: creates or updates overall statistics.
-	\item \textbf{getTripStatsByTripId(tripId)}: retrieves cached per-trip statistics.
-	\item \textbf{upsertTripStats(tripId, statsPayload)}: creates or updates per-trip statistics.
-	\item \textbf{createSegment(status, polylineCoordinates)}: stores a segment.
-	\item \textbf{createSegmentWithId(segmentId, status, polylineCoordinates)}: stores a segment with a provided id.
-	\item \textbf{getSegmentsByIds(segmentIds)}: retrieves segments by id.
-	\item \textbf{getSegmentStatistics(segmentIds)}: retrieves segment status for scoring.
+	\item \textbf{checkDuplicateEmail(email)}: checks if an account with the given email already exists.
+	\item \textbf{checkDuplicateUsername(username)}: checks if a username is already taken.
+	\item \textbf{checkEmail(email)}: retrieves user data by email for authentication.
+	
+	\item \textbf{saveRefreshToken(token)}: stores a refresh token.
+	\item \textbf{insertUser(profilePayload)}: stores a new user record.
+	\item \textbf{insertReport(position, payload)}: inserts a new report record.
+	\item \textbf{insertTripSummary(tripSummary, userId)}: inserts a completed trip summary.
+	\item \textbf{insertTripStats(tripStats, userId)}: inserts trip statistics.
+	\item \textbf{insertOverallStats(stats, userId)}: inserts overall statistics for a user.
+	\item \textbf{insertPath(pathPayload, userId)}: inserts a path with specified metadata, segments and visibility.
+	
+	\item \textbf{deleteRefreshToken(token)}: deletes a refresh token.
+	\item \textbf{deleteTrip(tripId)}: deletes a trip and all dependent records.
+	\item \textbf{deletePath(pathId)}: deletes a path and all dependent records.
+	
+	\item \textbf{updatePathVisibility(pathId, visibility)}: updates the visibility of a path.
+	\item \textbf{updateOverallStats(userStats, userId)}: update user's overall statistics.
+	\item \textbf{updateUser(userId, profilePayload)}: updates editable user profile fields.
+	
+	\item \textbf{fetchUserPaths(userId)}: retrieves all paths created by a user.
+	\item \textbf{fetchPaths(origin, destination, userId)}: retrieves paths matching the specified area and visibility constraints.
+	\item \textbf{fetchReportsByTripId(tripId)}: retrieves reports associated with a trip.
+	\item \textbf{fetchStats(userId)}: retrieves overall statistics for a user.
+	\item \textbf{fetchTripCount(userId)}: retrieves the total number of trips for a user.
+	\item \textbf{fetchUserTrips(userId)}: retieves all trips associated with a user.
+	\item \textbf{fetchAggregatedWeatherData(tripId)}: retrieves stored weather data for a trip.
+	\item \textbf{fetchReportsByPathId(pathId)}: retrieves reports for a path.
+	
+	\item \textbf{verifyPathOwnership(pathId, userId)}: verifies that a path belongs to the specified user.
+	\item \textbf{verifyTripOwnership(tripId, userId)}: verifies that a trip belongs to the specified user.
+
 \end{itemize}
 
 \subsection{RESTful API endpoints}
 \label{sec:api_endpoints}
 
 The BBP backend exposes a RESTful API consumed by the mobile application.
-All endpoints exchange JSON payloads over HTTPS.
+All endpoints exchange JSON payloads over HTTPS and are versioned under the base path \texttt{/api/v1}.
 Unless otherwise specified, requests that access or modify user-specific resources require authentication via
 \texttt{Authorization: Bearer <access\_token>}. Refresh tokens are used to renew expired access tokens.
 
 Each endpoint definition reports the HTTP method, the resource path, the expected request parameters (query/path/body),
 and the possible responses. Standard HTTP status codes are adopted to represent successful outcomes and errors.
 
+
 \subsubsection*{Auth}
-\paragraph{\textbf{POST} \texttt{/auth/login}}
+\paragraph{\textbf{POST} \texttt{/api/v1/auth/login}}
 \begin{itemize}
 	\item \textbf{Request Body}: \texttt{\{ email, password \}}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{200 OK}: \texttt{\{ success, user, tokens \}}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_CREDENTIALS}
+		      \item \textbf{400 Bad Request}: \texttt{VALIDATION\_ERROR}, \texttt{MISSING\_CREDENTIALS}
 		      \item \textbf{401 Unauthorized}: \texttt{INVALID\_CREDENTIALS}
 		      \item \textbf{404 Not Found}: \texttt{USER\_NOT\_FOUND}
 	      \end{itemize}
 \end{itemize}
 
-\paragraph{\textbf{POST} \texttt{/auth/logout}}
+\paragraph{\textbf{POST} \texttt{/api/v1/auth/logout}}
 \begin{itemize}
 	\item \textbf{Request Body}: \texttt{\{ refreshToken \}}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{204 No Content}
-		      \item \textbf{401 Unauthorized}: \texttt{MISSING\_REFRESH\_TOKEN}
-	      \end{itemize}
-\end{itemize}
-
-\paragraph{\textbf{POST} \texttt{/auth/refresh}}
-\begin{itemize}
-	\item \textbf{Request Body}: \texttt{\{ refreshToken \}}
-	\item \textbf{Responses}:
-	      \begin{itemize}
-		      \item \textbf{200 OK}: \texttt{\{ success, message, tokens \}}
-		      \item \textbf{401 Unauthorized}: \texttt{MISSING\_REFRESH\_TOKEN}
-		      \item \textbf{403 Forbidden}: \texttt{INVALID\_REFRESH\_TOKEN}, \texttt{REFRESH\_TOKEN\_NOT\_FOUND}, \texttt{REFRESH\_TOKEN\_EXPIRED}
-		      \item \textbf{404 Not Found}: \texttt{USER\_NOT\_FOUND}
+			  \item \textbf{401 Unauthorized}: \texttt{MISSING\_REFRESH\_TOKEN}
+		  \item \textbf{403 Forbidden}: \texttt{INVALID\_REFRESH\_TOKEN}, \texttt{REFRESH\_TOKEN\_NOT\_FOUND}
 	      \end{itemize}
 \end{itemize}
 
 \subsubsection*{Users}
-\paragraph{\textbf{POST} \texttt{/users/register}}
+\paragraph{\textbf{POST} \texttt{/api/v1/users/register}}
 \begin{itemize}
 	\item \textbf{Request Body}: \texttt{\{ email, password, username, systemPreferences? \}}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{201 Created}: \texttt{\{ success, user \}}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_CREDENTIALS}
+		      \item \textbf{400 Bad Request}: \texttt{VALIDATION\_ERROR}, \texttt{MISSING\_CREDENTIALS}
 		      \item \textbf{409 Conflict}: \texttt{EMAIL\_ALREADY\_IN\_USE}, \texttt{USERNAME\_ALREADY\_IN\_USE}
 	      \end{itemize}
 \end{itemize}
 
-\paragraph{\textbf{GET} \texttt{/users/me}}
-\begin{itemize}
-	\item \textbf{Responses}:
-	      \begin{itemize}
-		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
-		      \item \textbf{404 Not Found}: \texttt{USER\_NOT\_FOUND}
-	      \end{itemize}
-\end{itemize}
-
-\paragraph{\textbf{PATCH} \texttt{/users/me}}
+\paragraph{\textbf{PATCH} \texttt{/api/v1/users/me}}
 \begin{itemize}
 	\item \textbf{Request Body}: \texttt{\{ username?, email?, currentPassword?, password?, systemPreferences? \}}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{200 OK}: \texttt{\{ success, message \}}
-		      \item \textbf{400 Bad Request}: \texttt{EMPTY\_PAYLOAD}, \texttt{INCORRECT\_PASSWORD}
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
-		      \item \textbf{404 Not Found}: \texttt{USER\_NOT\_FOUND}
-		      \item \textbf{409 Conflict}: \texttt{EMAIL\_ALREADY\_IN\_USE}, \texttt{USERNAME\_ALREADY\_IN\_USE}
+		      \item \textbf{400 Bad Request}: \texttt{VALIDATION\_ERROR}, \texttt{EMPTY\_PAYLOAD}, \texttt{CURRENT\_PASSWORD\_REQUIRED}, \texttt{INCORRECT\_PASSWORD}
+		      \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
+		      \item \textbf{403 Forbidden}: \texttt{INVALID\_ACCESS\_TOKEN}
+			  \item \textbf{409 Conflict}: \texttt{EMAIL\_ALREADY\_IN\_USE}, \texttt{USERNAME\_ALREADY\_IN\_USE}
 	      \end{itemize}
 \end{itemize}
 
 \subsubsection*{Paths}
-\paragraph{\textbf{POST} \texttt{/paths}}
+\paragraph{\textbf{POST} \texttt{/api/v1/paths}}
 \begin{itemize}
 	\item \textbf{Request Body}: \texttt{\{ pathSegments, visibility, creationMode, title, description \}}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{201 Created}: \texttt{\{ success, message, data \}}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_PATH\_SEGMENTS}, \texttt{MISSING\_VISIBILITY}, \texttt{INVALID\_SEGMENT}, \texttt{MISSING\_CREATION\_MODE}, \texttt{INVALID\_CREATION\_MODE}, \texttt{NOT\_IMPLEMENTED}
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
-		      \item \textbf{404 Not Found}: \texttt{PATH\_NOT\_FOUND\_AFTER\_CREATION}
-		      \item \textbf{409 Conflict}: \texttt{PATH\_ALREADY\_EXISTS}
-	      \end{itemize}
+		  \item \textbf{400 Bad Request}: \texttt{VALIDATION\_ERROR}
+		  \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
+		  \item \textbf{403 Forbidden}: \texttt{INVALID\_ACCESS\_TOKEN}
+		      \end{itemize}
 \end{itemize}
 
-\paragraph{\textbf{GET} \texttt{/paths/search}}
+\paragraph{\textbf{GET} \texttt{/api/v1/paths/search}}
 \begin{itemize}
 	\item \textbf{Query Params}: \texttt{origin}, \texttt{destination}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_ORIGIN}, \texttt{MISSING\_DESTINATION}
-		      \item \textbf{404 Not Found}: \texttt{NO\_ROUTE}
+		      \item \textbf{400 Bad Request}: \texttt{VALIDATION\_ERROR}, \texttt{GEOCODE\_NOT\_FOUND}
 	      \end{itemize}
 \end{itemize}
 
-\paragraph{\textbf{POST} \texttt{/paths/snap}}
+\paragraph{\textbf{POST} \texttt{/api/v1/paths/snap}}
 \begin{itemize}
 	\item \textbf{Request Body}: \texttt{\{ coordinates \}}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_COORDINATES}
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
-	      \end{itemize}
+		      \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
+		      \item \textbf{403 Forbidden}: \texttt{INVALID\_ACCESS\_TOKEN}
+
+		     \end{itemize}
 \end{itemize}
 
-\paragraph{\textbf{GET} \texttt{/paths?owner=me}}
+\paragraph{\textbf{GET} \texttt{/api/v1/paths}}
 \begin{itemize}
 	\item \textbf{Responses}:
 	      \begin{itemize}
-		      \item \textbf{200 OK}: \texttt{\{ success, data \}} (empty list allowed)
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
-	      \end{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, data \}} 
+		      \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
+		      \item \textbf{403 Forbidden}: \texttt{INVALID\_ACCESS\_TOKEN}
+		  \end{itemize}
 \end{itemize}
 
-\paragraph{\textbf{PATCH} \texttt{/paths/:pathId/visibility}}
+\paragraph{\textbf{PATCH} \texttt{/api/v1/paths/:pathId/visibility}}
 \begin{itemize}
 	\item \textbf{Request Body}: \texttt{\{ visibility \}}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{200 OK}: \texttt{\{ success, message, data \}}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_PATH\_ID}, \texttt{MISSING\_VISIBILITY}, \texttt{INVALID\_VISIBILITY}
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
+		      \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
 		      \item \textbf{403 Forbidden}: \texttt{FORBIDDEN}
 		      \item \textbf{404 Not Found}: \texttt{NOT\_FOUND}
 	      \end{itemize}
 \end{itemize}
 
-\paragraph{\textbf{DELETE} \texttt{/paths/:pathId}}
+\paragraph{\textbf{DELETE} \texttt{/api/v1/paths/:pathId}}
 \begin{itemize}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{204 No Content}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_PATH\_ID}
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
+		      \item \textbf{400 Bad Request}: \texttt{VALIDATION\_ERROR}
+		      \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
 		      \item \textbf{403 Forbidden}: \texttt{FORBIDDEN}
 		      \item \textbf{404 Not Found}: \texttt{NOT\_FOUND}
 	      \end{itemize}
 \end{itemize}
 
 \subsubsection*{Trips}
-\paragraph{\textbf{POST} \texttt{/trips}}
+\paragraph{\textbf{POST} \texttt{/api/v1/trips}}
 \begin{itemize}
 	\item \textbf{Request Body}: \texttt{\{ origin, destination, startedAt, finishedAt, tripSegments, title? \}}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{201 Created}: \texttt{\{ success, message, data \}}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_ORIGIN\_DESTINATION}, \texttt{MISSING\_DATES}, \texttt{INVALID\_DATES}, \texttt{INVALID\_DATE\_RANGE}, \texttt{MISSING\_TRIP\_SEGMENTS}, \texttt{DUPLICATE\_SEGMENT\_IDS}
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
-	      \end{itemize}
+		      \item \textbf{400 Bad Request}: \texttt{VALIDATION\_ERROR}, \texttt{INVALID\_DATES}, \texttt{INVALID\_DATE\_RANGE}, \texttt{DUPLICATE\_SEGMENT\_IDS}
+		      \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
+		       \item \textbf{403 Forbidden}: \texttt{INVALID\_ACCESS\_TOKEN}
+		  \end{itemize}
 \end{itemize}
 
-\paragraph{\textbf{GET} \texttt{/trips?owner=me}}
+\paragraph{\textbf{GET} \texttt{/api/v1/trips}}
 \begin{itemize}
 	\item \textbf{Responses}:
 	      \begin{itemize}
-		      \item \textbf{200 OK}: \texttt{\{ success, data \}} (empty list allowed)
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
-	      \end{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, data \}} 
+			   \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
+		      \item \textbf{403 Forbidden}: \texttt{INVALID\_ACCESS\_TOKEN}
+		  \end{itemize}
 \end{itemize}
 
-\paragraph{\textbf{DELETE} \texttt{/trips/:tripId}}
+\paragraph{\textbf{DELETE} \texttt{/api/v1/trips/:tripId}}
 \begin{itemize}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{204 No Content}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_TRIP\_ID}
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
+		      \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
 		      \item \textbf{403 Forbidden}: \texttt{FORBIDDEN}
 		      \item \textbf{404 Not Found}: \texttt{NOT\_FOUND}
 	      \end{itemize}
 \end{itemize}
 
 \subsubsection*{Reports}
-\paragraph{\textbf{GET} \texttt{/reports?pathId=:pathId}}
+\paragraph{\textbf{GET} \texttt{/api/v1/reports}}
 \begin{itemize}
+	\item \textbf{Query Params}: \texttt{pathId}
 	\item \textbf{Responses}:
 	      \begin{itemize}
-		      \item \textbf{200 OK}: \texttt{\{ success, data \}} (empty list allowed)
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_PATH\_ID}
-	      \end{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, data \}} 
+		  \end{itemize}
 \end{itemize}
 
-\paragraph{\textbf{POST} \texttt{/reports}}
+\paragraph{\textbf{POST} \texttt{/api/v1/reports}}
 \begin{itemize}
-	\item \textbf{Request Body}: \texttt{\{ pathId, position, reportType, description?, media? \}}
+	\item \textbf{Request Body}: \texttt{\{ segmentId, sessionId, obstacleType, position, pathStatus? \}} (or \texttt{condition})
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{201 Created}: \texttt{\{ success, message, data \}}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_PATH\_ID}, \texttt{MISSING\_POSITION}, \texttt{INVALID\_REPORT\_TYPE}
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
-		      \item \textbf{404 Not Found}: \texttt{PATH\_NOT\_FOUND}
-	      \end{itemize}
+		      \item \textbf{400 Bad Request}: \texttt{VALIDATION\_ERROR}
+		      \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
+		   \item \textbf{403 Forbidden}: \texttt{INVALID\_ACCESS\_TOKEN}
+		     
+			\end{itemize}
 \end{itemize}
 
-\paragraph{\textbf{POST} \texttt{/reports/:reportId/confirm}}
+\paragraph{\textbf{POST} \texttt{/api/v1/reports/:reportId/confirm}}
 \begin{itemize}
-	\item \textbf{Request Body}: \texttt{\{ decision \}}
+	\item \textbf{Request Body}: \texttt{\{ decision, tripId?, sessionId? \}}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{201 Created}: \texttt{\{ success, message, data \}}
-		      \item \textbf{400 Bad Request}: \texttt{MISSING\_REPORT\_ID}, \texttt{INVALID\_DECISION}
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
-		      \item \textbf{404 Not Found}: \texttt{REPORT\_NOT\_FOUND}
-	      \end{itemize}
+		      \item \textbf{400 Bad Request}: \texttt{VALIDATION\_ERROR}
+			   \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
+		      \item \textbf{403 Forbidden}: \texttt{INVALID\_ACCESS\_TOKEN}
+		  \end{itemize}
 \end{itemize}
 
 \subsubsection*{Stats}
-\paragraph{\textbf{GET} \texttt{/stats/overall}}
+\paragraph{\textbf{GET} \texttt{/api/v1/stats}}
 \begin{itemize}
 	\item \textbf{Responses}:
 	      \begin{itemize}
 		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
-		      \item \textbf{401 Unauthorized}: \texttt{USER\_NOT\_AUTHENTICATED}
-		      \item \textbf{404 Not Found}: \texttt{NOT\_FOUND}
-	      \end{itemize}
+			  \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
+		      \item \textbf{403 Forbidden}: \texttt{INVALID\_ACCESS\_TOKEN}
+		  \end{itemize}
 \end{itemize}
 
 % --------------------------------------------------------------------------

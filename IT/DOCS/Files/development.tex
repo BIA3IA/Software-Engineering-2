@@ -197,4 +197,62 @@ The following is a list of the main technologies, libraries, and tools used in t
 \section{API Calls}
 \label{sec:api_calls}
 
-Any API not included in the DD should be mentioned here.
+During the development of the BBP system, new API endpoints and response codes were introduced
+in addition to those originally documented in the Design Document (DD).
+
+\paragraph{\textbf{POST} \texttt{/api/v1/auth/refresh}}
+This endpoint is used to refresh tokens, provided that a valid refresh token is supplied.
+\begin{itemize}
+	\item \textbf{Request Body}: \texttt{\{ refreshToken \}}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, message, tokens \}}
+		      \item \textbf{401 Unauthorized}: \texttt{MISSING\_REFRESH\_TOKEN}
+		      \item \textbf{403 Forbidden}: \texttt{INVALID\_REFRESH\_TOKEN}, \texttt{REFRESH\_TOKEN\_NOT\_FOUND}, \texttt{REFRESH\_TOKEN\_EXPIRED}
+		      \item \textbf{404 Not Found}: \texttt{USER\_NOT\_FOUND}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{GET} \texttt{/api/v1/users/me}}
+This endpoint is used to retrieve the authenticated user profile. The returned information includes
+user-specific preferences such as theme selection and default path visibility settings.
+\begin{itemize}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
+		      \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
+		      \item \textbf{403 Forbidden}: \texttt{INVALID\_ACCESS\_TOKEN}
+		      \item \textbf{404 Not Found}: \texttt{USER\_NOT\_FOUND}
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{\textbf{POST} \texttt{/api/v1/reports/attach}}
+This endpoint is used to associate reports created during an ongoing trip with the corresponding trip
+once it has been completed and persisted. Reports can be generated before a \texttt{tripId} is available.
+In such cases, they are temporarily stored using a client-generated \texttt{sessionId}.
+
+When the trip is successfully saved, all reports linked to the same session are attached to the newly
+created trip. This mechanism ensures that reports are displayed in the trip history and remain correctly
+associated with the related cycling activity.
+
+If the trip is not saved due to an error or if the user decides not to store the trip, the reports are
+still preserved without being attached to a trip. In this case, they continue to contribute to path
+condition evaluation and ranking.
+\begin{itemize}
+	\item \textbf{Request Body}: \texttt{\{ sessionId, tripId \}}
+	\item \textbf{Responses}:
+	      \begin{itemize}
+		      \item \textbf{200 OK}: \texttt{\{ success, data \}}
+		      \item \textbf{400 Bad Request}: \texttt{VALIDATION\_ERROR}
+		      \item \textbf{401 Unauthorized}: \texttt{ACCESS\_TOKEN\_MISSING}
+		      \item \textbf{403 Forbidden}: \texttt{INVALID\_ACCESS\_TOKEN}
+		      \item \textbf{404 Not Found}: \texttt{TRIP\_NOT\_FOUND}
+	      \end{itemize}
+\end{itemize}
+
+In addition, a cooldown mechanism was introduced for report submission in order to prevent users from
+spamming reports. When predefined thresholds are exceeded, the endpoint
+\textbf{POST} \texttt{/api/v1/reports} responds with:
+
+\textbf{429 Too Many Requests}: \texttt{REPORT\_COOLDOWN\_ACTIVE}, \texttt{REPORT\_RATE\_LIMIT}
+
