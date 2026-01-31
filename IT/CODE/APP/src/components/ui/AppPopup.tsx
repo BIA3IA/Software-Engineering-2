@@ -67,13 +67,14 @@ export function AppPopup({
   const accentColor = primaryButton.buttonColor ?? getVariantAccent(primaryVariant)
   const iconBgLight = iconBackgroundColor ?? palette.surface.accent
   const iconBackground = scheme === "dark" ? (primaryButton.buttonColor ?? accentColor) : iconBgLight
-  const shouldOverrideIconColor = scheme === "dark"
+  const iconElement = React.isValidElement<{ color?: string }>(icon) ? icon : null
+  const shouldOverrideIconColor = scheme === "dark" && !iconElement?.props?.color
   const iconColor = shouldOverrideIconColor ? palette.overlay.iconOnDark : undefined
 
   let renderedIcon = icon
-  if (shouldOverrideIconColor && icon && React.isValidElement(icon)) {
+  if (shouldOverrideIconColor && iconElement) {
     renderedIcon = React.cloneElement(
-      icon as React.ReactElement<{ color?: string }>,
+      iconElement,
       { color: iconColor }
     )
   }

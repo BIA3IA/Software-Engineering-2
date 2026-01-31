@@ -290,15 +290,18 @@ export default function PathsScreen() {
     : ""
 
   const visibilityIconColor =
-    pendingVisibilityChange?.target === "private" ? palette.surface.muted : palette.accent.green.base
+    pendingVisibilityChange?.target === "private" ? palette.accent.blue.surface : palette.accent.green.base
 
   const visibilityIconBackground =
     pendingVisibilityChange?.target === "private"
-      ? `${palette.border.default}`
+      ? `${palette.border.strong}`
       : `${palette.accent.green.surface}`
 
-  const visibilityPrimaryButtonColor = visibilityIconColor
-  const visibilityPrimaryTextColor = palette.text.onAccent
+  const visibilityPrimaryButtonColor = visibilityIconBackground
+  const visibilityPrimaryTextColor = palette.accent.blue.surface
+
+  const visibilitySecondaryButtonColor = palette.accent.blue.surface
+  const visibilitySecondaryTextColor =  visibilityIconBackground
 
   return (
     <View style={[styles.screen, { backgroundColor: palette.surface.screen }]}>
@@ -402,14 +405,15 @@ export default function PathsScreen() {
           variant: "primary",
           onPress: handleConfirmVisibilityChange,
           buttonColor: visibilityPrimaryButtonColor,
-          textColor: visibilityPrimaryTextColor,
+          textColor: visibilityPrimaryTextColor
         }}
         secondaryButton={{
           label: "No, Cancel",
           variant: "secondary",
           onPress: handleCancelVisibilityChange,
-          textColor: visibilityIconColor,
-          borderColor: visibilityIconColor,
+          buttonColor: visibilitySecondaryButtonColor,
+          textColor: visibilitySecondaryTextColor,
+          borderColor: visibilitySecondaryTextColor,
         }}
       />
       <AppPopup
