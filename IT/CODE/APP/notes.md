@@ -244,3 +244,5 @@ Notes:
 - Android artifacts are usually `.aab` (Play Store). For install on device you need to convert to APK.
 - iOS builds produce `.ipa` and require Apple credentials during the process.
 - EAS prints a download link; you can also find builds in the Expo dashboard.
+
+eas build -p android --profile apk

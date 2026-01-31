@@ -21,7 +21,7 @@ export default function MainLayout() {
   const logout = useAuthStore((s) => s.logout)
 
   const insets = useSafeAreaInsets()
-  const NAV_H = verticalScale(72)
+  const NAV_H = verticalScale(60) + (insets.bottom > 0 ? Math.min(insets.bottom, verticalScale(35)) : 0)
 
   const [loginPopupVisible, setLoginPopupVisible] = React.useState(false)
   const [navHidden, setNavHidden] = React.useState(false)
@@ -29,7 +29,7 @@ export default function MainLayout() {
 
   React.useEffect(() => {
     Animated.timing(navTranslate, {
-      toValue: navHidden ? NAV_H + insets.bottom : 0,
+      toValue: navHidden ? NAV_H : 0,
       duration: 200,
       useNativeDriver: true,
     }).start()
