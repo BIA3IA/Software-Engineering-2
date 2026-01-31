@@ -102,6 +102,61 @@
 - Easy to ship as containers: `api`, `postgres`.
 - Deployment platforms handle builds automatically.
 
+## 8.1 Proxy network (local vs prod)
+
+The backend compose uses a `proxy` network to connect with a shared reverse proxy (Nginx) in production.
+For local development we use a separate compose override that exposes port 3000 and keeps the proxy
+network internal.
+
+### Production (`docker-compose.yml`)
+
+```yaml
+networks:
+  proxy:
+    external: true
+```
+
+### Local (`docker-compose.dev.yml` + `Dockerfile.dev`)
+
+```yaml
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+
+networks:
+  proxy:
+    external: false
+```
+
+### Production setup note
+
+The external network must already exist on the host:
+
+```bash
+docker network create proxy || true
+```
+
+### Run commands
+
+Local:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
+
+Production:
+
+```bash
+docker compose up -d
+```
+
 ## 9. Project Configuration
 
 ### Initial Setup

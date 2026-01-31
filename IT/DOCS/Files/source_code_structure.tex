@@ -65,6 +65,7 @@ src/
 |—— .env                          # Environment variables
 |—— .gitignore                    # Git ignore rules
 |—— .npmrc                        # NPM configuration
+|—— app.config.js                 # Expo configuration
 |—— app.json                      # Expo app configuration
 |—— babel.config.js               # Babel configuration
 |—— eas.json                      # Expo Application Services configuration
@@ -92,6 +93,8 @@ backend/
 |   |—— migrations/                      # Database migrations
 |   |__ json.types.d.ts                  # Custom Prisma JSON type definitions
 |—— src/                                 # Source code
+|   |—— constants/                       # Application-wide constants
+|   |   |__ appConfig.ts                 # General app constants
 |   |—— errors/                          # Custom error classes
 |   |   |—— app.errors.ts                # Application-specific errors
 |   |   |__ index.ts                     # Export all error classes
@@ -114,7 +117,7 @@ backend/
 |   |   |—— user.schema.ts               # User-related schemas
 |   |   |__ ...                          # Other schemas
 |   |—— services/                        # External service integrations
-|   |   |—— openmeteo.service.ts         # OpenMeteo API integration
+|   |   |—— weather.service.ts           # OpenMeteo API integration
 |   |   |__ ...                          # Other services
 |   |—— tests/                           # Test files
 |   |   |—— integration/                 # Integration tests
@@ -126,7 +129,7 @@ backend/
 |   |—— types/                           # TypeScript type definitions
 |   |   |—— express/                     # Express-related types
 |   |   |   |—— index.d.ts               # Custom Express types
-|   |   |__ coordinate.types.ts         # Coordinate types
+|   |   |__ coordinate.types.ts          # Coordinate types
 |   |   |__ ...                          # Other type definitions
 |   |—— utils/                           # Utility functions
 |   |   |—— prisma-client.ts             # Prisma client instance
@@ -136,10 +139,11 @@ backend/
 |—— .env                                 # Environment variables
 |—— .gitignore                           # Git ignore rules
 |—— docker-compose.yml                   # Docker Compose configuration
+|—— docker-compose-dev.yml               # Dev Docker Compose configuration
 |—— Dockerfile                           # Dockerfile for backend service
+|—— Dockerfile.dev                       # Dev Dockerfile
 |—— jest.config.mjs                      # Jest configuration
 |—— node_modules/                        # Installed dependencies
-|—— notes.md                             # Project notes
 |—— package.json                         # Dependencies and scripts
 |—— package-lock.json                    # Locked dependency versions
 |—— prisma.config.ts                     # Prisma configuration

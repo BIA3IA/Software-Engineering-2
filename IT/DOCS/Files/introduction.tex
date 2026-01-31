@@ -10,63 +10,62 @@ requirements and high-level design are described in the Requirements Analysis an
 
 \section{Scope}
 \label{sec:scope}
-This document, Implementation and Test Document (ITD), provides a comprehensive description of the implementation and testing phases of the BBP platform. Specifically, it focuses on the functionalities developed, the adopted frameworks, and the structure of the source code. Additionally, it includes a detailed testing strategy, covering the procedures, tools, and methodologies used during the developmentprocess. This document also serves as a guide for installing and running the platform, offering installation instructions and addressing any prerequisites or potential issues. The effort spent by the team members is also summarized to provide insight into the workload distribution.
+This document, Implementation and Test Document (ITD), provides a comprehensive description of the implementation and testing phases 
+of the BBP platform. Specifically, it focuses on the functionalities developed, the adopted frameworks, and the structure of the source code. 
+Additionally, it includes a detailed testing strategy, covering the procedures, tools, and methodologies used during the developmentprocess.
+This document also serves as a guide for installing and running the platform, offering installation instructions and addressing any prerequisites 
+or potential issues. The effort spent by the team members is also summarized to provide insight into the workload distribution.
 
-\section{Definitions, Acronyms, Abbreviations}
-This section provides definitions and explanations of the terms, acronyms, and abbreviations used through out the document, making it easier for readers to understand and reference them.
-\label{sec:definitions}
-The definitions shared between this document and the RASD document are reported in the following list:
+\section{Definitions, Acronyms}
+This section provides definitions and explanations of the terms and acronyms used through out the document, 
+making it easier for readers to understand and reference them.
+
 \subsection{Definitions}
 \label{subsec:definitions}
 \begin{itemize}
-	\item \textbf{Path:} A route defined either by data collected from users or by paths manually created within BBP. A Bike Path consists of one or more Path Segments.
-	\item \textbf{Path Segment:} A portion of a Path defined between two consecutive waypoints. Each segment may have specific attributes.
-	\item \textbf{Path Status:} The overall condition of a Bike Path or Path Segment, as determined by the system's aggregation and merging process. Statuses include: \textit{Optimal}, \textit{Medium}, \textit{Sufficient}, \textit{Requires Maintenance}, and \textit{Closed}.
-	\item \textbf{Path Score:} The final ranking value computed by the system, based on the path's aggregated status and effectiveness, used to recommend the best alternatives between an origin and a destination.
-	\item \textbf{Trip:} A cycling activity tracked through the BBP application. If the user is logged-in, the trip is stored and becomes part of the user's trip history. Each trip includes temporal, spatial, and contextual data (e.g., duration, distance, speed).
-	\item \textbf{Report:} A submission of path information by a logged-in user. A report contains details on path status and obstacles and can be either Manually Entered or Automatically Detected (sensor-detected).
-	\item \textbf{Freshness:} A metric used when merging reports; newer reports carry more weight than older ones when determining Path Status.
-	\item \textbf{Obstacles:} Elements on a path that negatively impact cycling conditions, such as potholes or flooding, as identified by users or automatic sensors.
-	\item \textbf{Manual Creation Mode:} The creation mode in which a logged-in user defines a new path by drawing its geometry on the map or selecting the map segments composing it.
+	\item \textbf{Path:} A route created by users (manual drawing or GPS-based creation). A path consists of one or more Path Segments.
+	\item \textbf{Path Segment:} A portion of a Path defined by its polyline geometry and linked to adjacent segments.
+	\item \textbf{Path Status:} The overall condition of a Path or Path Segment, computed from user reports.
+	\item \textbf{Path Score/Ranking:} The value used to order suggested paths, derived from status and distance when searching routes.
+	\item \textbf{Trip:} A cycling activity tracked through the BBP application. If the user is logged in, the trip is stored and becomes part of the trip history, including temporal and spatial data (e.g., duration, distance, route).
+	\item \textbf{Report:} A submission of path information by a logged-in user. Reports describe obstacles and path condition for a specific segment.
+	\item \textbf{Freshness:} A metric used when aggregating reports; newer reports carry more weight than older ones when determining Path Status.
+	\item \textbf{Obstacle:} An element on a path that negatively impacts cycling conditions, such as potholes or flooding, as identified by users.
+	\item \textbf{Manual Creation Mode:} The creation mode in which a logged-in user defines a new path by drawing it on the map.
 	\item \textbf{Automatic Creation Mode:} The creation mode in which a logged-in user defines a new path by cycling along it, allowing the system to reconstruct the path using GPS data.
-	\item \textbf{Manual Report:} The system functionality where the logged-in user manually makes a report, inserting the bike path's condition and obstacle, through the application interface.
-	\item \textbf{Automatic Report:} The system functionality where, during an active trip with Automatic Mode enabled, the system analyzes sensor data to detect anomalies (e.g., potholes) and presents them to the user for confirmation before generating a report.
+	\item \textbf{Manual Report:} The functionality where a logged-in user manually creates a report by selecting the path condition and obstacle through the application interface.
 \end{itemize}
 
 \subsection{Acronyms}
 \label{subsec:acronyms}
 
 \begin{itemize}
+    \item \textbf{BBP:} Best Bike Paths. 
     \item \textbf{API:} Application Programming Interface.
-    \item \textbf{APK:} Android Package
-    \item \textbf{DBMS:} DataBase Management System.
+    \item \textbf{APK:} Android Package.
+    \item \textbf{CLI:} Command Line Interface.
+    \item \textbf{CRUD:} Create, Read, Update, Delete.
+    \item \textbf{DBMS:} Database Management System.
     \item \textbf{DD:} Design Document.
-    \item \textbf{DOM:} Document Object Model.
-    \item \textbf{DTO:} Data Transfer Object, represents a link between the user input and a Java Object.
+    \item \textbf{EAS:} Expo Application Services.
+    \item \textbf{GPS:} Global Positioning System.
     \item \textbf{HTTP:} HyperText Transfer Protocol.
     \item \textbf{IPA:} iOS App Store Package.
-    \item \textbf{JPA:} Java Persistence API.
-    \item \textbf{JS:} JavaScript.
+    \item \textbf{ITD:} Implementation and Test Document.
+    \item \textbf{JSON:} JavaScript Object Notation.
+    \item \textbf{JWT:} JSON Web Token.
+    \item \textbf{NGINX:} Engine X (reverse proxy).
+    \item \textbf{ORM:} Object-Relational Mapping.
+    \item \textbf{OSRM:} Open Source Routing Machine.
     \item \textbf{QR Code:} Quick Response Code.
-    \item \textbf{REST:} REpresentational State Transfer (see DD).
     \item \textbf{RASD:} Requirements Analysis and Specification Document.
-    \item \textbf{DD:} Design Document.
-    \item \textbf{ITD:} Implementation and Test Document. 
-    \item \textbf{S2B:} Software To Be.
+    \item \textbf{REST:} Representational State Transfer.
+    \item \textbf{SDK:} Software Development Kit.
+    \item \textbf{TLS:} Transport Layer Security.
     \item \textbf{UI:} User Interface.
     \item \textbf{URL:} Uniform Resource Locator.
-    \item \textbf{UX:} User eXperience.
-    \item \textbf{ORM:} Object-Relational Mapping.
-    \item \textbf{GPS:} Global Positioning System.
-    \item \textbf{JSON:} JavaScript Object Notation.
-     \item \textbf{CRUD:} Create, Read, Update, Delete.
-\end{itemize}
-
-\subsection{Abbreviations}
-\label{subsec:abbreviations}
-
-\begin{itemize}
-    \item \textbf{BBP:} Best Bike Paths. 
+    \item \textbf{UX:} User Experience.
+    \item \textbf{VPS:} Virtual Private Server.
 \end{itemize}
 
 \section{Revision History}
