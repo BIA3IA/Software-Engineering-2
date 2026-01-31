@@ -1,5 +1,13 @@
-\section{Unit Testing}
-\label{sec:unit_testing}
+\section{Backend Testing}
+\label{sec:backend_testing}
+
+Backend tests focus on API correctness, business logic reliability, and error handling across the service layer.
+They are implemented with \textbf{Jest} and organized into unit and integration suites under
+\texttt{src/tests/unit} and \texttt{src/tests/integration}. Unit tests isolate managers and utilities by
+mocking persistence and external services, while integration tests exercise the Express app through real HTTP
+requests using Supertest.
+
+\subsubsection{Unit Testing}
 
 Unit tests were used to validate the correctness of the backend \textit{business logic} in isolation, with the main goal of
 detecting defects early and keeping failures easy to debug. 
@@ -16,55 +24,7 @@ To keep unit tests close to the real execution environment, methods were invoked
 objects and a mocked \texttt{next} callback. Test cases cover common edge cases such as missing fields,
 invalid inputs, unauthorized access, conflicts (duplicate resources), and not-found scenarios.
 
-\subsubsection{How to run unit tests}
-All tests are executed via Jest. In our repository, the test script is already configured in \texttt{package.json}:
-
-\begin{verbatim}
-npm install
-npm run test
-\end{verbatim}
-
-Optionally, tests can be executed in watch mode in order to re-run them automatically upon file changes:
-
-\begin{verbatim}
-npm run test:watch
-\end{verbatim}
-
-In general (independently from our setup), you can also run Jest directly, or target a single test file:
-
-\begin{verbatim}
-npm test path.manager.test.ts
-\end{verbatim}
-
-\subsubsection{Test coverage}
-Coverage reports help identify untested branches and edge cases, and they were used as a guidance tool to refine 
-the test suite during development.
-
-Coverage can be collected by running Jest with the \texttt{--coverage} flag. In our setup this can be done through NPM as follows:
-
-\begin{verbatim}
-npm run test -- --coverage
-\end{verbatim}
-
-It is also possible to collect coverage for a specific subset of tests:
-
-\begin{verbatim}
-npm run test -- path.manager.test.ts --coverage
-\end{verbatim}
-
-The command generates a textual summary in the terminal which can be inspected to identify uncovered lines, functions, and branches.
-
-\vspace{1cm}
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.8\textwidth]{../Images/iit/iit1.png} 
-    \caption{Example of coverage report (HTML view)}
-    \label{fig:coverage_report}
-\end{figure}
-
-
-\section{Integration Testing}
-\label{sec:integration_testing}
+\subsubsection{Integration Testing}
 
 Integration tests were used to validate the correctness of component interactions at the \textit{API boundary}, ensuring that
 routing, middleware, validation, authentication, error handling, and controller/manager orchestration work correctly when
@@ -85,22 +45,104 @@ In particular, we mocked the Prisma client layer so that endpoint-to-manager flo
 instance for every test run. Authentication flows are tested by generating JWTs within the test suite (with test secrets configured
 in the environment \texttt{setup.test.ts}), thus simulating authenticated requests realistically while keeping the execution fully automated.
 
-\subsubsection{How to run integration tests}
-Integration tests are part of the standard Jest suite, therefore they can be executed with the same commands:
+\subsubsection{How to run backend tests}
+Backend tests are executed inside the backend container to ensure a consistent environment.
+Before running tests, make sure the backend stack is up:
+
+\begin{verbatim}
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+\end{verbatim}
+
+Then run the Jest suite inside the running container:
+
+\begin{verbatim}
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api 
+npm run test
+\end{verbatim}
+
+To run only integration tests, filter by filename pattern or target a specific file:
+
+\begin{verbatim}
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api
+ npm run test -- integration
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api
+ npm run test -- user.integration.test.ts
+\end{verbatim}
+
+% \subsubsection{Test coverage}
+% Coverage reports help identify untested branches and edge cases, and they were used as a guidance tool to refine 
+% the test suite during development.
+
+% Coverage can be collected by running Jest with the \texttt{--coverage} flag. In our setup this can be done through npm as follows:
+
+% \begin{verbatim}
+% npm run test -- --coverage
+% \end{verbatim}
+
+% It is also possible to collect coverage for a specific subset of tests:
+
+% \begin{verbatim}
+% npm run test -- path.manager.test.ts --coverage
+% \end{verbatim}
+
+% The command generates a textual summary in the terminal which can be inspected to identify uncovered lines, functions, and branches.
+
+% \vspace{1cm}
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.8\textwidth]{../Images/iit/iit1.png} 
+%     \caption{Example of coverage report (HTML view)}
+%     \label{fig:coverage_report}
+% \end{figure}
+
+\section{Frontend Testing}
+\label{sec:frontend_testing}
+
+Frontend tests were used to validate the correctness of the user interface logic, client-side state management,
+and screen-level interactions of the mobile application.
+
+Tests are implemented using \textbf{Jest} in a \textbf{React Native} environment and are organized into
+\textit{unit} and \textit{integration} test suites, located respectively under
+\texttt{src/tests/unit} and \texttt{src/tests/integration}. The test environment is configured through
+\texttt{jest.setup.ts}, where Expo modules and native dependencies are mocked.
+
+\subsubsection{Unit tests}
+
+Frontend unit tests focus on validating isolated pieces of client-side logic without involving UI rendering
+or navigation flows. These tests target reusable utilities, hooks, API clients, and validation logic that
+represent the foundation of the application behavior.
+
+Examples of unit-tested components include geospatial utilities, path mapping and transformation helpers,
+report option builders, authentication storage and session helpers, and API wrapper functions. By isolating
+these components, unit tests allow precise control over inputs and outputs and make failures easier to
+diagnose.
+
+\subsubsection{Integration tests}
+
+Frontend integration tests validate the interaction between components at the screen level, ensuring that
+UI elements, navigation, and state transitions work correctly when exercised together. These tests are
+implemented using \textbf{React Native Testing Library}, which simulates user interactions and renders
+components in an environment close to real execution.
+
+Integration tests cover end-to-end UI flows such as authentication (login, signup, profile editing),
+navigation guards distinguishing guest and authenticated access, path discovery and trip-related flows,
+report submission and confirmation, and settings and profile management screens. The focus is on verifying
+that user actions result in the expected UI updates and API calls, and that error states are handled
+consistently.
+
+\subsubsection{How to run frontend tests}
+
+Frontend tests can be executed from the mobile application directory. All required dependencies are installed
+via npm, and the Jest test suite can be run as follows:
 
 \begin{verbatim}
 npm run test
 \end{verbatim}
 
-To run only integration tests, a common approach is filtering by filename pattern for example:
+It is also possible to execute a subset of tests by filtering on filename patterns or by specifying a
+specific test file:
 
 \begin{verbatim}
-npm test integration
+npm run test -- integration
+npm run test -- login.integration.test.tsx
 \end{verbatim}
-
-or directly by specifying a single integration test file:
-
-\begin{verbatim}
-npm test user.integration.test.ts
-\end{verbatim}
-

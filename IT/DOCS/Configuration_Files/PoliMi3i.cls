@@ -10,7 +10,7 @@
 %--------------------------------------------------------------------------
 %	HANDLING THE STYLE OF THE DOCUMENT
 %--------------------------------------------------------------------------
-\LoadClass[12pt, twoside]{book} % 12 pt font, two-sided book style
+\LoadClass[12pt, oneside]{book} % 12 pt font, two-sided book style
 \RequirePackage[a4paper, includehead, headheight=0.6cm, inner=3.0cm ,outer=2.0cm, top=2.5cm, bottom=2.5cm]{geometry}
 
 \RequirePackage[bf, font=onehalfspacing]{caption} % caption: FIG in bold, 1.5 line spacing in figure and table captions
@@ -27,8 +27,8 @@
     \latexchapter{#1}
     \renewcommand{\headrulewidth}{0pt} %removing the horizontal line in the header
     %\addcontentsline{toc}{chapter}{#1} % Also adds the chapter name to the Contents
-    \fancyhead[LO, RE]{ \textbf{\textcolor{bluepoli}\thechapter\hsp\textcolor{bluepoli}{|   }\hsp \leftmark}}% Header
-    \fancyhead[LE, RO]{\thepage}
+    % \fancyhead[LO, RE]{ \textbf{\textcolor{bluepoli}\thechapter\hsp\textcolor{bluepoli}{|   }\hsp \leftmark}}% Header
+    % \fancyhead[LE, RO]{\thepage}
     \vspace{-1cm}
 }
 
@@ -38,8 +38,8 @@
     \latexchapter*{#1} 
    \renewcommand{\headrulewidth}{0pt} %removing the horizontal line in the header
     \addcontentsline{toc}{chapter}{#1} % Also adds the chapter name to the Contents
-    \fancyhead[LO, RE]{ \bfseries \textcolor{bluepoli}{|   } #1} % Header \textbf{\leftmark} \hspace{1mm}}
-    \fancyhead[LE, RO]{\thepage}
+    % \fancyhead[LO, RE]{ \bfseries \textcolor{bluepoli}{|   } #1} % Header \textbf{\leftmark} \hspace{1mm}}
+    % \fancyhead[LE, RO]{\thepage}
     \vspace{-1cm}
 }
 
