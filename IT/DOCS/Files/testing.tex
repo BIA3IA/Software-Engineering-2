@@ -10,7 +10,7 @@ requests using Supertest.
 \subsubsection{Unit Testing}
 
 Unit tests were used to validate the correctness of the backend \textit{business logic} in isolation, with the main goal of
-detecting defects early and keeping failures easy to debug. 
+detecting defects early and keeping failures easy to debug.
 
 We implemented unit tests using \textbf{Jest} (TypeScript support via \texttt{ts-jest}). Dependencies that would make tests
 slow were replaced with \textbf{mocks} through \texttt{jest.mock}.
@@ -34,16 +34,21 @@ instead of manually mocking \texttt{Request}/\texttt{Response}, Supertest perfor
 
 The focus of these tests is on verifying that each endpoint:
 \begin{itemize}
-    \item accepts and rejects payloads consistently (validation and error codes),
-    \item enforces authorization correctly (requests with missing/invalid tokens),
-    \item returns the expected HTTP status codes and response bodies, and
-    \item correctly maps internal failures to the public API error format.
+	\item accepts and rejects payloads consistently (validation and error codes),
+	\item enforces authorization correctly (requests with missing/invalid tokens),
+	\item returns the expected HTTP status codes and response bodies, and
+	\item correctly maps internal failures to the public API error format.
 \end{itemize}
 
 To keep integration tests fast, we stubbed external dependencies where needed.
 In particular, we mocked the Prisma client layer so that endpoint-to-manager flows can be validated without requiring a real database
 instance for every test run. Authentication flows are tested by generating JWTs within the test suite (with test secrets configured
 in the environment \texttt{setup.test.ts}), thus simulating authenticated requests realistically while keeping the execution fully automated.
+
+\paragraph{External services (live tests).}
+Some integration tests target external services (e.g., real weather, geocoding, and snapping APIs). These tests are intentionally
+skipped by default to avoid network instability and long execution time. They can be enabled by setting
+the environment variable \texttt{RUN\_LIVE\_TESTS=1} when running the suite.
 
 \subsubsection{How to run backend tests}
 Backend tests are executed inside the backend container to ensure a consistent environment.
@@ -58,6 +63,13 @@ Then run the Jest suite inside the running container:
 \begin{verbatim}
 docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api 
 npm run test
+\end{verbatim}
+
+To include live tests that hit external services, run:
+
+\begin{verbatim}
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -e 
+RUN_LIVE_TESTS=1 api npm run test
 \end{verbatim}
 
 To run only integration tests, filter by filename pattern or target a specific file:
