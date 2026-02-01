@@ -132,21 +132,7 @@ even if the external weather service is temporarily unavailable.
     \label{fig:iit5}
 \end{figure}
 
-After the \texttt{TripManager}, we integrate the \texttt{StatsManager}. This component aggregates data generated
-by the user's device to provide statistics. Its integration enables testing data flows based on trips and their associated routes.
-Integration tests will exercise interactions involving trips and paths to ensure that computed aggregates are consistent with the underlying data,
-preserve referential integrity, and remain efficient on realistic data volumes.
-
-\vspace{1cm}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{../Images/iit/iit6.pdf}
-    \caption{Step 6: StatsManager Integration}
-    \label{fig:iit6}
-\end{figure}
-
-
-After the \texttt{StatsManager}, we integrate the \texttt{ReportManager}. This module allows users to report obstacles.
+After the \texttt{TripManager}, we integrate the \texttt{ReportManager}. This module allows users to report obstacles.
 Integration tests will verify that reports are correctly linked to existing users and paths, that attempts to create reports for non-existing
 entities are rejected, and that report updates and confirmations are properly propagated to the \texttt{PathManager} so that route computation
 can take report information into account.
@@ -154,11 +140,36 @@ can take report information into account.
 \vspace{1cm}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{../Images/iit/iit7.pdf}
-    \caption{Step 7: ReportManager Integration}
+    \includegraphics[width=0.95\textwidth]{../Images/iit/iit6.png}
+    \caption{Step 6: ReportManager Integration}
+    \label{fig:iit6}
+\end{figure}
+
+After the \texttt{ReportManager}, we integrate the \texttt{StatsManager}. This component aggregates data generated
+by the user's device to provide statistics. Its integration enables testing data flows based on trips and their associated routes.
+Integration tests will exercise interactions involving trips and paths to ensure that computed aggregates are consistent with the underlying data,
+preserve referential integrity, and remain efficient on realistic data volumes.
+
+\vspace{1cm}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../Images/iit/iit7.png}
+    \caption{Step 7: StatsManager Integration}
     \label{fig:iit7}
 \end{figure}
 
+After the \texttt{StatsManager}, we integrate the \texttt{CacheingService}. This component is responsible for caching frequently 
+accessed data to improve system performance. Integration tests will verify that the caching mechanism correctly stores, retrieves data,
+and maintains data consistency with the underlying database. Tests will also ensure that cache invalidation 
+policies are correctly implemented to prevent stale data from being served.
+
+\vspace{1cm}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../Images/iit/iit8.png}
+    \caption{Step 7: CacheingService Integration}
+    \label{fig:iit7}
+\end{figure}
 
 Finally, the mobile application (front-end) is integrated and used to perform real requests against the backend, replacing the driver.
 At this final stage, integration tests are executed end-to-end by exercising the main use cases from the mobile client, including real device sensors
@@ -167,7 +178,7 @@ At this final stage, integration tests are executed end-to-end by exercising the
 \vspace{1cm}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{../Images/iit/iit8.pdf}
+    \includegraphics[width=0.95\textwidth]{../Images/iit/iit9.png}
     \caption{Step 8: System Integration via HTTP Test Driver}
     \label{fig:iit8}
 \end{figure}

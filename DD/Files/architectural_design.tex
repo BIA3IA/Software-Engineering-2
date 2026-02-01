@@ -68,6 +68,9 @@ The application layer also relies on supporting services that encapsulate third-
 	      to resolve user-provided origins and destinations into coordinates for path search.
 	\item \textbf{SnappingService}: maps raw segments to road geometry to improve
 	      path accuracy during manual path creation before storage and analysis.
+	\item \textbf{CacheingService}: provides in-memory caching capabilities
+	      to improve performance for frequently accessed data, such as
+	      user statistics.
 \end{itemize}
 
 All modules are accessed through the \textbf{API Entrypoint}, which exposes a set of
@@ -213,6 +216,13 @@ The \textbf{SnappingService} interfaces with an internal routing engine to
 snap user-drawn paths to the road network, ensuring accurate route representation.
 It returns the adjusted path to the \textbf{PathManager}.
 
+\subsubsection{CacheingService}
+The \textbf{CacheingService} interacts with the StatsManager to cache user statistics,
+avoiding the need to recalculate them each time they are requested. This mechanism
+avoids recomputing statistics when a user wants to access them, 
+if the number of trips has not changed, improving performance
+for frequently accessed data. 
+
 % --------------------------------------------------------------------------
 % Deployment View
 % --------------------------------------------------------------------------
@@ -247,6 +257,7 @@ deployed on logically separated infrastructure components and communicates with 
 	      to the backend containers over a private Docker network using HTTP.
 	      The backend application itself runs in one or more stateless Docker containers (replicas), allowing horizontal scaling.
 	      The snapping engine runs as a separate internal container and is reachable only over the private Docker network.
+		  The cacheing service is also deployed as a separate container, accessible only by the backend replicas.
 	      Since authentication tokens are included in each request header, no server-side session state is maintained, enabling horizontal
 	      scaling and dynamic replica management.
 
@@ -694,7 +705,8 @@ When the trip is valid and the external service is reachable, the
 \textbf{TripManager} retrieves a weather snapshot through the
 \textbf{WeatherService} based on the trip samples. It also invokes the
 \textbf{StatsManager} to compute and aggregate trip statistics and update user's overall statistics,
-which are then stored in the database through the \textbf{QueryManager}.
+which are then stored in the database through the \textbf{QueryManager} and 
+cached via the \textbf{CacheingService}.
 
 Finally, the \textbf{TripManager} creates the trip record by sending the complete
 trip payload, including weather data, to the \textbf{QueryManager}.
@@ -874,12 +886,15 @@ first checks whether previously computed overall statistics are still valid
 by comparing the stored trip count with the current number of trips retrieved
 through the \textbf{QueryManager}.
 
-If valid statistics already exist, they are loaded from the database and
-returned to the mobile app with a \textbf{200 OK} response.
+If valid statistics already exist, the StatsManager tries to load them
+from the cache. If the cached data is not available,
+they are loaded from the database.
+Either way, they are returned to the mobile app with a \textbf{200 OK} response.
 If the stored data is outdated, the \textbf{StatsManager} retrieves
 all trip records from the \textbf{DBMS}, computes the aggregated metrics
 (e.g., total distance, total duration, average speed), stores the updated
-statistics, and returns the results to the client.
+statistics, updates the cache through the \textbf{CacheingService},
+and returns the results to the client.
 
 If no trips exist for the user, the backend responds with a
 \textbf{200} status, and an empty statistics object is returned.
@@ -1025,6 +1040,15 @@ the adjusted polyline to the \textbf{PathManager}.
 	\item \textbf{snapToRoad(segment)}: snaps a path segment to the road network.
 \end{itemize}
 
+\subsection*{CacheingService}
+The \textbf{CacheingService} provides in-memory caching for frequently accessed data,
+reducing database load and improving response times. It is used by the \textbf{StatsManager}.
+
+\begin{itemize}
+	\item \textbf{insertCachedStats(stats, userId)}: inserts cached statistics for a user.
+	\item \textbf{getCachedStats(userId)}: retrieves cached statistics for a user, if available.
+\end{itemize}
+
 \subsection*{QueryManager}
 
 The \textbf{QueryManager} is the uniform access point to the DBMS.
@@ -1051,7 +1075,6 @@ It exposes:
 	\item \textbf{deletePath(pathId)}: deletes a path and all dependent records.
 	
 	\item \textbf{updatePathVisibility(pathId, visibility)}: updates the visibility of a path.
-	\item \textbf{updateOverallStats(userStats, userId)}: update user's overall statistics.
 	\item \textbf{updateUser(userId, profilePayload)}: updates editable user profile fields.
 	
 	\item \textbf{fetchUserPaths(userId)}: retrieves all paths created by a user.
