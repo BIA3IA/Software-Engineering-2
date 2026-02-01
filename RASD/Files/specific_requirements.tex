@@ -302,7 +302,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		                         & 3. The system displays the list of suggested paths to the actor.                                        \\ \hline
 		\textbf{Exit Condition}  & The suggested paths are displayed to the actor.                                                         \\ \hline
 		\textbf{Exceptions}      & If the inputs are invalid or incomplete, the system displays an error message.                          \\
-		                         & If no route is found, the system displays an error message and suggests adjusting inputs/filters.       \\
+		                         & If no route is found, the system displays an empty list message.         \\
 		                         & If there is a temporary connection or BBP error, the system displays an error message and allows retry. \\ \hline
 		\textbf{Notes}           & The search results are ranked based on path quality and distance.                                       \\ \hline
 	\end{tabularx}
@@ -789,7 +789,7 @@ A corresponding sequence diagram is provided for each process to illustrate the 
 		                         & 2. The system computes or retrieves overall statistics based on all stored trips.               \\
 		                         & 3. The system displays aggregated statistics (e.g., total distance, total time, average speed). \\ \hline
 		\textbf{Exit Condition}  & The actor can visualize the overall statistics of his trips.                                    \\ \hline
-		\textbf{Exceptions}      & If no trips are available, the system displays a message indicating that no statistics exist.   \\
+		\textbf{Exceptions}      & If no trips are available, the system returns empty statistics.   \\
 		                         & If a temporary connection or BBP error occurs, the system displays an error message.            \\ \hline
 		\textbf{Notes}           & Statistics are computed from validated and stored trips only.                                   \\ \hline
 	\end{tabularx}
