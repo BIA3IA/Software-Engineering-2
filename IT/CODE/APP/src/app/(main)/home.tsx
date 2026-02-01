@@ -42,6 +42,7 @@ import {
   CYCLING_SPEED_KMH,
   OFF_ROUTE_MAX_CONSECUTIVE,
   OFF_ROUTE_MAX_MS,
+  OFF_ROUTE_AUTO_END_MS,
   OFF_ROUTE_DISTANCE_METERS,
   REPORT_CONFIRM_DISMISS_MS,
   REPORT_CONFIRM_DISTANCE_METERS,
@@ -118,6 +119,7 @@ export default function HomeScreen() {
   const offRouteCountRef = React.useRef(0)
   const offRouteStartedAtRef = React.useRef<number | null>(null)
   const offRouteContinueUsedRef = React.useRef(false)
+  const offRouteAutoEndTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const cyclingPromptAtRef = React.useRef(0)
   const cyclingStartAtRef = React.useRef<number | null>(null)
   const cyclingPromptVisibleRef = React.useRef(false)
@@ -163,9 +165,20 @@ export default function HomeScreen() {
     disableGestures: true,
   })
 
+  const progressIndexRef = React.useRef<number | null>(null)
   const routeProgressIndex = React.useMemo(() => {
-    if (!activeTrip || !userLocation) return null
-    return findClosestPointIndex(activeTrip.route, userLocation)
+    if (!activeTrip || !userLocation) {
+      progressIndexRef.current = null
+      return null
+    }
+    const nextIndex = findClosestPointIndex(activeTrip.route, userLocation)
+    if (nextIndex === null || Number.isNaN(nextIndex)) {
+      return progressIndexRef.current
+    }
+    if (progressIndexRef.current == null || nextIndex > progressIndexRef.current) {
+      progressIndexRef.current = nextIndex
+    }
+    return progressIndexRef.current
   }, [activeTrip, userLocation])
 
   const traversedRoute = React.useMemo(() => {
@@ -340,6 +353,10 @@ export default function HomeScreen() {
   }
 
   function handleContinueOffRoute() {
+    if (offRouteAutoEndTimerRef.current) {
+      clearTimeout(offRouteAutoEndTimerRef.current)
+      offRouteAutoEndTimerRef.current = null
+    }
     if (offRouteContinueUsedRef.current) {
       handleEndOffRouteTrip()
       return
@@ -350,11 +367,15 @@ export default function HomeScreen() {
   }
 
   function handleEndOffRouteTrip() {
+    if (offRouteAutoEndTimerRef.current) {
+      clearTimeout(offRouteAutoEndTimerRef.current)
+      offRouteAutoEndTimerRef.current = null
+    }
     setOffRoutePopupVisible(false)
-    void handleCompleteTrip()
+    void handleCompleteTrip(true)
   }
 
-  async function handleCompleteTrip() {
+  async function handleCompleteTrip(fromOffRoute = false) {
     if (!activeTrip) {
       return
     }
@@ -378,6 +399,19 @@ export default function HomeScreen() {
       const hasInvalidSegment = tripSegments.some((segment) => segment.polylineCoordinates.length < 2)
 
       if (!tripSegments.length || hasInvalidSegment) {
+        if (fromOffRoute) {
+          setOffRoutePopupVisible(false)
+          resetOffRouteTracking()
+          offRouteContinueUsedRef.current = false
+          setActiveTrip(null)
+          setSelectedResult(null)
+          setActiveTripStartedAt(null)
+          setReportVisible(false)
+          reportSessionIdRef.current = null
+          autoCompleteTriggeredRef.current = false
+          setResultsVisible(false)
+          return
+        }
         setOffRoutePopupVisible(false)
         setErrorPopup({
           visible: true,
@@ -582,6 +616,9 @@ export default function HomeScreen() {
       if (confirmationTimerRef.current) {
         clearTimeout(confirmationTimerRef.current)
       }
+      if (offRouteAutoEndTimerRef.current) {
+        clearTimeout(offRouteAutoEndTimerRef.current)
+      }
     }
   }, [])
 
@@ -608,6 +645,7 @@ export default function HomeScreen() {
 
     if (errorPopup.visible) return
     if (isOffRoutePopupVisible) return
+    if (isCompletingTrip) return
 
     const distance = minDistanceToRouteMeters(activeTrip.route ?? [], userLocation)
     if (distance <= OFF_ROUTE_DISTANCE_METERS) {
@@ -624,7 +662,29 @@ export default function HomeScreen() {
     if (offRouteCountRef.current >= OFF_ROUTE_MAX_CONSECUTIVE || elapsed >= OFF_ROUTE_MAX_MS) {
       setOffRoutePopupVisible(true)
     }
-  }, [activeTrip, hasActiveNavigation, isOffRoutePopupVisible, userLocation])
+  }, [activeTrip, hasActiveNavigation, isOffRoutePopupVisible, userLocation, isCompletingTrip])
+
+  React.useEffect(() => {
+    if (!isOffRoutePopupVisible) {
+      if (offRouteAutoEndTimerRef.current) {
+        clearTimeout(offRouteAutoEndTimerRef.current)
+        offRouteAutoEndTimerRef.current = null
+      }
+      return
+    }
+
+    offRouteAutoEndTimerRef.current = setTimeout(() => {
+      offRouteAutoEndTimerRef.current = null
+      handleEndOffRouteTrip()
+    }, OFF_ROUTE_AUTO_END_MS)
+
+    return () => {
+      if (offRouteAutoEndTimerRef.current) {
+        clearTimeout(offRouteAutoEndTimerRef.current)
+        offRouteAutoEndTimerRef.current = null
+      }
+    }
+  }, [isOffRoutePopupVisible, OFF_ROUTE_AUTO_END_MS])
 
   React.useEffect(() => {
     if (!activeTrip || !userLocation || !destinationPoint) {

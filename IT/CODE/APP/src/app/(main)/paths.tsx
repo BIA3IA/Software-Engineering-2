@@ -4,6 +4,7 @@ import * as Location from "expo-location"
 import { useFocusEffect, useRouter } from "expo-router"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
+import { START_TRIP_DISTANCE_METERS } from "@/constants/appConfig"
 import { RouteCard, RouteItem } from "@/components/route/RouteCard"
 import { ScreenHeader } from "@/components/ui/ScreenHeader"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
@@ -21,8 +22,6 @@ import type { SearchResult } from "@/components/paths/SearchResultsSheet"
 
 type SortOption = "date" | "distance" | "alphabetical"
 type LatLng = { latitude: number; longitude: number }
-
-const ORIGIN_PROXIMITY_METERS = 100
 
 const SORT_OPTIONS: { key: SortOption; label: string }[] = [
   { key: "date", label: "Date" },
@@ -318,7 +317,7 @@ export default function PathsScreen() {
             {(() => {
               const summary = pathSummaries.find((path) => path.pathId === item.id)
               const canStartTrip = summary && userLocation
-                ? isNearOriginMeters(summary.origin, userLocation, ORIGIN_PROXIMITY_METERS)
+                ? isNearOriginMeters(summary.origin, userLocation, START_TRIP_DISTANCE_METERS)
                 : false
               return (
             <RouteCard
