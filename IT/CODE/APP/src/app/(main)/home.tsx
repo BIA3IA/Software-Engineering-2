@@ -1,6 +1,6 @@
 import React from "react"
 import { View, StyleSheet, Pressable, Text } from "react-native"
-import MapView, { Marker, Polyline, Circle } from "react-native-maps"
+import MapView, { Marker, Polyline, Circle, PROVIDER_GOOGLE } from "react-native-maps"
 import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle, X, Bike } from "lucide-react-native"
 import * as Location from "expo-location"
 
@@ -943,6 +943,7 @@ export default function HomeScreen() {
             mapRef.current = ref
           }}
           style={styles.map}
+          provider={PROVIDER_GOOGLE}
           initialRegion={{
             latitude: 45.478,
             longitude: 9.227,
