@@ -1,6 +1,5 @@
 import React from "react"
-import { ScrollView, StyleSheet, View, Text, Pressable, Dimensions } from "react-native"
-import Linking from "react-native/Libraries/Linking/Linking"
+import { ScrollView, StyleSheet, View, Text, Pressable, Dimensions, Linking } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useColorScheme, useThemePreference, useSetThemePreference, type AppearancePreference } from "@/hooks/useColorScheme"
 import { usePrivacyPreference, useSetPrivacyPreference } from "@/hooks/usePrivacyPreference"
