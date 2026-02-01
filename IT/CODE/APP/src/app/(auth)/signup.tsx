@@ -131,6 +131,9 @@ export default function SignUpScreen() {
                   onChangeText={field.onChange}
                   onBlur={field.onBlur}
                   autoCapitalize="none"
+                  autoComplete="off"
+                  textContentType="none"
+                  importantForAutofill="no"
                   icon={<User size={fieldIconSize} color={iconColor} />}
                   errorMessage={errors.username?.message}
                 />
@@ -151,6 +154,9 @@ export default function SignUpScreen() {
                   onBlur={field.onBlur}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  autoComplete="off"
+                  textContentType="none"
+                  importantForAutofill="no"
                   icon={<Mail size={fieldIconSize} color={iconColor} />}
                   errorMessage={errors.email?.message}
                 />
@@ -170,6 +176,9 @@ export default function SignUpScreen() {
                   onChangeText={field.onChange}
                   onBlur={field.onBlur}
                   secureTextEntry
+                  autoComplete="off"
+                  textContentType="none"
+                  importantForAutofill="no"
                   icon={<Lock size={fieldIconSize} color={iconColor} />}
                   errorMessage={errors.password?.message}
                 />
@@ -189,6 +198,9 @@ export default function SignUpScreen() {
                   onChangeText={field.onChange}
                   onBlur={field.onBlur}
                   secureTextEntry
+                  autoComplete="off"
+                  textContentType="none"
+                  importantForAutofill="no"
                   icon={<LockKeyhole size={fieldIconSize} color={iconColor} />}
                   errorMessage={errors.confirm?.message}
                 />

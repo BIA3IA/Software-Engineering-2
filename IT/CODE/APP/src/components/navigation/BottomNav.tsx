@@ -1,6 +1,7 @@
 import React from "react"
 import { View, TouchableOpacity, StyleSheet } from "react-native"
 import { useRouter, usePathname } from "expo-router"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Map, Bike, Route, User, Lock } from "lucide-react-native"
 
 import Colors from "@/constants/Colors"
@@ -18,8 +19,10 @@ export function BottomNav({ onRequireLogin }: BottomNavProps) {
     const pathname = usePathname()
     const scheme = useColorScheme() ?? "light"
     const palette = Colors[scheme]
+    const insets = useSafeAreaInsets()
     const user = useAuthStore((s) => s.user)
     const isGuest = !user || user.id === "guest"
+    const bottomInset = insets.bottom > 0 ? Math.min(insets.bottom, verticalScale(35)) : 0
 
     function go(to: string, needsAuth?: boolean) {
         if (needsAuth && isGuest) {
@@ -31,7 +34,17 @@ export function BottomNav({ onRequireLogin }: BottomNavProps) {
     }
 
     return (
-        <View style={[styles.container, { backgroundColor: palette.surface.accent, shadowColor: palette.border.muted }]}>
+        <View
+            style={[
+                styles.container,
+                {
+                    backgroundColor: palette.surface.accent,
+                    shadowColor: palette.border.muted,
+                    paddingBottom: bottomInset,
+                    height: verticalScale(60) + bottomInset,
+                },
+            ]}
+        >
             <NavItem
                 icon={Map}
                 label="Home"

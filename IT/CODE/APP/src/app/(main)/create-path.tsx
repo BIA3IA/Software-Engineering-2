@@ -1,6 +1,6 @@
 import React from "react"
 import { View, StyleSheet, Pressable } from "react-native"
-import MapView, { Marker, Polyline, Circle } from "react-native-maps"
+import MapView, { Marker, Polyline, Circle, PROVIDER_GOOGLE } from "react-native-maps"
 import * as Location from "expo-location"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useRouter, useLocalSearchParams } from "expo-router"
@@ -417,6 +417,7 @@ export default function CreatePathScreen() {
           mapRef.current = ref
         }}
         style={styles.map}
+        provider={PROVIDER_GOOGLE}
         initialRegion={userLocation ? regionAroundPoint(userLocation, 0.008) : DEFAULT_REGION}
         customMapStyle={scheme === "dark" ? darkMapStyle : lightMapStyle}
         showsUserLocation

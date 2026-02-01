@@ -1,6 +1,6 @@
 import React from "react"
 import { View, StyleSheet, Pressable, Text } from "react-native"
-import MapView, { Marker, Polyline, Circle } from "react-native-maps"
+import MapView, { Marker, Polyline, Circle, PROVIDER_GOOGLE } from "react-native-maps"
 import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle, X, Bike } from "lucide-react-native"
 import * as Location from "expo-location"
 
@@ -42,6 +42,7 @@ import {
   CYCLING_SPEED_KMH,
   OFF_ROUTE_MAX_CONSECUTIVE,
   OFF_ROUTE_MAX_MS,
+  OFF_ROUTE_AUTO_END_MS,
   OFF_ROUTE_DISTANCE_METERS,
   REPORT_CONFIRM_DISMISS_MS,
   REPORT_CONFIRM_DISTANCE_METERS,
@@ -90,6 +91,8 @@ export default function HomeScreen() {
   const [reportConfirmation, setReportConfirmation] = React.useState<ReportSummary | null>(null)
   const [isSuccessPopupVisible, setSuccessPopupVisible] = React.useState(false)
   const [isCompletedPopupVisible, setCompletedPopupVisible] = React.useState(false)
+  const [isSubmittingReport, setIsSubmittingReport] = React.useState(false)
+  const [isCompletingTrip, setIsCompletingTrip] = React.useState(false)
   const [isCreateModalVisible, setCreateModalVisible] = React.useState(false)
   const [isSearching, setIsSearching] = React.useState(false)
   const [isCancelTripPopupVisible, setCancelTripPopupVisible] = React.useState(false)
@@ -116,6 +119,7 @@ export default function HomeScreen() {
   const offRouteCountRef = React.useRef(0)
   const offRouteStartedAtRef = React.useRef<number | null>(null)
   const offRouteContinueUsedRef = React.useRef(false)
+  const offRouteAutoEndTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const cyclingPromptAtRef = React.useRef(0)
   const cyclingStartAtRef = React.useRef<number | null>(null)
   const cyclingPromptVisibleRef = React.useRef(false)
@@ -161,9 +165,20 @@ export default function HomeScreen() {
     disableGestures: true,
   })
 
+  const progressIndexRef = React.useRef<number | null>(null)
   const routeProgressIndex = React.useMemo(() => {
-    if (!activeTrip || !userLocation) return null
-    return findClosestPointIndex(activeTrip.route, userLocation)
+    if (!activeTrip || !userLocation) {
+      progressIndexRef.current = null
+      return null
+    }
+    const nextIndex = findClosestPointIndex(activeTrip.route, userLocation)
+    if (nextIndex === null || Number.isNaN(nextIndex)) {
+      return progressIndexRef.current
+    }
+    if (progressIndexRef.current == null || nextIndex > progressIndexRef.current) {
+      progressIndexRef.current = nextIndex
+    }
+    return progressIndexRef.current
   }, [activeTrip, userLocation])
 
   const traversedRoute = React.useMemo(() => {
@@ -338,6 +353,10 @@ export default function HomeScreen() {
   }
 
   function handleContinueOffRoute() {
+    if (offRouteAutoEndTimerRef.current) {
+      clearTimeout(offRouteAutoEndTimerRef.current)
+      offRouteAutoEndTimerRef.current = null
+    }
     if (offRouteContinueUsedRef.current) {
       handleEndOffRouteTrip()
       return
@@ -348,11 +367,15 @@ export default function HomeScreen() {
   }
 
   function handleEndOffRouteTrip() {
+    if (offRouteAutoEndTimerRef.current) {
+      clearTimeout(offRouteAutoEndTimerRef.current)
+      offRouteAutoEndTimerRef.current = null
+    }
     setOffRoutePopupVisible(false)
-    void handleCompleteTrip()
+    void handleCompleteTrip(true)
   }
 
-  async function handleCompleteTrip() {
+  async function handleCompleteTrip(fromOffRoute = false) {
     if (!activeTrip) {
       return
     }
@@ -376,6 +399,19 @@ export default function HomeScreen() {
       const hasInvalidSegment = tripSegments.some((segment) => segment.polylineCoordinates.length < 2)
 
       if (!tripSegments.length || hasInvalidSegment) {
+        if (fromOffRoute) {
+          setOffRoutePopupVisible(false)
+          resetOffRouteTracking()
+          offRouteContinueUsedRef.current = false
+          setActiveTrip(null)
+          setSelectedResult(null)
+          setActiveTripStartedAt(null)
+          setReportVisible(false)
+          reportSessionIdRef.current = null
+          autoCompleteTriggeredRef.current = false
+          setResultsVisible(false)
+          return
+        }
         setOffRoutePopupVisible(false)
         setErrorPopup({
           visible: true,
@@ -385,6 +421,7 @@ export default function HomeScreen() {
         return
       }
 
+      setIsCompletingTrip(true)
       try {
         const tripId = await createTripApi({
           origin: { lat: startRoutePoint.latitude, lng: startRoutePoint.longitude },
@@ -422,6 +459,8 @@ export default function HomeScreen() {
           message,
         })
         return
+      } finally {
+        setIsCompletingTrip(false)
       }
     }
 
@@ -441,12 +480,18 @@ export default function HomeScreen() {
   }
 
   async function handleSubmitReport(values: { condition: string; obstacle: string }) {
-    if (!activeTrip || !userLocation) {
+    function showReportError(message: string) {
+      setReportVisible(false)
+      clearReportConfirmation()
       setErrorPopup({
         visible: true,
         title: "Report Error",
-        message: "Trip details are missing. Please try again.",
+        message,
       })
+    }
+
+    if (!activeTrip || !userLocation) {
+      showReportError("Trip details are missing. Please try again.")
       return
     }
 
@@ -455,14 +500,11 @@ export default function HomeScreen() {
 
     const closestSegment = findClosestSegment(activeTrip.pathSegments ?? [], userLocation)
     if (!closestSegment) {
-      setErrorPopup({
-        visible: true,
-        title: "Report Error",
-        message: "Unable to determine the reported segment. Please try again.",
-      })
+      showReportError("Unable to determine the reported segment. Please try again.")
       return
     }
 
+    setIsSubmittingReport(true)
     try {
       await createReportApi({
         segmentId: closestSegment.segmentId,
@@ -473,12 +515,10 @@ export default function HomeScreen() {
       })
     } catch (error) {
       const message = getApiErrorMessage(error, "Unable to submit the report. Please try again.")
-      setErrorPopup({
-        visible: true,
-        title: "Report Error",
-        message,
-      })
+      showReportError(message)
       return
+    } finally {
+      setIsSubmittingReport(false)
     }
 
     setReportVisible(false)
@@ -545,6 +585,7 @@ export default function HomeScreen() {
         title: "Report Error",
         message,
       })
+      setReportVisible(false)
     } finally {
       clearReportConfirmation()
     }
@@ -575,6 +616,9 @@ export default function HomeScreen() {
       if (confirmationTimerRef.current) {
         clearTimeout(confirmationTimerRef.current)
       }
+      if (offRouteAutoEndTimerRef.current) {
+        clearTimeout(offRouteAutoEndTimerRef.current)
+      }
     }
   }, [])
 
@@ -601,6 +645,7 @@ export default function HomeScreen() {
 
     if (errorPopup.visible) return
     if (isOffRoutePopupVisible) return
+    if (isCompletingTrip) return
 
     const distance = minDistanceToRouteMeters(activeTrip.route ?? [], userLocation)
     if (distance <= OFF_ROUTE_DISTANCE_METERS) {
@@ -617,7 +662,29 @@ export default function HomeScreen() {
     if (offRouteCountRef.current >= OFF_ROUTE_MAX_CONSECUTIVE || elapsed >= OFF_ROUTE_MAX_MS) {
       setOffRoutePopupVisible(true)
     }
-  }, [activeTrip, hasActiveNavigation, isOffRoutePopupVisible, userLocation])
+  }, [activeTrip, hasActiveNavigation, isOffRoutePopupVisible, userLocation, isCompletingTrip])
+
+  React.useEffect(() => {
+    if (!isOffRoutePopupVisible) {
+      if (offRouteAutoEndTimerRef.current) {
+        clearTimeout(offRouteAutoEndTimerRef.current)
+        offRouteAutoEndTimerRef.current = null
+      }
+      return
+    }
+
+    offRouteAutoEndTimerRef.current = setTimeout(() => {
+      offRouteAutoEndTimerRef.current = null
+      handleEndOffRouteTrip()
+    }, OFF_ROUTE_AUTO_END_MS)
+
+    return () => {
+      if (offRouteAutoEndTimerRef.current) {
+        clearTimeout(offRouteAutoEndTimerRef.current)
+        offRouteAutoEndTimerRef.current = null
+      }
+    }
+  }, [isOffRoutePopupVisible, OFF_ROUTE_AUTO_END_MS])
 
   React.useEffect(() => {
     if (!activeTrip || !userLocation || !destinationPoint) {
@@ -876,6 +943,7 @@ export default function HomeScreen() {
             mapRef.current = ref
           }}
           style={styles.map}
+          provider={PROVIDER_GOOGLE}
           initialRegion={{
             latitude: 45.478,
             longitude: 9.227,
@@ -1105,8 +1173,9 @@ export default function HomeScreen() {
             </Pressable>
 
             <AppButton
-              title="Complete Trip"
+              title={isCompletingTrip ? "Completing..." : "Complete Trip"}
               onPress={handleCompleteTrip}
+              loading={isCompletingTrip}
               buttonColor={palette.brand.base}
               testID="home-complete-trip"
               style={[
@@ -1124,6 +1193,7 @@ export default function HomeScreen() {
         visible={reportVisible}
         onClose={() => setReportVisible(false)}
         onSubmit={handleSubmitReport}
+        submitting={isSubmittingReport}
       />
       <AppPopup
         visible={isCyclingPromptVisible}
@@ -1256,6 +1326,7 @@ export default function HomeScreen() {
         message={offRouteMessage}
         icon={<AlertTriangle size={iconSizes.xl} color={palette.status.danger} />}
         iconBackgroundColor={`${palette.accent.red.surface}`}
+        dismissible={false}
         onClose={handleContinueOffRoute}
         primaryButton={{
           label: "End Trip",

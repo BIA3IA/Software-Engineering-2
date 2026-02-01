@@ -33,11 +33,17 @@ export const useAuthStore = create<AuthState>((set, get) => {
       ])
       set({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken })
     } else {
+      const currentUser = get().user
       await Promise.all([
         SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY),
         SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY),
+        SecureStore.deleteItemAsync(USER_KEY),
       ])
-      set({ accessToken: null, refreshToken: null })
+      if (currentUser?.id === "guest") {
+        set({ accessToken: null, refreshToken: null })
+        return
+      }
+      set({ user: null, accessToken: null, refreshToken: null })
     }
   })
 
@@ -49,6 +55,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     async initAuth() {
       try {
+        if (get().user?.id === "guest") {
+          set({ loading: false })
+          return
+        }
         const [userJson, accessToken, refreshToken] = await Promise.all([
           SecureStore.getItemAsync(USER_KEY),
           SecureStore.getItemAsync(ACCESS_TOKEN_KEY),
@@ -96,9 +106,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     loginAsGuest(user) {
-      clearSession()
-      void SecureStore.deleteItemAsync(USER_KEY)
       set({ user, accessToken: null, refreshToken: null, loading: false })
+      clearSession()
     },
 
     async logout() {

@@ -1,5 +1,6 @@
 import React from "react"
 import { render, fireEvent, waitFor } from "@testing-library/react-native"
+import { Linking } from "react-native"
 import SettingsScreen from "@/app/(main)/settings"
 import { mockRouter } from "@/jest.setup"
 
@@ -50,14 +51,11 @@ jest.mock("@/components/ui/SelectionOverlay", () => {
   }
 })
 
-jest.mock("react-native/Libraries/Linking/Linking", () => ({
-  openURL: jest.fn(),
-}))
-
 describe("settings integration", () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockUser = { id: "user-1" }
+    jest.spyOn(Linking, "openURL").mockResolvedValueOnce(undefined as any)
   })
 
   test("logout confirms and navigates to welcome", async () => {
@@ -96,7 +94,6 @@ describe("settings integration", () => {
     fireEvent.press(getByTestId("settings-help"))
 
     await waitFor(() => {
-      const Linking = require("react-native/Libraries/Linking/Linking")
       expect(Linking.openURL).toHaveBeenCalled()
     })
   })

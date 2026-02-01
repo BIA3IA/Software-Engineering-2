@@ -1,5 +1,5 @@
 import React from "react"
-import { Modal, View, Text, Pressable, StyleSheet } from "react-native"
+import { Keyboard, Modal, View, Text, Pressable, StyleSheet } from "react-native"
 
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
@@ -121,6 +121,7 @@ export function CreatePathModal({
   }
 
   function handleSelectVisibility(anchor: SelectAnchor) {
+    Keyboard.dismiss()
     setSelectAnchor(anchor)
     if (errors.visibility) {
       setErrors((prev) => ({ ...prev, visibility: undefined }))
@@ -128,6 +129,7 @@ export function CreatePathModal({
   }
 
   function handleSelectMode(anchor: SelectAnchor) {
+    Keyboard.dismiss()
     setModeAnchor(anchor)
     if (errors.creationMode) {
       setErrors((prev) => ({ ...prev, creationMode: undefined }))

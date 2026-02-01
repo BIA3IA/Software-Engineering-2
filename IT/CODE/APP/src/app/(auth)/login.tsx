@@ -117,6 +117,9 @@ export default function LogInScreen() {
                   onBlur={field.onBlur}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  autoComplete="off"
+                  textContentType="none"
+                  importantForAutofill="no"
                   icon={<Mail size={fieldIconSize} color={iconColor} />}
                   errorMessage={errors.email?.message}
                 />
@@ -136,6 +139,9 @@ export default function LogInScreen() {
                   onChangeText={field.onChange}
                   onBlur={field.onBlur}
                   secureTextEntry
+                  autoComplete="off"
+                  textContentType="none"
+                  importantForAutofill="no"
                   icon={<Lock size={fieldIconSize} color={iconColor} />}
                   errorMessage={errors.password?.message}
                 />

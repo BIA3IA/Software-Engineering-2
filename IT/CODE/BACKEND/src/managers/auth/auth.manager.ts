@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { queryManager } from "../query/index.js";
 import bcrypt from 'bcrypt';
 import { generateTokens, verifyRefreshToken } from "../../middleware/index.js";
+import { REFRESH_TOKEN_TTL_MS } from "../../constants/appConfig.js";
 import { UnauthorizedError, BadRequestError, NotFoundError, ForbiddenError } from '../../errors/index.js';
 import crypto from 'crypto';
 
@@ -35,9 +36,8 @@ export class AuthManager {
 
             const { accessToken, refreshToken } = generateTokens(user.userId);
 
-            // Save refresh token to database. Set expiration to 1 hour from now.
-            const expiresAt = new Date();
-            expiresAt.setHours(expiresAt.getHours() + 1);
+            // Save refresh token to database. Set expiration to 30 days from now.
+            const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
 
             await queryManager.createRefreshToken(user.userId, hashRefreshToken(refreshToken), expiresAt);
 
@@ -137,8 +137,7 @@ export class AuthManager {
             const { accessToken, refreshToken } = generateTokens(user.userId);
 
             // Save new refresh token
-            const expiresAt = new Date();
-            expiresAt.setHours(expiresAt.getHours() + 1);
+            const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
 
             await queryManager.createRefreshToken(user.userId, hashRefreshToken(refreshToken), expiresAt);
 

@@ -4,6 +4,7 @@ import * as Location from "expo-location"
 import { useFocusEffect, useRouter } from "expo-router"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
+import { START_TRIP_DISTANCE_METERS } from "@/constants/appConfig"
 import { RouteCard, RouteItem } from "@/components/route/RouteCard"
 import { ScreenHeader } from "@/components/ui/ScreenHeader"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
@@ -21,8 +22,6 @@ import type { SearchResult } from "@/components/paths/SearchResultsSheet"
 
 type SortOption = "date" | "distance" | "alphabetical"
 type LatLng = { latitude: number; longitude: number }
-
-const ORIGIN_PROXIMITY_METERS = 100
 
 const SORT_OPTIONS: { key: SortOption; label: string }[] = [
   { key: "date", label: "Date" },
@@ -290,15 +289,18 @@ export default function PathsScreen() {
     : ""
 
   const visibilityIconColor =
-    pendingVisibilityChange?.target === "private" ? palette.surface.muted : palette.accent.green.base
+    pendingVisibilityChange?.target === "private" ? palette.accent.blue.surface : palette.accent.green.surface
 
   const visibilityIconBackground =
     pendingVisibilityChange?.target === "private"
-      ? `${palette.border.default}`
-      : `${palette.accent.green.surface}`
+      ? `${palette.border.strong}`
+      : `${palette.accent.green.base}`
 
-  const visibilityPrimaryButtonColor = visibilityIconColor
-  const visibilityPrimaryTextColor = palette.text.onAccent
+  const visibilityPrimaryButtonColor = visibilityIconBackground
+  const visibilityPrimaryTextColor = visibilityIconColor
+
+  const visibilitySecondaryButtonColor = visibilityIconColor
+  const visibilitySecondaryTextColor =  visibilityIconBackground
 
   return (
     <View style={[styles.screen, { backgroundColor: palette.surface.screen }]}>
@@ -315,7 +317,7 @@ export default function PathsScreen() {
             {(() => {
               const summary = pathSummaries.find((path) => path.pathId === item.id)
               const canStartTrip = summary && userLocation
-                ? isNearOriginMeters(summary.origin, userLocation, ORIGIN_PROXIMITY_METERS)
+                ? isNearOriginMeters(summary.origin, userLocation, START_TRIP_DISTANCE_METERS)
                 : false
               return (
             <RouteCard
@@ -402,14 +404,15 @@ export default function PathsScreen() {
           variant: "primary",
           onPress: handleConfirmVisibilityChange,
           buttonColor: visibilityPrimaryButtonColor,
-          textColor: visibilityPrimaryTextColor,
+          textColor: visibilityPrimaryTextColor
         }}
         secondaryButton={{
           label: "No, Cancel",
           variant: "secondary",
           onPress: handleCancelVisibilityChange,
-          textColor: visibilityIconColor,
-          borderColor: visibilityIconColor,
+          buttonColor: visibilitySecondaryButtonColor,
+          textColor: visibilitySecondaryTextColor,
+          borderColor: visibilitySecondaryTextColor,
         }}
       />
       <AppPopup
