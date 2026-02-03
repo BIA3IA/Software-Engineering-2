@@ -1,10 +1,14 @@
-# Best Bike Paths – Software Engineering 2 Project
-**Best Bike Paths (BBP)** is a system designed to improve the cycling experience by collecting, merging, and displaying information about bicycle paths.  
-The application enables users to:
-- **Record and analyze trips**, storing statistics such as distance, speed, and duration.
-- **Report road conditions** (manual mode) and **automatically detect obstacles** using simulated sensor data (auto mode).
-- **Validate and merge path information** from multiple users to ensure reliable and up-to-date reports.
-- **Visualize optimal routes** between two points based on quality, safety, and path conditions.
+# Best Bike Paths - Software Engineering 2 Project
+
+<p align="center">
+  <img src="IT/CODE/APP/src/assets/images/icon.png"
+       alt="Best Bike Paths Logo"
+       width="180"
+       style="border-radius: 16px;" />
+</p>
+
+**Best Bike Paths (BBP)** is a system designed to improve the cycling experience by collecting, validating, and visualizing information about bicycle paths.
+The goal of the project is to support cyclists in choosing safer and higher-quality routes by combining user-generated data with automated processing and validation mechanisms.
 
 # Team
 - [**Errigo Simone**](https://github.com/SimoneErrigo) 
@@ -13,23 +17,18 @@ The application enables users to:
 
 ## Repository Structure
 ```
-├── RASD/                 # Requirements Analysis and Specification Document
-├── DD/                   # Design Document
-├── ITD/                  # Implementation and Test Document
 ├── ATD/                  # Acceptance Test Document
+├── DD/                   # Design Document
 ├── DeliveryFolder/       # Official submitted documents
+├── ITD/                  # Implementation and Test Document
+├── RASD/                 # Requirements Analysis and Specification Document
 └── README.md
 ```
 
-## Tech Stack (TBD)
+## Where to Start
 
-## Workload Tracking (TBD)
-| Phase | Simone | Vale | Bianca |
-|--------|---------|----------|----------|
-| RASD | 0h | 0h | 0h |
-| DD | 0h | 0h | 0h |
-| ITD | 0h | 0h | 0h |
-| ATD | 0h | 0h | 0h |
+For implementation details and setup, use the dedicated READMEs:
 
-## How to Run (TBD)
-
+- Application: `IT/CODE/APP/README.md`
+- Backend: `IT/CODE/BACKEND/README.md`
+- Production deployment (Hetzner + Docker + NGINX): `IT/CODE/BACKEND/README_DEPLOYMENT.md`
