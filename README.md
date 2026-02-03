@@ -1,10 +1,9 @@
 # Best Bike Paths - Software Engineering 2 Project
 
 <p align="center">
-  <img src="IT/CODE/APP/src/assets/images/icon.png"
+  <img src=".github/icon.png"
        alt="Best Bike Paths Logo"
-       width="180"
-       style="border-radius: 16px;" />
+       width="180" />
 </p>
 
 **Best Bike Paths (BBP)** is a system designed to improve the cycling experience by collecting, validating, and visualizing information about bicycle paths.
