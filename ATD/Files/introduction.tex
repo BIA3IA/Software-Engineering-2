@@ -1,0 +1,87 @@
+
+\section{Tested Project}
+\label{sec:tested_project}
+
+The analyzed project is the \textbf{Best Bike Paths (BBP)} System, a web-based crowdsourcing 
+application aimed at supporting cyclists in discovering safer and more comfortable routes,
+developed by \href{https://github.com/Huangsj1/HuangLiMa}{\textbf{Huang Shijie, Li Yuqing, and Ma Zeyao}(github.com)}.
+
+
+The delivered material includes both the frontend and backend components of the system,
+as well as a deployable JAR package for the backend.
+
+For the purposes of this Acceptance Test Document, the following reference documents provided by the
+authors were considered:
+
+\begin{itemize}
+	\item \textbf{RASD}: Requirements Analysis and Specification Document
+	\item \textbf{DD}: Design Document
+	\item \textbf{ITD}: Implementation and Test Document
+\end{itemize}
+
+\section{Definitions, Acronyms}
+This section provides definitions and explanations of the terms and acronyms used through out the document,
+making it easier for readers to understand and reference them.
+
+\subsection{Definitions}
+\label{subsec:definitions}
+\begin{itemize}
+	\item \textbf{Path:} A route created by users (manual drawing or GPS-based creation). A path consists of one or more Path Segments.
+	\item \textbf{Path Segment:} A portion of a Path defined by its polyline geometry and linked to adjacent segments.
+	\item \textbf{Path Status:} The overall condition of a Path or Path Segment, computed from user reports.
+	\item \textbf{Path Score/Ranking:} The value used to order suggested paths, derived from status and distance when searching routes.
+	\item \textbf{Trip:} A cycling activity tracked through the BBP application. If the user is logged in, the trip is stored and becomes part of the trip history, including temporal and spatial data (e.g., duration, distance, route).
+	\item \textbf{Report:} A submission of path information by a logged-in user. Reports describe obstacles and path condition for a specific segment.
+	\item \textbf{Freshness:} A metric used when aggregating reports; newer reports carry more weight than older ones when determining Path Status.
+	\item \textbf{Obstacle:} An element on a path that negatively impacts cycling conditions, such as potholes or flooding, as identified by users.
+	\item \textbf{Manual Creation Mode:} The creation mode in which a logged-in user defines a new path by drawing it on the map.
+	\item \textbf{Automatic Creation Mode:} The creation mode in which a logged-in user defines a new path by cycling along it, allowing the system to reconstruct the path using GPS data.
+	\item \textbf{Manual Report:} The functionality where a logged-in user manually creates a report by selecting the path condition and obstacle through the application interface.
+\end{itemize}
+
+\subsection{Acronyms}
+\label{subsec:acronyms}
+
+\begin{itemize}
+	\item \textbf{BBP:} Best Bike Paths.
+	\item \textbf{API:} Application Programming Interface.
+	\item \textbf{CLI:} Command Line Interface.
+	\item \textbf{CRUD:} Create, Read, Update, Delete.
+	\item \textbf{DBMS:} Database Management System.
+	\item \textbf{DD:} Design Document.
+	\item \textbf{GPS:} Global Positioning System.
+	\item \textbf{HTTP:} HyperText Transfer Protocol.
+	\item \textbf{ITD:} Implementation and Test Document.
+	\item \textbf{JSON:} JavaScript Object Notation.
+	\item \textbf{JWT:} JSON Web Token.
+	\item \textbf{ORM:} Object-Relational Mapping.
+	\item \textbf{OSRM:} Open Source Routing Machine.
+	\item \textbf{RASD:} Requirements Analysis and Specification Document.
+	\item \textbf{REST:} Representational State Transfer.
+	\item \textbf{SDK:} Software Development Kit.
+	\item \textbf{TLS:} Transport Layer Security.
+	\item \textbf{UI:} User Interface.
+	\item \textbf{URL:} Uniform Resource Locator.
+	\item \textbf{UX:} User Experience.
+\end{itemize}
+
+\section{Revision History}
+\label{sec:revhistory}
+
+\begin{itemize}
+	\item Version 1.0 (08 February 2026);
+\end{itemize}
+
+\section{Document Structure}
+\label{sec:docstructure}
+
+This document is divided into six chapters, which are organized as follows:
+\begin{enumerate}
+	\item \textbf{Introduction:} provides an overview of the document, including the project under evaluation, the goals of the analysis, and how the document is organized.
+	\item \textbf{Installation:} describes the installation process, including the steps followed to install and run the system, as well as any issues encountered.
+	\item \textbf{Testing:} details the acceptance test cases executed on the system and their outcomes.
+	\item \textbf{Conclusions:} summarizes the results of the installation and testing phases, highlighting significant findings or issues.
+	\item \textbf{References:} lists the references and resources used in the creation of the document and the project.
+	\item \textbf{Effort Spent:} details the distribution of work and time spent by each team member throughout the project.
+\end{enumerate}
+
