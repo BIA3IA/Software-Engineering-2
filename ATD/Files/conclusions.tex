@@ -1,1 +1,53 @@
-How smooth everything was, the errros, if it is a good product, things like this.
+The system is clearly designed for cyclists and relies heavily on GPS data and mobile
+device sensors. For this reason, the application should be considered inherently \emph{mobile-first}.
+Cyclists are expected to interact with the system through a smartphone during or immediately
+after a trip, rather than from a desktop environment.
+
+From this perspective, ensuring full responsiveness, usability, and interaction correctness
+on mobile devices should have been a primary design and implementation concern.
+However, several features (manual report creation, map interaction, and general navigation)
+exhibit usability issues on small screens, and some interactions become difficult or
+impossible on mobile-sized viewports.
+This limits the practical usability of the system in its primary usage context.
+
+Some design choices, while potentially intentional, reduce the intuitiveness of the user
+experience. For example, the path search feature is limited to static visualization and does not allow
+users to initiate a trip following a selected route.
+Although turn-by-turn navigation is not required, users may reasonably expect to view or
+follow a selected route dynamically while moving.
+
+Similarly, report creation is restricted to the end of a trip.
+This post-trip-only reporting model negatively impacts the concept of data freshness, as
+obstacles may be removed or repaired shortly after being encountered.
+Additionally, requiring users to remember and manually pinpoint obstacle locations on the
+map after a delay increases cognitive load and reduces report accuracy.
+The same limitations apply to manual reports, which further weaken the temporal relevance
+of submitted data.
+
+A significant portion of the identified issues stems not only from missing or partial
+implementations, but from a lack of explicit justification for these omissions.
+Several features described in the RASD, DD, and partially referenced in the ITD are either
+simplified, missing, or only partially exposed to the user.
+
+While scope reductions and simplifications are acceptable in an academic prototype,
+they should be explicitly documented in the ITD.
+Leaving features partially implemented or silently removed introduces ambiguity and makes
+it difficult to assess whether the behavior is intentional or incomplete.
+
+The evaluation also highlighted the absence of automated testing.
+No evidence of unit tests, integration tests, or automated validation frameworks (e.g.,
+JUnit-based testing) was found.
+While manual testing was clearly performed, the lack of automated tests reduces confidence
+in the robustness of the implementation and makes regression detection difficult as the
+system evolves.
+
+Despite the identified issues, the system demonstrates a clear and consistent separation
+between user roles. The distinction between guest users and registered users is correctly enforced.
+This aspect of the implementation closely follows the defined scope and actor responsibilities
+and represents a solid foundation for future extensions.
+
+Overall, the delivered prototype provides a functional baseline that implements the core
+features of the system.
+With clearer scope documentation, a stronger focus on mobile-first design, and more rigorous
+testing practices, the project could be substantially strengthened and aligned more closely
+with its original design goals.
