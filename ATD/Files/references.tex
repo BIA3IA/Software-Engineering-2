@@ -9,8 +9,10 @@ The preparation of this document was supported by the following reference materi
 \begin{itemize}
 	\item Assignment specification for the ITD of the Software Engineering II course,
 	      held by professors Matteo Rossi, Elisabetta Di Nitto, and Matteo Camilli at the
-	      Politecnico di Milano, Academic Year 2025/2026 \cite{itd};
+	      Politecnico di Milano, Academic Year 2025/2026 \cite{itd_spec};
 	\item Slides of the Software Engineering II course available on WeBeep \cite{slides}.
+	\item The delivered material of the Best Bike Paths project, including the RASD, DD, 
+	and ITD documents provided by the authors Huang Shijie, Li Yuqing, and Ma Zeyao \cite{rasd, dd, itd}.
 \end{itemize}
 
 % --------------------------------------------------------------------------
@@ -40,44 +42,19 @@ AI tools were used during the project as supporting tools, in the same way as ot
 adopted in the development process. Their role was not to automatically generate content, but
 to help improve the clarity, structure, and overall quality of the documentation.
 
-Their use was mainly limited to the writing and revision phases. They were helpful in rephrasing sentences,
-simplifying long or unclear passages, and checking whether explanations could be misunderstood. In some cases,
-interacting with an AI assistant also helped clarify ideas before writing the final version of the text.
-
 \subsection{Tools Used}
 The AI tools employed during the project were:
 \begin{itemize}
 	\item Gemini
 	\item ChatGPT
-	\item Copilot
 \end{itemize}
 
 \subsection{Typical Prompts}
 AI tools were queried using prompts such as:
 \begin{itemize}
 	\item "Rephrase this description to make it clearer."
-	\item "Does this explanation of the backend deployment process contain any ambiguities?"
-	\item "Suggest alternative wording for this technical paragraph to improve flow."
-	\item "Identify any terms in this section that may be inconsistent with the definitions provided earlier
-	in the document."
-	\item "Format this design description or table using LaTeX".
-	\item "What's the difference between interface and type in TypeScript, and in what 
-	specific scenarios is one recommended over the other? How do you achieve type safety?"
-	\item "What is the config.ts file and how do you configure it in the best way?"
-	\item "What's the ideal structure for organizing a Node.js/Express project to clearly
-	 separate routes, controllers, and business logic?"
-	\item "What are the best practices for structuring a React Native project?"
-	\item "Explain how mocking works in Jest. What are the best practices?"
-	\item "How does a Dockerfile work, and what are the best practices for writing one for a Node.js application?"
-	\item "How does a Docker Compose file work, and what are the best practices
-	 to set up Docker Compose for a multi-service Node.js application?"
-	\item "How to monitor logs of Docker containers effectively?"
-	\item "Is Redis persistent, or is data lost on reboot?"
-	\item "What's the difference between Redis and Memcached?"
-	\item "How do TTL, EXPIRE and setex work?"
-	\item "How should cache invalidation be handled correctly?"
-	\item "How should I test the Redis cache service with Jest?"
-	\item "How can I see if Redis is working correctly and how can I access the service with redis-cli?"
+	\item "Does this explanation of the error encountered contain any ambiguities?"
+	\item "Suggest alternative wording for this paragraph to improve readability."
 \end{itemize}
 
 \subsection{Input Provided}
@@ -86,8 +63,6 @@ The input given to AI tools consisted mainly of:
 	\item Early drafts of paragraphs.
 	\item Short text fragments requiring clarity checks.
 	\item Sections with repeated structure where consistent wording was needed.
-	\item Technical descriptions needing LaTeX formatting.
-	\item Code snippets or configuration files requiring explanations or best practices.
 \end{itemize}
 
 \subsection{Constraints Applied}
@@ -104,8 +79,6 @@ The interaction with AI tools resulted in:
 	\item Clearer or more concise formulations of existing statements.
 	\item Identification of potentially ambiguous sentences.
 	\item Terminology suggestions to improve internal coherence.
-	\item LaTeX formatting assistance for tables and code snippets.
-	\item Explanations of technical concepts and best practices.
 \end{itemize}
 
 \subsection{Refinement Process}

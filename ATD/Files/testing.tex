@@ -1,28 +1,401 @@
-Explain what we tested and how.
+In this chapter, we present the results of the functional tests performed on the delivered 
+prototype. We focused on the main user stories described in the RASD. For each feature, 
+we report the Expected Behavior, the Steps performed, the Result, and a detailed list of
+Anomalies and Notes found during execution.
 
-\section{Signup and Login}
-\label{sec:signup_login}
+\section{User Registration and Authentication}
+\label{sec:user_authentication}
 
-\subsection{Steps}
-How we tested it, step by step.
+These tests assess the implementation of user registration, authentication,
+access control, and basic profile management functionalities.
+The tests focus on the correctness of the registration and login flows, input validation,
+duplicate handling, session management, and access to protected resources.
 
-\subsection{Expected Result}
-What we expected to happen.
+\subsection*{Expected Behavior}
+The system should allow new users to register using valid credentials (username, email,
+and password), prevent the creation of accounts with duplicate identifiers, and enforce
+basic input validation constraints.
+Registered users should be able to authenticate, access protected routes, update their
+profile information, and log out securely.
+Unauthenticated users should be prevented from accessing restricted areas of the system.
 
-\subsection{Actual Result}
-What actually happened.
+\subsection*{Steps}
+\begin{enumerate}
+    \item Open the registration page.
+    \item Register a new user using valid credentials.
+    \item Attempt to register users with duplicated email and duplicated username.
+    \item Attempt registration using invalid email formats and weak passwords.
+    \item Perform login attempts with valid credentials, invalid credentials, and non-existing users.
+    \item Access protected routes both before and after authentication.
+    \item Edit profile information and attempt updates with duplicated data.
+\end{enumerate}
 
-\subsection{Edge Cases}
-Edge Cases (duplicate email, wrong password, etc.)
+\subsection*{Result: \textcolor{orange!}{PARTIAL SUCCESS}}
 
-\section{Path Creation}
-\label{sec:path_creation}
+\textbf{Core authentication flow:}
+The core authentication mechanisms are correctly implemented.
+User registration with valid credentials works as expected, and registered users can
+successfully log in.
+Login attempts with non-existing users or incorrect passwords are consistently rejected,
+and the system always returns a generic “invalid email or password” message.
+This behavior represents a good security practice, as it prevents user enumeration.
 
-\section{Reporting Obstacles}
-\label{sec:reporting_obstacles}
+\textbf{Duplicate handling and access control:}
+Duplicate email addresses are correctly detected and rejected during registration,
+but duplicate usernames are allowed.
+Access control for protected routes is properly enforced, prompting unauthenticated
+users to login while allowing authenticated users to access restricted sections.
 
-\section{Path Searching}
-\label{sec:path_searching}
+\textbf{Inconsistent validation rules during registration:}
+During the registration phase, the system allows the creation of multiple users with the
+same username, despite enforcing username uniqueness during profile updates.
 
-\section{Other Functionalities}
-\label{sec:other_functionalities}
+\textbf{Missing input validation:}
+Input validation during registration is severely lacking.
+The system accepts invalid email formats and extremely weak credentials
+(e.g., username: \texttt{a}, email: \texttt{a}, password: \texttt{a}),
+both on the client side and on the server side.
+The absence of minimal validation constraints represents a significant weakness in the
+user management implementation and exposes the system to potential security and data
+quality issues.
+
+\section{Authentication, Session Handling, and Access Control}
+\label{subsec:auth_management}
+
+This set of tests evaluates authentication enforcement for guest users, session persistence,
+logout behavior across navigation and browser tabs, and authorization checks on protected
+backend resources. In addition, we performed targeted security tests to verify that users
+cannot access resources belonging to other users.
+
+\subsection*{Expected Behavior}
+Guest users should be prevented from using limited features and should be prompted to log in.
+After logout, the session must be invalidated and the user should not be able to access or
+view protected content through browser back navigation.
+Sessions should behave consistently across tabs (logging out in one tab should invalidate
+the session in all tabs).
+On the backend, authenticated users must only be able to access and modify their own trips
+and reports. Any attempt to access another user’s resources (e.g., by guessing an ID in the URL)
+should be rejected with an authorization error (e.g., 403).
+
+\subsection*{Steps}
+\begin{enumerate}
+    \item As a guest user, attempt to access limited features and observe the system behavior.
+    \item Log in and navigate across protected pages (e.g., profile, record).
+    \item Log out and use the browser back button to check whether protected pages can still be viewed.
+    \item Verify session persistence by closing and reopening the browser after login.
+    \item Open two tabs with an authenticated session. Log out from one tab and observe the other.
+    \item Perform backend authorization checks:
+    \begin{enumerate}
+        \item Call protected endpoints without a Bearer token.
+        \item Call resource endpoints using a valid token belonging to a different user
+              (e.g., \texttt{GET /api/reports/\{reportId\}} with another user's token).
+    \end{enumerate}
+\end{enumerate}
+
+\subsection*{Result: \textcolor{orange!}{PARTIAL SUCCESS}}
+
+\textbf{Guest gating and basic session handling:}
+The system correctly prompts guest users to log in when attempting to use limited features.
+This behavior is coherent with access control expectations.
+However, selecting the \emph{Stay} button causes a full page refresh, which is functional but 
+negatively impacts usability, since the page content is reloaded unnecessarily.
+
+The login session is persistent: after authenticating, closing and reopening the page preserves 
+the logged-in state. Logging out in one tab also logs the user out in another tab, which is correct 
+and indicates consistent session invalidation across browser contexts.
+
+\textbf{Logout and navigation edge case:}
+After logout, using the browser back button may still display previously visited protected pages
+(e.g., the profile page) even though the session has been invalidated.
+From those pages, attempting protected actions triggers authentication-related failures.
+This indicates that logout invalidation works at the backend level, but client-side state and/or
+navigation handling is incomplete (e.g., missing cache/state clearing or missing redirect
+logic after logout).
+
+\textbf{Backend access control on protected endpoints:}
+Calls to protected endpoints without a Bearer token are correctly rejected,
+confirming that authentication is enforced at the API level for those routes.
+
+\textbf{Critical security issue: Horizontal Privilege Escalation (IDOR) \emph{(FAIL)}}
+Authorization checks are missing for multiple endpoints that expose user-owned resources.
+In particular, requesting a report by ID (e.g., \texttt{GET /api/reports/\{reportId\}}) with a valid token
+belonging to a different user returns the full report details instead of rejecting the request.
+This indicates an Insecure Direct Object Reference (IDOR) vulnerability: any authenticated user
+can read other users' reports if the numeric ID is known or can be guessed.
+
+Similar missing-authorization patterns were identified for additional endpoints related to trips and reports,
+where operations are performed based only on the provided \texttt{tripId} or \texttt{reportId}.
+
+This vulnerability breaks data confidentiality and allows unauthorized access to other users’ data.
+It is a high-severity access control flaw.
+
+\section{Path Search and Navigation}
+\label{sec:path_search_navigation}
+
+The following tests evaluate the path search functionality and route visualization workflow,
+including the correctness of route computation, the availability of multiple route options,
+UI responsiveness, and robustness of the Google Maps integration.
+
+\subsection*{Expected Behavior}
+The system should allow the user to search for a route between two locations and visualize
+the computed route(s) on the map, including route details (e.g., distance, duration, score).
+If multiple routing strategies are provided, the UI should present them consistently and
+avoid invalid or empty results.
+The Google Maps interface should load reliably during normal usage.
+User location visualization should be coherent with the application's permission model.
+
+\subsection*{Steps}
+\begin{enumerate}
+    \item Use the search interface to search for a path between two locations.
+    \item Click the displayed route to inspect route details.
+    \item Compare the routes returned by the available strategies (balanced, fastest, safest).
+    \item Search for very short routes and inspect the returned results.
+    \item Repeat address searches multiple times to assess robustness of the autocomplete and map loading.
+    \item Perform simultaneous searches from different browsers/accounts to check concurrency.
+\end{enumerate}
+
+\subsection*{Result: \textcolor{orange!}{PARTIAL SUCCESS}}
+
+\textbf{Core route search and visualization:}
+Path search works correctly in normal conditions.
+The map is displayed with the computed path, and clicking on the route shows route details.
+The UI provides three routing strategies (balanced, fastest, safest).
+
+\textbf{Ghost results on short routes:}
+When searching for very short routes, the system sometimes returns invalid “ghost” results mixed with valid ones.
+These entries show 0.0 km distance, 0 minutes duration, and a score of 0.
+This indicates missing filtering or validation of route results before presenting them to the user.
+
+\textbf{Intermittent Google Maps loading error:}
+During address search (autocomplete dropdown), an intermittent Google Maps error was observed:
+“Questa pagina non carica correttamente Google Maps”.
+The error appears non-deterministically, as the same functionality may work correctly moments before failing.
+This reduces robustness of the search experience and suggests instability in the Maps integration layer.
+
+\textbf{User position visibility and permission model:}
+While the search page does not consistently show the user's current position, this behavior aligns with the application's
+permission flow, since location access is requested only when starting a trip recording in the Record feature.
+After granting location permissions in the recording workflow, the user position becomes visible on the map,
+making orientation clearer.
+Therefore, the absence of a position marker during pure search should be considered a UX limitation rather than a functional bug.
+
+\textbf{Route selection and workflow clarity:}
+Selecting a route allows preview on the map.
+Starting a trip from the search view is not supported, but this appears to be an intentional design choice,
+as the search feature is used for visualization only, while trip recording is handled in a dedicated section.
+
+\textbf{Concurrency:}
+Searching for routes simultaneously from two different browsers/accounts works correctly without interference.
+
+\section{Trip Recording}
+\label{sec:trip_recording}
+
+These tests analyze the trip recording functionality, including location permission
+handling, path tracking, trip termination, and post-trip report generation.
+The focus is on correctness of recorded paths, robustness in edge cases, and usability
+of the reporting workflow.
+
+\subsection*{Expected Behavior}
+The system should request location permissions before starting a trip and record the
+user’s movement accurately from the initial GPS position.
+Trip recording should handle edge cases such as very short or zero-length trips gracefully.
+At the end of a trip, the system should allow users to review and report encountered obstacles
+in a way that preserves data accuracy and usability.
+
+\subsection*{Steps}
+\begin{enumerate}
+    \item Navigate to the recording page.
+    \item Press the “Start” button and observe location permission handling.
+    \item Grant location permissions when requested.
+    \item Observe the recorded path on the map while stationary or moving.
+    \item Stop the trip and inspect the generated report draft.
+    \item Start and immediately stop a trip without moving.
+\end{enumerate}
+\subsection*{Result: \textcolor{orange!}{PARTIAL SUCCESS}}
+
+\textbf{Location permission handling:}
+The application requests location permissions only when the user presses the “Start” button.
+
+\textbf{Initial position handling and map artifact:}
+After granting location permissions, the recorded path does not consistently start from the
+actual initial GPS position.
+Instead, the map sometimes draws a straight artifact line connecting the previous map center
+(random default point) to the first retrieved GPS coordinate after authorization.
+This occurs because the application initializes the trip polyline before having access to the
+user’s real location, and then connects the initial placeholder point to the real position once
+it becomes available.
+This behavior creates a misleading visual representation of the trip and indicates incorrect
+initialization of the starting point.
+
+\textbf{Continuous tracking with simulated GPS:}
+Using a browser extension to simulate GPS movement (Route Pilot on Chrome), the system is able to
+record a moving path and append multiple points over time.
+This confirms that the core tracking pipeline works for non-trivial trips, and that the main issues
+are concentrated around trip initialization and edge-case handling.
+
+\textbf{Trip termination and report generation:}
+Stopping an active trip correctly generates a draft report, allowing the user to add obstacles.
+However, obstacles can only be added at the end of the trip by selecting points on the map.
+This post-trip reporting approach increases cognitive load and may reduce data accuracy,
+as users are required to remember obstacles encountered earlier during the trip.
+
+\textbf{Map cleanup after trip completion:}
+After ending a trip and submitting the related report, the previously recorded polyline remains
+visible on the map instead of being cleared.
+However, when another trip is started, the old path is removed and the new trip is recorded cleanly.
+
+\textbf{Zero-length trip handling \emph{(FAIL)}:}
+Starting and immediately stopping a trip without any movement results in a client-side
+JSON parsing error.
+This indicates that the backend does not handle empty or zero-length trip data gracefully,
+leading to a system failure instead of a controlled empty result.
+
+\textbf{Observed inconsistencies in score impact:}
+After submitting multiple reports on the same path, no observable change was detected
+in the route score shown in the search feature (e.g., remaining constant at 80).
+
+\section{Manual Reports}
+\label{sec:manual_reports}
+
+These tests focus on the manual report functionality, including report creation,
+map interaction, input validation, and consistency of user statistics.
+In particular, one of the main goals of this test is to verify that manual reports 
+can be created correctly and that they have the expected impact on route scores,
+as described in the requirements documentation.
+
+\subsection*{Expected Behavior}
+The system should allow users to manually create reports by defining a path and selecting
+one or more obstacles on the map.
+
+\subsection*{Steps}
+\begin{enumerate}
+    \item Create a manual report by defining a path on the map.
+    \item Attempt to submit the report with and without selecting obstacles.
+    \item Submit a report with obstacles but without selecting a valid map point.
+\end{enumerate}
+
+\subsection*{Result: \textcolor{orange!}{PARTIAL SUCCESS}}
+
+\textbf{Manual report creation workflow:}
+The manual report workflow allows the user to define an origin and a destination,
+manually adjust the path on the map, and then add obstacles along that path.
+The path creation phase works as expected and the route can be visually defined
+through map interaction.
+
+\textbf{Report submission behavior:}
+When attempting to submit a manual report with obstacles, the system enforces the
+selection of a point on the map.
+However, even after correctly selecting obstacle positions, the report submission
+fails with a generic saving error.
+Conversely, submitting a manual report without selecting any obstacle succeeds
+without issues.
+The empty report appears to be intended behavior, to signal a “positive” confirmation
+of a path and increase its score.
+However, no observable effect on the route score was detected in the search feature
+(e.g., the score remained constant at 80 after multiple submissions).
+
+\section{Profile Page and User Statistics}
+\label{sec:profile_page}
+
+This set of tests evaluates the profile page implementation, with a focus on the visibility
+and usefulness of user-related information and statistics.
+
+\subsection*{Expected Behavior}
+According to the RASD, the profile-related use cases
+indicate that the system should present meaningful user information, including aggregated
+statistics such as total distance traveled and number of submitted reports.
+Such information is expected to provide users with an overview of their activity history.
+
+\subsection*{Steps}
+\begin{enumerate}
+    \item Log in as an authenticated user.
+    \item Navigate to the profile page.
+    \item Inspect the information and statistics displayed for trips and reports.
+\end{enumerate}
+
+\subsection*{Result: \textcolor{orange!}{PARTIAL SUCCESS}}
+
+\textbf{Minimal profile information:}
+The profile page is accessible and displays user-related data.
+However, the interface only presents simple lists of items (e.g., “My Trips” and “My Reports”)
+without providing detailed views or interactive exploration of individual entries.
+
+\textbf{Missing aggregated statistics:}
+Aggregated user statistics such as total distance traveled
+or meaningful summaries of report activity are not displayed.
+The interface does not provide any form of aggregation, visualization, or historical overview
+beyond a flat list of elements.
+
+\textbf{Low informational value and engagement:}
+The current implementation offers limited informational value to the user.
+The lack of statistics, summaries, or visual elements reduces the perceived usefulness of
+the profile page. Overall, the profile page appears to be implemented at a minimal 
+level and does not fully reflect the expectations set by the requirements documentation.
+
+
+\section{Test Infrastructure and Coverage}
+\label{sec:test-infrastructure}
+
+This section analyzes the testing approach adopted by the development team, focusing on the presence 
+(or absence) of automated testing infrastructure and test coverage.
+
+\subsection{Absence of Automated Test Suite}
+
+We found no evidence of automated unit tests, integration tests in the delivered codebase.
+
+The backend repository contains a single placeholder test class:
+\begin{verbatim}
+BestBikePathApplicationTests.java
+\end{verbatim}
+
+This class contains only the default Spring Boot context load test generated by the framework initializer,
+which verifies that the application starts successfully but provides no functional validation.
+
+No custom test classes were found for any of the core services, controllers, repositories, or utility classes, 
+despite the implemented business logic (path segmentation, data merging, scoring algorithms).
+
+Similarly, the frontend code contains no test files, test configurations, or references to
+testing frameworks.
+
+\subsection{Manual Testing via Postman}
+
+Based on the ITD documentation and the absence of automated tests, we infer that the development team 
+relied exclusively on manual testing using tools like Postman for API validation.
+
+While manual testing is acceptable for rapid prototyping and exploratory validation, 
+the complete absence of automated tests represents a significant quality assurance gap for several reasons:
+
+\begin{itemize}
+    \item \textbf{Difficult bug detection:} Without automated tests, there is 
+    no mechanism to detect when code changes introduce bugs in previously 
+    working functionality. This is particularly problematic for complex 
+    algorithms like path segmentation and score calculation.
+    
+    \item \textbf{Limited edge case coverage:} Manual testing is typically 
+    focused on happy paths and common scenarios. Edge cases, boundary conditions, 
+    and error handling paths are often under-tested, as evidenced by the 
+    zero-length trip crash and ghost route results we discovered during 
+    functional testing.
+    
+    \item \textbf{No validation of business logic correctness:} Core algorithms 
+    such as the Data Merging weighted average, the Freshness Algorithm 
+    (which is not implemented), and the Score Calculation penalty system 
+    cannot be verified for mathematical correctness without dedicated unit tests.
+    
+    \item \textbf{Poor documentation of expected behavior:} Well-written tests 
+    serve as executable specifications that document how components should 
+    behave. Without tests, understanding intended behavior requires reading 
+    implementation code and inferring intent.
+\end{itemize}
+
+\section{Testing Summary}
+\label{sec:testing_summary}
+
+Overall, the tested prototype implements the main user-facing features described in the documents.
+However, multiple functionalities are only partially implemented or lack consistency between
+frontend behavior, backend validation, and data semantics.
+
+Critical issues were identified in access control, trip recording edge
+case handling, and manual report submission logic.
+While the system demonstrates a functional baseline, these issues significantly impact data
+reliability, security, and user trust.
