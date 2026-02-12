@@ -1,0 +1,153 @@
+This chapter analyzes missing functionalities, partial implementations, and discrepancies
+between the Delivered Documets and the delivered prototype.
+The goal is to identify unjustified omissions and to highlight
+design-to-implementation gaps that affect correctness, completeness, or system quality.
+
+\section{Missing or Partially Implemented Features}
+\label{sec:missing-features}
+
+This section highlights features that were presented as part of the system’s functionality
+but are missing, incomplete, or only partially implemented in the delivered prototype,
+without a clear justification.
+The focus is on the gap between declared capabilities and the actual behavior and visibility
+of those features from a user and system perspective.
+
+\subsection*{Aggregated User Statistics}
+
+The system is expected to provide users with an overview of their activity through
+aggregated statistics such as total distance traveled, total time, or number of reports.
+
+In the delivered prototype, the profile page only displays raw lists of trips and reports,
+without any form of aggregation or summary.
+
+As a result, users cannot obtain a meaningful overview of their historical activity.
+This represents a missing feature, since the aggregation logic is neither implemented nor
+explicitly excluded, and the current implementation only exposes unprocessed data.
+
+\subsection*{Email Verification and Notification Service}
+
+The design documents describe an email verification step via a Notification Service.
+In the delivered prototype, however, no email verification mechanism is present and no email
+service is configured during installation. There's also no trace of the notification service, which
+should have processed notifications triggered by other components.
+
+Moreover, the ITD does not justify the exclusion of email verification, despite describing the
+registration flow as “complete”. As a result, accounts are created without verification, which
+is inconsistent with the planned design.
+
+\subsection*{Weather Service Integration}
+
+The system is expected to associate meteorological data with recorded trips.
+In the delivered prototype, weather-related logic exists at the backend level.
+A WeatherService retrieves data from an external provider, and weather information is
+stored when a trip is completed.
+
+However, this information is never exposed to the user.
+Weather data is not displayed in the profile, trip history, or any user-facing interface,
+making the feature effectively invisible from a functional perspective.
+As a result, the feature is partially implemented but not usable or observable by the user,
+and its presence does not provide any practical value.
+
+\section{Infrastructure Simplification}
+\label{sec:infrastructure-simplification}
+
+The development team initially proposed a deployment architecture oriented toward scalability
+and robustness, including components such as firewalls and load balancers to manage traffic
+and distribute requests across multiple instances.
+
+In the delivered prototype, this architectural vision is not reflected.
+The system is deployed as a single, locally executed Spring Boot application, without any
+external security layer, request routing, or instance replication.
+
+While this simplification is acceptable in the context of an academic prototype, it represents
+a clear deviation from the intended deployment model.
+The implemented infrastructure does not support horizontal scaling, load distribution, or
+fault tolerance as originally envisioned, and therefore does not align with the scalability
+and robustness goals stated during design.
+
+\section{Missing Core Logic and Algorithmic Discrepancies}
+\label{sec:missing-logic}
+
+Several algorithmic components were presented as central to the system’s value proposition,
+but are not realized in the delivered implementation.
+
+In particular, the system was intended to evaluate route quality using a dynamic scoring
+approach, accounting for factors such as report freshness and continuous updates over time.
+In practice, no freshness-based or time-decay logic is implemented.
+Route scores are computed using static weight combinations and fixed penalties, resulting in
+a simplified and non-adaptive evaluation model.
+
+Similarly, the system was designed to automatically detect obstacles based on sensor data
+collected during trips, reducing the burden on users and increasing data objectivity.
+In the delivered implementation, sensor data is recorded but never analyzed to generate
+obstacles or reports automatically.
+All obstacle reporting remains entirely manual and post-trip.
+
+Automated report generation from sensor data, which was meant to populate draft reports with
+pre-detected events, is also absent.
+Draft reports contain no automatically inferred information and rely solely on user input.
+
+Finally, route visualization was intended to convey quality and safety information through
+visual cues such as color-coded segments.
+The current user interface renders all routes using a uniform visual style, preventing users
+from distinguishing between routes based on their underlying scores.
+
+Overall, the implemented system reflects a significantly simplified version of the originally
+proposed logic.
+Several core mechanisms that were meant to differentiate the system—dynamic scoring,
+automation, and rich visual feedback—are either missing or reduced to static placeholders,
+resulting in a functional but substantially less ambitious solution than initially proposed.
+
+\subsection{Google Routes Dominance Over Crowdsourced Data}
+
+The system was designed as a crowdsourcing platform where community-contributed 
+data should be the primary source of route recommendations, with Google Maps API 
+serving as a fallback for areas without user coverage.
+
+In the delivered implementation, Google routes receive hardcoded static scores 
+(80 for primary route, 70 for alternatives) that are never adjusted based on 
+obstacle data or community reports. This creates an unfair comparison where 
+Google routes consistently outrank internally computed paths, even when the 
+latter have higher quality scores derived from actual user feedback.
+
+The RouteService sorts all routes by score in descending order, but since 
+Google routes maintain their fixed score of 80, they almost always appear 
+first in the result list, effectively making the system Google-first rather 
+than crowdsourcing-first as intended.
+
+Moreover, there is no mechanism to overlay Google polylines with internal 
+BikePath segments to apply obstacle penalties or aggregate user-reported 
+conditions. This means Google routes are presented as-is without any 
+enrichment from the crowdsourced knowledge base, defeating the purpose 
+of community data collection.
+
+\section{Security and Quality Issues}
+\label{sec:security-quality-issues}
+
+This section summarizes security-related and quality issues identified during code inspection
+and system usage. While some of these issues may be acceptable in a prototype context, they
+still represent deviations from good engineering practices and may introduce risks if the
+system were to be extended or deployed in a real-world scenario.
+
+\subsection*{Hardcoded Secrets}
+
+Sensitive credentials are embedded directly in the source code and configuration files.
+In particular, the JWT secret key is hardcoded in the backend code, and the Weather Service
+API key is stored directly in the application configuration.
+
+Although comments in the code acknowledge that this approach is not suitable for production,
+embedding cryptographic secrets and external service keys in the codebase represents a
+security anti-pattern.
+This practice weakens overall system security, makes secret rotation difficult, and increases
+the risk of credential leakage if the repository is shared or exposed.
+
+\subsection*{UI Responsiveness Issues}
+
+The application exhibits several layout and usability problems when the screen resolution
+changes.
+On mobile-sized viewports, some interface elements become partially or completely hidden,
+overlap with other components, or are no longer clickable.
+
+These issues reduce usability on mobile devices and suggest that responsive layout handling
+was not fully addressed in the delivered implementation.
+

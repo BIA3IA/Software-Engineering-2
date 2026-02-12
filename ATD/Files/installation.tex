@@ -1,0 +1,128 @@
+This section reports the installation process we executed to run the prototype
+delivered by the group under analysis.
+We followed the Installation Instructions provided in the ITD (Chapter 6), and we report
+both the documented procedure and the issues encountered during the setup, together with
+the corrective steps required to successfully run the system.
+
+\section{Prerequisites}
+\label{sec:prerequisites}
+
+The ITD lists the following software requirements:
+\begin{itemize}
+	\item Java (JDK 8 or higher, JDK 11 recommended)
+	\item MySQL 8.0+ with spatial support,
+	\item Node.js (>= 14),
+	\item npm (>= 6).
+\end{itemize}
+
+During the installation, we confirmed that these prerequisites are necessary.
+
+Moreover, the document states that a Google Maps API key is required, and it explicitly lists
+several required Google APIs (Maps JavaScript, Routes, Directions, and Geocoding).
+
+However, during functional testing, we encountered a minor inconsistency between
+the documented API requirements and the actual implementation.
+The location search functionality relies on the Google Places API (Autocomplete), 
+which is not mentioned in the installation requirements section.
+This dependency is documented elsewhere in the ITD (specifically in Chapter 3 and 4), but
+it is missing from the explicit list of required APIs in the installation prerequisites,
+which caused an initial functional failure of the search bar until the Places API was
+manually enabled in Google Cloud Console.
+
+\section{Database Setup and Issues}
+\label{sec:dbsetup}
+
+The ITD provides a SQL script located at \texttt{backend/sql\_file/bbp.sql} and suggests
+executing it using:
+\texttt{mysql -u root -p < backend/sql\_file/bbp.sql}
+
+While the script correctly creates the schema and the tables, the documented procedure
+is not sufficient to set up the database from scratch in a clean environment.
+The backend configuration expects a dedicated database user (through environment variables
+such as \texttt{DB\_USERNAME} and \texttt{DB\_PASSWORD}).
+However, the installation guide does not describe the creation of such user, nor the
+privilege grants required to import the schema and let the application connect.
+
+When executing the import using the configured application user, the setup fails
+with a MySQL authentication error (ERROR 1045, access denied), because the user does
+not exist yet or does not have the required privileges.
+
+To complete the installation, we can set the DB\_USERNAME environment variable to \texttt{root} or those administrative steps 
+should be performed which were not documented in the ITD:
+
+\begin{verbatim}
+cd backend
+sudo mysql
+
+CREATE DATABASE IF NOT EXISTS BestBikePathDB;
+CREATE USER IF NOT EXISTS 'tester'@'localhost' IDENTIFIED BY 'bbp';
+GRANT ALL PRIVILEGES ON BestBikePathDB.* TO 'tester'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+\end{verbatim}
+
+After creating the user and granting privileges, we imported the schema by executing:
+
+\begin{verbatim}
+mysql -u tester -p BestBikePathDB < sql_file/bbp.sql
+\end{verbatim}
+
+This procedure successfully completed the database setup and allowed the backend
+to connect correctly.
+
+\section{Backend Setup and Environment Variables}
+\label{sec:backendsetup}
+
+The backend is delivered as a runnable Spring Boot JAR.
+The ITD instructs to export environment variables (\texttt{DB\_USERNAME}, \texttt{DB\_PASSWORD}, \texttt{GOOGLE\_API\_KEY})
+and then run the JAR from the backend directory using:
+\texttt{java -jar best\_bike\_path-0.0.1-SNAPSHOT.jar}.
+
+In our execution, a critical usability issue is that the documentation implies a straightforward
+execution, but it does not clearly emphasize that the environment variables must be loaded in
+the same shell session where the JAR is launched.
+In our setup, we used a \texttt{.env} file and manually sourced it before starting the
+backend, otherwise the application fails due to missing configuration values.
+
+Final working procedure:
+
+\begin{verbatim}
+source .env
+java -jar best_bike_path-0.0.1-SNAPSHOT.jar
+\end{verbatim}
+
+The backend starts on port 8080 as stated in the ITD.
+
+\section{Frontend Setup and External API Inconsistency}
+\label{sec:frontendsetup}
+
+The ITD instructs to install frontend dependencies in \texttt{frontend/} and start
+the development server with \texttt{npm start}.
+The ITD also specifies that the Google Maps API key must be placed inside
+\texttt{js/config.js}.
+
+Following the documented procedure, the frontend setup completed successfully.
+The application loaded as expected in the browser, and the overall frontend
+initialization process can be considered smooth and straightforward.
+
+\section{Repository Structure and Configuration Management}
+\label{sec:repo_quality}
+
+Upon inspecting the delivered source code, we identified issues regarding repository
+organization and configuration management.
+
+The project is split into two main directories, \texttt{backend/} and \texttt{frontend/},
+coherently with the ITD description of the repository-level structure.
+However, the repository lacks a \texttt{.gitignore} file.
+This omission introduces two major problems.
+
+\begin{itemize}
+	\item \textbf{Security risk:} without ignore rules, sensitive configuration files
+	      such as \texttt{.env} (containing database credentials and API keys) can be accidentally
+	      committed to version control.
+	      Even if such files were not committed in the delivered snapshot, the repository
+	      configuration does not prevent accidental leaks in future commits.
+	\item \textbf{Repository bloat and noise:} without excluding folders such as
+	      \texttt{node\_modules/}, dependency files can be tracked by Git, increasing repository size
+	      and raising the probability of merge conflicts and irrelevant diffs.
+\end{itemize}
