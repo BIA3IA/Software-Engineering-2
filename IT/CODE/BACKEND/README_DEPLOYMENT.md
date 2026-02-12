@@ -103,6 +103,8 @@ File: `docker-compose.yml`
 Notes:
 - The backend does not expose public ports
 - Port 3000 is exposed only inside Docker
+- Redis port 6379 is exposed only inside Docker (no public host binding)
+- Redis requires authentication via `REDIS_PASSWORD`
 - The backend joins the shared `proxy` network
 - The service is designed to be replicated horizontally
 
