@@ -5,6 +5,7 @@ import { TRIP_COUNT_TTL, TRIP_STATS_TTL, OVERALL_STATS_TTL } from '../constants/
 const redis = new Redis({
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379'),
+    password: process.env.REDIS_PASSWORD || undefined,
     maxRetriesPerRequest: 3,
     enableReadyCheck: true,
     lazyConnect: false,

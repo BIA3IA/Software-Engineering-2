@@ -2,10 +2,12 @@ import { Coordinates } from "../types/index";
 import { BadRequestError, InternalServerError } from "../errors/index";
 import logger from "../utils/logger";
 import { fetchWithTimeout } from "../utils/fetch";
+import { haversineDistanceMeters } from "../utils/geo";
 
 const OSRM_BASE_URL = process.env.OSRM_BASE_URL ?? "http://localhost:5000";
 const DEFAULT_PROFILE = "cycling";
 const OSRM_TIMEOUT_MS = Number(process.env.OSRM_TIMEOUT_MS) || 8000;
+const MAX_EDGE_SNAP_DISTANCE_METERS = Number(process.env.OSRM_MAX_EDGE_SNAP_DISTANCE_METERS) || 300;
 
 type OsrmRouteResponse = {
     code: string;
@@ -50,6 +52,18 @@ export async function snapToRoad(coordinates: Coordinates[]): Promise<Coordinate
 
         const coordinatesList = data.routes?.[0]?.geometry?.coordinates;
         if (!coordinatesList || coordinatesList.length === 0) {
+            throw new BadRequestError("No route found for provided coordinates", "NO_ROUTE");
+        }
+
+        // Guard against out-of-map "edge snapping": if route starts/ends too far from requested points, reject it.
+        const snappedStart = { lat: coordinatesList[0][1], lng: coordinatesList[0][0] };
+        const snappedEnd = {
+            lat: coordinatesList[coordinatesList.length - 1][1],
+            lng: coordinatesList[coordinatesList.length - 1][0],
+        };
+        const startDistance = haversineDistanceMeters(coordinates[0], snappedStart);
+        const endDistance = haversineDistanceMeters(coordinates[coordinates.length - 1], snappedEnd);
+        if (startDistance > MAX_EDGE_SNAP_DISTANCE_METERS || endDistance > MAX_EDGE_SNAP_DISTANCE_METERS) {
             throw new BadRequestError("No route found for provided coordinates", "NO_ROUTE");
         }
 

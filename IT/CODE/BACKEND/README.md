@@ -144,6 +144,7 @@ OPENMETEO_TIMEOUT_MS=8000
 # Redis
 REDIS_HOST=redis
 REDIS_PORT=6379
+REDIS_PASSWORD=change-me-to-a-long-random-secret
 ```
 
 ## Database & Prisma
@@ -318,8 +319,9 @@ Timeouts are configurable via `OPENMETEO_TIMEOUT_MS`.
 
 Redis is used as an in-memory cache to improve performance.
 
-Redis is accessed via the `REDIS_HOST` and `REDIS_PORT` environment variables and is
-designed to be optional but recommended in production deployments.
+Redis is accessed via the `REDIS_HOST`, `REDIS_PORT`, and `REDIS_PASSWORD` environment variables.
+In production, Redis should never be published on a public interface (`6379`) and must be reachable
+only from internal Docker networks.
 
 ## Testing Strategy
 

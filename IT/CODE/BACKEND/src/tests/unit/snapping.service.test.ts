@@ -124,6 +124,35 @@ describe("Snapping Service Unit Tests", () => {
         });
     });
 
+    test("Should throw BadRequestError when snapped route is too far from requested endpoints", async () => {
+        fetchWithTimeoutMock.mockResolvedValue(makeResponse({
+            ok: true,
+            json: async () => ({
+                code: "Ok",
+                routes: [
+                    {
+                        geometry: {
+                            coordinates: [
+                                [10.1, 46.1],
+                                [10.2, 46.2],
+                            ],
+                        },
+                    },
+                ],
+            }),
+        }));
+
+        await expect(
+            snapToRoad([
+                { lat: 45.1, lng: 9.1 },
+                { lat: 45.2, lng: 9.2 },
+            ])
+        ).rejects.toMatchObject({
+            statusCode: 400,
+            code: "NO_ROUTE",
+        });
+    });
+
     test("Should throw InternalServerError on timeout", async () => {
         const timeoutError = new Error("Aborted");
         timeoutError.name = "AbortError";
