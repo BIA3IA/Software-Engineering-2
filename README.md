@@ -9,6 +9,8 @@
 **Best Bike Paths (BBP)** is a system designed to improve the cycling experience by collecting, validating, and visualizing information about bicycle paths.
 The goal of the project is to support cyclists in choosing safer and higher-quality routes by combining user-generated data with automated processing and validation mechanisms.
 
+**Final Grade:** 30L
+
 # Team
 - [**Errigo Simone**](https://github.com/SimoneErrigo) 
 - [**Gholami Vajihe**](https://github.com/vajihe-gholami) 
