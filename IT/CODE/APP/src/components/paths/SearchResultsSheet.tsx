@@ -5,7 +5,7 @@ import { X } from "lucide-react-native"
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { iconSizes, textStyles } from "@/theme/typography"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { cardMetrics, controlSizes, overlayMetrics, radius, spacing, verticalScale } from "@/theme/layout"
 import { PathResultCard, type PathResultTag } from "@/components/paths/PathResultCard"
 import { useAuthStore } from "@/auth/storage"
 
@@ -137,11 +137,11 @@ export function SearchResultsSheet({
 const styles = StyleSheet.create({
   sheet: {
     position: "absolute",
-    width: "90%",
+    width: overlayMetrics.sheetWidth,
     alignSelf: "center",
     borderRadius: radius.xl,
-    paddingHorizontal: scale(20),
-    paddingVertical: verticalScale(18),
+    paddingHorizontal: cardMetrics.cardPaddingX,
+    paddingVertical: cardMetrics.cardPaddingY,
     borderWidth: 1,
     shadowOpacity: 0.16,
     shadowOffset: { width: 0, height: 18 },
@@ -153,21 +153,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: verticalScale(12),
+    marginBottom: cardMetrics.inlineGap,
   },
   headerTextGroup: {
     flex: 1,
-    marginRight: scale(12),
+    marginRight: cardMetrics.inlineGap,
   },
   headerTitle: {
-    marginBottom: verticalScale(2),
+    marginBottom: 2,
   },
   headerSubtitle: {
     opacity: 0.9,
   },
   closeButton: {
-    width: scale(36),
-    height: scale(36),
+    width: controlSizes.iconButton,
+    height: controlSizes.iconButton,
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
@@ -179,17 +179,17 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   listContent: {
-    paddingBottom: verticalScale(6),
+    paddingBottom: spacing.xs,
   },
   cardWrapper: {
-    marginBottom: verticalScale(12),
+    marginBottom: cardMetrics.inlineGap,
   },
   emptyState: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: scale(12),
-    gap: verticalScale(6),
+    paddingHorizontal: cardMetrics.inlineGap,
+    gap: cardMetrics.chipGap,
   },
   emptyTitle: {
     textAlign: "center",

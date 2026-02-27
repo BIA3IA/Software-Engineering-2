@@ -7,8 +7,8 @@ import { RouteCard, RouteItem } from "@/components/route/RouteCard"
 import { ScreenHeader } from "@/components/ui/ScreenHeader"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { AppPopup } from "@/components/ui/AppPopup"
-import { scale, verticalScale } from "@/theme/layout"
-import { iconSizes } from "@/theme/typography"
+import { heroMetrics, spacing } from "@/theme/layout"
+import { iconSizes, textStyles } from "@/theme/typography"
 import { Trash2 } from "lucide-react-native"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
 import { deleteTripApi, getMyTripsApi, type TripSummary } from "@/api/trips"
@@ -172,7 +172,7 @@ export default function TripHistoryScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
           styles.listContent,
-          { paddingHorizontal: scale(16) },
+          { paddingHorizontal: spacing.md },
         ]}
         renderItem={({ item, index }) => (
           <View style={index === 0 ? styles.firstCardWrapper : undefined}>
@@ -317,27 +317,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    paddingBottom: verticalScale(24),
+    paddingBottom: spacing.lg,
   },
   list: {
     flex: 1,
   },
   listHeader: {
-    marginHorizontal: -scale(16),
+    marginHorizontal: -spacing.md,
   },
   headerSpacer: {
-    height: verticalScale(12),
+    height: spacing.sm,
     backgroundColor: "transparent",
   },
   firstCardWrapper: {
-    marginTop: -verticalScale(48),
+    marginTop: -heroMetrics.contentOverlapLg,
   },
   emptyState: {
-    paddingVertical: verticalScale(32),
+    paddingVertical: spacing.xl,
     alignItems: "center",
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: textStyles.bodySmall.fontSize,
     textAlign: "center",
   },
 })

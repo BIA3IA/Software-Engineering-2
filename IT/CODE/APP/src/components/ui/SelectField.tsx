@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet, Dimensions } from "react-native"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { radius, spacing } from "@/theme/layout"
 import { ChevronDown } from "lucide-react-native"
 
 type Anchor = {
@@ -78,18 +78,18 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   label: {
-    marginBottom: verticalScale(6),
+    marginBottom: spacing.xs,
   },
   input: {
     borderWidth: 1,
     borderRadius: radius.md,
-    paddingHorizontal: scale(14),
-    paddingVertical: verticalScale(12),
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   errorMessage: {
-    marginTop: verticalScale(6),
+    marginTop: spacing.xs,
   },
 })

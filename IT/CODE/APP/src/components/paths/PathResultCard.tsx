@@ -1,7 +1,7 @@
 import React from "react"
 import { View, Text, StyleSheet, Pressable } from "react-native"
 
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { controlSizes, radius, spacing } from "@/theme/layout"
 import { textStyles } from "@/theme/typography"
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
@@ -86,8 +86,8 @@ export function PathResultCard({
 const styles = StyleSheet.create({
   card: {
     borderRadius: radius.lg,
-    paddingHorizontal: scale(14),
-    paddingVertical: verticalScale(10),
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 10,
     borderWidth: 0.3,
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 8 },
@@ -95,22 +95,22 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   title: {
-    marginBottom: verticalScale(4),
+    marginBottom: 4,
   },
   description: {
-    marginBottom: verticalScale(8),
+    marginBottom: spacing.xs,
   },
   tagsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: scale(8),
+    gap: spacing.xs,
   },
   actionButton: {
-    marginTop: verticalScale(10),
+    marginTop: 10,
     borderRadius: radius.full,
-    height: verticalScale(42),
+    height: controlSizes.compactFab,
   },
   actionButtonContent: {
-    height: verticalScale(42),
+    height: controlSizes.compactFab,
   },
 })

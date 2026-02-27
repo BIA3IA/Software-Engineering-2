@@ -3,7 +3,8 @@ import { StyleSheet, type StyleProp, type ViewStyle } from "react-native"
 import { Button } from "react-native-paper"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
-import { radius } from "@/theme/layout"
+import { controlSizes, radius } from "@/theme/layout"
+import { textStyles } from "@/theme/typography"
 
 type Variant = "primary" | "secondary" | "outline" | "destructive"
 
@@ -102,15 +103,14 @@ export function AppButton({
 
 const styles = StyleSheet.create({
   button: {
-    height: 50,
+    height: controlSizes.buttonHeight,
     borderRadius: radius.pill,
     justifyContent: "center",
   },
   content: {
-    height: 50,
+    height: controlSizes.buttonHeight,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "600",
+    ...textStyles.bodyBold,
   },
 })

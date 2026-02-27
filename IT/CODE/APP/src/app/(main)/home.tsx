@@ -4,7 +4,7 @@ import MapView, { Marker, Polyline, Circle, PROVIDER_GOOGLE } from "react-native
 import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle, X, Bike } from "lucide-react-native"
 import * as Location from "expo-location"
 
-import { layoutStyles, scale, verticalScale, radius } from "@/theme/layout"
+import { controlSizes, floatingMetrics, layoutStyles, radius, scale, shadowStyles, verticalScale } from "@/theme/layout"
 import { iconSizes, textStyles } from "@/theme/typography"
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
@@ -1502,16 +1502,13 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: "absolute",
-    right: scale(24),
-    width: scale(56),
-    height: scale(56),
+    right: floatingMetrics.fabRight,
+    width: scale(controlSizes.fab),
+    height: scale(controlSizes.fab),
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 14,
-    elevation: 8,
+    ...shadowStyles.fab,
     opacity: 0.85,
   },
   completeButton: {
@@ -1526,16 +1523,13 @@ const styles = StyleSheet.create({
   },
   closeTripButton: {
     position: "absolute",
-    right: scale(20),
-    width: scale(44),
-    height: scale(44),
+    right: floatingMetrics.compactControlRight,
+    width: scale(controlSizes.compactFab),
+    height: scale(controlSizes.compactFab),
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,
-    elevation: 6,
+    ...shadowStyles.iconButton,
   },
   calloutOverlay: {
     position: "absolute",

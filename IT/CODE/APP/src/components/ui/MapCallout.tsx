@@ -4,7 +4,7 @@ import { View, Text, StyleSheet } from "react-native"
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { textStyles } from "@/theme/typography"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { radius, scale, spacing } from "@/theme/layout"
 
 type ToneKey = "purple" | "green" | "orange" | "red" | "blue"
 
@@ -66,20 +66,20 @@ const styles = StyleSheet.create({
     minWidth: scale(150),
     borderRadius: radius.lg,
     borderWidth: 2,
-    paddingHorizontal: scale(14),
-    paddingVertical: verticalScale(10),
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 10,
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 12 },
     shadowRadius: 16,
     elevation: 8,
-    gap: verticalScale(4),
+    gap: 4,
   },
   value: {
-    marginTop: verticalScale(2),
+    marginTop: 2,
     textAlign: "center",
   },
   itemDivider: {
-    paddingTop: verticalScale(4),
+    paddingTop: 4,
   },
   arrowWrap: {
     position: "relative",

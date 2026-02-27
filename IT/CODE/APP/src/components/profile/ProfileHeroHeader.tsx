@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from "react-native"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { radius, scale, shadowStyles, verticalScale } from "@/theme/layout"
 import { Settings, Pencil } from "lucide-react-native"
 
 type ProfileHeroHeaderProps = {
@@ -116,10 +116,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,
-    elevation: 6,
+    ...shadowStyles.iconButton,
   },
   userRow: {
     flexDirection: "row",

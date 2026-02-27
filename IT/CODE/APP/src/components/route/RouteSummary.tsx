@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from "react-native"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles } from "@/theme/typography"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { radius, spacing } from "@/theme/layout"
 
 type RouteSummaryProps = {
   date: string
@@ -65,19 +65,19 @@ function Row({
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: verticalScale(14),
+    marginBottom: spacing.sm,
   },
   card: {
-    marginTop: verticalScale(8),
+    marginTop: spacing.xs,
     borderRadius: radius.lg,
     borderWidth: 1,
-    paddingHorizontal: scale(16),
-    paddingVertical: verticalScale(8),
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: verticalScale(10),
+    paddingVertical: 10,
   },
   value: {
     fontWeight: "700",

@@ -5,7 +5,17 @@ import { useColorScheme, useThemePreference, useSetThemePreference, type Appeara
 import { usePrivacyPreference, useSetPrivacyPreference } from "@/hooks/usePrivacyPreference"
 import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import {
+  cardMetrics,
+  controlSizes,
+  heroMetrics,
+  radius,
+  scale,
+  screenMetrics,
+  shadowStyles,
+  spacing,
+  verticalScale,
+} from "@/theme/layout"
 import { ChevronDown, SunMedium, Eye, Mail, LogOut, X } from "lucide-react-native"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
 import { AppPopup } from "@/components/ui/AppPopup"
@@ -328,42 +338,36 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   backButton: {
-    width: scale(36),
-    height: scale(36),
+    width: controlSizes.iconButton,
+    height: controlSizes.iconButton,
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,
-    elevation: 6,
+    ...shadowStyles.iconButton,
   },
   sectionsWrapper: {
-    marginTop: -verticalScale(40),
-    paddingHorizontal: scale(20),
-    gap: verticalScale(18),
+    marginTop: -heroMetrics.contentOverlapMd,
+    paddingHorizontal: cardMetrics.cardPaddingX,
+    gap: screenMetrics.sectionGap,
   },
   card: {
     borderRadius: radius.xl,
-    paddingHorizontal: scale(18),
-    paddingVertical: verticalScale(14),
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 10 },
-    shadowRadius: radius.xl,
-    elevation: 4,
+    paddingHorizontal: cardMetrics.cardPaddingX,
+    paddingVertical: cardMetrics.cardPaddingCompactY,
+    ...shadowStyles.card,
   },
   cardRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: scale(14),
+    gap: cardMetrics.inlineGap,
   },
   cardTexts: {
     flex: 1,
-    gap: verticalScale(4),
+    gap: 4,
   },
   iconBadge: {
-    width: scale(40),
-    height: scale(40),
+    width: controlSizes.badge,
+    height: controlSizes.badge,
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
@@ -373,9 +377,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: radius.full,
     borderWidth: 1,
-    paddingHorizontal: scale(12),
-    paddingVertical: verticalScale(4),
-    columnGap: scale(6),
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    columnGap: 6,
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: radius.md,
@@ -387,7 +391,7 @@ const styles = StyleSheet.create({
   simpleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: scale(14),
+    gap: cardMetrics.inlineGap,
   },
   signOutCard: {
     borderWidth: 1,

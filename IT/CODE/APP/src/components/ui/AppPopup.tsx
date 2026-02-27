@@ -10,7 +10,7 @@ import {
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles } from "@/theme/typography"
-import { verticalScale, scale, radius } from "@/theme/layout"
+import { overlayMetrics, radius, screenMetrics, shadowStyles, spacing } from "@/theme/layout"
 import { AppButton } from "@/components/ui/AppButton"
 
 type PopupButtonConfig = {
@@ -206,43 +206,40 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-start",
     alignItems: "center",
-    paddingTop: verticalScale(40),
+    paddingTop: overlayMetrics.modalTopInset,
   },
   card: {
-    width: "92%",
+    width: overlayMetrics.modalWidth,
     borderRadius: radius.xl,
-    paddingHorizontal: scale(24),
-    paddingTop: verticalScale(18),
-    paddingBottom: verticalScale(24),
-    shadowOpacity: 0.12,
-    shadowOffset: { width: 0, height: 16 },
-    shadowRadius: 32,
-    elevation: 10,
+    paddingHorizontal: screenMetrics.screenPaddingX,
+    paddingTop: overlayMetrics.modalPaddingTop,
+    paddingBottom: overlayMetrics.modalPaddingBottom,
+    ...shadowStyles.modal,
   },
   iconWrapper: {
     alignSelf: "center",
-    width: scale(80),
-    height: scale(80),
+    width: overlayMetrics.modalIconSize,
+    height: overlayMetrics.modalIconSize,
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: verticalScale(16),
+    marginBottom: spacing.md,
   },
   title: {
     textAlign: "center",
-    marginBottom: verticalScale(6),
+    marginBottom: spacing.xs,
   },
   message: {
     textAlign: "center",
-    marginBottom: verticalScale(20),
+    marginBottom: 20,
   },
   buttonsColumn: {
     width: "100%",
-    gap: verticalScale(12),
+    gap: spacing.sm,
   },
   buttonRow: {
     flexDirection: "row",
-    gap: scale(12),
+    gap: spacing.sm,
   },
   button: {
     flex: 1,

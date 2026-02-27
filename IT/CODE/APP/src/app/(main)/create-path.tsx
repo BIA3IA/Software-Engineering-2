@@ -8,7 +8,7 @@ import { useRouter, useLocalSearchParams } from "expo-router"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { controlSizes, floatingMetrics, radius, scale, shadowStyles, verticalScale } from "@/theme/layout"
 import { iconSizes } from "@/theme/typography"
 import { PRIVACY_OPTIONS, type PrivacyPreference } from "@/constants/Privacy"
 import { FOLLOW_ZOOM } from "@/constants/appConfig"
@@ -634,23 +634,20 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: "absolute",
-    right: scale(20),
-    width: scale(44),
-    height: scale(44),
+    right: floatingMetrics.compactControlRight,
+    width: scale(controlSizes.compactFab),
+    height: scale(controlSizes.compactFab),
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,
-    elevation: 6,
+    ...shadowStyles.iconButton,
     zIndex: 12,
   },
   saveButton: {
     position: "absolute",
     alignSelf: "center",
     width: "80%",
-    paddingVertical: verticalScale(14),
+    paddingVertical: floatingMetrics.actionButtonInsetY,
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
@@ -664,30 +661,24 @@ const styles = StyleSheet.create({
   },
   drawFab: {
     position: "absolute",
-    right: scale(24),
-    width: scale(56),
-    height: scale(56),
+    right: floatingMetrics.fabRight,
+    width: scale(controlSizes.fab),
+    height: scale(controlSizes.fab),
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 14,
-    elevation: 8,
+    ...shadowStyles.fab,
     opacity: 0.9,
   },
   undoFab: {
     position: "absolute",
-    right: scale(24),
-    width: scale(56),
-    height: scale(56),
+    right: floatingMetrics.fabRight,
+    width: scale(controlSizes.fab),
+    height: scale(controlSizes.fab),
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 14,
-    elevation: 8,
+    ...shadowStyles.fab,
     opacity: 0.9,
   },
 })

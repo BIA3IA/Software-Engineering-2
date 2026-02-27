@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from "react-native"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
-import { scale, verticalScale, radius } from "@/theme/layout"
+import { controlSizes, heroMetrics, radius, screenMetrics } from "@/theme/layout"
 import { ArrowUpDown } from "lucide-react-native"
 
 type ScreenHeaderProps = {
@@ -70,15 +70,15 @@ export function ScreenHeader({
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: scale(24),
-    paddingTop: verticalScale(48),
-    paddingBottom: verticalScale(52),
+    paddingHorizontal: screenMetrics.screenPaddingX,
+    paddingTop: heroMetrics.headerPaddingTop,
+    paddingBottom: heroMetrics.headerPaddingBottom,
     borderBottomLeftRadius: radius.xxxl,
     borderBottomRightRadius: radius.xxxl,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    columnGap: scale(16),
+    columnGap: screenMetrics.sectionGap,
   },
   textBlock: {
     flex: 1,
@@ -89,15 +89,15 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   headerTitle: {
-    marginBottom: verticalScale(4),
+    marginBottom: 4,
   },
   headerSubtitle: {
     opacity: 0.95,
     textAlign: "left",
   },
   sortButton: {
-    width: scale(36),
-    height: scale(36),
+    width: controlSizes.iconButton,
+    height: controlSizes.iconButton,
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",

@@ -10,7 +10,7 @@ import { AppPopup } from "@/components/ui/AppPopup"
 import { useColorScheme, useThemePreference } from "@/hooks/useColorScheme"
 import { usePrivacyPreference } from "@/hooks/usePrivacyPreference"
 import Colors from "@/constants/Colors"
-import { layoutStyles, spacingStyles, verticalScale } from "@/theme/layout"
+import { layoutStyles, spacing, spacingStyles, verticalScale } from "@/theme/layout"
 import { textStyles, iconSizes } from "@/theme/typography"
 import { signupSchema, type SignupFormValues } from "@/validation"
 import { useAuthStore } from "@/auth/storage"
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     paddingBottom: verticalScale(42),
   },
   headerTitle: {
-    marginBottom: verticalScale(4),
+    marginBottom: 4,
   },
   formContainer: {
     flex: 1,
@@ -252,11 +252,11 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   content: {
-    paddingTop: verticalScale(32),
-    paddingBottom: verticalScale(32),
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xl,
   },
   backWrapper: {
-    marginTop: verticalScale(16),
+    marginTop: spacing.md,
     alignItems: "center",
   },
   backText: {

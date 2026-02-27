@@ -1,5 +1,5 @@
 import React from "react"
-import { ScrollView, View, Text, StyleSheet, Pressable } from "react-native"
+import { ScrollView, View, StyleSheet, Pressable } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import { Controller, useForm } from "react-hook-form"
@@ -8,7 +8,16 @@ import { UserRound, Mail, Lock, X, CheckCircle, AlertTriangle } from "lucide-rea
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { iconSizes } from "@/theme/typography"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import {
+  cardMetrics,
+  controlSizes,
+  heroMetrics,
+  radius,
+  screenMetrics,
+  shadowStyles,
+  spacing,
+  verticalScale,
+} from "@/theme/layout"
 import { ScreenHeader } from "@/components/ui/ScreenHeader"
 import { AppTextInput } from "@/components/ui/AppTextInput"
 import { AppButton } from "@/components/ui/AppButton"
@@ -290,38 +299,32 @@ export default function EditProfileScreen() {
 
 const styles = StyleSheet.create({
   sectionsWrapper: {
-    marginTop: -verticalScale(40),
-    paddingHorizontal: scale(20),
-    gap: verticalScale(18),
+    marginTop: -heroMetrics.contentOverlapMd,
+    paddingHorizontal: cardMetrics.cardPaddingX,
+    gap: screenMetrics.sectionGap,
   },
   card: {
     borderRadius: radius.xl,
-    paddingHorizontal: scale(18),
-    paddingVertical: verticalScale(16),
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 10 },
-    shadowRadius: radius.xl,
-    elevation: 4,
+    paddingHorizontal: cardMetrics.cardPaddingX,
+    paddingVertical: cardMetrics.cardPaddingY,
+    ...shadowStyles.card,
   },
   fieldSpacing: {
-    height: verticalScale(12),
+    height: spacing.sm,
   },
   actions: {
     flexDirection: "row",
-    gap: scale(12),
+    gap: cardMetrics.inlineGap,
   },
   actionButton: {
     flex: 1,
   },
   backButton: {
-    width: scale(36),
-    height: scale(36),
+    width: controlSizes.iconButton,
+    height: controlSizes.iconButton,
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,
-    elevation: 6,
+    ...shadowStyles.iconButton,
   },
 })

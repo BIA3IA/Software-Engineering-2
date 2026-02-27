@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from "react-native"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
-import { scale, verticalScale } from "@/theme/layout"
+import { spacing } from "@/theme/layout"
 import { MetricCircle } from "@/components/ui/MetricCircle"
 import { formatDuration, formatSpeed } from "@/utils/statsFormat"
 import { Timer, TrendingUp } from "lucide-react-native"
@@ -49,11 +49,11 @@ export function PerformanceMetric({ durationSeconds, avgSpeed }: PerformanceMetr
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: verticalScale(12),
+    marginBottom: spacing.sm,
   },
   card: {
-    marginTop: verticalScale(6),
-    paddingHorizontal: scale(12),
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.sm,
   },
   grid: {
     flexDirection: "row",

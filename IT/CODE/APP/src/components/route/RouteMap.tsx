@@ -5,7 +5,7 @@ import MapView, { Marker, Polyline, PROVIDER_GOOGLE, Circle } from "react-native
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { radius, scale, spacing, verticalScale } from "@/theme/layout"
 import { AlertTriangle, Bike, Cloud } from "lucide-react-native"
 import { lightMapStyle, darkMapStyle } from "@/theme/mapStyles"
 import { MapIconMarker } from "@/components/ui/MapIconMarker"
@@ -458,10 +458,10 @@ function regionFromRoute(route: LatLng[]) {
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: verticalScale(14),
+    marginBottom: spacing.sm,
   },
   mapWrapper: {
-    marginTop: verticalScale(10),
+    marginTop: 10,
     position: "relative",
   },
   mapContainer: {
@@ -475,13 +475,13 @@ const styles = StyleSheet.create({
   },
   weatherBadge: {
     position: "absolute",
-    top: verticalScale(10),
-    right: scale(10),
+    top: 10,
+    right: 10,
     flexDirection: "row",
     alignItems: "center",
-    columnGap: scale(6),
-    paddingHorizontal: scale(10),
-    paddingVertical: verticalScale(6),
+    columnGap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: radius.full,
     shadowOpacity: 0.12,
     shadowOffset: { width: 0, height: 10 },
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   weatherText: {
-    marginTop: verticalScale(1),
+    marginTop: 1,
   },
   overlayWrapper: {
     flex: 1,
@@ -505,8 +505,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: scale(230),
     borderRadius: radius.lg,
-    paddingHorizontal: scale(14),
-    paddingVertical: verticalScale(12),
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
     shadowOpacity: 0.16,
     shadowOffset: { width: 0, height: 14 },
     shadowRadius: 24,
@@ -516,12 +516,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: verticalScale(10),
+    marginBottom: 10,
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: verticalScale(8),
+    paddingVertical: spacing.xs,
     borderTopWidth: 1,
   },
   calloutOverlay: {

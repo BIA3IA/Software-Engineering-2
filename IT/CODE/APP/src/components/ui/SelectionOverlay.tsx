@@ -3,7 +3,7 @@ import { Modal, Pressable, View, Text, StyleSheet } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { overlayMetrics, radius, spacing } from "@/theme/layout"
 import { textStyles } from "@/theme/typography"
 
 export type SelectionOverlayOption = {
@@ -30,8 +30,8 @@ export function SelectionOverlay({
   selectedKey,
   onClose,
   onSelect,
-  topOffset = verticalScale(76),
-  rightOffset = scale(16),
+  topOffset = 76,
+  rightOffset = spacing.md,
   width,
   absoluteTop,
 }: SelectionOverlayProps) {
@@ -59,7 +59,7 @@ export function SelectionOverlay({
               backgroundColor: palette.surface.card,
               top: cardTop,
               right: rightOffset,
-              width: width ?? scale(190),
+              width: width ?? overlayMetrics.menuWidth,
               shadowColor: palette.border.muted,
             },
           ]}
@@ -110,20 +110,20 @@ const styles = StyleSheet.create({
   },
   card: {
     position: "absolute",
-    width: scale(190),
+    width: overlayMetrics.menuWidth,
     borderRadius: radius.lg,
-    paddingVertical: verticalScale(6),
-    paddingHorizontal: scale(6),
+    paddingVertical: 6,
+    paddingHorizontal: 6,
     shadowOpacity: 0.18,
     shadowOffset: { width: 0, height: 14 },
     shadowRadius: radius.lg,
     elevation: 10,
   },
   item: {
-    paddingVertical: verticalScale(10),
-    paddingHorizontal: scale(10),
+    paddingVertical: 10,
+    paddingHorizontal: 10,
   },
   itemText: {
-    fontSize: 14,
+    fontSize: textStyles.body.fontSize,
   },
 })

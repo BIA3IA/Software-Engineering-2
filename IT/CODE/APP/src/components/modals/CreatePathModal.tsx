@@ -3,7 +3,7 @@ import { Keyboard, Modal, View, Text, Pressable, StyleSheet } from "react-native
 
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { controlSizes, overlayMetrics, radius, screenMetrics, shadowStyles, spacing } from "@/theme/layout"
 import { textStyles, iconSizes } from "@/theme/typography"
 import { AppTextInput } from "@/components/ui/AppTextInput"
 import { SelectionOverlay } from "@/components/ui/SelectionOverlay"
@@ -271,41 +271,39 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-start",
     alignItems: "center",
-    paddingTop: verticalScale(40),
+    paddingTop: overlayMetrics.modalTopInset,
   },
   card: {
-    width: "92%",
+    width: overlayMetrics.modalWidth,
     borderRadius: radius.xl,
-    paddingHorizontal: scale(24),
-    paddingTop: verticalScale(18),
-    paddingBottom: verticalScale(24),
-    shadowOpacity: 0.12,
-    shadowOffset: { width: 0, height: 16 },
-    shadowRadius: 32,
+    paddingHorizontal: screenMetrics.screenPaddingX,
+    paddingTop: overlayMetrics.modalPaddingTop,
+    paddingBottom: overlayMetrics.modalPaddingBottom,
+    ...shadowStyles.modal,
     elevation: 14,
-    gap: verticalScale(14),
+    gap: 14,
   },
   iconWrapper: {
     alignSelf: "center",
-    width: scale(80),
-    height: scale(80),
+    width: overlayMetrics.modalIconSize,
+    height: overlayMetrics.modalIconSize,
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: verticalScale(16),
+    marginBottom: spacing.md,
   },
   title: {
     textAlign: "center",
   },
   subtitle: {
     textAlign: "center",
-    marginBottom: verticalScale(6),
+    marginBottom: spacing.xs,
   },
   form: {
-    gap: verticalScale(12),
+    gap: spacing.sm,
   },
   submitButton: {
-    marginTop: verticalScale(6),
+    marginTop: spacing.xs,
     borderRadius: radius.full,
     shadowOpacity: 0.16,
     shadowOffset: { width: 0, height: 10 },
@@ -313,6 +311,6 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   submitButtonContent: {
-    height: verticalScale(48),
+    height: controlSizes.buttonHeight,
   },
 })

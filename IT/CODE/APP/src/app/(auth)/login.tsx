@@ -9,7 +9,7 @@ import { AppButton } from "@/components/ui/AppButton"
 import { AppPopup } from "@/components/ui/AppPopup"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
-import { layoutStyles, spacingStyles, verticalScale } from "@/theme/layout"
+import { layoutStyles, spacing, spacingStyles, verticalScale } from "@/theme/layout"
 import { textStyles, iconSizes } from "@/theme/typography"
 import { useAuthStore } from "@/auth/storage"
 import { loginSchema, type LoginFormValues } from "@/validation"
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     paddingBottom: verticalScale(42),
   },
   headerTitle: {
-    marginBottom: verticalScale(4),
+    marginBottom: 4,
   },
   formContainer: {
     flex: 1,
@@ -193,11 +193,11 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   content: {
-    paddingTop: verticalScale(32),
-    paddingBottom: verticalScale(32),
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xl,
   },
   backWrapper: {
-    marginTop: verticalScale(16),
+    marginTop: spacing.md,
     alignItems: "center",
   },
   backText: {

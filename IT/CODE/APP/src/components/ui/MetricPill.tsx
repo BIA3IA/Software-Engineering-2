@@ -2,7 +2,7 @@ import React from "react"
 import { View, Text, StyleSheet } from "react-native"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
-import { scale, verticalScale, radius } from "@/theme/layout"
+import { radius } from "@/theme/layout"
 import { textStyles } from "@/theme/typography"
 
 type MetricPillProps = {
@@ -41,12 +41,12 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: "row",
         borderRadius: radius.full,
-        paddingHorizontal: scale(10),
-        paddingVertical: verticalScale(4),
+        paddingHorizontal: 10,
+        paddingVertical: 4,
         alignItems: "center",
     },
     icon: {
-        marginRight: scale(6),
+        marginRight: 6,
     },
     texts: {
         flexDirection: "column",

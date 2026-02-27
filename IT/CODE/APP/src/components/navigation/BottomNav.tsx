@@ -7,7 +7,7 @@ import { Map, Bike, Route, User, Lock } from "lucide-react-native"
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { useAuthStore } from "@/auth/storage"
-import { scale, verticalScale, radius } from "@/theme/layout"
+import { controlSizes, radius, spacing, verticalScale } from "@/theme/layout"
 import { iconSizes } from "@/theme/typography"
 
 type BottomNavProps = {
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        paddingHorizontal: scale(22),
+        paddingHorizontal: spacing.lg,
         shadowOpacity: 0.12,
         shadowOffset: { width: 0, height: 10 },
         shadowRadius: 30,
@@ -152,8 +152,8 @@ const styles = StyleSheet.create({
         opacity: 0.55,
     },
     iconWrapper: {
-        width: scale(48),
-        height: scale(48),
+        width: controlSizes.navItem,
+        height: controlSizes.navItem,
         borderRadius: radius.md,
         alignItems: "center",
         justifyContent: "center",
@@ -161,10 +161,10 @@ const styles = StyleSheet.create({
     },
     lockBadge: {
         position: "absolute",
-        top: -verticalScale(4),
-        right: -scale(2),
-        width: scale(20),
-        height: scale(20),
+        top: -4,
+        right: -2,
+        width: controlSizes.compactBadge,
+        height: controlSizes.compactBadge,
         borderRadius: radius.sm,
         alignItems: "center",
         justifyContent: "center",

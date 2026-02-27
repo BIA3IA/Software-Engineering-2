@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from "react-native"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles } from "@/theme/typography"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { controlSizes, radius, spacing } from "@/theme/layout"
 
 type StatCardProps = {
   icon: React.ReactNode
@@ -45,18 +45,18 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     borderRadius: radius.lg,
-    paddingVertical: verticalScale(14),
-    paddingHorizontal: scale(12),
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
     alignItems: "center",
     justifyContent: "center",
   },
   iconWrap: {
-    width: scale(42),
-    height: scale(42),
+    width: controlSizes.badge,
+    height: controlSizes.badge,
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: verticalScale(6),
+    marginBottom: spacing.xs,
   },
   value: {
     fontWeight: "700",

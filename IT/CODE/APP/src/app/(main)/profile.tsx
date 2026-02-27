@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { cardMetrics, radius, scale, spacing, screenMetrics, verticalScale } from "@/theme/layout"
 import { StatCard } from "@/components/ui/StatsCard"
 import { MetricCircle } from "@/components/ui/MetricCircle"
 import { useAuthStore } from "@/auth/storage"
@@ -391,12 +391,12 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   content: {
     marginTop: -verticalScale(36),
-    paddingHorizontal: scale(20),
-    gap: verticalScale(18),
+    paddingHorizontal: cardMetrics.cardPaddingX,
+    gap: screenMetrics.sectionGap,
   },
   card: {
-    paddingHorizontal: scale(18),
-    paddingVertical: verticalScale(18),
+    paddingHorizontal: cardMetrics.cardPaddingX,
+    paddingVertical: cardMetrics.cardPaddingY,
     borderRadius: radius.xl,
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 12 },
@@ -404,27 +404,27 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   cardTitle: {
-    marginBottom: verticalScale(14),
+    marginBottom: spacing.sm,
   },
   overallRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: scale(12),
+    gap: cardMetrics.inlineGap,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: verticalScale(12),
+    marginBottom: spacing.sm,
   },
   fakeSelect: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
     borderRadius: radius.full,
-    paddingHorizontal: scale(12),
-    paddingVertical: verticalScale(4),
-    columnGap: scale(6),
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    columnGap: 6,
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: radius.md,
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   periodLabelWrap: {
     flexDirection: "row",
     alignItems: "center",
-    columnGap: scale(6),
+    columnGap: 6,
   },
   metricsGrid: {
     flexDirection: "row",

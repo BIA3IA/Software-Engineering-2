@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from "react-native"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles, iconSizes } from "@/theme/typography"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { cardMetrics, controlSizes, radius, spacing } from "@/theme/layout"
 import { MetricPill } from "@/components/ui/MetricPill"
 import { MapPin, Calendar, Trash2, ChevronDown, Eye, EyeOff } from "lucide-react-native"
 
@@ -174,9 +174,9 @@ export function RouteCard({
 const styles = StyleSheet.create({
     card: {
         borderRadius: radius.lg,
-        paddingHorizontal: scale(14),
-        paddingVertical: verticalScale(14),
-        marginBottom: verticalScale(14),
+        paddingHorizontal: cardMetrics.inlineGap,
+        paddingVertical: cardMetrics.cardPaddingCompactY,
+        marginBottom: cardMetrics.inlineGap,
         shadowOpacity: 0.08,
         shadowOffset: { width: 0, height: 12 },
         shadowRadius: radius.lg,
@@ -189,58 +189,58 @@ const styles = StyleSheet.create({
     },
     titleWrapper: {
         flex: 1,
-        marginRight: scale(12),
+        marginRight: cardMetrics.inlineGap,
     },
     title: {
-        marginBottom: verticalScale(4),
+        marginBottom: 4,
     },
     description: {
-        marginBottom: verticalScale(6),
+        marginBottom: spacing.xs,
     },
     metricsRow: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: verticalScale(2),
+        marginBottom: 2,
     },
     pillsRow: {
         flexDirection: "row",
         flexWrap: "wrap",
-        gap: scale(8),
+        gap: spacing.xs,
         flex: 1,
     },
     actionsRow: {
         flexDirection: "row",
         alignItems: "center",
-        columnGap: scale(10),
-        marginLeft: scale(8),
+        columnGap: spacing.xs,
+        marginLeft: spacing.xs,
         flexShrink: 0,
     },
     iconButton: {
-        paddingHorizontal: scale(6),
-        paddingVertical: verticalScale(4),
+        paddingHorizontal: 6,
+        paddingVertical: 4,
         borderRadius: radius.md,
         alignSelf: "flex-start",
     },
     visibilityIcon: {
-        paddingHorizontal: scale(4),
-        paddingVertical: verticalScale(2),
+        paddingHorizontal: 4,
+        paddingVertical: 2,
         borderRadius: radius.md,
     },
     visibilityIconDisabled: {
         opacity: 0.5,
     },
     expandedContent: {
-        marginTop: verticalScale(12),
-        gap: verticalScale(12),
+        marginTop: cardMetrics.inlineGap,
+        gap: cardMetrics.inlineGap,
     },
     actionButtonWrapper: {
-        marginTop: verticalScale(4),
+        marginTop: 4,
     },
     actionButton: {
-        height: verticalScale(44),
+        height: controlSizes.compactFab,
         borderRadius: radius.full,
     },
     actionButtonContent: {
-        height: verticalScale(44),
+        height: controlSizes.compactFab,
     },
 })
