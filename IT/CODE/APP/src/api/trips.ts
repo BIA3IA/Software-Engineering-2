@@ -24,10 +24,10 @@ export type TripSummary = {
   stats: TripStats | null
   weather: unknown | null
   segmentCount: number
-  tripSegments?: Array<{
+  tripSegments?: {
     segmentId: string
     polylineCoordinates: PathPoint[]
-  }>
+  }[]
   reports?: ReportSummary[]
 }
 

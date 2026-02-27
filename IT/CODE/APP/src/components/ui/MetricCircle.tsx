@@ -4,7 +4,7 @@ import Svg, { Circle } from "react-native-svg"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { textStyles } from "@/theme/typography"
-import { radius, scale, verticalScale } from "@/theme/layout"
+import { scale, verticalScale } from "@/theme/layout"
 
 type MetricCircleProps = {
   icon: React.ReactNode

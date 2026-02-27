@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  GestureResponderEvent,
 } from "react-native"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
@@ -15,7 +14,7 @@ import { AppButton } from "@/components/ui/AppButton"
 
 type PopupButtonConfig = {
   label: string
-  onPress: (event: GestureResponderEvent) => void
+  onPress: () => void
   variant?: "primary" | "secondary" | "outline" | "destructive"
   textColor?: string
   borderColor?: string
@@ -146,7 +145,7 @@ export function AppPopup({
                       <AppButton
                         title={primaryButton.label}
                         variant={primaryButton.variant ?? "primary"}
-                        onPress={() => primaryButton.onPress({} as GestureResponderEvent)}
+                        onPress={primaryButton.onPress}
                         textColor={primaryButton.textColor}
                         borderColor={primaryButton.borderColor}
                         buttonColor={primaryButton.buttonColor}
@@ -159,7 +158,7 @@ export function AppPopup({
                         textColor={secondaryButton!.textColor ?? accentColor}
                         borderColor={secondaryButton!.borderColor ?? accentColor}
                         buttonColor={secondaryButton!.buttonColor}
-                        onPress={() => secondaryButton!.onPress({} as GestureResponderEvent)}
+                        onPress={secondaryButton!.onPress}
                       />
                     </View>
                   </>
@@ -168,7 +167,7 @@ export function AppPopup({
                     <AppButton
                       title={primaryButton.label}
                       variant={primaryButton.variant ?? "primary"}
-                      onPress={() => primaryButton.onPress({} as GestureResponderEvent)}
+                      onPress={primaryButton.onPress}
                       textColor={primaryButton.textColor}
                       borderColor={primaryButton.borderColor}
                       buttonColor={primaryButton.buttonColor}
@@ -182,7 +181,7 @@ export function AppPopup({
                   <AppButton
                     title={destructiveButton!.label}
                     variant={destructiveButton!.variant ?? "destructive"}
-                    onPress={() => destructiveButton!.onPress({} as GestureResponderEvent)}
+                    onPress={destructiveButton!.onPress}
                   />
                 </View>
               )}

@@ -3,7 +3,6 @@ import { render, fireEvent, waitFor } from "@testing-library/react-native"
 import HomeScreen from "@/app/(main)/home"
 import { searchPathsApi } from "@/api/paths"
 import { getReportsByPathApi } from "@/api/reports"
-import * as Location from "expo-location"
 
 jest.mock("@/api/paths", () => ({
     searchPathsApi: jest.fn(),

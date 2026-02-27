@@ -1,6 +1,6 @@
 import React from "react"
 import { StyleSheet, type StyleProp, type ViewStyle } from "react-native"
-import { Button } from "react-native-paper"
+import { Button, type ButtonProps } from "react-native-paper"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import Colors from "@/constants/Colors"
 import { controlSizes, radius } from "@/theme/layout"
@@ -78,16 +78,19 @@ export function AppButton({
 
   const isBlocked = disabled || loading
   const handlePress = isBlocked ? undefined : onPress
+  const buttonMode: ButtonProps["mode"] = mode
+  const paperButtonColor: ButtonProps["buttonColor"] = resolvedButtonColor
+  const paperTextColor: ButtonProps["textColor"] = resolvedTextColor
 
   return (
     <Button
       testID={testID}
-      mode={mode}
+      mode={buttonMode}
       onPress={handlePress}
       loading={loading}
       disabled={disabled}
-      buttonColor={resolvedButtonColor as any}
-      textColor={resolvedTextColor as any}
+      buttonColor={paperButtonColor}
+      textColor={paperTextColor}
       style={[
         styles.button,
         style,

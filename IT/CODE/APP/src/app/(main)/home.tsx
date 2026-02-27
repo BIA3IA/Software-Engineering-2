@@ -1,11 +1,12 @@
 import React from "react"
-import { View, StyleSheet, Pressable, Text } from "react-native"
+import { View, StyleSheet, Pressable } from "react-native"
 import MapView, { Marker, Polyline, Circle, PROVIDER_GOOGLE } from "react-native-maps"
 import { AlertTriangle, Navigation, MapPin, Plus, CheckCircle, X, Bike } from "lucide-react-native"
 import * as Location from "expo-location"
+import { type Href } from "expo-router"
 
 import { controlSizes, floatingMetrics, layoutStyles, radius, scale, shadowStyles, verticalScale } from "@/theme/layout"
-import { iconSizes, textStyles } from "@/theme/typography"
+import { iconSizes } from "@/theme/typography"
 import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { useAuthStore } from "@/auth/storage"
@@ -130,7 +131,10 @@ export default function HomeScreen() {
   const promptedReportIdsRef = React.useRef(new Set<string>())
   const autoCompleteTriggeredRef = React.useRef(false)
 
-  const displayRoute = (activeTrip?.route ?? selectedResult?.route) ?? []
+  const displayRoute = React.useMemo(
+    () => (activeTrip?.route ?? selectedResult?.route) ?? [],
+    [activeTrip?.route, selectedResult?.route]
+  )
   const destinationPoint = displayRoute[displayRoute.length - 1]
   const startRoutePoint = displayRoute[0]
   const hasActiveNavigation = Boolean(activeTrip && activeTrip.route.length > 0)
@@ -250,8 +254,15 @@ export default function HomeScreen() {
     creationMode: "manual" | "automatic"
   }) {
     setCreateModalVisible(false)
-    const query = `?name=${encodeURIComponent(values.name)}&description=${encodeURIComponent(values.description)}&visibility=${values.visibility}&creationMode=${values.creationMode}`
-    router.push(`/create-path${query}` as any)
+    router.push({
+      pathname: "/create-path",
+      params: {
+        name: values.name,
+        description: values.description,
+        visibility: values.visibility,
+        creationMode: values.creationMode,
+      },
+    })
   }
 
   function handleReportIssue() {
@@ -319,18 +330,23 @@ export default function HomeScreen() {
     }
   }
 
-  function handleCloseResults() {
+  const handleCloseResults = React.useCallback(() => {
     setResultsVisible(false)
     setSelectedResult(null)
     setActiveTrip(null)
     setActiveTripStartedAt(null)
-  }
+  }, [])
 
   function handleCancelTrip() {
     setCancelTripPopupVisible(true)
   }
 
-  function handleConfirmCancelTrip() {
+  const resetOffRouteTracking = React.useCallback(() => {
+    offRouteCountRef.current = 0
+    offRouteStartedAtRef.current = null
+  }, [])
+
+  const handleConfirmCancelTrip = React.useCallback(() => {
     resetOffRouteTracking()
     offRouteContinueUsedRef.current = false
     setActiveTrip(null)
@@ -341,15 +357,10 @@ export default function HomeScreen() {
     autoCompleteTriggeredRef.current = false
     setResultsVisible(false)
     setCancelTripPopupVisible(false)
-  }
+  }, [resetOffRouteTracking])
 
   function handleCloseCancelTripPopup() {
     setCancelTripPopupVisible(false)
-  }
-
-  function resetOffRouteTracking() {
-    offRouteCountRef.current = 0
-    offRouteStartedAtRef.current = null
   }
 
   function handleContinueOffRoute() {
@@ -366,16 +377,7 @@ export default function HomeScreen() {
     setOffRoutePopupVisible(false)
   }
 
-  function handleEndOffRouteTrip() {
-    if (offRouteAutoEndTimerRef.current) {
-      clearTimeout(offRouteAutoEndTimerRef.current)
-      offRouteAutoEndTimerRef.current = null
-    }
-    setOffRoutePopupVisible(false)
-    void handleCompleteTrip(true)
-  }
-
-  async function handleCompleteTrip(fromOffRoute = false) {
+  const handleCompleteTrip = React.useCallback(async (fromOffRoute = false) => {
     if (!activeTrip) {
       return
     }
@@ -473,10 +475,27 @@ export default function HomeScreen() {
     reportSessionIdRef.current = null
     autoCompleteTriggeredRef.current = false
     setCompletedPopupVisible(true)
-  }
+  }, [
+    activeTrip,
+    activeTripStartedAt,
+    destinationPoint,
+    isGuest,
+    resetOffRouteTracking,
+    startRoutePoint,
+    traversedRoute.length,
+  ])
 
-  function go(to: string) {
-    router.replace(to as any)
+  const handleEndOffRouteTrip = React.useCallback(() => {
+    if (offRouteAutoEndTimerRef.current) {
+      clearTimeout(offRouteAutoEndTimerRef.current)
+      offRouteAutoEndTimerRef.current = null
+    }
+    setOffRoutePopupVisible(false)
+    void handleCompleteTrip(true)
+  }, [handleCompleteTrip])
+
+  function go(to: Href) {
+    router.replace(to)
   }
 
   async function handleSubmitReport(values: { condition: string; obstacle: string }) {
@@ -634,7 +653,7 @@ export default function HomeScreen() {
     setOffRoutePopupVisible(false)
     setResultsVisible(false)
     setTripLaunchSelection(null)
-  }, [tripLaunchSelection, setTripLaunchSelection])
+  }, [resetOffRouteTracking, tripLaunchSelection, setTripLaunchSelection])
 
   React.useEffect(() => {
     if (!hasActiveNavigation || !activeTrip || !userLocation || !activeTrip.route.length) {
@@ -662,7 +681,15 @@ export default function HomeScreen() {
     if (offRouteCountRef.current >= OFF_ROUTE_MAX_CONSECUTIVE || elapsed >= OFF_ROUTE_MAX_MS) {
       setOffRoutePopupVisible(true)
     }
-  }, [activeTrip, hasActiveNavigation, isOffRoutePopupVisible, userLocation, isCompletingTrip])
+  }, [
+    activeTrip,
+    errorPopup.visible,
+    hasActiveNavigation,
+    isCompletingTrip,
+    isOffRoutePopupVisible,
+    resetOffRouteTracking,
+    userLocation,
+  ])
 
   React.useEffect(() => {
     if (!isOffRoutePopupVisible) {
@@ -684,7 +711,7 @@ export default function HomeScreen() {
         offRouteAutoEndTimerRef.current = null
       }
     }
-  }, [isOffRoutePopupVisible, OFF_ROUTE_AUTO_END_MS])
+  }, [handleEndOffRouteTrip, isOffRoutePopupVisible])
 
   React.useEffect(() => {
     if (!activeTrip || !userLocation || !destinationPoint) {
@@ -696,7 +723,7 @@ export default function HomeScreen() {
     if (distanceToDestination > AUTO_COMPLETE_DISTANCE_METERS) return
     autoCompleteTriggeredRef.current = true
     void handleCompleteTrip()
-  }, [activeTrip, destinationPoint, userLocation])
+  }, [activeTrip, destinationPoint, handleCompleteTrip, userLocation])
 
   React.useEffect(() => {
     cyclingPromptVisibleRef.current = isCyclingPromptVisible
@@ -864,7 +891,7 @@ export default function HomeScreen() {
         locationWatcherRef.current = null
       }
     }
-  }, [])
+  }, [hasActiveNavigation])
 
   React.useEffect(() => {
     setNavHidden(hasActiveNavigation)
@@ -919,7 +946,7 @@ export default function HomeScreen() {
         })
       }
     }
-  }, [selectedResult?.id, displayRoute, userLocation, hasActiveNavigation])
+  }, [activeTrip?.id, displayRoute, hasActiveNavigation, selectedResult?.id, userLocation])
 
   React.useEffect(() => {
     if (!hasActiveNavigation || !userLocation || !mapRef.current || !isMapReady) return
@@ -1297,7 +1324,13 @@ export default function HomeScreen() {
         primaryButton={{
           label: isGuest ? "Log In" : "View Stats",
           variant: "primary",
-          onPress: () => { isGuest ? go("/(auth)/login") : go("/trips") },
+          onPress: () => {
+            if (isGuest) {
+              go("/(auth)/login")
+              return
+            }
+            go("/trips")
+          },
           buttonColor: palette.status.success,
           textColor: palette.text.onAccent,
         }}
@@ -1375,7 +1408,7 @@ function generateSessionId() {
 }
 
 function findClosestSegment(
-  segments: Array<{ segmentId: string; polylineCoordinates: LatLng[] }>,
+  segments: { segmentId: string; polylineCoordinates: LatLng[] }[],
   position: LatLng
 ) {
   let bestSegment: { segmentId: string } | null = null
@@ -1399,7 +1432,7 @@ function findClosestSegment(
 }
 
 function buildTraversedTripSegments(
-  segments: Array<{ segmentId: string; polylineCoordinates: LatLng[] }>,
+  segments: { segmentId: string; polylineCoordinates: LatLng[] }[],
   traversedPointCount: number
 ) {
   if (!segments.length) {
@@ -1411,7 +1444,7 @@ function buildTraversedTripSegments(
     return []
   }
 
-  const traversed: Array<{ segmentId: string; polylineCoordinates: Array<{ lat: number; lng: number }> }> = []
+  const traversed: { segmentId: string; polylineCoordinates: { lat: number; lng: number }[] }[] = []
   let remainingUniquePoints = traversedPointCount
   let lastPoint: LatLng | null = null
 

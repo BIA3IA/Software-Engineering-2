@@ -20,7 +20,7 @@ export type RouteItem = {
     durationMin: number
     date: string
     route: LatLng[]
-    reports?: Array<{ reportId: string; position: { lat: number; lng: number }; obstacleType?: string; pathStatus?: string }>
+    reports?: { reportId: string; position: { lat: number; lng: number }; obstacleType?: string; pathStatus?: string }[]
     avgSpeed: number
     temperatureLabel?: string
     weather?: WeatherDetails

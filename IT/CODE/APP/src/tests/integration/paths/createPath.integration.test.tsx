@@ -150,10 +150,10 @@ describe("create-path integration", () => {
     })
 
     test("save is blocked while snapping", async () => {
-        let resolveSnap: ((value: Array<{ lat: number; lng: number }>) => void) | undefined 
+        let resolveSnap: ((value: { lat: number; lng: number }[]) => void) | undefined
         ;(snapPathApi as jest.Mock).mockImplementation(
             () =>
-                new Promise<Array<{ lat: number; lng: number }>>((resolve) => {
+                new Promise<{ lat: number; lng: number }[]>((resolve) => {
                     resolveSnap = resolve
                 })
         )

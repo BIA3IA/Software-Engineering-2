@@ -5,7 +5,6 @@ import { Provider as PaperProvider } from "react-native-paper"
 import { useAuthStore } from "@/auth/storage"
 import { usePaperTheme } from "@/theme/paperTheme"
 import { LucideIcon } from "@/components/icons/LucideIcon"
-import { useColorScheme } from "@/hooks/useColorScheme"
 import { useIsMutationBlocking } from "@/state/mutationTracker"
 
 export default function RootLayout() {
@@ -13,7 +12,6 @@ export default function RootLayout() {
   const loading = useAuthStore((s) => s.loading)
   const initAuth = useAuthStore((s) => s.initAuth)
   const isGuest = user?.id === "guest"
-  const scheme = useColorScheme() ?? "light"
   const isMutationBlocking = useIsMutationBlocking()
 
   const segments = useSegments()

@@ -7,7 +7,7 @@ import Colors from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 import { AppButton } from "@/components/ui/AppButton"
 import { useAuthStore } from "@/auth/storage"
-import { textStyles, iconSizes } from "@/theme/typography"
+import { textStyles } from "@/theme/typography"
 import { scale, verticalScale, moderateScale, radius } from "@/theme/layout"
 
 export default function NotFoundScreen() {

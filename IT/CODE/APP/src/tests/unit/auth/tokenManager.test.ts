@@ -1,3 +1,5 @@
+import { refreshAccessToken } from "@/api/tokenManager"
+
 const mockPost = jest.fn()
 
 jest.mock("axios", () => ({
@@ -13,8 +15,6 @@ jest.mock("@/auth/authSession", () => ({
     setSession: (t: any) => mockSetSession(t),
     clearSession: () => mockClearSession(),
 }))
-
-import { refreshAccessToken } from "@/api/tokenManager"
 
 describe("api/tokenManager", () => {
     beforeEach(() => {
@@ -71,7 +71,8 @@ describe("api/tokenManager", () => {
         const secondCall = refreshAccessToken()
 
         expect(mockPost).toHaveBeenCalledTimes(1)
-        resolvePost?.({
+        expect(resolvePost).not.toBeNull()
+        resolvePost!({
             data: { tokens: { accessToken: "a2", refreshToken: "r2" } },
         })
 

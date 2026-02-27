@@ -3,6 +3,9 @@ import type { ComponentType } from "react"
 import { icons } from "lucide-react-native"
 import { iconSizes } from "@/theme/typography"
 
+type IconComponent = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>
+const iconRegistry = { ...icons } as Record<string, IconComponent>
+
 type IconRegistry = typeof icons
 type LucideIconName = keyof IconRegistry
 
@@ -57,28 +60,28 @@ function toPascalCase(name: string): string {
     .replace(/\s+/g, "")
 }
 
-function resolveIcon(name?: string): ComponentType<{ color?: string; size?: number; strokeWidth?: number }> {
+function resolveIcon(name?: string): IconComponent {
   if (!name) {
-    return icons[DEFAULT_ICON]
+    return iconRegistry[DEFAULT_ICON]
   }
 
-  const exact = icons[name as LucideIconName]
+  const exact = iconRegistry[name]
   if (exact) {
     return exact
   }
 
   const normalizedKey = aliasMap[name.toLowerCase()]
-  if (normalizedKey && icons[normalizedKey as LucideIconName]) {
-    return icons[normalizedKey as LucideIconName]
+  if (normalizedKey && iconRegistry[normalizedKey]) {
+    return iconRegistry[normalizedKey]
   }
 
   const pascalCaseName = toPascalCase(name)
-  const pascalIcon = icons[pascalCaseName as LucideIconName]
+  const pascalIcon = iconRegistry[pascalCaseName]
   if (pascalIcon) {
     return pascalIcon
   }
 
-  return icons[DEFAULT_ICON]
+  return iconRegistry[DEFAULT_ICON]
 }
 
 export function LucideIcon({ name, color = "currentColor", size = iconSizes.lg, strokeWidth = 2 }: LucideIconProps) {

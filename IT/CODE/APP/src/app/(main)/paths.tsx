@@ -13,12 +13,11 @@ import { heroMetrics, spacing } from "@/theme/layout"
 import { iconSizes, textStyles } from "@/theme/typography"
 import { AlertTriangle, Trash2, Eye, EyeOff } from "lucide-react-native"
 import { useBottomNavVisibility } from "@/hooks/useBottomNavVisibility"
-import { changePathVisibilityApi, deletePathApi, getMyPathsApi, type PathPoint, type UserPathSummary } from "@/api/paths"
+import { changePathVisibilityApi, deletePathApi, getMyPathsApi, type UserPathSummary } from "@/api/paths"
 import { getApiErrorMessage } from "@/utils/apiError"
 import { isNearOrigin as isNearOriginMeters } from "@/utils/geo"
 import { mapUserPathSummaryToRouteItem, mapUserPathSummaryToSearchResult } from "@/utils/pathMappers"
 import { useSetTripLaunchSelection } from "@/hooks/useTripLaunchSelection"
-import type { SearchResult } from "@/components/paths/SearchResultsSheet"
 
 type SortOption = "date" | "distance" | "alphabetical"
 type LatLng = { latitude: number; longitude: number }
@@ -267,7 +266,7 @@ export default function PathsScreen() {
           }
         )
         locationWatcherRef.current = watcher
-      } catch (error) {
+      } catch {
       }
     }
 

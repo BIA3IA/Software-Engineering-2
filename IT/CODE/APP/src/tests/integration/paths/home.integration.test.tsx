@@ -70,11 +70,6 @@ jest.mock("@/components/modals/ReportIssueModal", () => ({
 let mockLocation = { latitude: 45.0, longitude: 9.0, heading: 0 }
 let locationCallback: any = null
 
-function emitSpeedKmh(kmh: number) {
-    const speed = kmh / 3.6
-    locationCallback?.({ coords: { ...mockLocation, speed } })
-}
-
 jest.mock("expo-location", () => ({
     requestForegroundPermissionsAsync: jest.fn(async () => ({ status: "granted" })),
     getCurrentPositionAsync: jest.fn(async () => ({
@@ -263,7 +258,7 @@ describe("home paths integration", () => {
     })
 
     test("shows cycling prompt for logged-in user", async () => {
-        const { findByText, getByText, queryByText } = render(<HomeScreen />)
+        const { findByText } = render(<HomeScreen />)
 
         await waitFor(() => {
             expect(Location.getCurrentPositionAsync).toHaveBeenCalled()

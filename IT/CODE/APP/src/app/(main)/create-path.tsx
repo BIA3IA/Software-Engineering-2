@@ -1,6 +1,6 @@
 import React from "react"
 import { View, StyleSheet, Pressable } from "react-native"
-import MapView, { Marker, Polyline, Circle, PROVIDER_GOOGLE } from "react-native-maps"
+import MapView, { Marker, Polyline, Circle, PROVIDER_GOOGLE, type MapPressEvent } from "react-native-maps"
 import * as Location from "expo-location"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useRouter, useLocalSearchParams } from "expo-router"
@@ -78,6 +78,7 @@ export default function CreatePathScreen() {
   const hasCenteredRef = React.useRef(false)
   const lastLocationRef = React.useRef<LatLng | null>(null)
   const lastLocationAtRef = React.useRef(0)
+  const queueSnapSegmentRef = React.useRef<((start: LatLng, end: LatLng) => void) | null>(null)
 
   const { followsUserLocation, gesturesDisabled } = useFollowUserLocation({
     enabled: creationMode === "automatic",
@@ -205,7 +206,7 @@ export default function CreatePathScreen() {
     mapRef.current.animateToRegion(regionAroundPoint(userLocation, 0.008), 400)
   }, [userLocation])
 
-  function handleMapPress(event: any) {
+  function handleMapPress(event: MapPressEvent) {
     if (!isDrawMode || creationModeRef.current !== "manual") return
     const coordinate = event?.nativeEvent?.coordinate
     if (!coordinate) return
@@ -216,7 +217,7 @@ export default function CreatePathScreen() {
     })
   }
 
-  function handlePanDrag(event: any) {
+  function handlePanDrag(event: MapPressEvent) {
     if (!isDrawMode || creationModeRef.current !== "manual") return
     const coordinate = event?.nativeEvent?.coordinate
     if (!coordinate) return
@@ -326,29 +327,7 @@ export default function CreatePathScreen() {
     })
   }
 
-  function queueSnapSegment(start: LatLng, end: LatLng) {
-    const now = Date.now()
-    const delay = Math.max(0, 350 - (now - lastSnapAtRef.current))
-
-    if (snapInFlightRef.current || delay > 0) {
-      pendingSnapRef.current = [start, end]
-      setIsSnapping(true)
-      if (delay > 0 && !snapTimerRef.current) {
-        snapTimerRef.current = setTimeout(() => {
-          snapTimerRef.current = null
-          const pending = pendingSnapRef.current
-          if (pending) {
-            pendingSnapRef.current = null
-            queueSnapSegment(pending[0], pending[1])
-          }
-        }, delay)
-      }
-      return
-    }
-    void snapSegment(start, end)
-  }
-
-  async function snapSegment(start: LatLng, end: LatLng) {
+  const snapSegment = React.useCallback(async (start: LatLng, end: LatLng) => {
     snapInFlightRef.current = true
     const version = snapVersionRef.current
     lastSnapAtRef.current = Date.now()
@@ -371,12 +350,38 @@ export default function CreatePathScreen() {
       const pending = pendingSnapRef.current
       pendingSnapRef.current = null
       if (pending) {
-        queueSnapSegment(pending[0], pending[1])
+        queueSnapSegmentRef.current?.(pending[0], pending[1])
       } else {
         setIsSnapping(false)
       }
     }
-  }
+  }, [])
+
+  const queueSnapSegment = React.useCallback((start: LatLng, end: LatLng) => {
+    const now = Date.now()
+    const delay = Math.max(0, 350 - (now - lastSnapAtRef.current))
+
+    if (snapInFlightRef.current || delay > 0) {
+      pendingSnapRef.current = [start, end]
+      setIsSnapping(true)
+      if (delay > 0 && !snapTimerRef.current) {
+        snapTimerRef.current = setTimeout(() => {
+          snapTimerRef.current = null
+          const pending = pendingSnapRef.current
+          if (pending) {
+            pendingSnapRef.current = null
+            queueSnapSegmentRef.current?.(pending[0], pending[1])
+          }
+        }, delay)
+      }
+      return
+    }
+    void snapSegment(start, end)
+  }, [snapSegment])
+
+  React.useEffect(() => {
+    queueSnapSegmentRef.current = queueSnapSegment
+  }, [queueSnapSegment])
 
   React.useEffect(() => {
     if (creationMode !== "manual") return
@@ -393,7 +398,7 @@ export default function CreatePathScreen() {
     lastSnappedIndexRef.current = drawnRoute.length
 
     queueSnapSegment(start, end)
-  }, [drawnRoute])
+  }, [creationMode, drawnRoute, queueSnapSegment])
 
   React.useEffect(() => {
     return () => {

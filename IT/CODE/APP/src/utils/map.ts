@@ -43,9 +43,9 @@ export function regionAroundPoint(point: LatLng, delta = 0.01) {
     }
 }
 
-export function normalizeSearchResult<T extends { route: LatLng[]; pathSegments?: Array<{ polylineCoordinates: LatLng[] }> }>(
+export function normalizeSearchResult<T extends { route: LatLng[]; pathSegments?: { polylineCoordinates: LatLng[] }[] }>(
     result: T,
-    buildRouteFromSegments: (segments: Array<{ polylineCoordinates: LatLng[] }>) => LatLng[]
+    buildRouteFromSegments: (segments: { polylineCoordinates: LatLng[] }[]) => LatLng[]
 ) {
     if (result.route.length > 1 || !result.pathSegments?.length) {
         return result

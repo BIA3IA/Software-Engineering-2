@@ -31,7 +31,7 @@ type RouteMapProps = {
   showWeatherBadge?: boolean
   title?: string
   showUserLocation?: boolean
-  reports?: Array<{ reportId: string; position: { lat: number; lng: number }; obstacleType?: string; pathStatus?: string }>
+  reports?: { reportId: string; position: { lat: number; lng: number }; obstacleType?: string; pathStatus?: string }[]
 }
 
 export function RouteMap({

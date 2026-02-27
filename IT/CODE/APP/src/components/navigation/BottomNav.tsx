@@ -1,6 +1,6 @@
 import React from "react"
 import { View, TouchableOpacity, StyleSheet } from "react-native"
-import { useRouter, usePathname } from "expo-router"
+import { type Href, useRouter, usePathname } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Map, Bike, Route, User, Lock } from "lucide-react-native"
 
@@ -24,13 +24,13 @@ export function BottomNav({ onRequireLogin }: BottomNavProps) {
     const isGuest = !user || user.id === "guest"
     const bottomInset = insets.bottom > 0 ? Math.min(insets.bottom, verticalScale(35)) : 0
 
-    function go(to: string, needsAuth?: boolean) {
+    function go(to: Href, needsAuth?: boolean) {
         if (needsAuth && isGuest) {
             onRequireLogin?.()
             return
         }
         if (pathname === to) return
-        router.replace(to as any)
+        router.replace(to)
     }
 
     return (

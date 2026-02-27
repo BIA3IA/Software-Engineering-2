@@ -14,6 +14,7 @@ jest.mock("react-native-maps", () => {
     }))
     return React.createElement(View, null)
   })
+  MockMap.displayName = "MockMap"
   return {
     __esModule: true,
     default: MockMap,

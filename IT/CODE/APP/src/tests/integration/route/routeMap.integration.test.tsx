@@ -1,6 +1,5 @@
 import React from "react"
-import { render, act, fireEvent } from "@testing-library/react-native"
-import { Pressable } from "react-native"
+import { render, fireEvent } from "@testing-library/react-native"
 import { RouteMap } from "@/components/route/RouteMap"
 
 jest.mock("react-native/Libraries/Modal/Modal", () => {
@@ -20,6 +19,7 @@ jest.mock("react-native-maps", () => {
         }))
         return React.createElement(View, null, props.children)
     })
+    MockMap.displayName = "MockMap"
     const Marker = ({ onPress, children }: any) =>
         React.createElement(Pressable, { onPress, testID: "map-marker" }, children)
     const Mock = (props: any) => React.createElement(View, null, props.children)

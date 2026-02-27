@@ -9,7 +9,7 @@ function pushUnique(points: LatLng[], point: LatLng) {
 }
 
 export function buildRouteFromLatLngSegments(
-    segments: Array<{ polylineCoordinates: LatLng[] }>
+    segments: { polylineCoordinates: LatLng[] }[]
 ) {
     const points: LatLng[] = []
 
@@ -23,7 +23,7 @@ export function buildRouteFromLatLngSegments(
 }
 
 export function buildRouteFromPathPointSegments(
-    segments: Array<{ polylineCoordinates?: PathPoint[] }>
+    segments: { polylineCoordinates?: PathPoint[] }[]
 ) {
     const points: LatLng[] = []
 
