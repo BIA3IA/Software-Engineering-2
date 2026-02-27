@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach } from "@jest/globals";
 import { Request, Response } from "express";
+import { TripSegments, WeatherData } from "../../types";
 
 jest.mock('../../managers/query', () => ({
     queryManager: {
@@ -10,6 +11,30 @@ jest.mock('../../managers/query', () => ({
 
 jest.mock('../../services/index', () => ({
     fetchAndAggregateWeatherData: jest.fn(),
+}));
+
+jest.mock('../../utils/cache', () => ({
+    incrementTripCount: jest.fn().mockResolvedValue(undefined),
+    decrementTripCount: jest.fn().mockResolvedValue(undefined),
+    getCachedTripStats: jest.fn().mockResolvedValue(null),
+    setCachedTripStats: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('../../utils/logger', () => ({
+    __esModule: true,
+    default: {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn(),
+    },
+}));
+
+jest.mock('../../managers/stats/stats.manager', () => ({
+    statsManager: {
+        computeStats: jest.fn(),
+        computeOverallStats: jest.fn(),
+    },
 }));
 
 import { TripManager } from "../../managers/trip/trip.manager";
@@ -37,10 +62,17 @@ describe("Testing TripManager weather logic", () => {
         jest.clearAllMocks();
     });
 
+    const invokeEnrichTripWithWeather = (tripManager: TripManager, trip: TripSegments): Promise<WeatherData> => {
+        const testAccess = tripManager as unknown as {
+            enrichTripWithWeather: (tripInput: TripSegments) => Promise<WeatherData>;
+        };
+        return testAccess.enrichTripWithWeather(trip);
+    };
+
     describe("Testing enrichTripWithWeather method", () => {
 
         test("Should successfully enrich trip with weather data", async () => {
-            const mockTrip = {
+            const mockTrip: TripSegments = {
                 tripId: "trip",
                 userId: "user",
                 createdAt: new Date(),
@@ -49,8 +81,8 @@ describe("Testing TripManager weather logic", () => {
                 title: null,
                 origin: { lat: 45.4642, lng: 9.1900 },
                 destination: { lat: 45.4654, lng: 9.1859 },
-                statistics: { speed: 15, maxSpeed: 20, distance: 5, time: 20 },
                 weather: null,
+                distanceKm: null,
                 tripSegments: [
                     {
                         segmentId: "seg1",
@@ -84,7 +116,7 @@ describe("Testing TripManager weather logic", () => {
             (queryManager.updateTripWeather as jest.Mock).mockResolvedValue({});
 
             const tripManager = new TripManager();
-            const result = await (tripManager as any).enrichTripWithWeather(mockTrip);
+            const result = await invokeEnrichTripWithWeather(tripManager, mockTrip);
 
             expect(fetchAndAggregateWeatherData).toHaveBeenCalledWith([
                 mockTrip.origin,
@@ -96,23 +128,23 @@ describe("Testing TripManager weather logic", () => {
         });
 
         test("Should throw BadRequestError when trip has no coordinates", async () => {
-            const mockTrip = {
+            const mockTrip: TripSegments = {
                 tripId: "trip",
                 userId: "user",
                 createdAt: new Date(),
                 startedAt: new Date(),
                 finishedAt: new Date(),
-                origin: null as any,
-                destination: null as any,
+                origin: null as unknown as TripSegments["origin"],
+                destination: null as unknown as TripSegments["destination"],
                 title: null,
-                statistics: { speed: 0, maxSpeed: 0, distance: 0, time: 0 },
                 weather: null,
+                distanceKm: null,
                 tripSegments: []
             };
 
             const tripManager = new TripManager();
 
-            await expect((tripManager as any).enrichTripWithWeather(mockTrip)).rejects.toMatchObject({
+            await expect(invokeEnrichTripWithWeather(tripManager, mockTrip)).rejects.toMatchObject({
                 statusCode: 400,
                 code: "NO_COORDINATES"
             });
@@ -135,8 +167,8 @@ describe("Testing TripManager weather logic", () => {
                 title: null,
                 origin: { lat: 45.4642, lng: 9.1900 },
                 destination: { lat: 45.4654, lng: 9.1859 },
-                statistics: { speed: 15, maxSpeed: 20, distance: 5, time: 20 },
                 weather: null,
+                distanceKm: null,
                 tripSegments: [
                     {
                         segmentId: "seg1",

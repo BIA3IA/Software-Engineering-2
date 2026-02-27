@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { queryManager } from '../query/index.js';
 import { NotFoundError, BadRequestError, TooManyRequestsError } from '../../errors/index.js';
 import { computeReportSignals } from '../../utils/index';
+import { Coordinates } from '../../types/index.js';
 import { pathManager } from '../path/path.manager.js';
 import {
     REPORT_ACTIVE_FRESHNESS_MIN,
@@ -136,7 +137,7 @@ export class ReportManager {
                 sessionId: sessionId ?? report.sessionId ?? null,
                 obstacleType: report.obstacleType,
                 pathStatus: report.pathStatus,
-                position: report.position,
+                position: report.position as Coordinates,
                 status: decision
             });
 
@@ -187,7 +188,10 @@ export class ReportManager {
     }
 
     // Filter active original reports -> only created
-    private filterActiveOriginalReports(reports: any[], now: Date) {
+    private filterActiveOriginalReports(
+        reports: Array<{ status: string; createdAt: Date; segmentId: string }>,
+        now: Date
+    ) {
         return reports.filter(report => {
             if (report.status !== 'CREATED') {
                 return false;

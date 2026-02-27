@@ -4,7 +4,7 @@ import { queryManager } from '../query/index.js';
 import { NotFoundError, BadRequestError } from '../../errors/index.js';
 import logger from '../../utils/logger';
 import { polylineDistanceKm } from '../../utils/geo.js';
-import { Coordinates } from '../../types/index.js';
+import { Coordinates, OverallStatsPeriod, Stats, TripSegments } from '../../types/index.js';
 import { getCachedTripCount, getCachedOverallStats, setCachedOverallStats } from '../../utils/cache.js';
 
 export class StatsManager {
@@ -42,7 +42,7 @@ export class StatsManager {
                 [StatsPeriod.OVERALL]: {},
             };
 
-            const byPeriod: Record<string, any> = {};
+            const byPeriod: Partial<Record<Lowercase<StatsPeriod>, OverallStatsPeriod>> = {};
 
             for (const period of [
                 StatsPeriod.DAY,
@@ -64,7 +64,7 @@ export class StatsManager {
                 }
 
                 if (stats) {
-                    byPeriod[period.toLowerCase()] = stats;
+                    byPeriod[period.toLowerCase() as Lowercase<StatsPeriod>] = stats;
                 }
             }
 
@@ -84,7 +84,7 @@ export class StatsManager {
     /**
      * Internal Logic: Computes metrics for a single trip
      */
-    private computePerTripMetrics(trip: any) {
+    private computePerTripMetrics(trip: TripSegments) {
         const start = new Date(trip.startedAt).getTime();
         const end = new Date(trip.finishedAt).getTime();
         const durationSeconds = Math.max(0, (end - start) / 1000);
@@ -95,7 +95,7 @@ export class StatsManager {
             // Calculate distance from trip segments if not directly available
             const allCoordinates: Coordinates[] = [
                 trip.origin,
-                ...(trip.tripSegments?.flatMap((ts: any) => ts.segment?.polylineCoordinates) || []),
+                ...(trip.tripSegments?.flatMap((ts) => ts.segment?.polylineCoordinates) || []),
                 trip.destination
             ].filter(Boolean) as Coordinates[];
             
@@ -114,7 +114,7 @@ export class StatsManager {
     /**
      * Internal Logic: Computes averages of averages across all trips
      */
-    private calculateOverallAverages(statsArray: any[]) {
+    private calculateOverallAverages(statsArray: Stats[]) {
         if (!statsArray.length) {
             return {
                 avgSpeed: 0,

@@ -72,7 +72,7 @@ describe("Testing validate middleware", () => {
         });
 
         const req = mockRequest();
-        req.query = { page: "1" } as any;
+        req.query = { page: "1" } as Request["query"];
 
         const res = mockResponse();
         const next = jest.fn();

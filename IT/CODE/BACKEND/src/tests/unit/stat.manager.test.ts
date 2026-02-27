@@ -1,5 +1,4 @@
 import { describe, test, expect, beforeEach } from "@jest/globals";
-import { Request, Response, NextFunction } from "express";
 import { StatsPeriod } from "@prisma/client";
 
 jest.mock('../../managers/query', () => ({
@@ -34,21 +33,9 @@ jest.mock('../../utils/logger', () => ({
 
 import { queryManager } from "../../managers/query";
 import { StatsManager } from "../../managers/stats/stats.manager";
-import { getCachedTripCount, getCachedOverallStats, setCachedOverallStats } from "../../utils/cache";
+import { getCachedTripCount, setCachedOverallStats } from "../../utils/cache";
 
 describe("Testing StatsManager business logic", () => {
-
-    const mockRequest = () => ({
-        method: 'GET',
-        params: {},
-        query: {},
-        user: undefined,
-    }) as unknown as Request;
-
-    const mockResponse = () => ({
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-    }) as unknown as Response;
 
     beforeEach(() => {
         jest.clearAllMocks();

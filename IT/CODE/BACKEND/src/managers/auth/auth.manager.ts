@@ -73,7 +73,7 @@ export class AuthManager {
             let decoded;
             try {
                 decoded = verifyRefreshToken(refreshToken);
-            } catch (error) {
+            } catch (_error) {
                 return next(new ForbiddenError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN'));
             }
 
@@ -107,7 +107,7 @@ export class AuthManager {
             let decoded;
             try {
                 decoded = verifyRefreshToken(oldRefreshToken);
-            } catch (error) {
+            } catch (_error) {
                 return next(new ForbiddenError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN'));
             }
 

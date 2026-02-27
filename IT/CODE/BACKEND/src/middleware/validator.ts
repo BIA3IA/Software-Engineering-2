@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ObjectSchema } from 'joi';
+import { ObjectSchema, ValidationError } from 'joi';
 import { BadRequestError } from '../errors/index.js';
 
 // Middleware to validate request data against a Joi schema. 
@@ -22,10 +22,12 @@ export const validate = (schema: ObjectSchema, target: Target = 'body') =>
                 req[target] = validated;
             }
             next();
-        } catch (error: any) {
+        } catch (error) {
+            const validationError = error as ValidationError;
             // With mapping we extract all error messages from Joi and join them into a single string
             // Maybe useful for client feedback on what went wrong
-            const message = error.details?.map((d: any) => d.message).join(', ') || 'Validation error';
+            const message =
+                validationError.details?.map((detail) => detail.message).join(', ') || 'Validation error';
             next(new BadRequestError(message, 'VALIDATION_ERROR'));
         }
     };

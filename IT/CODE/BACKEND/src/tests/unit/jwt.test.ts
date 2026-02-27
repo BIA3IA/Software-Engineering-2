@@ -1,6 +1,6 @@
 import { describe, test, expect, jest, beforeEach } from "@jest/globals";
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import { Request, Response } from "express";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 jest.mock('../../utils/utils', () => ({
     getJwtSecrets: jest.fn(() => ({
@@ -10,6 +10,14 @@ jest.mock('../../utils/utils', () => ({
 }));
 
 import { generateTokens, verifyAccessToken, verifyRefreshToken } from "../../middleware/jwt.auth";
+
+const decodeJwtPayload = (token: string): JwtPayload => {
+    const decoded = jwt.decode(token);
+    if (!decoded || typeof decoded === "string") {
+        throw new Error("Expected JWT payload object");
+    }
+    return decoded;
+};
 
 describe("Testing JWT auth middleware", () => {
 
@@ -45,8 +53,8 @@ describe("Testing JWT auth middleware", () => {
 
             const { accessToken, refreshToken } = generateTokens(userId);
 
-            const decodedAccess = jwt.decode(accessToken) as any;
-            const decodedRefresh = jwt.decode(refreshToken) as any;
+            const decodedAccess = decodeJwtPayload(accessToken);
+            const decodedRefresh = decodeJwtPayload(refreshToken);
 
             expect(decodedAccess.userId).toBe(userId);
             expect(decodedRefresh.userId).toBe(userId);
@@ -57,8 +65,8 @@ describe("Testing JWT auth middleware", () => {
 
             const { accessToken, refreshToken } = generateTokens(userId);
 
-            const decodedAccess = jwt.decode(accessToken) as any;
-            const decodedRefresh = jwt.decode(refreshToken) as any;
+            const decodedAccess = decodeJwtPayload(accessToken);
+            const decodedRefresh = decodeJwtPayload(refreshToken);
 
             expect(decodedAccess).toHaveProperty("exp");
             expect(decodedAccess).toHaveProperty("iat");

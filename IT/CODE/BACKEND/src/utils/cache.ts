@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import { OverallStatsPeriod, Stats } from '../types/index.js';
 import logger from './logger.js';
 import { TRIP_COUNT_TTL, TRIP_STATS_TTL, OVERALL_STATS_TTL } from '../constants/appConfig.js';
 
@@ -133,15 +134,15 @@ export async function closeRedis(): Promise<void> {
 
 // PER-TRIP STATS CACHING
 
-export async function getCachedTripStats(tripId: string): Promise<any | null> {
+export async function getCachedTripStats(tripId: string): Promise<Stats | null> {
     const key = getTripStatsCacheKey(tripId);
     
     try {
         const cached = await redis.get(key);
         if (cached) {
-        logger.debug({ tripId }, 'Trip stats cache hit');
-        return JSON.parse(cached);
-    }
+            logger.debug({ tripId }, 'Trip stats cache hit');
+            return deserializeTripStats(cached);
+        }
         logger.debug({ tripId }, 'Trip stats cache miss');
         return null;
     } catch (error) {
@@ -150,7 +151,7 @@ export async function getCachedTripStats(tripId: string): Promise<any | null> {
     }
 }
 
-export async function setCachedTripStats(tripId: string, stats: any): Promise<void> {
+export async function setCachedTripStats(tripId: string, stats: Stats): Promise<void> {
     const key = getTripStatsCacheKey(tripId);
     
     try {
@@ -163,14 +164,14 @@ export async function setCachedTripStats(tripId: string, stats: any): Promise<vo
 
 // OVERALL STATS CACHING
 
-export async function getCachedOverallStats(userId: string, period: string): Promise<any | null> {
+export async function getCachedOverallStats(userId: string, period: string): Promise<OverallStatsPeriod | null> {
     const key = getOverallStatsCacheKey(userId, period);
     
     try {
         const cached = await redis.get(key);
         if (cached) {
             logger.debug({ userId }, 'Overall stats cache hit');
-            return JSON.parse(cached);
+            return deserializeOverallStats(cached);
         }
         logger.debug({ userId }, 'Overall stats cache miss');
         return null;
@@ -180,7 +181,7 @@ export async function getCachedOverallStats(userId: string, period: string): Pro
     }
 }
 
-export async function setCachedOverallStats(userId: string, period: string, stats: any): Promise<void> {
+export async function setCachedOverallStats(userId: string, period: string, stats: OverallStatsPeriod): Promise<void> {
     const key = getOverallStatsCacheKey(userId, period);
     
     try {
@@ -205,4 +206,20 @@ export async function invalidateOverallStatsPeriod(userId: string, period: strin
 export async function invalidateOverallStats(userId: string): Promise<void> {
     const periods = ["DAY", "WEEK", "MONTH", "YEAR", "OVERALL"];
     await Promise.all(periods.map((period) => invalidateOverallStatsPeriod(userId, period)));
+}
+
+function deserializeTripStats(value: string): Stats {
+    const parsed = JSON.parse(value) as Omit<Stats, 'createdAt'> & { createdAt: string };
+    return {
+        ...parsed,
+        createdAt: new Date(parsed.createdAt),
+    };
+}
+
+function deserializeOverallStats(value: string): OverallStatsPeriod {
+    const parsed = JSON.parse(value) as Omit<OverallStatsPeriod, 'updatedAt'> & { updatedAt: string };
+    return {
+        ...parsed,
+        updatedAt: new Date(parsed.updatedAt),
+    };
 }

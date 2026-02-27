@@ -36,7 +36,7 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
         const decoded = jwt.verify(token, accessTokenSecret) as JwtPayload;
         req.user = decoded;
         next();
-    } catch (error) {
+    } catch (_error) {
         return next(new ForbiddenError('Invalid or expired token', 'INVALID_ACCESS_TOKEN'));
     }
 };
@@ -46,7 +46,7 @@ export const verifyRefreshToken = (token: string): JwtPayload => {
     const { refreshTokenSecret } = getJwtSecrets();
     try {
         return jwt.verify(token, refreshTokenSecret) as JwtPayload;
-    } catch (error) {
+    } catch (_error) {
         throw new ForbiddenError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
     }
 };

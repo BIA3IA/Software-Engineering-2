@@ -134,7 +134,10 @@ const computeFreshness = (date: Date, now: Date) => {
     return Math.pow(2, -ageMinutes / REPORT_FRESHNESS_HALF_LIFE_MIN);
 };
 
-export const computeReportSignals = (report: any, now: Date) => {
+export const computeReportSignals = (
+    report: { status: string; createdAt: Date },
+    now: Date
+) => {
     let confirmedScore = 0;
     let rejectedScore = 0;
 

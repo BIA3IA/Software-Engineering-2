@@ -1,6 +1,9 @@
 import { describe, test, expect, beforeEach } from "@jest/globals";
 import request from "supertest";
 import jwt from "jsonwebtoken";
+import { app } from "../../server";
+import { queryManager } from "../../managers/query/query.manager";
+import { decrementTripCount, incrementTripCount, getCachedTripStats, setCachedTripStats } from "../../utils/cache";
 
 jest.mock("../../utils/prisma-client", () => ({
     __esModule: true,
@@ -57,10 +60,6 @@ jest.mock("../../utils/cache", () => ({
     setCachedTripStats: jest.fn(),
 }));
 
-import { app } from "../../server";
-import prisma from "../../utils/prisma-client";
-import { queryManager } from "../../managers/query/query.manager";
-import { decrementTripCount, incrementTripCount, getCachedTripStats, setCachedTripStats } from "../../utils/cache";
 
 describe("Trip Routes Integration Tests", () => {
 

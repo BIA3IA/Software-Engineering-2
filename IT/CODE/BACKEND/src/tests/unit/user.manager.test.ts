@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "@jest/globals";
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 
 jest.mock('bcrypt', () => ({
     compare: jest.fn(),

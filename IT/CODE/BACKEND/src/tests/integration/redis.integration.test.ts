@@ -1,6 +1,6 @@
-import { describe, test, expect, beforeEach, afterAll } from "@jest/globals";
+import { describe, test, expect, beforeEach } from "@jest/globals";
 
-// Mock ioredis BEFORE importing anything else
+// redis BEFORE importing anything else
 const mockRedisInstance = {
     get: jest.fn(),
     set: jest.fn(),
@@ -13,20 +13,6 @@ const mockRedisInstance = {
     on: jest.fn(),
     quit: jest.fn(),
 };
-
-jest.mock("ioredis", () => {
-    return jest.fn(() => mockRedisInstance);
-});
-
-jest.mock("../../utils/logger", () => ({
-    __esModule: true,
-    default: {
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-        debug: jest.fn(),
-    },
-}));
 
 import {
     getCachedTripCount,
@@ -41,6 +27,21 @@ import {
     getTripStatsCacheKey,
     getOverallStatsCacheKey,
 } from "../../utils/cache";
+import { OverallStatsPeriod, Stats } from "../../types";
+
+jest.mock("ioredis", () => {
+    return jest.fn(() => mockRedisInstance);
+});
+
+jest.mock("../../utils/logger", () => ({
+    __esModule: true,
+    default: {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn(),
+    },
+}));
 
 describe("Cache Utilities Integration Tests", () => {
 
@@ -206,9 +207,11 @@ describe("Cache Utilities Integration Tests", () => {
             const mockStat = {
                 statsId: "stat1",
                 tripId: "trip123",
+                userId: "user123",
                 avgSpeed: 20.5,
                 duration: 3600,
                 kilometers: 15.2,
+                createdAt: new Date(),
             };
 
             mockRedisInstance.get.mockResolvedValue(JSON.stringify(mockStat));
@@ -228,12 +231,14 @@ describe("Cache Utilities Integration Tests", () => {
         });
 
         test("Should cache trip stats successfully", async () => {
-            const mockStat = {
+            const mockStat: Stats = {
                 statsId: "stat1",
                 tripId: "trip123",
+                userId: "user123",
                 avgSpeed: 20.5,
                 duration: 3600,
                 kilometers: 15.2,
+                createdAt: new Date(),
             };
 
             mockRedisInstance.setex.mockResolvedValue("OK");
@@ -259,7 +264,7 @@ describe("Cache Utilities Integration Tests", () => {
     describe("Testing overall stats caching", () => {
 
         test("Should return cached overall stats when available", async () => {
-            const mockStat = {
+            const mockStat: OverallStatsPeriod = {
                 userId: "user123",
                 period: "WEEK",
                 avgSpeed: 20.5,
@@ -271,6 +276,7 @@ describe("Cache Utilities Integration Tests", () => {
                 longestTime: 4200,
                 pathsCreated: 2,
                 tripCount: 5,
+                updatedAt: new Date(),
             };
 
             mockRedisInstance.get.mockResolvedValue(JSON.stringify(mockStat));
@@ -282,7 +288,7 @@ describe("Cache Utilities Integration Tests", () => {
         });
 
         test("Should cache overall stats successfully", async () => {
-            const mockStat = {
+            const mockStat: OverallStatsPeriod = {
                 userId: "user123",
                 period: "WEEK",
                 avgSpeed: 20.5,
@@ -294,6 +300,7 @@ describe("Cache Utilities Integration Tests", () => {
                 longestTime: 4200,
                 pathsCreated: 2,
                 tripCount: 5,
+                updatedAt: new Date(),
             };
 
             mockRedisInstance.setex.mockResolvedValue("OK");

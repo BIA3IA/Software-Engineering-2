@@ -6,11 +6,12 @@ import logger from '../utils/logger.js';
 // Type guard: if it has statusCode, it's our custom error
 // There are different ways to implement type guards.. this is a simple one
 const isAppError = (error: unknown): error is AppError => {
+    const candidate = error as { statusCode?: unknown };
     return (
         error !== null &&
         typeof error === 'object' &&
         'statusCode' in error &&
-        typeof (error as any).statusCode === 'number'
+        typeof candidate.statusCode === 'number'
     );
 };
 
@@ -21,7 +22,7 @@ export const errorHandler = (
     err: Error,
     req: Request,
     res: Response,
-    next: NextFunction
+    _next: NextFunction
 ): void => {
     const { method, originalUrl, body, params, query } = req;
     const safeBody = redactSensitive(body);
